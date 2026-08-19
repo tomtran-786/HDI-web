@@ -1,0 +1,26 @@
+{
+  "title": "Tom Tran - Portfolio",
+  "url": "https://tomtran-portfolio.vercel.app/",
+  "slug": "/",
+  "viewports": [
+    "desktop"
+  ],
+  "colors": [
+    "#ffffff",
+    "#000000",
+    "#f7f7f7",
+    "#172636",
+    "#0c498f",
+    "#4a4a4a",
+    "#404040",
+    "#003865",
+    "#1c7a4d",
+    "#e8f0fe"
+  ],
+  "fonts": [
+    "Source Sans 3",
+    "Arial",
+    "tabler-icons",
+    "Times"
+  ]
+}

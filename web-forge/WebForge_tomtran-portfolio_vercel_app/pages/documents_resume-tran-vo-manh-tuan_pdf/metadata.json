@@ -1,0 +1,25 @@
+{
+  "title": "My Teaching Career | Tom Tran",
+  "url": "https://tomtran-portfolio.vercel.app/documents/resume-tran-vo-manh-tuan.pdf",
+  "slug": "/documents/resume-tran-vo-manh-tuan.pdf",
+  "viewports": [
+    "desktop"
+  ],
+  "colors": [
+    "#ffffff",
+    "#000000",
+    "#4a403b",
+    "#8f4100",
+    "#2f2723",
+    "#f79747",
+    "#665c57",
+    "#f8f6f4"
+  ],
+  "fonts": [
+    "Source Sans 3",
+    "Arial",
+    "Georgia",
+    "Times New Roman",
+    "tabler-icons"
+  ]
+}

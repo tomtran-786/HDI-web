@@ -1,0 +1,37 @@
+{
+  "domain": "tomtran-portfolio.vercel.app",
+  "exportedAt": "2026-08-19T08:00:47.958031+00:00",
+  "sitemap": [
+    "https://tomtran-portfolio.vercel.app/",
+    "https://tomtran-portfolio.vercel.app/documents/resume-tran-vo-manh-tuan.pdf",
+    "https://tomtran-portfolio.vercel.app/teaching"
+  ],
+  "designTokens": {
+    "colors": [
+      "#ffffff",
+      "#000000",
+      "#f7f7f7",
+      "#172636",
+      "#0c498f",
+      "#4a4a4a",
+      "#404040",
+      "#003865",
+      "#1c7a4d",
+      "#e8f0fe",
+      "#4a403b",
+      "#8f4100",
+      "#2f2723",
+      "#f79747",
+      "#665c57",
+      "#f8f6f4"
+    ],
+    "fonts": [
+      "Source Sans 3",
+      "Arial",
+      "tabler-icons",
+      "Times",
+      "Georgia",
+      "Times New Roman"
+    ]
+  }
+}
