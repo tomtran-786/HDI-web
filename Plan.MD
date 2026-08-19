@@ -67,6 +67,7 @@ components/
 content/    ← TOÀN BỘ chữ nghĩa nằm ở đây, không hardcode trong JSX
   site.ts  programs.ts  course.ts  services.ts  about.ts
   publications.ts  projects.ts  conferences.ts  teaching.ts  stats.ts
+vercel.json   ghim Framework Preset = nextjs (xem Nhật ký phiên, sự cố 404)
 public/
   docs/cv.pdf  docs/teaching-statement.pdf
   images/portrait.jpg   ← cắt từ poster khóa học, đã xóa nền ngoài hình tròn
@@ -183,6 +184,20 @@ script Playwright ở trên thay vì công cụ đó.
   `web-forge/` **vẫn được đưa lên** vì người dùng chỉ yêu cầu loại trừ `reference/`,
   và nó là nguồn ngôn ngữ thiết kế mà Plan.MD có tham chiếu tới.
 
+### 2026-08-19 — Phiên 1 (tiếp): sự cố 404 khi deploy Vercel
+- **Triệu chứng:** deploy lên Vercel xong truy cập vào bị 404.
+- **Đã loại trừ:** clone sạch từ GitHub, chạy `npm ci` + `npm run build` đúng như Vercel
+  làm → build thành công, sinh đúng route `/` với `index.html` 139 KB. Kiểm tra thêm
+  phân biệt hoa/thường trong đường dẫn import (Linux nhạy cảm, macOS thì không) → không lỗi.
+  Cảnh báo `npm warn allow-scripts unrs-resolver` trong log chỉ là cảnh báo của một
+  dependency thuộc ESLint, không liên quan tới `next build`.
+- **Nguyên nhân thật:** **Framework Preset trên Vercel bị đặt là "Other" thay vì "Next.js".**
+  Khi đó Vercel chỉ serve file tĩnh từ thư mục gốc, không chạy Next.js runtime → mọi route 404.
+- **Cách sửa:** đổi Settings → Build & Deployment → Framework Preset thành **Next.js**, rồi Redeploy.
+- **Phòng ngừa:** thêm `vercel.json` với `"framework": "nextjs"` vào repo. Trường này trong
+  `vercel.json` ghi đè cấu hình trên dashboard, nên nếu sau này tạo lại project hoặc ai đó
+  đổi nhầm preset thì vẫn deploy đúng.
+
 ---
 
 ## 8. Việc tiếp theo (gợi ý, chưa làm)
@@ -190,5 +205,5 @@ script Playwright ở trên thay vì công cụ đó.
 - [ ] Ảnh chân dung hiện cắt từ poster nên hơi mờ (gốc ~310px). Nếu có ảnh gốc độ phân giải cao thì thay `public/images/portrait.jpg`.
 - [ ] Chưa có favicon và ảnh Open Graph riêng.
 - [ ] Hai dịch vụ ở `#dich-vu` mới chỉ có tiêu đề, vì trang gốc cũng chỉ có tiêu đề. Cần Dr. Trinh cung cấp mô tả và bảng giá thật — **đừng tự viết**.
-- [ ] Chưa deploy (dự kiến Vercel — repo đã sẵn trên GitHub).
+- [ ] Deploy Vercel: đã sửa preset + thêm `vercel.json`, cần Redeploy và xác nhận trang chạy.
 - [ ] Nếu sau này cần bản tiếng Anh: mọi chữ đã nằm gọn trong `content/`, chỉ cần tách thành `content/vi/` + `content/en/` và thêm nút chuyển ở header.
