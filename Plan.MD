@@ -178,6 +178,10 @@ script Playwright ở trên thay vì công cụ đó.
   `card.tsx`, `badge.tsx`; sắp lại nhịp nền `soft` của các section phía sau.
 - Kiểm chứng: build sạch, eslint sạch, `overflow-x = 0` ở cả 4 khổ, PDF + ảnh trả 200,
   các link ngoài (forms.gle, linktr.ee, congtamtrinh.com) trả 200.
+- Khởi tạo git, commit đầu tiên, push lên `https://github.com/tomtran-786/HDI-web.git`
+  (nhánh `main`). `reference/` bị loại khỏi repo theo yêu cầu — repo chỉ 3.6 MB.
+  `web-forge/` **vẫn được đưa lên** vì người dùng chỉ yêu cầu loại trừ `reference/`,
+  và nó là nguồn ngôn ngữ thiết kế mà Plan.MD có tham chiếu tới.
 
 ---
 
@@ -186,6 +190,5 @@ script Playwright ở trên thay vì công cụ đó.
 - [ ] Ảnh chân dung hiện cắt từ poster nên hơi mờ (gốc ~310px). Nếu có ảnh gốc độ phân giải cao thì thay `public/images/portrait.jpg`.
 - [ ] Chưa có favicon và ảnh Open Graph riêng.
 - [ ] Hai dịch vụ ở `#dich-vu` mới chỉ có tiêu đề, vì trang gốc cũng chỉ có tiêu đề. Cần Dr. Trinh cung cấp mô tả và bảng giá thật — **đừng tự viết**.
-- [ ] Chưa khởi tạo git repo.
-- [ ] Chưa deploy (dự kiến Vercel).
+- [ ] Chưa deploy (dự kiến Vercel — repo đã sẵn trên GitHub).
 - [ ] Nếu sau này cần bản tiếng Anh: mọi chữ đã nằm gọn trong `content/`, chỉ cần tách thành `content/vi/` + `content/en/` và thêm nút chuyển ở header.
