@@ -1,7 +1,7 @@
 import { contact, links } from "@/content/site";
 import { Reveal } from "../ui/reveal";
 import { Section, SectionHeading } from "../ui/section";
-import { IconArrow, IconMail, IconPhone } from "../ui/icons";
+import { IconArrow, IconMail, IconMessage, IconPhone } from "../ui/icons";
 
 export function Contact() {
   return (
@@ -31,6 +31,17 @@ export function Contact() {
             >
               <IconMail size={16} />
               {contact.email}
+            </a>
+            {/* `phoneNote` tells people to prefer Zalo, so Zalo needs its own
+                button — otherwise they have to copy the number by hand. */}
+            <a
+              href={links.zalo}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 rounded-full border border-line px-5 py-3 text-sm font-bold text-fg transition hover:border-primary hover:text-primary"
+            >
+              <IconMessage size={16} />
+              Nhắn Zalo
             </a>
             <a
               href={contact.phoneHref}

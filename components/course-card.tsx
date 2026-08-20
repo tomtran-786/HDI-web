@@ -3,7 +3,7 @@
 import { useRef } from "react";
 import type { Course } from "@/content/course";
 import { links } from "@/content/site";
-import { IconArrow, IconCheck, IconClose } from "./ui/icons";
+import { IconArrow, IconCheck, IconClose, IconMessage } from "./ui/icons";
 
 /** Running index of the first session in each phase, so numbering stays 1…8. */
 function phaseOffset(phases: Course["phases"], index: number) {
@@ -155,6 +155,37 @@ export function CourseCard({ course }: { course: Course }) {
               })}
             </div>
 
+            {/* Renders only once a real intake exists — see CourseCohort. */}
+            {course.cohort && (
+              <div className="mt-7 rounded-card border border-primary bg-tint p-5">
+                <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-primary">
+                  Kỳ tới — {course.cohort.ky}
+                </p>
+                <dl className="mt-2">
+                  <div className="flex flex-wrap items-baseline justify-between gap-2 py-1.5">
+                    <dt className="text-[13px] text-fg-muted">Khai giảng</dt>
+                    <dd className="text-[15px] font-bold text-fg">
+                      {course.cohort.khaiGiang}
+                    </dd>
+                  </div>
+                  <div className="flex flex-wrap items-baseline justify-between gap-2 py-1.5">
+                    <dt className="text-[13px] text-fg-muted">Lịch học</dt>
+                    <dd className="text-[15px] font-semibold text-fg">
+                      {course.cohort.lichHoc}
+                    </dd>
+                  </div>
+                  {course.cohort.conLai !== undefined && (
+                    <div className="flex flex-wrap items-baseline justify-between gap-2 py-1.5">
+                      <dt className="text-[13px] text-fg-muted">Chỗ còn lại</dt>
+                      <dd className="text-[15px] font-bold text-primary">
+                        {course.cohort.conLai}/{course.cohort.siSo}
+                      </dd>
+                    </div>
+                  )}
+                </dl>
+              </div>
+            )}
+
             <div className="mt-7 rounded-card border border-line bg-bg-soft p-5">
               <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-fg-subtle">
                 Thông tin học
@@ -201,15 +232,32 @@ export function CourseCard({ course }: { course: Course }) {
               ))}
             </ul>
 
-            <a
-              href={links.register}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="mt-7 inline-flex w-full items-center justify-center gap-2 rounded-full bg-primary px-6 py-3 text-sm font-bold text-primary-fg transition hover:bg-primary-deep"
-            >
-              Đăng ký khóa học
-              <IconArrow size={16} />
-            </a>
+            {/* The label says "tư vấn", not "đăng ký khóa học": this link goes
+                to the same free consultation form as the other six CTAs. A
+                reader still weighing a 1.100.000đ course will not press a button
+                that sounds like committing to pay. */}
+            <div className="mt-7 flex flex-col gap-3 sm:flex-row">
+              <a
+                href={links.register}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex flex-1 items-center justify-center gap-2 rounded-full bg-primary px-6 py-3 text-sm font-bold text-primary-fg transition hover:bg-primary-deep"
+              >
+                Đăng ký tư vấn khóa này
+                <IconArrow size={16} />
+              </a>
+              {/* Parallel route out for people who will never fill in a form —
+                  with Zalo as the real consulting channel, that group is large. */}
+              <a
+                href={links.zalo}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center justify-center gap-2 rounded-full border border-line px-6 py-3 text-sm font-bold text-fg transition hover:border-primary hover:text-primary"
+              >
+                <IconMessage size={16} />
+                Nhắn Zalo
+              </a>
+            </div>
             <p className="mt-3 text-center text-xs leading-relaxed text-fg-subtle">
               {course.registerNote}
             </p>

@@ -34,6 +34,10 @@ export const contact = {
 
 export const links = {
   register: "https://forms.gle/YXXfYAgPgmksqdCb9",
+  // Same number as `contact.phoneHref`, in the form zalo.me expects: country
+  // code without "+", no spaces. `contact.phoneNote` tells people to prefer
+  // Zalo, so the page has to actually give them a way there.
+  zalo: "https://zalo.me/84939979890",
   linktree: "https://linktr.ee/minandkin",
   tiktok: "https://www.tiktok.com/@minandkin.official",
   legacySite: "https://www.congtamtrinh.com/",

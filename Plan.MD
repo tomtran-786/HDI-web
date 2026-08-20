@@ -28,7 +28,14 @@ thiệu các chương trình kèm cặp nghiên cứu và khóa học 8 buổi; 
 | **Định vị** | **Dịch vụ dẫn dắt.** Hero + Chương trình + Khóa học đứng trước; Công bố / Dự án / Hội thảo đứng sau làm bằng chứng. |
 | **Công nghệ** | Next.js 16 (App Router) + TypeScript + Tailwind v4. Node v24.16.0. |
 | **Ngôn ngữ** | **Tiếng Việt** cho toàn bộ giao diện và văn xuôi. **Giữ nguyên tiếng Anh** cho: tên bài báo, tên tạp chí, tên hội thảo, tên trường/tổ chức, tên người, tên bằng cấp, tên chương trình (Coach Session, Research Class…), và các chỉ số (ABDC, SSCI, Q1, IF). |
-| **Bảng màu** | **Một bảng màu duy nhất** (xanh dương đậm). Bản đầu dùng thêm bảng màu cam cho phần khóa học — **đã bỏ** theo yêu cầu ngày 2026-08-19: khóa học không phải trang riêng nên không dùng màu riêng. Phần khóa học nay nổi bật bằng một panel nền `bg-primary`. |
+| **Bảng màu** | **Một bảng màu duy nhất** (xanh dương đậm). Bản đầu dùng thêm bảng màu cam cho phần khóa học — **đã bỏ** theo yêu cầu ngày 2026-08-19: khóa học không phải trang riêng nên không dùng màu riêng. |
+| **Mô hình khóa học** | Chốt 2026-08-20: **tất cả khóa đều dạy trực tiếp theo kỳ (cohort)**, record chỉ để xem lại khi cần — **không phải bán video**. Kéo theo: một SKU cho mỗi khóa, và đòn bẩy chuyển đổi là **khan hiếm** (ngày khai giảng, sĩ số), không phải tiện lợi. |
+
+> ⚠️ **Phạm vi đang mở rộng.** Đây hiện là landing page, nhưng kế hoạch đã duyệt ngày
+> 2026-08-20 sẽ biến nó thành **ứng dụng có tài khoản, CSDL và tiền thật chạy qua**
+> (đăng nhập Google → thanh toán → webhook → truy cập record). Kế hoạch đầy đủ ở
+> `~/.claude/plans/b-t-u-phi-n-m-i-twinkly-karp.md`. Mới thực hiện **GĐ0**; GĐ1–GĐ4 chưa làm
+> và **GĐ2 trở đi bị chặn** cho tới khi chốt HDI có tách khỏi edubit hay không.
 
 ---
 
@@ -363,6 +370,62 @@ mất vĩnh viễn cho tới khi reload.
 khi bấm "Mặc định"; modal vẫn giữ đủ hai kiểu đánh số (`Buổi 1…8` / `1.1…5.3`), Esc đóng,
 focus quay lại thẻ, `html { overflow: hidden }` bật/tắt đúng; `overflow-x = 0` ở
 375 / 1280, cả sáng lẫn tối.
+
+---
+
+### 2026-08-20 — Phiên 3 (tiếp): GĐ0 của kế hoạch tối ưu luồng đăng ký
+
+Kế hoạch đầy đủ (GĐ0–GĐ4) ở `~/.claude/plans/b-t-u-phi-n-m-i-twinkly-karp.md`.
+**Phiên này chỉ làm GĐ0** — phần không cần backend và không cần dữ liệu từ Dr. Trinh.
+
+**1. Sửa nhãn nút lệch kỳ vọng.** `grep` phát hiện 7 CTA cùng trỏ `links.register` nhưng
+6 chỗ ghi *"Đăng ký tư vấn (miễn phí)"*, riêng `course-card.tsx` — chỗ ý định mua cao nhất —
+ghi **"Đăng ký khóa học"**. Người vừa đọc học phí 1.100.000đ và còn cân nhắc sẽ không bấm một
+nút nghe như cam kết đóng tiền. Đổi thành *"Đăng ký tư vấn khóa này"*. Giờ cả 10 link tới form
+đều nói "tư vấn".
+
+**2. Zalo deep link.** `contact.phoneNote` bảo *"Ưu tiên liên hệ qua Zalo"* nhưng trang chỉ có
+`tel:` — người dùng phải tự copy số, mở app, tìm. Thêm `links.zalo` (cùng số với
+`contact.phoneHref`), đặt ở `#lien-he` và **song song** với nút form trong cả 5 modal. Đây là
+đường thoát cho nhóm sẽ không bao giờ điền form; với Zalo là kênh chính, nhóm này không nhỏ.
+Thêm `IconMessage` vào `components/ui/icons.tsx`.
+
+**3. Tách "Thời lượng" thành "Lớp trực tiếp" / "Kho record" / "Xem lại".**
+Con số edubit in là **kho record tích lũy qua nhiều kỳ**, không phải độ dài khóa:
+
+| | edubit in | Thực tế một kỳ live |
+|---|---|---|
+| Stata | 47 giờ 29 phút | ~10–11h (5 module) — K1 11h20 · K2 11h05 · K3 10h26 · K4 6h15 |
+| Tạp chí | 60 giờ 44 phút | ~15h (6 module) — K12 14h08 · K13 15h29 · K14 15h42 |
+
+Ghi `Thời lượng: 47 giờ 29 phút` khiến người đọc tưởng khóa dài 47 tiếng. Tách ra vừa đúng
+hơn vừa **bán tốt hơn** — "được cả kho record các kỳ trước" là quyền lợi thật đang bị chôn.
+Lý do đầy đủ đã chép vào comment đầu `content/course.ts`.
+
+> Khóa chủ lực `viet-bao-cao-khoa-hoc` **giữ nguyên** `facts` cũ: poster không nói gì về
+> record, thêm vào là bịa.
+>
+> Khóa SPSS **không** ghi sĩ số 40 — trang edubit của khóa đó không có con số này, khác với
+> Stata và tạp chí. Không suy diễn từ khóa khác sang.
+
+**4. Dựng sẵn khối "Kỳ tới" (`CourseCohort`), chưa có dữ liệu.** Mô hình cohort sống bằng
+khan hiếm mà trang không có một chữ nào về ngày khai giảng. Type + phần render đã xong, field
+`cohort?` **tùy chọn** nên chưa khóa nào hiển thị gì — theo đúng quy tắc mục 3, không bịa
+ngày tháng. Khi Dr. Trinh đưa lịch thật thì chỉ cần thêm data, không phải sửa component.
+`conLai` cũng để tùy chọn: *"còn 3/40 chỗ"* thì bán được, *"còn 38/40"* thì phản tác dụng.
+
+**Gotcha:** đã kiểm nhánh render `cohort` bằng cách **tạm** thêm dữ liệu giả, chụp ảnh xác
+nhận (sáng + tối), rồi **gỡ ra và kiểm lại** là chuỗi `KIỂM THỬ` / `10/09/2026` không còn
+trong HTML. Đừng ship một nhánh render chưa từng thấy chạy.
+
+**Kiểm chứng:** `tsc --noEmit` + eslint + build sạch; 10/10 nhãn CTA nói "tư vấn"; 6 link
+`zalo.me` đúng số; `facts` của 4 khóa tách đúng và khóa chủ lực không đổi; khối `cohort` render
+đúng khi có data và **ẩn hoàn toàn** khi không; modal vẫn Esc-đóng, click ruột không đóng,
+focus quay lại thẻ, scroll lock bật/tắt đúng; `overflow-x = 0` ở 375 / 1280, sáng và tối.
+
+**Chưa làm (chặn bởi dữ liệu, không phải bởi code):** prefill Google Form và bật
+Responses → Link to Sheets — cần Dr. Trinh gửi *pre-filled link* và xác nhận form có đủ tên
+5 khóa. Xem bảng "Cần Dr. Trinh cung cấp / quyết định" trong file kế hoạch.
 
 ---
 

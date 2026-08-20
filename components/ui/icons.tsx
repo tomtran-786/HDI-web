@@ -69,6 +69,14 @@ export function IconPhone({ className, size = 20 }: IconProps) {
   );
 }
 
+export function IconMessage({ className, size = 20 }: IconProps) {
+  return (
+    <svg {...base(size)} className={className} aria-hidden>
+      <path d="M21 11.5a8.4 8.4 0 0 1-9 8.4 9.9 9.9 0 0 1-3.9-.8L3 20.5l1.4-4.1A8.4 8.4 0 0 1 3 11.5 8.4 8.4 0 0 1 12 3a8.4 8.4 0 0 1 9 8.5z" />
+    </svg>
+  );
+}
+
 export function IconDownload({ className, size = 20 }: IconProps) {
   return (
     <svg {...base(size)} className={className} aria-hidden>

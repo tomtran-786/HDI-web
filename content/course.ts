@@ -34,11 +34,44 @@
  * Tuition is edubit's current price and will drift if they reprice. Student
  * counts and star ratings are deliberately omitted: they are edubit's social
  * proof, not HDI's.
+ *
+ * WHY `facts` SPLITS "Lớp trực tiếp" FROM "Kho record" — every course here is
+ * taught live on a schedule, with recordings as a catch-up benefit. The single
+ * figure edubit prints as "Thời lượng" is the ACCUMULATED record library across
+ * past intakes, not the length of one course. Adding up the per-intake records
+ * in reference/edubit/courses/:
+ *
+ *    Stata    K1 11h20 + K2 11h05 + K3 10h26 + K4 6h15 (+ per-module detail
+ *             ~8h) = 47h29 total, but ONE live intake is ~10–11h (5 modules)
+ *    Tạp chí  K12 14h08 + K13 15h29 + K14 15h42 (+ detail ~14h) = 60h44 total,
+ *             one intake ~15h (6 modules)
+ *
+ * Printing "Thời lượng: 47 giờ 29 phút" made readers think the course runs for
+ * 47 hours. Splitting the rows states the same sourced numbers accurately — and
+ * surfaces the record library as the benefit it is instead of burying it.
  */
 
 export type CoursePhase = {
   name: string;
   sessions: string[];
+};
+
+/**
+ * The next intake of a course. Every course here is taught live on a schedule,
+ * so the start date and remaining seats are the strongest reason for a reader
+ * to act today rather than later — but they are facts about the real world, so
+ * per the no-fabrication rule in Plan.MD §3 they only appear once Dr. Trinh
+ * supplies them. Until then the field stays absent and the card renders nothing.
+ *
+ * `conLai` is optional on purpose: "còn 3/40 chỗ" sells, "còn 38/40 chỗ" does
+ * the opposite. Leave it out when it does not help.
+ */
+export type CourseCohort = {
+  ky: string;
+  khaiGiang: string;
+  lichHoc: string;
+  siSo: number;
+  conLai?: number;
 };
 
 export type Course = {
@@ -62,6 +95,8 @@ export type Course = {
    * parse the display string. Keep the two in step when a price changes.
    */
   price: { amount: string; note: string; vnd: number };
+  /** Absent until real intake dates exist — see CourseCohort. */
+  cohort?: CourseCohort;
   facts: { label: string; value: string }[];
   phases: CoursePhase[];
   outcomes: string[];
@@ -159,9 +194,9 @@ export const courses: Course[] = [
       vnd: 1100000,
     },
     facts: [
-      { label: "Hình thức", value: "Trực tuyến qua Zoom, có record xem lại" },
-      { label: "Thời lượng", value: "47 giờ 29 phút — 42 bài học" },
-      { label: "Quy mô lớp", value: "Tối đa 40 học viên" },
+      { label: "Lớp trực tiếp", value: "05 module qua Zoom — tối đa 40 học viên" },
+      { label: "Kho record", value: "47 giờ 29 phút — 42 bài học" },
+      { label: "Xem lại", value: "02 năm kể từ ngày đăng ký" },
     ],
     phases: [
       {
@@ -234,10 +269,12 @@ export const courses: Course[] = [
       note: "Giảm 10% cho nhóm từ 03 người",
       vnd: 1100000,
     },
+    // No class-size figure on the SPSS page, unlike Stata and tap-chi — so none
+    // is claimed here.
     facts: [
-      { label: "Hình thức", value: "Trực tuyến qua Zoom, có record xem lại" },
-      { label: "Thời lượng", value: "51 giờ 02 phút — 60 bài học" },
-      { label: "Xem lại record", value: "02 năm kể từ ngày đăng ký" },
+      { label: "Lớp trực tiếp", value: "06 module qua Zoom" },
+      { label: "Kho record", value: "51 giờ 02 phút — 60 bài học" },
+      { label: "Xem lại", value: "02 năm kể từ ngày đăng ký" },
     ],
     phases: [
       {
@@ -327,9 +364,9 @@ export const courses: Course[] = [
       vnd: 2000000,
     },
     facts: [
-      { label: "Hình thức", value: "Trực tuyến qua Zoom, có record xem lại" },
-      { label: "Thời lượng", value: "60 giờ 44 phút — 60 bài học" },
-      { label: "Quy mô lớp", value: "Tối đa 40 học viên" },
+      { label: "Lớp trực tiếp", value: "06 module qua Zoom — tối đa 40 học viên" },
+      { label: "Kho record", value: "60 giờ 44 phút — 60 bài học" },
+      { label: "Xem lại", value: "02 năm kể từ ngày đăng ký" },
     ],
     phases: [
       {
@@ -425,9 +462,9 @@ export const courses: Course[] = [
       vnd: 220000,
     },
     facts: [
-      { label: "Hình thức", value: "03 buổi Zoom + học liệu online" },
-      { label: "Thời lượng", value: "35 giờ 34 phút — 40 bài học" },
-      { label: "Xem lại record", value: "03 năm kể từ ngày đăng ký" },
+      { label: "Lớp trực tiếp", value: "03 buổi Zoom + học liệu online" },
+      { label: "Kho record", value: "35 giờ 34 phút — 40 bài học" },
+      { label: "Xem lại", value: "03 năm kể từ ngày đăng ký" },
     ],
     phases: [
       {
