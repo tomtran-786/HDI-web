@@ -42,3 +42,13 @@ next-env.d.ts
 
 # crawl output + its 700MB venv — research input, not part of the app
 /reference
+
+# prisma client is generated at install time (postinstall)
+/lib/generated
+
+# real cohort data carries the Zoom link and Drive folder id
+/prisma/cohorts.json
+
+# local MCP server config and installed agent skills
+.mcp.json
+.agents/
