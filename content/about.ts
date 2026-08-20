@@ -23,7 +23,7 @@ export const about = {
   education: [
     {
       degree: "PhD in Economics",
-      school: "Deakin University, Australia",
+      school: "Deakin University, Australia (ranked #265 THE, #17 in Australia)",
       year: "2017",
       note: "Luận án: Non-life Insurance Expenditure in Developed and Developing Economies",
     },
@@ -43,6 +43,8 @@ export const about = {
       year: "2005",
     },
   ],
+  // From the course flyer (reference/site/images/image-53a4a7a37922.png).
+  honors: ["Excellent research award, VNU-HCMC (2023)"],
   interests: [
     "Applied Economics",
     "Insurance Economics",

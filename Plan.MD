@@ -61,6 +61,7 @@ app/
   page.tsx        ghép các section theo thứ tự
 components/
   site-header.tsx  site-footer.tsx  theme-toggle.tsx
+  course-card.tsx  ← "use client": thẻ khóa học + modal <dialog> chi tiết
   ui/     section.tsx  card.tsx  badge.tsx  reveal.tsx  icons.tsx
   sections/  hero  stats  programs  featured-course  services
              about  publications  projects  conferences  teaching  contact
@@ -75,6 +76,16 @@ public/
 
 **Quy ước:** sửa nội dung thì sửa trong `content/`; sửa giao diện thì sửa trong
 `components/`. Đừng trộn hai việc.
+
+### `content/course.ts` — cấu trúc mảng
+Từ phiên 2, file này export `courses: Course[]` (không còn `course` đơn lẻ) cùng hai
+type `Course` và `CoursePhase`. Giáo trình nằm ở `phases` — 4 giai đoạn × 2 buổi —
+thay cho mảng phẳng `syllabus` cũ. Học phí tách khỏi `facts` thành `price` riêng để
+thẻ hiển thị nổi bật. **Thêm khóa mới = thêm một object vào mảng**, không phải sửa
+component. Khi đó nhớ đổi lưới trong `featured-course.tsx` thành `md:grid-cols-2`.
+
+> **Tên 4 giai đoạn là biên tập, không có trên poster.** Tám tiêu đề buổi học và mọi
+> con số vẫn giữ nguyên văn từ poster. Đây là ngoại lệ duy nhất so với quy tắc ở mục 3.
 
 ### Design token
 Định nghĩa ở `app/globals.css`. Sáng: `--primary #0c498f`, `--fg #172636`,
@@ -97,7 +108,7 @@ Về chúng tôi(bg) · Công bố(soft) · Dự án(bg) · Hội thảo(soft) �
 | 2 | Hero | `#top` | ✅ xong |
 | 3 | Dải số liệu | — | ✅ xong |
 | 4 | Chương trình kèm cặp (4 thẻ) | `#chuong-trinh` | ✅ xong |
-| 5 | Khóa học 8 buổi | `#khoa-hoc` | ✅ xong |
+| 5 | Khóa học 8 buổi (thẻ + modal lộ trình) | `#khoa-hoc` | ✅ xong |
 | 6 | Dịch vụ hỗ trợ bản thảo | `#dich-vu` | ✅ xong |
 | 7 | Về Dr. Cong Tam Trinh | `#ve-chung-toi` | ✅ xong |
 | 8 | Công bố khoa học (13 bài, lọc theo năm) | `#cong-bo` | ✅ xong |
@@ -197,6 +208,52 @@ script Playwright ở trên thay vì công cụ đó.
 - **Phòng ngừa:** thêm `vercel.json` với `"framework": "nextjs"` vào repo. Trường này trong
   `vercel.json` ghi đè cấu hình trên dashboard, nên nếu sau này tạo lại project hoặc ai đó
   đổi nhầm preset thì vẫn deploy đúng.
+
+### 2026-08-20 — Phiên 2: học cách sắp xếp khóa học từ edubit
+
+**Khảo sát `reference/edubit/`** (59 trang, 22 khóa + 10 combo). Phát hiện chính: cả 22
+trang khóa học dùng **chung một template 4 khối cố định** — `Bạn sẽ học được gì` →
+`Giới thiệu khóa học` → `Nội dung khóa học` → `Thông tin giảng viên`. Giáo trình là cây
+hai tầng `MODULE n → bài 1.1, 1.2` render bằng widget (không sinh heading nào). Giá +
+badge `-57%` đẩy lên thẻ ở trang danh sách. Combo là cơ chế phân tầng giá, luôn chứa
+khóa "Training" làm sản phẩm mỏ neo.
+
+**Đã lấy:** giáo trình có nhóm, và đưa học phí lên vị trí nổi bật.
+**Không lấy:** trang chi tiết riêng cho từng khóa — edubit cần vì có 32 sản phẩm, HDI
+chỉ có **một** khóa thật. Thay bằng **modal**, giữ nguyên kiến trúc landing page.
+
+**Thay đổi:**
+- `content/course.ts`: `course` → `courses: Course[]`; `syllabus` phẳng → `phases`
+  (4 giai đoạn); tách `price` khỏi `facts`.
+- `components/course-card.tsx` (mới): thẻ nền `bg-primary` có hover lift, click mở
+  `<dialog>`. Dùng `<dialog>` + `showModal()` chứ không tự dựng overlay — được sẵn
+  focus trap, Esc, khôi phục focus, và top layer nên không tranh z-index với header sticky.
+- `components/sections/featured-course.tsx`: bỏ lưới 2 cột, còn `courses.map()`.
+- `app/globals.css`: style nền cho `dialog` + `::backdrop`, khóa cuộn bằng
+  `html:has(dialog[open])` (không cần JS).
+- `content/about.ts` + `about.tsx`: thêm `honors` (Excellent research award, VNU-HCMC
+  2023) và xếp hạng Deakin — hai dữ kiện thật trên poster mà trang chưa từng dùng.
+
+**Bẫy đã gặp / cần nhớ:**
+- `Card` trong `ui/card.tsx` hardcode `bg-card`; truyền `bg-primary` qua `className`
+  sẽ phụ thuộc thứ tự CSS chứ không chắc thắng. Nên thẻ khóa học **không** dùng `Card`,
+  mà dựng panel trực tiếp và mượn lại đúng class hover của `Card`.
+- **Không bọc `Reveal` bên trong `<dialog>`.** `Reveal` bắn một lần bằng
+  IntersectionObserver; dialog đóng là `display:none` nên phần tử sẽ kẹt ở `opacity: 0`.
+- Số buổi phải chạy liên tục 1→8 xuyên qua 4 giai đoạn, không reset theo từng giai đoạn.
+- Dev server giữ log lỗi cũ sau khi đổi tên export; `npm run build` mới là nguồn tin cậy.
+
+**Kiểm chứng:** build + eslint sạch; `overflow-x = 0` ở cả 4 khổ **và** khi modal đang mở;
+dialog nằm gọn trong viewport, tự cuộn bên trong (mobile 343×690, desktop 672×765);
+Esc / click nền / nút đóng đều đóng, click vào ruột modal thì không; focus quay lại đúng
+thẻ; token dark mode áp đúng vào dialog (`#14202f` / `#e9eff7`).
+
+**Còn treo — cần Dr. Trinh xác nhận, không tự điền:**
+- Poster ghi grants *Nafosted (2023)* và *VNU-HCMC (level B, 2024)*. `content/projects.ts`
+  đang có 3 đề tài IU–VNU tổng US$37,300 và `stats.ts` công bố con số đó. Hai nguồn này có
+  thể trùng nhau — thêm bừa sẽ hoặc lặp mục, hoặc làm sai chỉ số US$37,300.
+- Poster ghi ông phản biện cho *Finance Research Letters*; `about.ts.refereeFor` (lấy từ
+  `cv.pdf`) liệt kê 4 tạp chí khác, không có tạp chí này.
 
 ---
 

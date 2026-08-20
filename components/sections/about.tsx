@@ -45,6 +45,17 @@ export function About() {
               ))}
             </ul>
 
+            <p className="mt-7 text-[10px] font-bold uppercase tracking-[0.16em] text-fg-subtle">
+              Giải thưởng
+            </p>
+            <ul className="mt-3 space-y-2">
+              {about.honors.map((h) => (
+                <li key={h}>
+                  <Badge tone="success">{h}</Badge>
+                </li>
+              ))}
+            </ul>
+
             <div className="mt-7 flex flex-wrap gap-3">
               <a
                 href={links.cv}

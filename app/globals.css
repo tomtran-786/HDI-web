@@ -88,3 +88,39 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .reveal { opacity: 1; transform: none; transition: none; }
 }
+
+/* Native <dialog> renders in the top layer, so it inherits nothing from body —
+   it has to name its own surface tokens. It stays a DOM descendant of <body>,
+   so the `.dark` class variant still reaches it. */
+dialog {
+  margin: auto;
+  padding: 0;
+  max-height: 85vh;
+  overflow-y: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  background: var(--card);
+  color: var(--fg);
+}
+
+dialog::backdrop {
+  background: rgb(0 0 0 / 0.5);
+}
+
+/* Freeze the page behind an open dialog without touching the DOM. */
+html:has(dialog[open]) {
+  overflow: hidden;
+}
+
+dialog[open] {
+  animation: dialog-in 0.18s ease both;
+}
+
+@keyframes dialog-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  dialog[open] { animation: none; }
+}
