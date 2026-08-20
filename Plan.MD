@@ -62,6 +62,7 @@ app/
 components/
   site-header.tsx  site-footer.tsx  theme-toggle.tsx
   course-card.tsx  ← "use client": thẻ khóa học + modal <dialog> chi tiết
+  course-list.tsx  ← "use client": state sắp xếp + lưới thẻ khóa học
   ui/     section.tsx  card.tsx  badge.tsx  reveal.tsx  icons.tsx
   sections/  hero  stats  programs  featured-course  services
              about  publications  projects  conferences  teaching  contact
@@ -78,14 +79,38 @@ public/
 `components/`. Đừng trộn hai việc.
 
 ### `content/course.ts` — cấu trúc mảng
-Từ phiên 2, file này export `courses: Course[]` (không còn `course` đơn lẻ) cùng hai
-type `Course` và `CoursePhase`. Giáo trình nằm ở `phases` — 4 giai đoạn × 2 buổi —
-thay cho mảng phẳng `syllabus` cũ. Học phí tách khỏi `facts` thành `price` riêng để
-thẻ hiển thị nổi bật. **Thêm khóa mới = thêm một object vào mảng**, không phải sửa
-component. Khi đó nhớ đổi lưới trong `featured-course.tsx` thành `md:grid-cols-2`.
+File này export `courses: Course[]` cùng hai type `Course`, `CoursePhase`, và
+`coursesIntro` (tiêu đề section, theo đúng tiền lệ `programsIntro`). Giáo trình nằm ở
+`phases`; học phí tách khỏi `facts` thành `price` riêng để thẻ hiển thị nổi bật.
+**Thêm khóa mới = thêm một object vào mảng**, không phải sửa component.
 
-> **Tên 4 giai đoạn là biên tập, không có trên poster.** Tám tiêu đề buổi học và mọi
-> con số vẫn giữ nguyên văn từ poster. Đây là ngoại lệ duy nhất so với quy tắc ở mục 3.
+Từ phiên 3 mảng có **5 khóa** và mỗi khóa khai báo `curriculum`:
+
+- `"sessions"` — một `phase` gom nhiều buổi, đánh số liên tục 1…8 ("Buổi 1"…"Buổi 8").
+  Chỉ khóa chủ lực `viet-bao-cao-khoa-hoc` dùng kiểu này.
+- `"modules"` — một `phase` **là** một module dạy trong một buổi, các mục bên trong
+  đánh số 1.1, 1.2… Bốn khóa lấy từ edubit dùng kiểu này.
+
+> Đánh số hai kiểu là **bắt buộc**, không phải trang trí: gọi 21 mục của khóa Stata là
+> "Buổi 1…21" sẽ khai khống số buổi học của khóa đó.
+
+**Cả 5 thẻ dùng chung một kiểu** (viền `border-line` + `bg-card`), xếp `md:grid-cols-2`.
+Thẻ chỉ hiện tên khóa, đối tượng, học phí và `facts`; **lộ trình nằm hoàn toàn trong
+modal**, thẻ chỉ có link "Xem lộ trình chi tiết" ghim đáy bằng `mt-auto` để các thẻ trong
+cùng hàng thẳng nhau.
+
+`price.vnd` là chính con số của `price.amount` dưới dạng number, để sắp xếp không phải
+parse chuỗi hiển thị. **Đổi giá thì phải sửa cả hai.**
+
+`components/course-list.tsx` ("use client") giữ state sắp xếp và render lưới; nhờ vậy
+`featured-course.tsx` vẫn là Server Component. Ba lựa chọn: Mặc định (giữ thứ tự biên tập
+trong `content/course.ts`) · Giá cao → thấp · Giá thấp → cao. Dùng lại đúng mẫu pill của
+bộ lọc năm ở `#cong-bo`. Hàm sort **copy mảng trước** (`[...courses]`) vì `courses` là mảng
+import từ module — sort tại chỗ sẽ ghi đè thứ tự gốc cho mọi nơi khác.
+
+> **Tên 4 giai đoạn của khóa chủ lực là biên tập, không có trên poster.** Tám tiêu đề
+> buổi học và mọi con số vẫn giữ nguyên văn từ poster. Đây là ngoại lệ duy nhất so với
+> quy tắc ở mục 3.
 
 ### Design token
 Định nghĩa ở `app/globals.css`. Sáng: `--primary #0c498f`, `--fg #172636`,
@@ -108,7 +133,7 @@ Về chúng tôi(bg) · Công bố(soft) · Dự án(bg) · Hội thảo(soft) �
 | 2 | Hero | `#top` | ✅ xong |
 | 3 | Dải số liệu | — | ✅ xong |
 | 4 | Chương trình kèm cặp (4 thẻ) | `#chuong-trinh` | ✅ xong |
-| 5 | Khóa học 8 buổi (thẻ + modal lộ trình) | `#khoa-hoc` | ✅ xong |
+| 5 | Khóa đào tạo (5 thẻ + modal lộ trình) | `#khoa-hoc` | ✅ xong |
 | 6 | Dịch vụ hỗ trợ bản thảo | `#dich-vu` | ✅ xong |
 | 7 | Về Dr. Cong Tam Trinh | `#ve-chung-toi` | ✅ xong |
 | 8 | Công bố khoa học (13 bài, lọc theo năm) | `#cong-bo` | ✅ xong |
@@ -249,11 +274,95 @@ Esc / click nền / nút đóng đều đóng, click vào ruột modal thì khô
 thẻ; token dark mode áp đúng vào dialog (`#14202f` / `#e9eff7`).
 
 **Còn treo — cần Dr. Trinh xác nhận, không tự điền:**
-- Poster ghi grants *Nafosted (2023)* và *VNU-HCMC (level B, 2024)*. `content/projects.ts`
-  đang có 3 đề tài IU–VNU tổng US$37,300 và `stats.ts` công bố con số đó. Hai nguồn này có
-  thể trùng nhau — thêm bừa sẽ hoặc lặp mục, hoặc làm sai chỉ số US$37,300.
+- ~~Poster ghi grants *Nafosted (2023)*…~~ **Đã gỡ ở phiên 3** — xem bên dưới.
 - Poster ghi ông phản biện cho *Finance Research Letters*; `about.ts.refereeFor` (lấy từ
-  `cv.pdf`) liệt kê 4 tạp chí khác, không có tạp chí này.
+  `cv.pdf`) liệt kê 4 tạp chí khác, không có tạp chí này. Bio trên edubit (nguồn thứ hai,
+  do chính ông viết) liệt kê **đúng 4 tạp chí giống `cv.pdf`**, cũng không có FRL. Hai
+  nguồn khớp nhau, poster là nguồn duy nhất lệch — vẫn cần xác nhận trước khi thêm.
+
+---
+
+### 2026-08-20 — Phiên 3: crawl nội dung 4 khóa edubit
+
+**Đính chính kết luận của phiên 2.** Phiên 2 kết luận rằng nội dung khóa học của edubit
+"nằm trong ảnh, không đọc được". **Sai.** Toàn bộ giáo trình nằm trong DOM, trong
+accordion `Nội dung khoá học`. Bản crawl cũ không thấy vì `scrape_edubit.py` chỉ giữ
+heading + 200 ký tự `meta_description` — đó là giới hạn của script, không phải của trang.
+
+**Script mới:** `reference/scrape_edubit_courses.py` (crawl4ai + Playwright). Khác
+`scrape_edubit.py` ở chỗ nó nhắm vào một số URL cụ thể và lấy toàn văn:
+- `js_code` ép mở mọi `.collapse` / `[aria-expanded=false]` / `<details>` trước khi đọc DOM,
+  vì accordion chỉ render con khi mở;
+- `delay_before_return_html=3.0` để widget kịp dựng;
+- đọc theo **từng block** (`p`, `li`, `h*`…) chứ không `body.get_text()` một lần —
+  cách sau dính các dòng không liên quan vào nhau.
+- Kết quả: `reference/edubit/courses/{slug}.json|.md` + `summary.md`, 15k–21k ký tự/trang.
+
+**Ai dạy khóa nào (quan trọng — trang không hiển thị điều này):**
+
+| khóa | giảng viên thật trên edubit |
+|---|---|
+| `stata` | TS. Trịnh Công Tâm — **giảng viên duy nhất**, cả 5 module |
+| `spss` | PGS.TS. Phương Hữu Từng + TS. Trịnh Công Tâm (module 3, 4) |
+| `tap-chi` | Phương Hữu Từng + Dương Công Doanh + Trịnh Công Tâm (module 4, 5) |
+| `nckh-sinh-vien` | ThS. Đặng Văn Phong — **Dr. Trinh không dạy phần nào** |
+
+> Chủ trang đã được cảnh báo rõ và vẫn quyết định đưa cả 4 khóa lên dưới tên
+> Dr. Cong Tam Trinh, tinh chỉnh sau. Bảng trên được chép nguyên vào comment đầu
+> `content/course.ts` để lần chỉnh sau còn truy được nguồn.
+
+**Thay đổi:**
+- `content/course.ts`: thêm 4 khóa (tổng 5), thêm field `curriculum`, thêm `coursesIntro`.
+- `components/course-card.tsx`: thêm prop `variant` (`filled` / `outline`), tách
+  `phaseLabel()`, đánh số theo `curriculum`. Thẻ giờ tự hiển thị tên khóa của nó.
+- `components/sections/featured-course.tsx`: tiêu đề section chuyển sang `coursesIntro`
+  (không còn mượn tiêu đề của khóa đầu tiên), lưới `md:grid-cols-2`, khóa đầu `md:col-span-2`.
+
+**Đã gỡ được một điểm treo:** bio của Dr. Trinh trên edubit ghi rõ NAFOSTED là đề tài
+**riêng biệt** với các grant IU–VNU ("*In addition,* he is also the principal investigator
+of a number of grants funded by VNU-HCMC and International University"), tên đề tài
+*"Culture, pandemic, and socio-economic outcomes: An international analysis and Vietnam's
+applications"*, dẫn nhóm Úc – Đài Loan – Việt Nam. **Chỉ số US$37,300 không bị ảnh hưởng.**
+Bio đó còn có: *Review of Income and Wealth* (Q1, IF 2.0), *International Review of
+Financial Analysis* (Q1, IF 9.8, forthcoming), Editorial Board *Eurasian Economic Review*,
+15 hội thảo quốc tế tại 10 nước. **Chưa đưa vào trang** — chờ quyết định riêng.
+
+**Gotcha:**
+- Thẻ `outline` nằm dưới màn hình nên `Reveal` chưa bắn → chụp ảnh phần tử ra trong suốt.
+  Muốn chụp phải ép `document.querySelectorAll('.reveal').forEach(e=>e.dataset.shown='true')`.
+- Bỏ tiêu đề khóa khỏi `SectionHeading` mà quên thêm vào thẻ `filled` thì khóa chủ lực
+  mất luôn tên. Đã sửa: cả hai variant đều tự render `eyebrow` + `title` + `audience`.
+
+**Kiểm chứng:** build + eslint + `tsc --noEmit` sạch; `overflow-x = 0` ở 375 / 768 / 1280,
+cả khi modal mở; modal lớn nhất (tạp chí, 38 dòng) vừa viewport mobile 343×690 và tự cuộn
+bên trong; Esc / nút đóng đóng được, click ruột modal thì không; focus quay lại đúng thẻ;
+`html { overflow: hidden }` bật/tắt đúng; đánh số đúng hai kiểu (`Buổi 1…8` cho khóa chủ
+lực, `1.1…6.7` cho 4 khóa module); token dark mode đúng (`#14202f` / `#e9eff7`).
+
+**Còn treo:** `registerNote` của 4 khóa mới đang là câu chung chung, vì chưa biết Google
+Form có mục chọn tên khóa hay không. Cần mở form kiểm tra rồi thay bằng tên mục thật
+(khóa chủ lực dùng `"Research Class (Advanced)"`, lấy từ poster).
+
+### 2026-08-20 — Phiên 3 (tiếp): gộp kiểu thẻ, dời lộ trình, thêm sắp xếp
+
+Theo yêu cầu chủ trang, ba thay đổi ở `#khoa-hoc`:
+
+1. **Bỏ variant `filled`.** Thẻ khóa chủ lực từng có nền `bg-primary` chạy hết chiều
+   ngang; giờ cả 5 thẻ dùng chung kiểu viền. `CourseCard` không còn prop `variant`, object
+   `variants` và hàm `phaseLabel()` bị xóa hẳn (chỉ dùng cho lộ trình trên thẻ).
+2. **Lộ trình rời khỏi thẻ, chỉ còn trong modal.** Thẻ gọn lại: tên khóa · đối tượng ·
+   học phí · `facts` · link "Xem lộ trình chi tiết".
+3. **Thêm sắp xếp theo giá** — xem mục 4.
+
+**Gotcha:** `courses` là mảng import từ module. `.sort()` mutate tại chỗ, nên phải
+`[...courses].sort(...)`; nếu không, chọn "Giá cao → thấp" một lần là thứ tự biên tập gốc
+mất vĩnh viễn cho tới khi reload.
+
+**Kiểm chứng:** build + eslint + `tsc --noEmit` sạch; 5 thẻ cùng một `background-color`;
+`LỘ TRÌNH` không còn trong thẻ; sắp xếp đúng cả 3 chiều và quay lại đúng thứ tự biên tập
+khi bấm "Mặc định"; modal vẫn giữ đủ hai kiểu đánh số (`Buổi 1…8` / `1.1…5.3`), Esc đóng,
+focus quay lại thẻ, `html { overflow: hidden }` bật/tắt đúng; `overflow-x = 0` ở
+375 / 1280, cả sáng lẫn tối.
 
 ---
 

@@ -12,72 +12,63 @@ function phaseOffset(phases: Course["phases"], index: number) {
     .reduce((total, phase) => total + phase.sessions.length, 0);
 }
 
+/** Shared by the label above every phase and the heading inside the modal. */
+function phaseKind(course: Course) {
+  return course.curriculum === "modules" ? "Module" : "Giai đoạn";
+}
+
 export function CourseCard({ course }: { course: Course }) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const titleId = `${course.slug}-title`;
 
   return (
     <>
-      {/* Trigger. Filled with `primary` because --card and --bg are both white in
-          light mode — a default card would vanish against this section. */}
       <button
         type="button"
         onClick={() => dialogRef.current?.showModal()}
         aria-haspopup="dialog"
-        className="w-full rounded-card border border-primary-deep bg-primary p-6 text-left text-primary-fg transition duration-200 hover:-translate-y-0.5 hover:shadow-[0_10px_30px_-14px_rgba(12,73,143,0.35)] sm:p-7"
+        className="flex h-full w-full flex-col rounded-card border border-line bg-card p-6 text-left text-fg transition duration-200 hover:-translate-y-0.5 hover:border-primary hover:shadow-[0_10px_30px_-14px_rgba(12,73,143,0.25)] sm:p-7"
       >
-        <div className="grid gap-6 sm:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)] sm:gap-8">
-          <div>
-            <p className="text-[10px] font-bold uppercase tracking-[0.16em] opacity-70">
-              Học phí
-            </p>
-            <p className="mt-1.5 text-3xl font-bold tracking-tight sm:text-4xl">
-              {course.price.amount}
-            </p>
-            <p className="mt-1.5 text-sm opacity-80">{course.price.note}</p>
+        {/* The section heading is generic now that several courses share it, so
+            every card has to name itself. */}
+        <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-fg-subtle">
+          {course.eyebrow}
+        </p>
+        <h3 className="mt-1.5 text-lg font-bold leading-snug tracking-tight">
+          {course.title}
+        </h3>
+        <p className="mt-1.5 text-sm text-fg-muted">{course.audience}</p>
 
-            <dl className="mt-6">
-              {course.facts.map((fact) => (
-                <div
-                  key={fact.label}
-                  className="flex flex-wrap items-baseline justify-between gap-2 border-b border-white/20 py-2.5 last:border-0"
-                >
-                  <dt className="text-[10px] font-bold uppercase tracking-[0.16em] opacity-70">
-                    {fact.label}
-                  </dt>
-                  <dd className="text-[13px] font-semibold">{fact.value}</dd>
-                </div>
-              ))}
-            </dl>
-          </div>
+        <p className="mt-6 text-[10px] font-bold uppercase tracking-[0.16em] text-fg-subtle">
+          Học phí
+        </p>
+        <p className="mt-1.5 text-2xl font-bold tracking-tight text-primary sm:text-3xl">
+          {course.price.amount}
+        </p>
+        <p className="mt-1.5 text-sm text-fg-muted">{course.price.note}</p>
 
-          <div>
-            <p className="text-[10px] font-bold uppercase tracking-[0.16em] opacity-70">
-              Lộ trình
-            </p>
-            <ol className="mt-3 space-y-2.5">
-              {course.phases.map((phase, i) => {
-                const from = phaseOffset(course.phases, i) + 1;
-                const to = from + phase.sessions.length - 1;
-                return (
-                  <li key={phase.name} className="flex items-baseline gap-3">
-                    <span className="shrink-0 text-[11px] font-bold tabular-nums opacity-70">
-                      Buổi {from}–{to}
-                    </span>
-                    <span className="text-[15px] font-semibold">
-                      {phase.name}
-                    </span>
-                  </li>
-                );
-              })}
-            </ol>
+        <dl className="mt-6">
+          {course.facts.map((fact) => (
+            <div
+              key={fact.label}
+              className="flex flex-wrap items-baseline justify-between gap-2 border-b border-line py-2.5 last:border-0"
+            >
+              <dt className="text-[10px] font-bold uppercase tracking-[0.16em] text-fg-subtle">
+                {fact.label}
+              </dt>
+              <dd className="text-[13px] font-semibold text-fg-muted">
+                {fact.value}
+              </dd>
+            </div>
+          ))}
+        </dl>
 
-            <span className="mt-6 inline-flex items-center gap-2 text-sm font-bold underline underline-offset-4">
-              Xem lộ trình chi tiết
-              <IconArrow size={15} />
-            </span>
-          </div>
-        </div>
+        {/* The roadmap itself lives in the modal; `mt-auto` pins this to the
+            bottom so the affordance lines up across a row of uneven cards. */}
+        <span className="mt-auto inline-flex items-center gap-2 pt-6 text-sm font-bold text-primary underline underline-offset-4">
+          Xem lộ trình chi tiết
+          <IconArrow size={15} />
+        </span>
       </button>
 
       {/* Detail. Native <dialog> gives focus trapping, Esc-to-close, focus
@@ -126,11 +117,12 @@ export function CourseCard({ course }: { course: Course }) {
             </p>
             <div className="mt-4 space-y-6">
               {course.phases.map((phase, i) => {
+                const byModule = course.curriculum === "modules";
                 const offset = phaseOffset(course.phases, i);
                 return (
                   <div key={phase.name}>
                     <h4 className="text-sm font-bold text-fg">
-                      Giai đoạn {i + 1}: {phase.name}
+                      {phaseKind(course)} {i + 1}: {phase.name}
                     </h4>
                     <ol className="mt-2.5">
                       {phase.sessions.map((session, j) => (
@@ -138,13 +130,21 @@ export function CourseCard({ course }: { course: Course }) {
                           key={session}
                           className="flex gap-3.5 border-b border-line py-3 last:border-0"
                         >
-                          <span className="mt-0.5 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-tint text-[11px] font-bold tabular-nums text-primary">
-                            {offset + j + 1}
+                          {/* A module's topics carry a two-part number (1.1, 1.2);
+                              a session carries the running class number. */}
+                          <span
+                            className={`mt-0.5 inline-flex h-6 shrink-0 items-center justify-center rounded-full bg-tint text-[11px] font-bold tabular-nums text-primary ${
+                              byModule ? "px-2" : "w-6"
+                            }`}
+                          >
+                            {byModule ? `${i + 1}.${j + 1}` : offset + j + 1}
                           </span>
                           <span className="text-[15px] leading-relaxed text-fg">
-                            <span className="font-semibold">
-                              Buổi {offset + j + 1}:
-                            </span>{" "}
+                            {!byModule && (
+                              <span className="font-semibold">
+                                Buổi {offset + j + 1}:{" "}
+                              </span>
+                            )}
                             {session}
                           </span>
                         </li>

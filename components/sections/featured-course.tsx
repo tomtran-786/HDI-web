@@ -1,34 +1,26 @@
-import { courses } from "@/content/course";
-import { CourseCard } from "../course-card";
+import { courses, coursesIntro } from "@/content/course";
+import { CourseList } from "../course-list";
 import { Reveal } from "../ui/reveal";
 import { Section, SectionHeading } from "../ui/section";
 
 export function FeaturedCourse() {
-  const [featured] = courses;
-
   return (
     <Section id="khoa-hoc">
       <SectionHeading
-        eyebrow={featured.eyebrow}
-        title={featured.title}
-        subtitle={featured.audience}
+        eyebrow={coursesIntro.eyebrow}
+        title={coursesIntro.title}
+        subtitle={coursesIntro.subtitle}
       />
 
       <Reveal>
-        <p className="max-w-xl text-base leading-relaxed text-fg-muted sm:text-lg">
-          {featured.intro}
+        <p className="mb-8 max-w-xl text-base leading-relaxed text-fg-muted sm:text-lg">
+          {coursesIntro.intro}
         </p>
       </Reveal>
 
-      {/* One card today. Add `md:grid-cols-2` once a second course exists — at
-          length 1 a half-width card just reads as a layout bug. */}
-      <div className="mt-8 grid gap-5">
-        {courses.map((course, i) => (
-          <Reveal key={course.slug} delay={110 + i * 70}>
-            <CourseCard course={course} />
-          </Reveal>
-        ))}
-      </div>
+      {/* The sort control needs state, so the list is a client component and
+          this section stays a server component. */}
+      <CourseList courses={courses} />
     </Section>
   );
 }
