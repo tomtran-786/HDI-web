@@ -1,5 +1,3 @@
-import { SiteHeader } from "@/components/site-header";
-import { SiteFooter } from "@/components/site-footer";
 import { Hero } from "@/components/sections/hero";
 import { Stats } from "@/components/sections/stats";
 import { Programs } from "@/components/sections/programs";
@@ -15,22 +13,18 @@ import { Contact } from "@/components/sections/contact";
 export default function Home() {
   return (
     <>
-      <SiteHeader />
-      <main className="flex-1">
-        {/* services first — the page is services-led, credentials follow as proof */}
-        <Hero />
-        <Stats />
-        <Programs />
-        <FeaturedCourse />
-        <Services />
-        <About />
-        <Publications />
-        <Projects />
-        <Conferences />
-        <Teaching />
-        <Contact />
-      </main>
-      <SiteFooter />
+      {/* services first — the page is services-led, credentials follow as proof */}
+      <Hero />
+      <Stats />
+      <Programs />
+      <FeaturedCourse />
+      <Services />
+      <About />
+      <Publications />
+      <Projects />
+      <Conferences />
+      <Teaching />
+      <Contact />
     </>
   );
 }

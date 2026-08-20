@@ -1,5 +1,10 @@
 import type { Metadata } from "next";
 import { Source_Sans_3 } from "next/font/google";
+import { Analytics } from "@vercel/analytics/next";
+import { SessionProvider } from "next-auth/react";
+import { CartProvider } from "@/components/cart-provider";
+import { SiteHeader } from "@/components/site-header";
+import { SiteFooter } from "@/components/site-footer";
 import "./globals.css";
 
 const sourceSans = Source_Sans_3({
@@ -37,7 +42,22 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <script dangerouslySetInnerHTML={{ __html: themeBootstrap }} />
       </head>
       <body className="min-h-full flex flex-col font-sans bg-bg text-fg">
-        {children}
+        {/* SessionProvider, not `await auth()` here: reading the session on the
+            server would opt every route — including the marketing page — out of
+            static rendering. The header resolves the session on the client and
+            falls back to the marketing CTA while it loads. */}
+        <SessionProvider>
+          {/* The cart lives in a cookie, so it wraps the header (which shows the
+              badge) and the pages (which add to it) alike. It holds no session
+              state — a signed-out visitor has a cart too. */}
+          <CartProvider>
+            <SiteHeader />
+            <main className="flex-1">{children}</main>
+            <SiteFooter />
+          </CartProvider>
+        </SessionProvider>
+        {/* Page views plus the three funnel events in lib/analytics.ts. */}
+        <Analytics />
       </body>
     </html>
   );

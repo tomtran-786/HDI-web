@@ -1,6 +1,7 @@
 import Image from "next/image";
 import { about } from "@/content/about";
 import { links, site } from "@/content/site";
+import { CtaLink } from "../ui/cta-link";
 import { Reveal } from "../ui/reveal";
 import { IconArrow, IconDownload } from "../ui/icons";
 
@@ -38,15 +39,14 @@ export function Hero() {
           </p>
 
           <div className="mt-8 flex flex-wrap gap-3">
-            <a
-              href={links.register}
-              target="_blank"
-              rel="noopener noreferrer"
+            <CtaLink
+              source="hero"
+              target="tu-van"
               className="inline-flex items-center gap-2 rounded-full bg-primary px-6 py-3 text-sm font-bold text-primary-fg transition hover:bg-primary-deep"
             >
               Đăng ký tư vấn miễn phí
               <IconArrow size={16} />
-            </a>
+            </CtaLink>
             <a
               href="#chuong-trinh"
               className="inline-flex items-center gap-2 rounded-full border border-line px-6 py-3 text-sm font-bold text-fg transition hover:border-primary hover:text-primary"

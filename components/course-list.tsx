@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import type { Course } from "@/content/course";
+import { trackCourseSort } from "@/lib/analytics";
 import { CourseCard } from "./course-card";
 import { Reveal } from "./ui/reveal";
 
@@ -46,7 +47,12 @@ export function CourseList({ courses }: { courses: Course[] }) {
               <button
                 key={key}
                 type="button"
-                onClick={() => setSort(key)}
+                onClick={() => {
+                  // Re-clicking the active pill is not a preference change.
+                  if (key === sort) return;
+                  setSort(key);
+                  trackCourseSort(key);
+                }}
                 aria-pressed={active}
                 className={`inline-flex items-center rounded-full px-4 py-2 text-sm font-semibold transition ${
                   active

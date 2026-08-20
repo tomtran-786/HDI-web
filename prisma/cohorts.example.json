@@ -1,0 +1,14 @@
+[
+  {
+    "courseSlug": "viet-bao-cao-khoa-hoc",
+    "ky": "K1/2026",
+    "khaiGiang": "2026-10-05",
+    "lichHoc": "Tối T3 & T5, 19:30–21:30",
+    "capacity": 40,
+    "priceVnd": 1100000,
+    "accessDays": 730,
+    "status": "open",
+    "meetingUrl": "https://us02web.zoom.us/j/000000000?pwd=xxxx",
+    "driveFolderId": "1AbCdEfGhIjKlMnOpQrStUvWxYz"
+  }
+]

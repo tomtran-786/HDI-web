@@ -1,7 +1,8 @@
 import { contact, links } from "@/content/site";
+import { CtaLink } from "../ui/cta-link";
 import { Reveal } from "../ui/reveal";
 import { Section, SectionHeading } from "../ui/section";
-import { IconArrow, IconMail, IconMessage, IconPhone } from "../ui/icons";
+import { IconMail, IconMessage, IconPhone } from "../ui/icons";
 
 export function Contact() {
   return (
@@ -34,15 +35,14 @@ export function Contact() {
             </a>
             {/* `phoneNote` tells people to prefer Zalo, so Zalo needs its own
                 button — otherwise they have to copy the number by hand. */}
-            <a
-              href={links.zalo}
-              target="_blank"
-              rel="noopener noreferrer"
+            <CtaLink
+              source="lien-he"
+              target="zalo"
               className="inline-flex items-center gap-2 rounded-full border border-line px-5 py-3 text-sm font-bold text-fg transition hover:border-primary hover:text-primary"
             >
               <IconMessage size={16} />
               Nhắn Zalo
-            </a>
+            </CtaLink>
             <a
               href={contact.phoneHref}
               className="inline-flex items-center gap-2 rounded-full border border-line px-5 py-3 text-sm font-bold text-fg transition hover:border-primary hover:text-primary"
@@ -54,16 +54,7 @@ export function Contact() {
           <p className="mt-3 text-xs text-fg-subtle">{contact.phoneNote}</p>
 
           <div className="mt-8 border-t border-line pt-6">
-            <a
-              href={links.register}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 text-sm font-bold text-primary hover:underline"
-            >
-              Hoặc điền form đăng ký tư vấn
-              <IconArrow size={15} />
-            </a>
-            <p className="mt-4 text-sm text-fg-subtle">
+            <p className="text-sm text-fg-subtle">
               <a
                 className="hover:text-primary"
                 href={links.linktree}

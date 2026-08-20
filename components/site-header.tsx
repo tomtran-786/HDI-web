@@ -1,13 +1,22 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { links, nav, site } from "@/content/site";
+import Link from "next/link";
+import { useSession } from "next-auth/react";
+import { nav, site } from "@/content/site";
 import { ThemeToggle } from "./theme-toggle";
+import { CtaLink } from "./ui/cta-link";
+import { CartButton } from "./cart-button";
 import { IconClose, IconMenu } from "./ui/icons";
 
 export function SiteHeader() {
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
+  // Resolved on the client so the marketing page stays statically rendered.
+  // While it loads we show the marketing CTA — the right default for the
+  // overwhelmingly more common visitor, and no layout shift when it resolves.
+  const { status } = useSession();
+  const signedIn = status === "authenticated";
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 8);
@@ -23,32 +32,51 @@ export function SiteHeader() {
       }`}
     >
       <div className="shell flex h-16 items-center justify-between gap-4">
-        <a href="#top" className="flex items-baseline gap-2 font-bold tracking-tight">
+        <Link href="/#top" className="flex items-baseline gap-2 font-bold tracking-tight">
           <span className="text-lg text-primary">{site.short}</span>
           <span className="text-sm text-fg-muted">Research Center</span>
-        </a>
+        </Link>
 
         <nav className="hidden items-center gap-6 lg:flex">
           {nav.map((item) => (
-            <a
+            <Link
               key={item.href}
               href={item.href}
               className="text-[11px] font-semibold uppercase tracking-[0.14em] text-fg-muted transition hover:text-primary"
             >
               {item.label}
-            </a>
+            </Link>
           ))}
         </nav>
 
         <div className="flex items-center gap-2">
-          <a
-            href={links.register}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="hidden rounded-full border border-primary px-4 py-2 text-[11px] font-bold uppercase tracking-[0.12em] text-primary transition hover:bg-primary hover:text-primary-fg sm:inline-block"
-          >
-            Đăng ký tư vấn
-          </a>
+          {signedIn ? (
+            <Link
+              href="/tai-khoan"
+              className="hidden rounded-full border border-primary px-4 py-2 text-[11px] font-bold uppercase tracking-[0.12em] text-primary transition hover:bg-primary hover:text-primary-fg sm:inline-block"
+            >
+              Tài khoản
+            </Link>
+          ) : (
+            <>
+              {/* Until now /dang-nhap existed but nothing linked to it — a
+                  returning student had no way in short of typing the URL. */}
+              <Link
+                href="/dang-nhap"
+                className="hidden px-3 py-2 text-[11px] font-bold uppercase tracking-[0.12em] text-fg-muted transition hover:text-primary sm:inline-block"
+              >
+                Đăng nhập
+              </Link>
+              <CtaLink
+                source="header"
+                target="tu-van"
+                className="hidden rounded-full border border-primary px-4 py-2 text-[11px] font-bold uppercase tracking-[0.12em] text-primary transition hover:bg-primary hover:text-primary-fg sm:inline-block"
+              >
+                Đăng ký tư vấn
+              </CtaLink>
+            </>
+          )}
+          <CartButton />
           <ThemeToggle />
           <button
             type="button"
@@ -66,23 +94,48 @@ export function SiteHeader() {
         <nav className="border-t border-line bg-bg lg:hidden">
           <div className="shell flex flex-col py-2">
             {nav.map((item) => (
-              <a
+              <Link
                 key={item.href}
                 href={item.href}
                 onClick={() => setOpen(false)}
                 className="border-b border-line py-3 text-sm font-semibold text-fg-muted last:border-0"
               >
                 {item.label}
-              </a>
+              </Link>
             ))}
-            <a
-              href={links.register}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="mt-3 mb-2 rounded-full bg-primary px-4 py-2.5 text-center text-sm font-bold text-primary-fg"
+            <Link
+              href="/gio-hang"
+              onClick={() => setOpen(false)}
+              className="border-b border-line py-3 text-sm font-semibold text-fg-muted"
             >
-              Đăng ký tư vấn
-            </a>
+              Giỏ hàng
+            </Link>
+            {signedIn ? (
+              <Link
+                href="/tai-khoan"
+                onClick={() => setOpen(false)}
+                className="mt-3 mb-2 rounded-full bg-primary px-4 py-2.5 text-center text-sm font-bold text-primary-fg"
+              >
+                Tài khoản
+              </Link>
+            ) : (
+              <>
+                <Link
+                  href="/dang-nhap"
+                  onClick={() => setOpen(false)}
+                  className="mt-3 rounded-full border border-line px-4 py-2.5 text-center text-sm font-bold text-fg"
+                >
+                  Đăng nhập
+                </Link>
+                <CtaLink
+                  source="header-mobile"
+                  target="tu-van"
+                  className="mt-2 mb-2 rounded-full bg-primary px-4 py-2.5 text-center text-sm font-bold text-primary-fg"
+                >
+                  Đăng ký tư vấn
+                </CtaLink>
+              </>
+            )}
           </div>
         </nav>
       )}

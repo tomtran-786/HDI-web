@@ -2,7 +2,8 @@
 
 import { useRef } from "react";
 import type { Course } from "@/content/course";
-import { links } from "@/content/site";
+import { trackCourseModal } from "@/lib/analytics";
+import { CtaLink } from "./ui/cta-link";
 import { IconArrow, IconCheck, IconClose, IconMessage } from "./ui/icons";
 
 /** Running index of the first session in each phase, so numbering stays 1…8. */
@@ -25,7 +26,11 @@ export function CourseCard({ course }: { course: Course }) {
     <>
       <button
         type="button"
-        onClick={() => dialogRef.current?.showModal()}
+        onClick={() => {
+          dialogRef.current?.showModal();
+          // Opening a card is the strongest intent signal the page emits.
+          trackCourseModal(course.slug);
+        }}
         aria-haspopup="dialog"
         className="flex h-full w-full flex-col rounded-card border border-line bg-card p-6 text-left text-fg transition duration-200 hover:-translate-y-0.5 hover:border-primary hover:shadow-[0_10px_30px_-14px_rgba(12,73,143,0.25)] sm:p-7"
       >
@@ -237,26 +242,26 @@ export function CourseCard({ course }: { course: Course }) {
                 reader still weighing a 1.100.000đ course will not press a button
                 that sounds like committing to pay. */}
             <div className="mt-7 flex flex-col gap-3 sm:flex-row">
-              <a
-                href={links.register}
-                target="_blank"
-                rel="noopener noreferrer"
+              <CtaLink
+                source="khoa-hoc-modal"
+                target="dang-ky"
+                course={course.slug}
                 className="inline-flex flex-1 items-center justify-center gap-2 rounded-full bg-primary px-6 py-3 text-sm font-bold text-primary-fg transition hover:bg-primary-deep"
               >
-                Đăng ký tư vấn khóa này
+                Đăng ký học khóa này
                 <IconArrow size={16} />
-              </a>
+              </CtaLink>
               {/* Parallel route out for people who will never fill in a form —
                   with Zalo as the real consulting channel, that group is large. */}
-              <a
-                href={links.zalo}
-                target="_blank"
-                rel="noopener noreferrer"
+              <CtaLink
+                source="khoa-hoc-modal"
+                target="zalo"
+                course={course.slug}
                 className="inline-flex items-center justify-center gap-2 rounded-full border border-line px-6 py-3 text-sm font-bold text-fg transition hover:border-primary hover:text-primary"
               >
                 <IconMessage size={16} />
                 Nhắn Zalo
-              </a>
+              </CtaLink>
             </div>
             <p className="mt-3 text-center text-xs leading-relaxed text-fg-subtle">
               {course.registerNote}

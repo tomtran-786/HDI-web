@@ -1,4 +1,6 @@
 import { contact, links, nav, site } from "@/content/site";
+import type { CtaSource } from "@/lib/analytics";
+import { CtaLink } from "./ui/cta-link";
 
 const elsewhere = [
   { label: "Trang cũ (Google Sites)", href: links.legacySite },
@@ -9,7 +11,8 @@ const elsewhere = [
 const documents = [
   { label: "Tải CV", href: links.cv },
   { label: "Teaching statement", href: links.teachingStatement },
-  { label: "Đăng ký tư vấn", href: links.register },
+  // `cta` instead of `href`: CtaLink resolves the URL and reports the click.
+  { label: "Tư vấn miễn phí", cta: "footer" as CtaSource },
 ];
 
 export function SiteFooter() {
@@ -31,7 +34,10 @@ export function SiteFooter() {
           </p>
         </div>
 
-        <FooterColumn title="Khám phá" items={nav.map((n) => ({ ...n }))} />
+        <FooterColumn
+          title="Khám phá"
+          items={[...nav.map((n) => ({ ...n })), { label: "Đăng nhập", href: "/dang-nhap" }]}
+        />
         <FooterColumn title="Tài liệu" items={documents} />
         <FooterColumn title="Kênh khác" items={elsewhere} external />
       </div>
@@ -62,7 +68,7 @@ function FooterColumn({
   external = false,
 }: {
   title: string;
-  items: readonly { label: string; href: string }[];
+  items: readonly { label: string; href?: string; cta?: CtaSource }[];
   external?: boolean;
 }) {
   return (
@@ -71,22 +77,36 @@ function FooterColumn({
         {title}
       </p>
       <ul className="space-y-2.5">
-        {items.map((item) => (
-          <li key={item.href}>
-            <a
-              href={item.href}
-              {...(external || item.href.startsWith("http")
-                ? { target: "_blank", rel: "noopener noreferrer" }
-                : {})}
-              className="text-sm text-fg-muted transition hover:text-primary"
-            >
+        {items.map((item) => {
+          const offsite = item.cta !== undefined || external ||
+            (item.href?.startsWith("http") ?? false);
+          const style = "text-sm text-fg-muted transition hover:text-primary";
+          const label = (
+            <>
               {item.label}
-              {(external || item.href.startsWith("http")) && (
-                <span aria-hidden> ↗</span>
+              {offsite && <span aria-hidden> ↗</span>}
+            </>
+          );
+          return (
+            <li key={item.label}>
+              {item.cta ? (
+                <CtaLink source={item.cta} target="tu-van" className={style}>
+                  {label}
+                </CtaLink>
+              ) : (
+                <a
+                  href={item.href}
+                  {...(offsite
+                    ? { target: "_blank", rel: "noopener noreferrer" }
+                    : {})}
+                  className={style}
+                >
+                  {label}
+                </a>
               )}
-            </a>
-          </li>
-        ))}
+            </li>
+          );
+        })}
       </ul>
     </div>
   );
