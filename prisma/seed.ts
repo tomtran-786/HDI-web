@@ -88,7 +88,14 @@ async function main() {
       accessDays: r.accessDays ?? null,
       status: r.status ?? "draft",
       meetingUrl: r.meetingUrl ?? null,
-      driveFolderId: r.driveFolderId ?? driveFolders.get(r.courseSlug) ?? null,
+      // `undefined` (không khai báo) mới rơi về folder mặc định của khóa;
+      // `null` khai báo rõ ràng nghĩa là "kỳ này KHÔNG cấp Drive" và phải được
+      // tôn trọng. Dùng `??` ở đây sẽ gộp hai ý đó làm một, khiến không có cách
+      // nào tắt Drive cho một kỳ — đúng thứ cần cho kỳ thử nghiệm hoặc học thử.
+      driveFolderId:
+        r.driveFolderId !== undefined
+          ? r.driveFolderId
+          : (driveFolders.get(r.courseSlug) ?? null),
     };
     await prisma.cohort.upsert({
       where: { courseSlug_ky: { courseSlug: r.courseSlug, ky: r.ky } },

@@ -122,6 +122,10 @@ prisma/
   load-env.ts      nạp .env.local TRƯỚC mọi import khác — xem chú thích trong file
   seed.ts          upsert kỳ học từ prisma/cohorts.json (gitignore)
   cohorts.example.json  drive-folders.example.json
+                   ⚠️ trong cohorts.json, KHÔNG khai `driveFolderId` nghĩa là
+                   "dùng folder mặc định của khóa trong drive-folders.json";
+                   khai `null` nghĩa là "kỳ này không cấp Drive". Hai thứ đó
+                   khác nhau — xem Nhật ký phiên 2026-08-21.
   migrations/      4 migration; dựng lại từ DB trống đã được kiểm chứng thật
                    bằng Postgres disposable (xem mục 6)
 prisma.config.ts   CLI trỏ DIRECT_DATABASE_URL (session pooler :5432)
@@ -1153,6 +1157,31 @@ khoản); `npm run test:integration` **4/4**; `/` vẫn `○ (Static)`; `overflo
 > **Bẫy khi test `/dang-nhap`:** trang import `AuthError` từ `next-auth` như một
 > *giá trị* (để `instanceof`), nên vitest kéo cả runtime next-auth vào và chết ở
 > `Cannot find module next/server`. Mock `next-auth` bằng một class rỗng là đủ.
+
+---
+
+### 2026-08-21 — Phiên 7 (tiếp): seed kỳ học thử để chạy thử luồng mở bán
+
+Chủ trang muốn thử luồng mua hàng đầu-cuối, nên seed 3 kỳ **thử nghiệm** vào DB dev
+(`prisma/cohorts.json`, đã gitignore): hai kỳ `open` (một kỳ 40 chỗ, một kỳ **3 chỗ**
+để thấy badge khan hiếm) và một kỳ `draft` để chứng minh công tắc mở bán.
+
+**Học phí đặt 2.000đ, không phải giá thật** — `.env.local` đang trỏ vào **tài khoản
+PayOS thật**, nên bấm thanh toán là tiền thật chạy. Giá nhỏ để một cú bấm nhầm không
+tốn 1,1 triệu.
+
+> ⚠️ **Bẫy tìm được khi seed: `driveFolderId: null` trong `cohorts.json` bị bỏ qua.**
+> `seed.ts` viết `r.driveFolderId ?? driveFolders.get(slug) ?? null`, mà `??` không
+> phân biệt "không khai báo" với "khai báo là null". Repo đã có
+> `prisma/drive-folders.json` với **5 folder Drive thật**, nên mọi kỳ — kể cả kỳ thử
+> — đều âm thầm được gắn folder thật; ai thanh toán kỳ thử sẽ được cấp quyền đọc vào
+> tài liệu thật. Đã sửa thành `r.driveFolderId !== undefined ? … : fallback`, để tắt
+> Drive cho một kỳ trở thành việc làm được. Kiểm chứng lại bằng chính bảng dữ liệu
+> sau khi seed lại: THỬ-01 còn Drive (cố ý, để thử trọn luồng), THỬ-02/03 thì không.
+
+**Kiểm chứng trên trang:** THỬ-01 hiện đúng giá 2.000đ · THỬ-02 hiện badge
+"Chỗ còn lại: 3" · kỳ `draft` **không** xuất hiện, trang rơi về "Chưa mở kỳ mới cho
+khóa này". Chưa tạo đơn nào — `orders` và `enrollments` vẫn 0 để chủ trang tự chạy thử.
 
 ---
 
