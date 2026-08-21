@@ -1059,14 +1059,39 @@ redirect `/dang-nhap?verified=1` hiện đúng thông báo → mở lại chính
 màn hình "Liên kết không dùng được". Dữ liệu thử đã xoá sạch (mọi bảng về 0).
 
 **Chữ nghĩa chuyển vào `content/auth.ts`** theo đúng quy ước mục 4 (hai trang này
-trước đây hardcode trong JSX). Ba trang auth còn lại (`/dang-nhap`,
-`/quen-mat-khau`, `/dat-lai-mat-khau`) **vẫn hardcode** — chưa đụng tới để giữ diff
-gọn quanh luồng xác thực.
+trước đây hardcode trong JSX).
 
-**Kiểm chứng:** `tsc` + `eslint` + `build` sạch; `npm test` **96/96** (từ 84 — thêm
-test cho `maskEmail`, `findVerifyRecipient` và 4 trạng thái của trang xác thực);
-`npm run test:integration` **4/4**; `/` vẫn `○ (Static)`; `overflow-x = 0` ở 375 và
-1280, sáng và tối.
+**Dọn nốt ba trang auth còn lại vào `content/auth.ts`** (`/dang-nhap`,
+`/quen-mat-khau`, `/dat-lai-mat-khau`) — giờ **cả 5 trang auth** không còn chữ nào
+hardcode trong JSX. Trong lúc dọn, hai trang lộ ra đúng những khiếm khuyết vừa vá ở
+trang chị em của chúng, nên sửa luôn thay vì để hai trang cùng mẫu hành xử khác nhau:
+
+- **`/quen-mat-khau` mang y hệt lỗi của `/xac-thuc-email`**: cũng `allowAuthEmail`
+  3 lượt/giờ vô hình, cũng để form trống hiện lại sau khi gửi. Đã áp cùng cách sửa.
+  Điểm khác cần nói đúng: liên kết đặt lại chỉ sống **30 phút**, không phải 24 giờ
+  như liên kết xác thực — một liên kết mở sau bữa trưa là một liên kết đã chết, nên
+  con số này phải nằm trên màn hình.
+- **`/dat-lai-mat-khau` là ngõ cụt khi liên kết hỏng**: trang chỉ có một đường ra là
+  quay lại đăng nhập — nơi người đó vẫn không vào được, vì lý do họ ở đây là quên mật
+  khẩu. Thêm nút "Xin liên kết mới" trỏ thẳng `/quen-mat-khau`.
+- **`/dang-nhap` để tin vui và tin xấu chung một hộp xám**: `?verified=1` /
+  `?reset=1` trông hệt như `?error=`. Dùng `text-success` + dấu tick cho hai cái đầu,
+  `text-danger` cho lỗi. Câu lỗi vẫn cố ý gộp ba nguyên nhân làm một (sai mật khẩu /
+  chưa xác thực / vượt giới hạn) — tách ra sẽ cho biết email nào có tài khoản.
+
+> `metadata.title` vẫn hardcode ở cả 5 trang — mọi trang khác trong repo cũng vậy,
+> nên giữ nguyên cho nhất quán thay vì để một mình cụm auth khác kiểu.
+
+**Kiểm chứng:** `tsc` + `eslint` + `build` sạch; `npm test` **104/104** (từ 84 —
+thêm test cho `maskEmail`, `findVerifyRecipient`, 4 trạng thái của trang xác thực,
+và lần đầu có test cho `/dang-nhap`: chặn `?tiep=` ra ngoài site, phân biệt thông
+báo thành công/lỗi, và câu lỗi vẫn đủ mơ hồ để không xác nhận một email có tài
+khoản); `npm run test:integration` **4/4**; `/` vẫn `○ (Static)`; `overflow-x = 0`
+ở 375 và 1280, sáng và tối.
+
+> **Bẫy khi test `/dang-nhap`:** trang import `AuthError` từ `next-auth` như một
+> *giá trị* (để `instanceof`), nên vitest kéo cả runtime next-auth vào và chết ở
+> `Cannot find module next/server`. Mock `next-auth` bằng một class rỗng là đủ.
 
 ---
 

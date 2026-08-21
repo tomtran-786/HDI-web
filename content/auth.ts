@@ -52,6 +52,78 @@ export const verifyPage = {
   backToSignIn: "Quay lại đăng nhập",
 } as const;
 
+export const signInPage = {
+  eyebrow: "Khu vực học viên",
+  title: "Đăng nhập",
+  subtitle: "Đăng nhập bằng email và mật khẩu hoặc bằng Google.",
+
+  /** Hai tin vui dẫn tới đây: vừa xác thực xong, hoặc vừa đổi mật khẩu xong. */
+  verified: "Email đã được xác thực. Bạn có thể đăng nhập ngay.",
+  reset: "Mật khẩu đã được đổi và các phiên đăng nhập cũ đã hết hiệu lực.",
+
+  // Gộp ba nguyên nhân vào một câu là có chủ ý: tách ra sẽ cho biết email nào
+  // có tài khoản. Đổi lại, người chưa xác thực cần thấy ngay đường đi tiếp,
+  // nên ba liên kết dưới form không phải trang trí.
+  error:
+    "Email hoặc mật khẩu chưa đúng, tài khoản chưa xác thực, hoặc lượt thử tạm thời đã vượt giới hạn.",
+
+  fields: { email: "Email", password: "Mật khẩu" },
+  action: "Đăng nhập",
+  or: "hoặc",
+  google: "Tiếp tục với Google",
+  driveNote:
+    "Record được chia sẻ qua Google Drive. Email đăng nhập cần thuộc tài khoản Google bạn dùng để xem; không nhất thiết phải là Gmail.",
+  links: {
+    register: "Tạo tài khoản",
+    forgot: "Quên mật khẩu",
+    resendVerify: "Gửi lại xác thực",
+  },
+} as const;
+
+export const forgotPage = {
+  eyebrow: "Bảo mật tài khoản",
+  title: "Quên mật khẩu",
+  subtitle: "Nhận liên kết đặt lại mật khẩu qua email.",
+
+  label: "Email",
+  action: "Gửi liên kết",
+  // 30 phút, không phải 24 giờ như liên kết xác thực — nói rõ vì một liên kết
+  // mở sau bữa trưa là một liên kết đã chết.
+  hint: "Liên kết có hiệu lực trong 30 phút. Mỗi email nhận tối đa 3 liên kết mỗi giờ.",
+
+  /** Thay chỗ form, cùng lý do như trang xác thực. */
+  sent: {
+    title: "Đã gửi nếu email đã đăng ký",
+    body: "Hãy mở hộp thư và kiểm tra cả mục Spam. Liên kết có hiệu lực trong 30 phút và chỉ dùng được một lần.",
+    limitNote:
+      "Nếu không thấy email sau vài phút: mỗi email chỉ nhận tối đa 3 liên kết mỗi giờ, nên hãy đợi hết giờ rồi thử lại thay vì bấm liên tục.",
+    again: "Gửi cho email khác",
+  },
+
+  backToSignIn: "Quay lại đăng nhập",
+} as const;
+
+export const resetPage = {
+  eyebrow: "Bảo mật tài khoản",
+  title: "Đặt lại mật khẩu",
+  subtitle: "Mật khẩu mới sẽ đăng xuất các phiên cũ.",
+
+  fields: { password: "Mật khẩu mới", confirmPassword: "Nhập lại mật khẩu" },
+  action: "Đổi mật khẩu",
+  rule: "Mật khẩu cần ít nhất 12 ký tự.",
+
+  /** Liên kết hỏng/hết hạn, hoặc mật khẩu vừa nhập không đạt. */
+  invalid: {
+    title: "Không đổi được mật khẩu",
+    body: "Liên kết đã hết hạn, đã được sử dụng, hoặc mật khẩu chưa đạt yêu cầu. Liên kết đặt lại chỉ sống 30 phút.",
+    // Không có câu này thì người cầm liên kết chết đứng ở ngõ cụt: trang cũ chỉ
+    // có một đường quay lại đăng nhập, nơi họ vẫn không vào được.
+    cta: "Xin liên kết mới",
+  },
+
+  backToSignIn: "Quay lại đăng nhập",
+} as const;
+
 export const registerPage = {
   eyebrow: "Khu vực học viên",
   title: "Tạo tài khoản",

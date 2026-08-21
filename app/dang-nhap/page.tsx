@@ -4,8 +4,10 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth, signIn } from "@/lib/auth";
 import { safeNext } from "@/lib/safe-path";
+import { signInPage } from "@/content/auth";
 import { Section, SectionHeading } from "@/components/ui/section";
-import { IconGoogle } from "@/components/ui/icons";
+import { Card } from "@/components/ui/card";
+import { IconCheck, IconGoogle } from "@/components/ui/icons";
 
 export const metadata: Metadata = {
   title: "Đăng nhập — HDI Research Center",
@@ -13,6 +15,9 @@ export const metadata: Metadata = {
   // stay out of the index.
   robots: { index: false, follow: false },
 };
+
+const inputClass =
+  "mt-1.5 w-full rounded-card border border-line bg-bg px-4 py-3 text-sm outline-none transition focus:border-primary";
 
 export default async function SignInPage({
   searchParams,
@@ -31,23 +36,22 @@ export default async function SignInPage({
       <div className="mx-auto max-w-md">
         <SectionHeading
           align="center"
-          eyebrow="Khu vực học viên"
-          title="Đăng nhập"
-          subtitle="Đăng nhập bằng email và mật khẩu hoặc bằng Google."
+          eyebrow={signInPage.eyebrow}
+          title={signInPage.title}
+          subtitle={signInPage.subtitle}
         />
 
-        <div className="rounded-card border border-line bg-card p-6 sm:p-8">
+        <Card className="p-6 sm:p-8" hover={false}>
+          {/* Good news and bad news no longer share one grey box. */}
           {(verified || reset) && (
-            <p className="mb-5 rounded-card border border-line bg-bg-soft px-4 py-3 text-sm text-fg-muted">
-              {verified
-                ? "Email đã được xác thực. Bạn có thể đăng nhập ngay."
-                : "Mật khẩu đã được đổi và các phiên đăng nhập cũ đã hết hiệu lực."}
+            <p className="mb-5 flex items-start gap-2 rounded-card border border-line bg-bg-soft px-4 py-3 text-sm text-success">
+              <IconCheck size={16} className="mt-0.5 shrink-0" />
+              {verified ? signInPage.verified : signInPage.reset}
             </p>
           )}
           {error && (
-            <p className="mb-5 rounded-card border border-line bg-bg-soft px-4 py-3 text-sm text-fg-muted">
-              Email hoặc mật khẩu chưa đúng, tài khoản chưa xác thực, hoặc lượt
-              thử tạm thời đã vượt giới hạn.
+            <p className="mb-5 rounded-card border border-line bg-bg-soft px-4 py-3 text-sm text-danger">
+              {signInPage.error}
             </p>
           )}
 
@@ -72,9 +76,9 @@ export default async function SignInPage({
             }}
           >
             <label className="block text-sm font-semibold">
-              Email
+              {signInPage.fields.email}
               <input
-                className="mt-1.5 w-full rounded-card border border-line bg-bg px-4 py-3 text-sm outline-none transition focus:border-primary"
+                className={inputClass}
                 name="email"
                 type="email"
                 autoComplete="email"
@@ -82,9 +86,9 @@ export default async function SignInPage({
               />
             </label>
             <label className="block text-sm font-semibold">
-              Mật khẩu
+              {signInPage.fields.password}
               <input
-                className="mt-1.5 w-full rounded-card border border-line bg-bg px-4 py-3 text-sm outline-none transition focus:border-primary"
+                className={inputClass}
                 name="password"
                 type="password"
                 autoComplete="current-password"
@@ -95,13 +99,13 @@ export default async function SignInPage({
               type="submit"
               className="w-full rounded-full bg-primary px-6 py-3 text-sm font-bold text-primary-fg transition hover:bg-primary-deep"
             >
-              Đăng nhập
+              {signInPage.action}
             </button>
           </form>
 
           <div className="my-5 flex items-center gap-3 text-xs text-fg-subtle">
             <span className="h-px flex-1 bg-line" />
-            hoặc
+            {signInPage.or}
             <span className="h-px flex-1 bg-line" />
           </div>
 
@@ -116,26 +120,25 @@ export default async function SignInPage({
               className="inline-flex w-full items-center justify-center gap-3 rounded-full border border-line bg-bg px-6 py-3 text-sm font-bold text-fg transition hover:border-primary hover:text-primary"
             >
               <IconGoogle size={18} />
-              Tiếp tục với Google
+              {signInPage.google}
             </button>
           </form>
 
           <p className="mt-5 text-center text-xs leading-relaxed text-fg-subtle">
-            Record được chia sẻ qua Google Drive. Email đăng nhập cần thuộc tài
-            khoản Google bạn dùng để xem; không nhất thiết phải là Gmail.
+            {signInPage.driveNote}
           </p>
           <div className="mt-5 flex flex-wrap justify-center gap-x-5 gap-y-2 text-sm">
             <Link className="font-bold text-primary" href="/dang-ky-tai-khoan">
-              Tạo tài khoản
+              {signInPage.links.register}
             </Link>
             <Link className="font-bold text-primary" href="/quen-mat-khau">
-              Quên mật khẩu
+              {signInPage.links.forgot}
             </Link>
             <Link className="font-bold text-primary" href="/xac-thuc-email">
-              Gửi lại xác thực
+              {signInPage.links.resendVerify}
             </Link>
           </div>
-        </div>
+        </Card>
       </div>
     </Section>
   );
