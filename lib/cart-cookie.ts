@@ -1,7 +1,7 @@
 /**
  * The cart's wire format, shared by the browser and the server.
  *
- * A cart is a list of cohort ids in a cookie — nothing else. No prices, no
+ * A cart is a list of course ids in a cookie — nothing else. No prices, no
  * totals, no user id. That is deliberate: the cookie is fully under the
  * visitor's control, so the only safe thing to keep in it is a list of things
  * to *look up*. Every number a student is asked to pay is recomputed from the

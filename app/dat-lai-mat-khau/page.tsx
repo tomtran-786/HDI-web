@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { resetPage } from "@/content/auth";
+import { safeNext } from "@/lib/safe-path";
 import { Section, SectionHeading } from "@/components/ui/section";
 import { Card } from "@/components/ui/card";
 import { resetPassword } from "./actions";
@@ -16,8 +17,11 @@ const inputClass =
 export default async function ResetPasswordPage({
   searchParams,
 }: PageProps<"/dat-lai-mat-khau">) {
-  const { token, error } = await searchParams;
+  const { token, error, tiep } = await searchParams;
   const safeToken = typeof token === "string" ? token : "";
+  const next = safeNext(tiep);
+  const nextQuery =
+    next === "/tai-khoan" ? "" : `?tiep=${encodeURIComponent(next)}`;
   // No token means the link was mangled or never carried one; `error` means the
   // action refused it. Both leave nothing to submit, so both get the way out.
   const unusable = Boolean(error) || !safeToken;
@@ -44,7 +48,7 @@ export default async function ResetPasswordPage({
               {/* Without this the holder of a dead link is stranded: the only
                   other exit is a sign-in page they still cannot get past. */}
               <Link
-                href="/quen-mat-khau"
+                href={`/quen-mat-khau${nextQuery}`}
                 className="mt-4 inline-flex w-full items-center justify-center rounded-full bg-primary px-6 py-3 text-sm font-bold text-primary-fg transition hover:bg-primary-deep"
               >
                 {resetPage.invalid.cta}
@@ -55,6 +59,7 @@ export default async function ResetPasswordPage({
           {safeToken && (
             <form action={resetPassword} className="space-y-4">
               <input type="hidden" name="token" value={safeToken} />
+              <input type="hidden" name="tiep" value={next} />
               <label className="block text-sm font-semibold">
                 {resetPage.fields.password}
                 <input
@@ -90,7 +95,7 @@ export default async function ResetPasswordPage({
           )}
 
           <p className="mt-5 text-center text-sm">
-            <Link className="font-bold text-primary" href="/dang-nhap">
+            <Link className="font-bold text-primary" href={`/dang-nhap${nextQuery}`}>
               {resetPage.backToSignIn}
             </Link>
           </p>

@@ -5,7 +5,7 @@
 //      Their FIELD names are dictated by @auth/prisma-adapter — renaming any of
 //      them breaks the adapter at runtime, not at compile time. Only the TABLE
 //      names are ours, via @@map.
-//   2. HDI's domain: Cohort and Enrollment.
+//   2. HDI's domain: Course and Enrollment.
 //
 // Every column is lowercase snake_case via @map, while the Prisma field names
 // stay camelCase. The adapter binds to Prisma FIELD names, so it never sees the
@@ -13,8 +13,8 @@
 // every other tool then has to quote forever.
 //
 // Course marketing copy stays in content/course.ts (Plan.MD §3: every fact must
-// trace back to reference/). Only the *intake* lives here — because meetingUrl
-// and driveFolderId are secrets and this repo is public.
+// trace back to reference/). Commercial/access configuration lives here because
+// meetingUrl and driveFolderId are secrets and this repo is public.
 
 generator client {
   provider = "prisma-client"
@@ -145,13 +145,13 @@ enum ResearchStage {
   @@map("research_stage")
 }
 
-enum CohortStatus {
+enum CourseStatus {
   draft
   open
   running
   closed
 
-  @@map("cohort_status")
+  @@map("course_status")
 }
 
 enum EnrollmentStatus {
@@ -163,19 +163,16 @@ enum EnrollmentStatus {
   @@map("enrollment_status")
 }
 
-/// One intake (kỳ) of one course. `courseSlug` points at a slug in
-/// content/course.ts — Postgres cannot foreign-key into a TypeScript module, so
-/// lib/courses.ts and the seed script are what keep the two honest.
-model Cohort {
-  id         String   @id @default(cuid())
-  courseSlug String   @map("course_slug") @db.VarChar(80)
-  ky         String   @db.VarChar(40)
-  khaiGiang  DateTime @map("khai_giang") @db.Timestamptz(6)
-  lichHoc    String   @map("lich_hoc") @db.VarChar(200)
-  capacity   Int
+/// One sellable course. `slug` points at content/course.ts — Postgres cannot
+/// foreign-key into a TypeScript module, so lib/courses.ts and the seed script
+/// keep the database and authored marketing content aligned.
+model Course {
+  id       String @id @default(cuid())
+  slug     String @unique @db.VarChar(80)
+  capacity Int
   // The real price. content/course.ts carries the advertised price; once HDI
   // sets its own pricing (no longer mirroring edubit) this column is the truth.
-  priceVnd   Int      @map("price_vnd")
+  priceVnd Int    @map("price_vnd")
 
   // SECRETS. Never select these unless the caller's enrollment is `paid`.
   meetingUrl    String? @map("meeting_url") @db.VarChar(500)
@@ -184,19 +181,18 @@ model Cohort {
   // How long recordings stay watchable after payment. NULL = no expiry.
   accessDays Int? @map("access_days")
 
-  status    CohortStatus @default(draft)
+  status    CourseStatus @default(draft)
   createdAt DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt DateTime     @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
 
   enrollments Enrollment[]
   orderItems  OrderItem[]
 
-  @@unique([courseSlug, ky])
-  @@index([status, khaiGiang])
-  @@map("cohorts")
+  @@index([status])
+  @@map("courses")
 }
 
-/// A student's place in one intake.
+/// One purchase/access window for one student and course.
 ///
 /// `status` is the single seam between reservations and fulfillment. Only a
 /// verified PayOS webhook may flip pending → paid; admin cancellation operates
@@ -204,7 +200,7 @@ model Cohort {
 model Enrollment {
   id       String           @id @default(cuid())
   userId   String           @map("user_id")
-  cohortId String           @map("cohort_id")
+  courseId String           @map("course_id")
   status   EnrollmentStatus @default(pending)
   paidAt   DateTime?        @map("paid_at") @db.Timestamptz(6)
 
@@ -219,24 +215,23 @@ model Enrollment {
   updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
 
   user       User        @relation(fields: [userId], references: [id], onDelete: Cascade)
-  // Restrict, not Cascade: deleting a cohort must not silently erase the record
+  // Restrict, not Cascade: deleting a course must not silently erase the record
   // that someone paid for it.
-  cohort     Cohort      @relation(fields: [cohortId], references: [id], onDelete: Restrict)
-  // The order lines that reserved this enrolment. Usually one; more than one
-  // once a student re-orders an intake whose earlier order was cancelled.
+  course     Course      @relation(fields: [courseId], references: [id], onDelete: Restrict)
+  // The order line that reserved this access window. A later purchase creates a
+  // new enrollment so the old payment/access history is never overwritten.
   orderItems OrderItem[]
 
-  // Enforced by the database, not by the application — two concurrent requests
-  // cannot both pass an application-level "already enrolled?" check.
-  @@unique([userId, cohortId])
-  @@index([cohortId, status])
+  // The active-only uniqueness rule lives in the SQL migration as a partial
+  // unique index because Prisma cannot express a predicate on @@unique.
+  @@index([courseId, status])
   @@index([userId, status])
   @@map("enrollments")
 }
 
 // --------------------------------------------------------------- Đơn hàng ---
 //
-// The cart itself is NOT here. A cart is a browser-local list of cohort ids in
+// The cart itself is NOT here. A cart is a browser-local list of course ids in
 // a cookie — it holds no prices and grants nothing, so there is nothing worth
 // persisting or protecting. An Order is the opposite: the moment money is
 // expected, every number has to be one the server computed.
@@ -285,11 +280,11 @@ model Order {
   status OrderStatus @default(pending)
 
   /// Sum of the item snapshots, in đồng. Recomputed server-side at creation and
-  /// never accepted from the client — the browser only ever names cohort ids.
+  /// never accepted from the client — the browser only ever names course ids.
   amountVnd Int @map("amount_vnd")
 
   /// A pending order holds a seat. Without a deadline an abandoned checkout
-  /// takes that seat forever, and the cohort silently looks full.
+  /// takes that seat forever, and the course silently looks full.
   expiresAt DateTime  @map("expires_at") @db.Timestamptz(6)
   paidAt    DateTime? @map("paid_at") @db.Timestamptz(6)
   /// When it stopped being pending for any reason other than payment.
@@ -313,13 +308,13 @@ model Order {
   @@map("orders")
 }
 
-/// One cohort on one order.
+/// One course on one order.
 model OrderItem {
   id       String @id @default(cuid())
   orderId  String @map("order_id")
-  cohortId String @map("cohort_id")
+  courseId String @map("course_id")
 
-  /// The price as it stood when the order was placed. Cohort.priceVnd is the
+  /// The price as it stood when the order was placed. Course.priceVnd is the
   /// current asking price and may change; what someone owes must not.
   priceVnd Int @map("price_vnd")
 
@@ -327,20 +322,17 @@ model OrderItem {
   /// order — that is what actually holds the seat — and flipped to `paid` by
   /// confirmEnrollment() when the payment lands.
   ///
-  /// Not unique. An enrolment that was cancelled (an order expired, say) is
-  /// reused when the student tries again, so the same enrolment id legitimately
-  /// appears on the abandoned order line and on the new one. Only one of those
-  /// orders is ever live.
+  /// A later purchase receives a new enrollment; old order/access history stays
+  /// immutable instead of being reset in place.
   enrollmentId String? @map("enrollment_id")
 
   order      Order       @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  cohort     Cohort      @relation(fields: [cohortId], references: [id], onDelete: Restrict)
+  course     Course      @relation(fields: [courseId], references: [id], onDelete: Restrict)
   enrollment Enrollment? @relation(fields: [enrollmentId], references: [id], onDelete: SetNull)
 
-  // One line per cohort per order: the cart is a set, and buying the same
-  // intake twice is never what anyone meant.
-  @@unique([orderId, cohortId])
-  @@index([cohortId])
+  // One line per course per order: the cart is a set.
+  @@unique([orderId, courseId])
+  @@index([courseId])
   @@index([enrollmentId])
   @@map("order_items")
 }

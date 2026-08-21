@@ -7,6 +7,7 @@ import { nav, site } from "@/content/site";
 import { ThemeToggle } from "./theme-toggle";
 import { CtaLink } from "./ui/cta-link";
 import { CartButton } from "./cart-button";
+import { useCart } from "./cart-provider";
 import { IconClose, IconMenu } from "./ui/icons";
 
 export function SiteHeader() {
@@ -17,6 +18,7 @@ export function SiteHeader() {
   // overwhelmingly more common visitor, and no layout shift when it resolves.
   const { status } = useSession();
   const signedIn = status === "authenticated";
+  const { openCart } = useCart();
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 8);
@@ -103,13 +105,16 @@ export function SiteHeader() {
                 {item.label}
               </Link>
             ))}
-            <Link
-              href="/gio-hang"
-              onClick={() => setOpen(false)}
+            <button
+              type="button"
+              onClick={() => {
+                setOpen(false);
+                openCart();
+              }}
               className="border-b border-line py-3 text-sm font-semibold text-fg-muted"
             >
               Giỏ hàng
-            </Link>
+            </button>
             {signedIn ? (
               <Link
                 href="/tai-khoan"

@@ -27,6 +27,8 @@ export default async function SignInPage({
   // dropping them on the dashboard instead of back at their cart is how a
   // filled cart gets abandoned.
   const next = safeNext(tiep);
+  const nextQuery =
+    next === "/tai-khoan" ? "" : `?tiep=${encodeURIComponent(next)}`;
 
   const session = await auth();
   if (session?.user) redirect(next);
@@ -128,13 +130,13 @@ export default async function SignInPage({
             {signInPage.driveNote}
           </p>
           <div className="mt-5 flex flex-wrap justify-center gap-x-5 gap-y-2 text-sm">
-            <Link className="font-bold text-primary" href="/dang-ky-tai-khoan">
+            <Link className="font-bold text-primary" href={`/dang-ky-tai-khoan${nextQuery}`}>
               {signInPage.links.register}
             </Link>
-            <Link className="font-bold text-primary" href="/quen-mat-khau">
+            <Link className="font-bold text-primary" href={`/quen-mat-khau${nextQuery}`}>
               {signInPage.links.forgot}
             </Link>
-            <Link className="font-bold text-primary" href="/xac-thuc-email">
+            <Link className="font-bold text-primary" href={`/xac-thuc-email${nextQuery}`}>
               {signInPage.links.resendVerify}
             </Link>
           </div>

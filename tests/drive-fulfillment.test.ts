@@ -123,10 +123,9 @@ describe("Drive fulfillment reconciliation", () => {
       items: [
         {
           enrollmentId: "enrollment-order-1",
-          cohort: {
+          course: {
             driveFolderId: "folder-1",
-            courseSlug: "course",
-            ky: "K1",
+            slug: "course",
           },
         },
       ],
@@ -154,8 +153,8 @@ describe("Drive fulfillment reconciliation", () => {
   it("never exceeds the reconciliation batch budget across folders", async () => {
     mocks.findMany
       .mockResolvedValueOnce([
-        { cohort: { driveFolderId: "folder-a" } },
-        { cohort: { driveFolderId: "folder-b" } },
+        { course: { driveFolderId: "folder-a" } },
+        { course: { driveFolderId: "folder-b" } },
       ])
       .mockResolvedValueOnce([
         { id: "enrollment-a1", user: { email: "a1@example.com" } },
@@ -183,7 +182,7 @@ describe("Drive fulfillment reconciliation", () => {
         userId: "user-1",
         drivePermissionId: "permission-1",
         user: { email: "student@example.com" },
-        cohort: { driveFolderId: "folder-1" },
+        course: { driveFolderId: "folder-1" },
       },
     ]);
     mocks.count.mockResolvedValue(1);
@@ -208,7 +207,7 @@ describe("Drive fulfillment reconciliation", () => {
         userId: "user-1",
         drivePermissionId: "permission-1",
         user: { email: "student@example.com" },
-        cohort: { driveFolderId: "folder-1" },
+        course: { driveFolderId: "folder-1" },
       },
     ]);
     mocks.count.mockResolvedValue(0);
@@ -226,6 +225,29 @@ describe("Drive fulfillment reconciliation", () => {
       "student@example.com",
       "permission-1",
     );
+    expect(mocks.release).toHaveBeenCalledOnce();
+  });
+
+  it("keeps access unrevoked when Google Drive revoke fails", async () => {
+    mocks.findMany.mockResolvedValue([
+      {
+        id: "expired-failed",
+        userId: "user-1",
+        drivePermissionId: "permission-1",
+        user: { email: "student@example.com" },
+        course: { driveFolderId: "folder-1" },
+      },
+    ]);
+    mocks.count.mockResolvedValue(0);
+    mocks.revoke.mockRejectedValue(new Error("Drive unavailable"));
+
+    await expect(revokeExpiredDriveAccess()).resolves.toEqual({
+      checked: 1,
+      revoked: 0,
+      kept: 0,
+      failed: 1,
+    });
+    expect(mocks.updateMany).not.toHaveBeenCalled();
     expect(mocks.release).toHaveBeenCalledOnce();
   });
 });

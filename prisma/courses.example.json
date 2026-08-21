@@ -1,9 +1,6 @@
 [
   {
-    "courseSlug": "viet-bao-cao-khoa-hoc",
-    "ky": "K1/2026",
-    "khaiGiang": "2026-10-05",
-    "lichHoc": "Tối T3 & T5, 19:30–21:30",
+    "slug": "viet-bao-cao-khoa-hoc",
     "capacity": 40,
     "priceVnd": 1100000,
     "accessDays": 730,

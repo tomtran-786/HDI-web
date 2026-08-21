@@ -7,7 +7,6 @@ import { findCourse } from "@/lib/courses";
 import { formatDate, formatVnd } from "@/lib/format";
 import { orderPage, orderStatusLabel, orderStatusTone } from "@/content/checkout";
 import { contact, links } from "@/content/site";
-import { CheckoutSteps } from "@/components/checkout-steps";
 import { HoldCountdown } from "@/components/hold-countdown";
 import { Section, SectionHeading } from "@/components/ui/section";
 import { Badge } from "@/components/ui/badge";
@@ -48,14 +47,7 @@ export default async function OrderDetailPage({
         select: {
           id: true,
           priceVnd: true,
-          cohort: {
-            select: {
-              courseSlug: true,
-              ky: true,
-              khaiGiang: true,
-              lichHoc: true,
-            },
-          },
+          course: { select: { slug: true } },
         },
       },
     },
@@ -71,8 +63,6 @@ export default async function OrderDetailPage({
         title={`${orderPage.codeLabel} #${order.code}`}
         subtitle={`Đặt ngày ${formatDate(order.createdAt)}`}
       />
-      <CheckoutSteps current={pending ? 3 : 4} />
-
       <div className="mx-auto max-w-2xl">
         <div className="rounded-card border border-line bg-card p-6 sm:p-7">
           <div className="flex flex-wrap items-center justify-between gap-3">
@@ -92,15 +82,10 @@ export default async function OrderDetailPage({
               >
                 <div className="min-w-0">
                   <p className="font-semibold leading-snug text-fg">
-                    {findCourse(item.cohort.courseSlug)?.title ??
-                      item.cohort.courseSlug}
-                  </p>
-                  <p className="mt-0.5 text-[13px] text-fg-muted">
-                    {item.cohort.ky} · khai giảng{" "}
-                    {formatDate(item.cohort.khaiGiang)} · {item.cohort.lichHoc}
+                    {findCourse(item.course.slug)?.title ?? item.course.slug}
                   </p>
                 </div>
-                {/* The snapshot on the line, not the cohort's current price —
+                {/* The snapshot on the line, not the course's current price —
                     what someone owes must not move after they agreed to it. */}
                 <p className="font-bold tabular-nums text-fg">
                   {formatVnd(item.priceVnd)}

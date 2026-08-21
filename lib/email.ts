@@ -67,8 +67,12 @@ export function sendVerificationEmail(input: {
   to: string;
   name: string;
   token: string;
+  next?: string;
 }) {
-  const href = `${appUrl()}/xac-thuc-email?token=${encodeURIComponent(input.token)}`;
+  const nextQuery = input.next
+    ? `&tiep=${encodeURIComponent(input.next)}`
+    : "";
+  const href = `${appUrl()}/xac-thuc-email?token=${encodeURIComponent(input.token)}${nextQuery}`;
   return sendEmail({
     to: input.to,
     subject: "Xác thực tài khoản học viên — HDI Research Center",
@@ -85,8 +89,12 @@ export function sendPasswordResetEmail(input: {
   to: string;
   name: string;
   token: string;
+  next?: string;
 }) {
-  const href = `${appUrl()}/dat-lai-mat-khau?token=${encodeURIComponent(input.token)}`;
+  const nextQuery = input.next
+    ? `&tiep=${encodeURIComponent(input.next)}`
+    : "";
+  const href = `${appUrl()}/dat-lai-mat-khau?token=${encodeURIComponent(input.token)}${nextQuery}`;
   return sendEmail({
     to: input.to,
     subject: "Đặt lại mật khẩu — HDI Research Center",
@@ -98,4 +106,3 @@ export function sendPasswordResetEmail(input: {
     ),
   });
 }
-

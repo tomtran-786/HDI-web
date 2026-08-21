@@ -1,0 +1,57 @@
+"use server";
+
+import { redirect } from "next/navigation";
+import { auth } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
+import { isProfileComplete } from "@/lib/profile";
+import { readCartIds, writeCartIds } from "@/lib/cart";
+import { createOrder } from "@/lib/orders";
+import { ensurePayosCheckout } from "@/lib/payment-checkout";
+
+export type CheckoutState = { error?: string; refreshCatalog?: boolean };
+
+const LANDING_CART = "/?cart=1";
+
+/**
+ * Turn the whole cookie cart into one server-priced order. There is no client
+ * amount and no partial checkout: createOrder locks and validates every course
+ * before writing any enrollment or order row.
+ */
+export async function checkout(
+  _previous: CheckoutState,
+  _formData: FormData,
+): Promise<CheckoutState> {
+  void _previous;
+  void _formData;
+  const session = await auth();
+  if (!session?.user?.id) {
+    redirect(`/dang-nhap?tiep=${encodeURIComponent(LANDING_CART)}`);
+  }
+
+  const user = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    select: { phone: true, stage: true },
+  });
+  if (!user) redirect("/dang-nhap");
+  if (!isProfileComplete(user)) {
+    redirect(`/hoan-tat-ho-so?tiep=${encodeURIComponent(LANDING_CART)}`);
+  }
+
+  const ids = await readCartIds();
+  const result = await createOrder(session.user.id, ids);
+  if (!result.ok) {
+    return { error: result.message, refreshCatalog: true };
+  }
+
+  const payment = await ensurePayosCheckout(result.orderId, session.user.id);
+  if (!payment.ok && payment.state !== "pending_gateway") {
+    return { error: payment.message, refreshCatalog: true };
+  }
+
+  // createOrder is all-or-nothing, so every id from this request belongs to the
+  // new order. Clear only after a recoverable PayOS/order destination exists.
+  await writeCartIds([]);
+
+  if (payment.ok) redirect(payment.checkoutUrl);
+  redirect(`/tai-khoan/don-hang/${result.code}`);
+}

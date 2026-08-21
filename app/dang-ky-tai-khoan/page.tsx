@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
+import { safeNext } from "@/lib/safe-path";
 import { registerPage } from "@/content/auth";
 import { registerAccount } from "./actions";
 import { Section, SectionHeading } from "@/components/ui/section";
@@ -19,8 +20,11 @@ const inputClass =
 export default async function RegisterPage({
   searchParams,
 }: PageProps<"/dang-ky-tai-khoan">) {
-  const { error, sent } = await searchParams;
-  if ((await auth())?.user) redirect("/tai-khoan");
+  const { error, sent, tiep } = await searchParams;
+  const next = safeNext(tiep);
+  const nextQuery =
+    next === "/tai-khoan" ? "" : `?tiep=${encodeURIComponent(next)}`;
+  if ((await auth())?.user) redirect(next);
 
   return (
     <Section soft>
@@ -47,13 +51,13 @@ export default async function RegisterPage({
               </p>
               <div className="mt-6 space-y-3">
                 <Link
-                  href="/xac-thuc-email"
+                  href={`/xac-thuc-email${nextQuery}`}
                   className="block w-full rounded-full border border-line px-6 py-3 text-center text-sm font-bold text-fg transition hover:border-primary hover:text-primary"
                 >
                   {registerPage.sent.resendCta}
                 </Link>
                 <Link
-                  href="/dang-nhap"
+                  href={`/dang-nhap${nextQuery}`}
                   className="block w-full rounded-full bg-primary px-6 py-3 text-center text-sm font-bold text-primary-fg transition hover:bg-primary-deep"
                 >
                   {registerPage.sent.signInCta}
@@ -69,6 +73,7 @@ export default async function RegisterPage({
               )}
 
               <form action={registerAccount} className="space-y-4">
+                <input type="hidden" name="tiep" value={next} />
                 <label className="block text-sm font-semibold">
                   {registerPage.fields.name}
                   <input className={inputClass} name="name" autoComplete="name" required minLength={2} maxLength={100} />
@@ -95,7 +100,7 @@ export default async function RegisterPage({
               </p>
               <p className="mt-5 text-center text-sm text-fg-muted">
                 {registerPage.haveAccount}{" "}
-                <Link className="font-bold text-primary" href="/dang-nhap">
+                <Link className="font-bold text-primary" href={`/dang-nhap${nextQuery}`}>
                   {registerPage.signIn}
                 </Link>
               </p>

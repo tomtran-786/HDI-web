@@ -47,9 +47,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
             static rendering. The header resolves the session on the client and
             falls back to the marketing CTA while it loads. */}
         <SessionProvider>
-          {/* The cart lives in a cookie, so it wraps the header (which shows the
-              badge) and the pages (which add to it) alike. Purchase surfaces
-              require a session before they write it. */}
+          {/* The cart lives in a cookie, so it wraps the header badge and the
+              shared modal. The modal loads its catalog only after opening and
+              gates selection behind authentication/profile completion. */}
           <CartProvider>
             <SiteHeader />
             <main className="flex-1">{children}</main>

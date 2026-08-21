@@ -3,8 +3,8 @@ import { safeNext } from "@/lib/safe-path";
 
 describe("safe post-auth return paths", () => {
   it("preserves a local path", () => {
-    expect(safeNext("/dang-ky/viet-bao-cao-khoa-hoc")).toBe(
-      "/dang-ky/viet-bao-cao-khoa-hoc",
+    expect(safeNext("/?cart=1&course=viet-bao-cao-khoa-hoc")).toBe(
+      "/?cart=1&course=viet-bao-cao-khoa-hoc",
     );
   });
 

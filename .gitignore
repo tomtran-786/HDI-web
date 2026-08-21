@@ -50,8 +50,12 @@ next-env.d.ts
 # prisma client is generated at install time (postinstall)
 /lib/generated
 
-# real cohort data carries the Zoom link and Drive folder id
+# real course data carries the Zoom link and Drive folder id
+/prisma/courses.json
+# Legacy private seed; keep ignored so the migration never exposes old links.
 /prisma/cohorts.json
+# Legacy private folder mapping is no longer read, but keep it ignored so an
+# existing deployment cannot accidentally commit historical Drive IDs.
 /prisma/drive-folders.json
 
 # local MCP server config and installed agent skills

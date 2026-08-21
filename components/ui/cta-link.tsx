@@ -3,31 +3,25 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
 import { links } from "@/content/site";
-import { trackCta, type CtaSource, type CtaTarget } from "@/lib/analytics";
+import { trackCta, type CtaSource } from "@/lib/analytics";
+
+type LinkTarget = "tu-van" | "zalo";
 
 /**
- * The three destinations any CTA on the page points at.
- *
- * `tu-van` and `dang-ky` are internal routes. Consultation goes to the page's
+ * The two link destinations used by marketing CTAs. Consultation goes to the page's
  * own contact section — Zalo, email and phone are all there, which is where
  * people were being sent anyway.
  *
- * `dang-ky` resolves per course, to that course's intake list. Signing in is
- * not asked for here: the registration page asks for sign-in before adding,
- * which is the point at which an account actually becomes necessary. The
- * account-less fallback exists only so the union stays total — every current
- * caller of `dang-ky` sits inside a course modal and passes a slug.
+ * Course registration is a button handled by the shared cart modal, not a link.
  */
-function hrefFor(target: CtaTarget, course?: string): string {
+function hrefFor(target: LinkTarget): string {
   if (target === "zalo") return links.zalo;
-  if (target === "tu-van") return "/#lien-he";
-  return course ? `/dang-ky/${course}` : "/dang-nhap";
+  return "/#lien-he";
 }
 
 /** Only Zalo leaves the site now; the other two must not open a new tab. */
-const isExternal: Record<CtaTarget, boolean> = {
+const isExternal: Record<LinkTarget, boolean> = {
   "tu-van": false,
-  "dang-ky": false,
   zalo: true,
 };
 
@@ -46,14 +40,14 @@ export function CtaLink({
   children,
 }: {
   source: CtaSource;
-  target: CtaTarget;
+  target: LinkTarget;
   /** Course slug, for the CTAs that sit inside a course modal. */
   course?: string;
   className?: string;
   children: ReactNode;
 }) {
   const onClick = () => trackCta(source, target, course);
-  const href = hrefFor(target, course);
+  const href = hrefFor(target);
 
   if (isExternal[target]) {
     return (

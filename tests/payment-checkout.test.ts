@@ -29,7 +29,7 @@ const order = {
   expiresAt: new Date(Date.now() + 60_000),
   checkoutUrl: null,
   user: { name: "Học viên", email: "student@example.com", phone: "0900000000" },
-  items: [{ priceVnd: 1_000_000, cohort: { courseSlug: "course", ky: "K1" } }],
+  items: [{ priceVnd: 1_000_000, course: { slug: "course" } }],
 };
 
 describe("PayOS checkout creation", () => {
@@ -66,6 +66,7 @@ describe("PayOS checkout creation", () => {
         orderCode: 100001,
         amount: 1_000_000,
         description: "HDI 100001",
+        items: [{ name: "course", quantity: 1, price: 1_000_000 }],
       }),
     );
     expect(mocks.updateMany).toHaveBeenCalledWith(

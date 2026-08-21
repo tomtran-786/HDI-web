@@ -18,15 +18,16 @@ export default async function ProfilePage({
 }: PageProps<"/hoan-tat-ho-so">) {
   const { tiep } = await searchParams;
   const next = safeNext(tiep);
+  const signIn = `/dang-nhap?tiep=${encodeURIComponent(next)}`;
 
   const session = await auth();
-  if (!session?.user?.id) redirect("/dang-nhap");
+  if (!session?.user?.id) redirect(signIn);
 
   const user = await prisma.user.findUnique({
     where: { id: session.user.id },
     select: { name: true, email: true, phone: true, stage: true },
   });
-  if (!user) redirect("/dang-nhap");
+  if (!user) redirect(signIn);
 
   // Already done — nothing to ask. Guard here as well as in the dashboard so
   // the page cannot be reached as a dead end.

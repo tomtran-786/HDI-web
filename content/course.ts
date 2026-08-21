@@ -56,24 +56,6 @@ export type CoursePhase = {
   sessions: string[];
 };
 
-/**
- * The next intake of a course. Every course here is taught live on a schedule,
- * so the start date and remaining seats are the strongest reason for a reader
- * to act today rather than later — but they are facts about the real world, so
- * per the no-fabrication rule in Plan.MD §3 they only appear once Dr. Trinh
- * supplies them. Until then the field stays absent and the card renders nothing.
- *
- * `conLai` is optional on purpose: "còn 3/40 chỗ" sells, "còn 38/40 chỗ" does
- * the opposite. Leave it out when it does not help.
- */
-export type CourseCohort = {
-  ky: string;
-  khaiGiang: string;
-  lichHoc: string;
-  siSo: number;
-  conLai?: number;
-};
-
 export type Course = {
   slug: string;
   eyebrow: string;
@@ -95,8 +77,6 @@ export type Course = {
    * parse the display string. Keep the two in step when a price changes.
    */
   price: { amount: string; note: string; vnd: number };
-  /** Absent until real intake dates exist — see CourseCohort. */
-  cohort?: CourseCohort;
   facts: { label: string; value: string }[];
   phases: CoursePhase[];
   outcomes: string[];
@@ -104,13 +84,11 @@ export type Course = {
 };
 
 /**
- * Registration is an account now, not a Google Form — so this note no longer
- * explains how to fill a form in. It sets the expectation instead: seats are
- * sold per intake, and there is no intake on sale until Dr. Trinh confirms the
- * schedule. Revisit once cohorts exist and checkout opens.
+ * Registration is an account now, not a Google Form. Availability and the
+ * authoritative price come from the Course row when the cart modal opens.
  */
 const REGISTER_NOTE_GENERIC =
-  "Tạo tài khoản để giữ chỗ. Kỳ khai giảng tiếp theo sẽ được thông báo qua email và Zalo.";
+  "Đăng nhập, chọn khóa trong giỏ và thanh toán trực tiếp qua PayOS.";
 
 export const coursesIntro = {
   eyebrow: "Khóa học",
@@ -124,8 +102,8 @@ export const coursesIntro = {
 /**
  * `satisfies` rather than a `: Course[]` annotation, so TypeScript keeps the
  * literal slug strings instead of widening them to `string`. That is what makes
- * `CourseSlug` below a real union — and what turns a typo in a cohort's
- * `courseSlug` into a compile error instead of an empty dashboard.
+ * `CourseSlug` below a real union and keeps authored content aligned with the
+ * Course records loaded from the database.
  */
 export const courses = [
   {
@@ -518,8 +496,7 @@ export const courses = [
 ] satisfies Course[];
 
 /**
- * Every course slug, as a union. The database stores `Cohort.courseSlug` as a
- * plain string — Postgres cannot foreign-key into a TypeScript module — so this
- * type plus `lib/courses.ts` are the only things keeping the two in step.
+ * Every course slug, as a union. The database stores `Course.slug` as a plain
+ * string, so this type plus the seed validation keep both sources aligned.
  */
 export type CourseSlug = (typeof courses)[number]["slug"];

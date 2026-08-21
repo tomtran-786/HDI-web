@@ -6,19 +6,23 @@ import { resetPasswordSchema } from "@/lib/auth-input";
 import { allowResetConsume, serverActionIp } from "@/lib/auth-throttle";
 import { consumeAuthToken } from "@/lib/auth-tokens";
 import { prisma } from "@/lib/prisma";
+import { safeNext } from "@/lib/safe-path";
 
 const RESET = "/dat-lai-mat-khau";
 
 export async function resetPassword(formData: FormData) {
+  const next = safeNext(formData.get("tiep"));
+  const nextSuffix =
+    next === "/tai-khoan" ? "" : `&tiep=${encodeURIComponent(next)}`;
   const parsed = resetPasswordSchema.safeParse({
     token: formData.get("token"),
     password: formData.get("password"),
     confirmPassword: formData.get("confirmPassword"),
   });
-  if (!parsed.success) redirect(`${RESET}?error=invalid`);
+  if (!parsed.success) redirect(`${RESET}?error=invalid${nextSuffix}`);
 
   if (!(await allowResetConsume(await serverActionIp()))) {
-    redirect(`${RESET}?error=invalid`);
+    redirect(`${RESET}?error=invalid${nextSuffix}`);
   }
 
   const passwordHash = await bcrypt.hash(parsed.data.password, 12);
@@ -32,6 +36,6 @@ export async function resetPassword(formData: FormData) {
     return result.count === 1;
   });
 
-  if (!changed) redirect(`${RESET}?error=invalid`);
-  redirect("/dang-nhap?reset=1");
+  if (!changed) redirect(`${RESET}?error=invalid${nextSuffix}`);
+  redirect(`/dang-nhap?reset=1${nextSuffix}`);
 }

@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useCart } from "./cart-provider";
 import { IconCart } from "./ui/icons";
 
@@ -13,13 +12,16 @@ import { IconCart } from "./ui/icons";
  * useSyncExternalStore's server snapshot buys.
  */
 export function CartButton({ onNavigate }: { onNavigate?: () => void }) {
-  const { count } = useCart();
+  const { count, openCart } = useCart();
 
   return (
-    <Link
-      href="/gio-hang"
-      onClick={onNavigate}
-      aria-label={count > 0 ? `Giỏ hàng, ${count} kỳ học` : "Giỏ hàng"}
+    <button
+      type="button"
+      onClick={() => {
+        onNavigate?.();
+        openCart();
+      }}
+      aria-label={count > 0 ? `Giỏ hàng, ${count} khóa học` : "Giỏ hàng"}
       className="relative inline-flex h-9 w-9 items-center justify-center rounded-full border border-line text-fg-muted transition hover:border-primary hover:text-primary"
     >
       <IconCart size={17} />
@@ -28,6 +30,6 @@ export function CartButton({ onNavigate }: { onNavigate?: () => void }) {
           {count}
         </span>
       )}
-    </Link>
+    </button>
   );
 }

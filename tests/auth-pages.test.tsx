@@ -109,6 +109,17 @@ describe("/dang-ky-tai-khoan", () => {
     expect(errorHtml).toContain("Vui lòng kiểm tra họ tên, email và mật khẩu");
     expect(errorHtml).toContain('name="password"');
   });
+
+  it("preserves the landing cart return through registration and verification", async () => {
+    const next = "/?cart=1&course=viet-bao-cao-khoa-hoc";
+    const html = renderToStaticMarkup(
+      await RegisterPage({
+        searchParams: Promise.resolve({ tiep: next }),
+      } as never),
+    );
+    expect(html).toContain('name="tiep"');
+    expect(html).toContain("%2F%3Fcart%3D1%26course%3Dviet-bao-cao-khoa-hoc");
+  });
 });
 
 describe("/quen-mat-khau", () => {
@@ -202,9 +213,13 @@ describe("/dang-nhap", () => {
     mocks.auth.mockResolvedValue({ user: { id: "u1" } });
     await expect(
       SignInPage({
-        searchParams: Promise.resolve({ tiep: "/gio-hang" }),
+        searchParams: Promise.resolve({
+          tiep: "/?cart=1&course=viet-bao-cao-khoa-hoc",
+        }),
       } as never),
-    ).rejects.toMatchObject({ url: "/gio-hang" });
+    ).rejects.toMatchObject({
+      url: "/?cart=1&course=viet-bao-cao-khoa-hoc",
+    });
   });
 
   it("refuses an off-site return path", async () => {

@@ -16,10 +16,10 @@ export async function retryDriveAccess(enrollmentId: string) {
       accessRevokedAt: null,
       OR: [{ accessExpiresAt: null }, { accessExpiresAt: { gt: new Date() } }],
     },
-    select: { id: true, cohort: { select: { driveFolderId: true } } },
+    select: { id: true, course: { select: { driveFolderId: true } } },
   });
-  if (!enrollment?.cohort.driveFolderId) return { ok: false };
-  await reconcileDriveFolder(enrollment.cohort.driveFolderId, {
+  if (!enrollment?.course.driveFolderId) return { ok: false };
+  await reconcileDriveFolder(enrollment.course.driveFolderId, {
     enrollmentIds: [enrollment.id],
     limit: 1,
   });

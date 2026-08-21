@@ -33,7 +33,7 @@ export async function reconcileDriveFolder(
         drivePermissionId: null,
         accessRevokedAt: null,
         OR: [{ accessExpiresAt: null }, { accessExpiresAt: { gt: new Date() } }],
-        cohort: { driveFolderId: folderId },
+        course: { driveFolderId: folderId },
       },
       select: { id: true, user: { select: { email: true } } },
       orderBy: { paidAt: "asc" },
@@ -78,7 +78,7 @@ export async function fulfillOrderDrive(orderId: string) {
       items: {
         select: {
           enrollmentId: true,
-          cohort: { select: { driveFolderId: true, courseSlug: true, ky: true } },
+          course: { select: { driveFolderId: true, slug: true } },
         },
       },
     },
@@ -88,14 +88,14 @@ export async function fulfillOrderDrive(orderId: string) {
   const folders = new Map<string, string[]>();
   for (const item of order.items) {
     if (!item.enrollmentId) continue;
-    if (item.cohort.driveFolderId) {
-      const ids = folders.get(item.cohort.driveFolderId) ?? [];
+    if (item.course.driveFolderId) {
+      const ids = folders.get(item.course.driveFolderId) ?? [];
       ids.push(item.enrollmentId);
-      folders.set(item.cohort.driveFolderId, ids);
+      folders.set(item.course.driveFolderId, ids);
     }
     else {
       console.error(
-        `[drive] Đơn đã trả tiền nhưng ${item.cohort.courseSlug}/${item.cohort.ky} chưa có driveFolderId.`,
+        `[drive] Đơn đã trả tiền nhưng ${item.course.slug} chưa có driveFolderId.`,
       );
     }
   }
@@ -121,15 +121,15 @@ export async function reconcileMissingDriveGrants(limit = 50) {
       drivePermissionId: null,
       accessRevokedAt: null,
       OR: [{ accessExpiresAt: null }, { accessExpiresAt: { gt: new Date() } }],
-      cohort: { driveFolderId: { not: null } },
+      course: { driveFolderId: { not: null } },
     },
-    select: { cohort: { select: { driveFolderId: true } } },
+    select: { course: { select: { driveFolderId: true } } },
     orderBy: { paidAt: "asc" },
     take: budget,
   });
   const folders = new Set(
     candidates
-      .map((item) => item.cohort.driveFolderId)
+      .map((item) => item.course.driveFolderId)
       .filter((id): id is string => Boolean(id)),
   );
   let checked = 0;
@@ -156,7 +156,7 @@ export async function revokeExpiredDriveAccess(limit = 50, now = new Date()) {
       userId: true,
       drivePermissionId: true,
       user: { select: { email: true } },
-      cohort: { select: { driveFolderId: true } },
+      course: { select: { driveFolderId: true } },
     },
     orderBy: { accessExpiresAt: "asc" },
     take: limit,
@@ -166,7 +166,7 @@ export async function revokeExpiredDriveAccess(limit = 50, now = new Date()) {
   let kept = 0;
   let failed = 0;
   for (const enrollment of expired) {
-    const folderId = enrollment.cohort.driveFolderId;
+    const folderId = enrollment.course.driveFolderId;
     if (!folderId) {
       const updated = await prisma.enrollment.updateMany({
         where: { id: enrollment.id, accessRevokedAt: null },
@@ -196,7 +196,7 @@ export async function revokeExpiredDriveAccess(limit = 50, now = new Date()) {
           status: "paid",
           accessRevokedAt: null,
           OR: [{ accessExpiresAt: null }, { accessExpiresAt: { gt: now } }],
-          cohort: { driveFolderId: folderId },
+          course: { driveFolderId: folderId },
         },
       });
       if (otherActive > 0) {

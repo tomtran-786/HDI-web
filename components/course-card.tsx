@@ -2,7 +2,8 @@
 
 import { useRef } from "react";
 import type { Course } from "@/content/course";
-import { trackCourseModal } from "@/lib/analytics";
+import { trackCourseModal, trackCta } from "@/lib/analytics";
+import { useCart } from "./cart-provider";
 import { CtaLink } from "./ui/cta-link";
 import { IconArrow, IconCheck, IconClose, IconMessage } from "./ui/icons";
 
@@ -21,6 +22,7 @@ function phaseKind(course: Course) {
 export function CourseCard({ course }: { course: Course }) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const titleId = `${course.slug}-title`;
+  const { openCart } = useCart();
 
   return (
     <>
@@ -85,6 +87,9 @@ export function CourseCard({ course }: { course: Course }) {
           // The ::backdrop forwards its clicks to the dialog element itself;
           // the padding lives on the inner wrapper so only backdrop hits match.
           if (e.target === dialogRef.current) dialogRef.current.close();
+        }}
+        onKeyDown={(event) => {
+          if (event.key === "Escape") dialogRef.current?.close();
         }}
         className="w-[calc(100vw-2rem)] max-w-2xl"
       >
@@ -160,37 +165,6 @@ export function CourseCard({ course }: { course: Course }) {
               })}
             </div>
 
-            {/* Renders only once a real intake exists — see CourseCohort. */}
-            {course.cohort && (
-              <div className="mt-7 rounded-card border border-primary bg-tint p-5">
-                <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-primary">
-                  Kỳ tới — {course.cohort.ky}
-                </p>
-                <dl className="mt-2">
-                  <div className="flex flex-wrap items-baseline justify-between gap-2 py-1.5">
-                    <dt className="text-[13px] text-fg-muted">Khai giảng</dt>
-                    <dd className="text-[15px] font-bold text-fg">
-                      {course.cohort.khaiGiang}
-                    </dd>
-                  </div>
-                  <div className="flex flex-wrap items-baseline justify-between gap-2 py-1.5">
-                    <dt className="text-[13px] text-fg-muted">Lịch học</dt>
-                    <dd className="text-[15px] font-semibold text-fg">
-                      {course.cohort.lichHoc}
-                    </dd>
-                  </div>
-                  {course.cohort.conLai !== undefined && (
-                    <div className="flex flex-wrap items-baseline justify-between gap-2 py-1.5">
-                      <dt className="text-[13px] text-fg-muted">Chỗ còn lại</dt>
-                      <dd className="text-[15px] font-bold text-primary">
-                        {course.cohort.conLai}/{course.cohort.siSo}
-                      </dd>
-                    </div>
-                  )}
-                </dl>
-              </div>
-            )}
-
             <div className="mt-7 rounded-card border border-line bg-bg-soft p-5">
               <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-fg-subtle">
                 Thông tin học
@@ -242,15 +216,18 @@ export function CourseCard({ course }: { course: Course }) {
                 reader still weighing a 1.100.000đ course will not press a button
                 that sounds like committing to pay. */}
             <div className="mt-7 flex flex-col gap-3 sm:flex-row">
-              <CtaLink
-                source="khoa-hoc-modal"
-                target="dang-ky"
-                course={course.slug}
+              <button
+                type="button"
+                onClick={() => {
+                  trackCta("khoa-hoc-modal", "dang-ky", course.slug);
+                  dialogRef.current?.close();
+                  openCart(course.slug);
+                }}
                 className="inline-flex flex-1 items-center justify-center gap-2 rounded-full bg-primary px-6 py-3 text-sm font-bold text-primary-fg transition hover:bg-primary-deep"
               >
                 Đăng ký học khóa này
                 <IconArrow size={16} />
-              </CtaLink>
+              </button>
               {/* Parallel route out for people who will never fill in a form —
                   with Zalo as the real consulting channel, that group is large. */}
               <CtaLink

@@ -8,7 +8,6 @@ import { Section, SectionHeading } from "@/components/ui/section";
 import { Badge } from "@/components/ui/badge";
 import {
   IconArrow,
-  IconCalendar,
   IconFolder,
   IconMessage,
   IconReceipt,
@@ -48,6 +47,18 @@ const statusLabel: Record<string, string> = {
   refunded: "Đã hoàn tiền",
 };
 
+function enrollmentLabel(e: {
+  status: string;
+  accessRevokedAt: Date | null;
+  accessExpiresAt: Date | null;
+}) {
+  if (e.status === "paid" && e.accessRevokedAt) return "Đã thu hồi quyền";
+  if (e.status === "paid" && e.accessExpiresAt && e.accessExpiresAt <= new Date()) {
+    return "Đã hết hạn truy cập";
+  }
+  return statusLabel[e.status] ?? e.status;
+}
+
 export default async function AccountPage() {
   const session = await auth();
   // The layout already redirected, so this is only for TypeScript.
@@ -55,7 +66,7 @@ export default async function AccountPage() {
   const userId = session.user.id;
 
   // NOTE: `meetingUrl` and `driveFolderId` are deliberately absent from this
-  // select. `include: { cohort: true }` would pull both into the rendered
+  // select. `include: { course: true }` would pull both into the rendered
   // payload even though no JSX reads them — which is exactly how a "hidden in
   // the UI" secret ends up in view-source.
   const enrollments = await prisma.enrollment.findMany({
@@ -64,33 +75,32 @@ export default async function AccountPage() {
     select: {
       id: true,
       status: true,
+      paidAt: true,
+      createdAt: true,
       accessExpiresAt: true,
       accessRevokedAt: true,
       drivePermissionId: true,
-      cohort: {
+      course: {
         select: {
           id: true,
-          courseSlug: true,
-          ky: true,
-          khaiGiang: true,
-          lichHoc: true,
+          slug: true,
         },
       },
     },
   });
 
-  // Second query, only for the intakes this student has actually paid for.
-  const liveCohortIds = enrollments
+  // Second query, only for courses this student currently has access to.
+  const liveCourseIds = enrollments
     .filter(hasLiveAccess)
-    .map((e) => e.cohort.id);
+    .map((e) => e.course.id);
 
   const secrets = new Map<
     string,
     { meetingUrl: string | null; driveFolderId: string | null }
   >();
-  if (liveCohortIds.length > 0) {
-    const rows = await prisma.cohort.findMany({
-      where: { id: { in: liveCohortIds } },
+  if (liveCourseIds.length > 0) {
+    const rows = await prisma.course.findMany({
+      where: { id: { in: liveCourseIds } },
       select: { id: true, meetingUrl: true, driveFolderId: true },
     });
     for (const r of rows) {
@@ -107,28 +117,28 @@ export default async function AccountPage() {
         <SectionHeading
           eyebrow="Khu vực học viên"
           title={`Chào ${session.user.name ?? "bạn"}`}
-          subtitle="Các kỳ học bạn đã ghi danh, lịch học và tài liệu."
+          subtitle="Các khóa học, thời hạn truy cập và tài liệu của bạn."
         />
         <div className="mb-10 flex flex-wrap items-center gap-3 sm:mb-12">
-        <Link
-          href="/tai-khoan/don-hang"
-          className="inline-flex items-center gap-2 rounded-full border border-line px-5 py-2.5 text-sm font-bold text-fg-muted transition hover:border-primary hover:text-primary"
-        >
-          <IconReceipt size={16} />
-          Đơn hàng
-        </Link>
-        <LogoutButton />
+          <Link
+            href="/tai-khoan/don-hang"
+            className="inline-flex items-center gap-2 rounded-full border border-line px-5 py-2.5 text-sm font-bold text-fg-muted transition hover:border-primary hover:text-primary"
+          >
+            <IconReceipt size={16} />
+            Đơn hàng
+          </Link>
+          <LogoutButton />
         </div>
       </div>
 
       {enrollments.length === 0 ? (
         <div className="rounded-card border border-line bg-card p-8 text-center sm:p-10">
           <p className="text-lg font-bold tracking-tight">
-            Bạn chưa ghi danh kỳ học nào
+            Bạn chưa mua khóa học nào
           </p>
           <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-fg-muted">
-            Sau khi đăng ký và hoàn tất học phí, kỳ học của bạn sẽ hiện ở đây
-            cùng link vào lớp và kho record.
+            Sau khi thanh toán, khóa học sẽ hiện ở đây cùng link vào lớp và kho
+            tài liệu.
           </p>
           <div className="mt-6 flex flex-wrap justify-center gap-3">
             <Link
@@ -152,9 +162,9 @@ export default async function AccountPage() {
       ) : (
         <div className="grid gap-5 md:grid-cols-2">
           {enrollments.map((e) => {
-            const course = findCourse(e.cohort.courseSlug);
+            const course = findCourse(e.course.slug);
             const live = hasLiveAccess(e);
-            const secret = secrets.get(e.cohort.id);
+            const secret = secrets.get(e.course.id);
 
             return (
               <div
@@ -164,36 +174,32 @@ export default async function AccountPage() {
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-fg-subtle">
-                      {e.cohort.ky}
+                      Khóa học
                     </p>
                     <h3 className="mt-1.5 text-lg font-bold leading-snug tracking-tight">
                       {/* An orphan slug must not blank the card — show the raw
                           slug so the problem is visible instead of silent. */}
-                      {course?.title ?? e.cohort.courseSlug}
+                      {course?.title ?? e.course.slug}
                     </h3>
                   </div>
                   <Badge tone={live ? "success" : "cool"}>
-                    {statusLabel[e.status] ?? e.status}
+                    {enrollmentLabel(e)}
                   </Badge>
                 </div>
 
                 <dl className="mt-6">
                   <div className="flex flex-wrap items-baseline justify-between gap-2 border-b border-line py-2.5">
-                    <dt className="text-[13px] text-fg-muted">Khai giảng</dt>
+                    <dt className="text-[13px] text-fg-muted">
+                      {e.paidAt ? "Thanh toán" : "Đặt chỗ"}
+                    </dt>
                     <dd className="text-[15px] font-bold text-fg">
-                      {dateFmt.format(e.cohort.khaiGiang)}
-                    </dd>
-                  </div>
-                  <div className="flex flex-wrap items-baseline justify-between gap-2 border-b border-line py-2.5">
-                    <dt className="text-[13px] text-fg-muted">Lịch học</dt>
-                    <dd className="text-[15px] font-semibold text-fg">
-                      {e.cohort.lichHoc}
+                      {dateFmt.format(e.paidAt ?? e.createdAt)}
                     </dd>
                   </div>
                   {e.accessExpiresAt && (
                     <div className="flex flex-wrap items-baseline justify-between gap-2 border-b border-line py-2.5 last:border-0">
                       <dt className="text-[13px] text-fg-muted">
-                        Xem lại đến
+                        Truy cập đến
                       </dt>
                       <dd className="text-[15px] font-semibold text-fg">
                         {dateFmt.format(e.accessExpiresAt)}
@@ -246,20 +252,16 @@ export default async function AccountPage() {
                       )}
                       {!secret?.meetingUrl && !secret?.driveFolderId && (
                         <p className="text-sm leading-relaxed text-fg-muted">
-                          Link vào lớp sẽ được cập nhật trước ngày khai giảng.
+                          Link vào lớp sẽ được cập nhật khi khóa học sẵn sàng.
                         </p>
                       )}
                     </div>
                   ) : (
-                    <div className="flex items-start gap-2.5 rounded-card border border-line bg-bg-soft px-4 py-3">
-                      <IconCalendar
-                        size={16}
-                        className="mt-0.5 shrink-0 text-fg-subtle"
-                      />
+                    <div className="rounded-card border border-line bg-bg-soft px-4 py-3">
                       <p className="text-sm leading-relaxed text-fg-muted">
                         {e.status === "pending"
-                          ? "Link vào lớp và kho record sẽ mở ngay khi học phí được xác nhận."
-                          : "Kỳ học này hiện không còn quyền truy cập."}
+                          ? "Link vào lớp và kho tài liệu sẽ mở ngay khi học phí được xác nhận."
+                          : "Lần mua này hiện không còn quyền truy cập. Lịch sử vẫn được giữ để bạn đối chiếu."}
                       </p>
                     </div>
                   )}

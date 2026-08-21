@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { findVerifyRecipient } from "@/lib/auth-tokens";
+import { safeNext } from "@/lib/safe-path";
 import { verifyPage } from "@/content/auth";
 import { Section, SectionHeading } from "@/components/ui/section";
 import { Card } from "@/components/ui/card";
@@ -18,9 +19,10 @@ const inputClass =
 const primaryButton =
   "w-full rounded-full bg-primary px-6 py-3 text-sm font-bold text-primary-fg transition hover:bg-primary-deep";
 
-function ResendForm() {
+function ResendForm({ next }: { next: string }) {
   return (
     <form action={resendVerification} className="space-y-4">
+      <input type="hidden" name="tiep" value={next} />
       <label className="block text-sm font-semibold">
         {verifyPage.resend.label}
         <input className={inputClass} name="email" type="email" autoComplete="email" required />
@@ -38,8 +40,11 @@ function ResendForm() {
 export default async function VerifyEmailPage({
   searchParams,
 }: PageProps<"/xac-thuc-email">) {
-  const { token, error, sent } = await searchParams;
+  const { token, error, sent, tiep } = await searchParams;
   const safeToken = typeof token === "string" ? token : "";
+  const next = safeNext(tiep);
+  const nextQuery =
+    next === "/tai-khoan" ? "" : `?tiep=${encodeURIComponent(next)}`;
 
   // Resolved on GET but never consumed — see findVerifyRecipient. A token that
   // no longer resolves is reported as such here rather than behind a button
@@ -76,11 +81,11 @@ export default async function VerifyEmailPage({
               <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
                 <Link
                   className="text-sm font-bold text-primary underline underline-offset-4"
-                  href="/xac-thuc-email"
+                  href={`/xac-thuc-email${nextQuery}`}
                 >
                   {verifyPage.sent.again}
                 </Link>
-                <Link className="text-sm font-bold text-primary" href="/dang-nhap">
+                <Link className="text-sm font-bold text-primary" href={`/dang-nhap${nextQuery}`}>
                   {verifyPage.backToSignIn}
                 </Link>
               </div>
@@ -95,6 +100,7 @@ export default async function VerifyEmailPage({
 
               <form action={verifyEmail} className="mt-6">
                 <input type="hidden" name="token" value={safeToken} />
+                <input type="hidden" name="tiep" value={next} />
                 <button type="submit" className={primaryButton}>
                   {verifyPage.confirm.action}
                 </button>
@@ -116,13 +122,13 @@ export default async function VerifyEmailPage({
                   </p>
                 </div>
               )}
-              <ResendForm />
+              <ResendForm next={next} />
             </div>
           )}
 
           {!sent && (
             <p className="mt-5 text-center text-sm">
-              <Link className="font-bold text-primary" href="/dang-nhap">
+              <Link className="font-bold text-primary" href={`/dang-nhap${nextQuery}`}>
                 {verifyPage.backToSignIn}
               </Link>
             </p>

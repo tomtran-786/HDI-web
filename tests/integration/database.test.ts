@@ -10,7 +10,7 @@ import { createOrder, processPayosPayment } from "@/lib/orders";
 import { prisma } from "@/lib/prisma";
 
 const userIds: string[] = [];
-const cohortIds: string[] = [];
+const courseIds: string[] = [];
 const throttleActions: string[] = [];
 
 async function createUser(label: string) {
@@ -31,7 +31,7 @@ async function createUser(label: string) {
 
 afterAll(async () => {
   await prisma.user.deleteMany({ where: { id: { in: userIds } } });
-  await prisma.cohort.deleteMany({ where: { id: { in: cohortIds } } });
+  await prisma.course.deleteMany({ where: { id: { in: courseIds } } });
   await prisma.authThrottle.deleteMany({
     where: { action: { in: throttleActions } },
   });
@@ -44,23 +44,55 @@ describe.sequential("disposable Postgres integration", () => {
       {
         authRls: boolean;
         leaseRls: boolean;
+        courseRls: boolean;
         anonAuth: boolean;
         authenticatedAuth: boolean;
+        anonCourse: boolean;
+        authenticatedCourse: boolean;
       }[]
     >`
       SELECT a.relrowsecurity AS "authRls",
              l.relrowsecurity AS "leaseRls",
+             c.relrowsecurity AS "courseRls",
              has_table_privilege('anon', 'public.auth_throttles', 'select') AS "anonAuth",
-             has_table_privilege('authenticated', 'public.auth_throttles', 'select') AS "authenticatedAuth"
-        FROM pg_class a, pg_class l
+             has_table_privilege('authenticated', 'public.auth_throttles', 'select') AS "authenticatedAuth",
+             has_table_privilege('anon', 'public.courses', 'select') AS "anonCourse",
+             has_table_privilege('authenticated', 'public.courses', 'select') AS "authenticatedCourse"
+        FROM pg_class a, pg_class l, pg_class c
        WHERE a.oid = 'public.auth_throttles'::regclass
-         AND l.oid = 'public.external_sync_leases'::regclass`;
+         AND l.oid = 'public.external_sync_leases'::regclass
+         AND c.oid = 'public.courses'::regclass`;
     expect(rows[0]).toEqual({
       authRls: true,
       leaseRls: true,
+      courseRls: true,
       anonAuth: false,
       authenticatedAuth: false,
+      anonCourse: false,
+      authenticatedCourse: false,
     });
+  });
+
+  it("keeps the active-only uniqueness and foreign-key indexes", async () => {
+    const indexes = await prisma.$queryRaw<{ indexname: string; indexdef: string }[]>`
+      SELECT indexname, indexdef
+        FROM pg_indexes
+       WHERE schemaname = 'public'
+         AND indexname IN (
+           'enrollments_user_id_course_id_active_key',
+           'enrollments_course_id_status_idx',
+           'order_items_course_id_idx'
+         )`;
+    expect(indexes.map((row) => row.indexname).sort()).toEqual([
+      "enrollments_course_id_status_idx",
+      "enrollments_user_id_course_id_active_key",
+      "order_items_course_id_idx",
+    ]);
+    expect(
+      indexes.find(
+        (row) => row.indexname === "enrollments_user_id_course_id_active_key",
+      )?.indexdef,
+    ).toContain("access_revoked_at IS NULL");
   });
 
   it("atomically limits a fixed window under concurrent attempts", async () => {
@@ -103,22 +135,19 @@ describe.sequential("disposable Postgres integration", () => {
       createUser("seat-a"),
       createUser("seat-b"),
     ]);
-    const cohort = await prisma.cohort.create({
+    const course = await prisma.course.create({
       data: {
-        courseSlug: `integration-${randomUUID()}`,
-        ky: "Kỳ integration",
-        khaiGiang: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-        lichHoc: "Integration only",
+        slug: `integration-${randomUUID()}`,
         capacity: 1,
         priceVnd: 1_000_000,
         status: "open",
       },
     });
-    cohortIds.push(cohort.id);
+    courseIds.push(course.id);
 
     const attempts = await Promise.all([
-      createOrder(first.id, [cohort.id]),
-      createOrder(second.id, [cohort.id]),
+      createOrder(first.id, [course.id]),
+      createOrder(second.id, [course.id]),
     ]);
     const winner = attempts.find((result) => result.ok);
     const loser = attempts.find((result) => !result.ok);
@@ -156,5 +185,66 @@ describe.sequential("disposable Postgres integration", () => {
     expect(stored.status).toBe("paid");
     expect(stored.payments).toEqual([{ status: "succeeded" }]);
     expect(stored.items[0]?.enrollment?.status).toBe("paid");
+  });
+
+  it("never creates a partial order when one course in the basket is invalid", async () => {
+    const user = await createUser("atomic-basket");
+    const [openCourse, closedCourse] = await Promise.all([
+      prisma.course.create({
+        data: {
+          slug: `integration-open-${randomUUID()}`,
+          capacity: 5,
+          priceVnd: 400_000,
+          status: "open",
+        },
+      }),
+      prisma.course.create({
+        data: {
+          slug: `integration-closed-${randomUUID()}`,
+          capacity: 5,
+          priceVnd: 600_000,
+          status: "closed",
+        },
+      }),
+    ]);
+    courseIds.push(openCourse.id, closedCourse.id);
+
+    await expect(
+      createOrder(user.id, [openCourse.id, closedCourse.id]),
+    ).resolves.toMatchObject({ ok: false, reason: "not_open" });
+    await expect(
+      prisma.order.count({ where: { userId: user.id } }),
+    ).resolves.toBe(0);
+    await expect(
+      prisma.enrollment.count({ where: { userId: user.id } }),
+    ).resolves.toBe(0);
+  });
+
+  it("allows a new purchase only after paid access is revoked", async () => {
+    const user = await createUser("repurchase");
+    const course = await prisma.course.create({
+      data: {
+        slug: `integration-repurchase-${randomUUID()}`,
+        capacity: 2,
+        priceVnd: 500_000,
+        status: "open",
+      },
+    });
+    courseIds.push(course.id);
+    const old = await prisma.enrollment.create({
+      data: { userId: user.id, courseId: course.id, status: "paid", paidAt: new Date() },
+    });
+
+    await expect(createOrder(user.id, [course.id])).resolves.toMatchObject({
+      ok: false,
+      reason: "already_enrolled",
+    });
+    await prisma.enrollment.update({
+      where: { id: old.id },
+      data: { accessRevokedAt: new Date() },
+    });
+    await expect(createOrder(user.id, [course.id])).resolves.toMatchObject({
+      ok: true,
+    });
   });
 });

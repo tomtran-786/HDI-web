@@ -1,13 +1,13 @@
 import { prisma } from "./prisma";
 import { confirmEnrollment } from "./enrollment";
-import { SEAT_HELD } from "./cohorts";
+import { findCourse } from "./courses";
 import { isPayosNotFound, payosClient } from "./payos";
 
 /**
  * How long a pending order holds its seats.
  *
- * A pending enrolment occupies a place (see SEAT_HELD). Without a deadline an
- * abandoned checkout keeps that place forever and the intake quietly looks
+ * A pending enrolment occupies a place. Without a deadline an abandoned
+ * checkout keeps that place forever and the course quietly looks
  * full — the failure nobody notices, because nothing errors. PayOS and the
  * local reservation share the same two-hour deadline.
  */
@@ -29,19 +29,18 @@ export type OrderSuccess = {
 
 export type OrderResult = OrderSuccess | OrderFailure;
 
-type LockedCohort = {
+type LockedCourse = {
   id: string;
-  ky: string;
-  courseSlug: string;
+  slug: string;
   priceVnd: number;
   capacity: number;
   status: string;
 };
 
 /**
- * Turn a basket of cohort ids into an order, or refuse and say why.
+ * Turn a basket of course ids into an order, or refuse and say why.
  *
- * Everything happens inside one transaction that begins by locking the cohort
+ * Everything happens inside one transaction that begins by locking the course
  * rows with `SELECT … FOR UPDATE`, in id order. That lock is what makes the
  * seat check mean anything: without it, two people buying the last place both
  * count "1 of 2 taken" and both succeed. Locking in a fixed order is what keeps
@@ -51,27 +50,26 @@ type LockedCohort = {
  */
 export async function createOrder(
   userId: string,
-  cohortIds: string[],
+  courseIds: string[],
 ): Promise<OrderResult> {
-  if (cohortIds.length === 0) {
+  if (courseIds.length === 0) {
     return { ok: false, reason: "empty", message: "Giỏ hàng đang trống." };
   }
 
-  const sorted = [...new Set(cohortIds)].sort();
+  const sorted = [...new Set(courseIds)].sort();
 
   // Never hold row locks while calling PayOS. Reconcile candidates first; the
   // transaction below still performs the authoritative seat count.
-  await reconcileStaleOrdersForCohorts(sorted);
+  await reconcileStaleOrdersForCourses(sorted);
 
   return prisma.$transaction(async (tx) => {
-    const locked = await tx.$queryRaw<LockedCohort[]>`
+    const locked = await tx.$queryRaw<LockedCourse[]>`
       SELECT id,
-             ky,
-             course_slug AS "courseSlug",
+             slug,
              price_vnd   AS "priceVnd",
              capacity,
              status::text AS status
-        FROM cohorts
+        FROM courses
        WHERE id = ANY(${sorted}::text[])
        ORDER BY id
          FOR UPDATE`;
@@ -79,51 +77,76 @@ export async function createOrder(
     const byId = new Map(locked.map((c) => [c.id, c]));
 
     const [counts, mine] = await Promise.all([
-      tx.enrollment.groupBy({
-        by: ["cohortId"],
-        where: { cohortId: { in: sorted }, status: { in: SEAT_HELD } },
-        _count: { _all: true },
-      }),
-      // Includes cancelled rows on purpose: the unique index on
-      // (userId, cohortId) means a second attempt has to reuse that row, not
-      // insert beside it.
+      tx.$queryRaw<{ courseId: string; held: bigint }[]>`
+        SELECT course_id AS "courseId", count(*)::bigint AS held
+          FROM enrollments
+         WHERE course_id = ANY(${sorted}::text[])
+           AND (
+             (
+               status = 'paid'::enrollment_status
+               AND access_revoked_at IS NULL
+             )
+             OR (
+               status = 'pending'::enrollment_status
+               AND (
+                 NOT EXISTS (
+                   SELECT 1 FROM order_items oi
+                    WHERE oi.enrollment_id = enrollments.id
+                 )
+                 OR EXISTS (
+                   SELECT 1
+                     FROM order_items oi
+                     JOIN orders o ON o.id = oi.order_id
+                    WHERE oi.enrollment_id = enrollments.id
+                      AND o.status = 'pending'::order_status
+                      AND o.expires_at > now()
+                 )
+               )
+             )
+           )
+         GROUP BY course_id`,
       tx.enrollment.findMany({
-        where: { userId, cohortId: { in: sorted } },
-        select: { id: true, cohortId: true, status: true },
+        where: {
+          userId,
+          courseId: { in: sorted },
+          OR: [
+            { status: "pending" },
+            { status: "paid", accessRevokedAt: null },
+          ],
+        },
+        select: { courseId: true },
       }),
     ]);
 
-    const taken = new Map(counts.map((c) => [c.cohortId, c._count._all]));
-    const existing = new Map(mine.map((e) => [e.cohortId, e]));
+    const taken = new Map(counts.map((row) => [row.courseId, Number(row.held)]));
+    const existing = new Set(mine.map((row) => row.courseId));
 
     // Validate the whole basket before writing anything. A half-placed order is
     // worse than a refused one, and refusing costs the student one message
     // instead of one message per line.
     for (const id of sorted) {
-      const cohort = byId.get(id);
-      if (!cohort || cohort.status !== "open") {
+      const course = byId.get(id);
+      if (!course || course.status !== "open" || !findCourse(course.slug)) {
         return {
           ok: false as const,
           reason: "not_open" as const,
-          message:
-            "Một kỳ học trong giỏ vừa đóng đăng ký. Vui lòng xem lại giỏ hàng.",
+          message: "Một khóa trong giỏ vừa đóng đăng ký. Vui lòng xem lại giỏ hàng.",
         };
       }
 
-      const held = existing.get(id);
-      if (held && SEAT_HELD.includes(held.status)) {
+      if (existing.has(id)) {
         return {
           ok: false as const,
           reason: "already_enrolled" as const,
-          message: `Bạn đã ghi danh kỳ ${cohort.ky} rồi.`,
+          message: `Bạn đang có quyền hoặc đơn chờ thanh toán cho khóa ${findCourse(course.slug)?.title ?? course.slug}.`,
         };
       }
 
-      if ((taken.get(id) ?? 0) >= cohort.capacity) {
+      if ((taken.get(id) ?? 0) >= course.capacity) {
         return {
           ok: false as const,
           reason: "no_seats" as const,
-          message: `Kỳ ${cohort.ky} đã hết chỗ.`,
+          message: `Khóa ${findCourse(course.slug)?.title ?? course.slug} đã hết chỗ.`,
         };
       }
     }
@@ -132,38 +155,23 @@ export async function createOrder(
     const expiresAt = new Date(now.getTime() + ORDER_TTL_HOURS * 3600 * 1000);
 
     const items: {
-      cohortId: string;
+      courseId: string;
       priceVnd: number;
       enrollmentId: string;
     }[] = [];
 
     for (const id of sorted) {
-      const cohort = byId.get(id)!;
-      const held = existing.get(id);
-
-      // Only cancelled or refunded rows reach here — anything live was refused
-      // above. Reset the access fields too: a row that was revoked must not
-      // come back still carrying its revocation.
-      const enrollment = held
-        ? await tx.enrollment.update({
-            where: { id: held.id },
-            data: {
-              status: "pending",
-              paidAt: null,
-              accessExpiresAt: null,
-              accessRevokedAt: null,
-              drivePermissionId: null,
-            },
-            select: { id: true },
-          })
-        : await tx.enrollment.create({
-            data: { userId, cohortId: id },
-            select: { id: true },
-          });
+      const course = byId.get(id)!;
+      // Every purchase gets a new access window. Old paid/cancelled rows remain
+      // immutable history and are never reset in place.
+      const enrollment = await tx.enrollment.create({
+        data: { userId, courseId: id },
+        select: { id: true },
+      });
 
       items.push({
-        cohortId: id,
-        priceVnd: cohort.priceVnd,
+        courseId: id,
+        priceVnd: course.priceVnd,
         enrollmentId: enrollment.id,
       });
     }
@@ -486,13 +494,13 @@ export async function cancelOrder(
   return cancelOrderLocally(order.id, options);
 }
 
-async function reconcileStaleOrdersForCohorts(cohortIds: string[], now = new Date()) {
-  if (cohortIds.length === 0) return;
+async function reconcileStaleOrdersForCourses(courseIds: string[], now = new Date()) {
+  if (courseIds.length === 0) return;
   const candidates = await prisma.order.findMany({
     where: {
       status: "pending",
       expiresAt: { lte: now },
-      items: { some: { cohortId: { in: cohortIds } } },
+      items: { some: { courseId: { in: courseIds } } },
     },
     select: { id: true },
     orderBy: { expiresAt: "asc" },

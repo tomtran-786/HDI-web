@@ -114,4 +114,20 @@ describe("credential registration action", () => {
     });
     expect(mocks.findUnique).not.toHaveBeenCalled();
   });
+
+  it("carries the cart return path into the email and sent state", async () => {
+    mocks.findUnique.mockResolvedValue(null);
+    const form = registrationForm();
+    form.set("tiep", "/?cart=1&course=viet-bao-cao-khoa-hoc");
+
+    await expect(registerAccount(form)).rejects.toMatchObject({
+      url:
+        "/dang-ky-tai-khoan?sent=1&tiep=%2F%3Fcart%3D1%26course%3Dviet-bao-cao-khoa-hoc",
+    });
+    expect(mocks.sendVerification).toHaveBeenCalledWith(
+      expect.objectContaining({
+        next: "/?cart=1&course=viet-bao-cao-khoa-hoc",
+      }),
+    );
+  });
 });

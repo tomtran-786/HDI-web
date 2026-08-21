@@ -11,7 +11,7 @@
  *                  Vercel Analytics cannot attribute the exit on its own.
  *   `doi-sap-xep`  re-sorting the course grid — tells us whether price is what
  *                  people are actually shopping on
- *   `them-vao-gio`  adding an intake to the cart — the first act that costs
+ *   `them-vao-gio`  adding a course to the cart — the first act that costs
  *                  something, and the last one before an account is required
  *   `bo-khoi-gio`  removing one again, which is where price objections show up
  *   `dat-don-hang`  pressing checkout. Compared against `them-vao-gio` this is
@@ -71,17 +71,14 @@ export function trackCourseSort(sort: string) {
   track("doi-sap-xep", { kieu: sort });
 }
 
-/** Fired when an intake is added to the cart. */
-export function trackCartAdd(course: string, cohort: string) {
-  // `khoa` not `ky`: the intake id means nothing in a dashboard, and which
-  // course sells is the question. `ky` is carried separately for the rare case
-  // where two intakes of one course are on sale at once.
-  track("them-vao-gio", { khoa: course, ky: cohort });
+/** Fired when a course is added to the cart. */
+export function trackCartAdd(course: string) {
+  track("them-vao-gio", { khoa: course });
 }
 
-/** Fired when an intake is taken back out of the cart. */
-export function trackCartRemove(course: string, cohort: string) {
-  track("bo-khoi-gio", { khoa: course, ky: cohort });
+/** Fired when a course is taken back out of the cart. */
+export function trackCartRemove(course: string) {
+  track("bo-khoi-gio", { khoa: course });
 }
 
 /**
@@ -89,6 +86,6 @@ export function trackCartRemove(course: string, cohort: string) {
  * about to be sent to the sign-in page. That case is the one worth counting:
  * it is where a funnel loses people quietly.
  */
-export function trackCheckout(items: number, amountVnd: number, signedIn: boolean) {
-  track("dat-don-hang", { so_ky: items, tien: amountVnd, da_dang_nhap: signedIn });
+export function trackCheckout(items: number, amountVnd: number) {
+  track("dat-don-hang", { so_khoa: items, tien: amountVnd });
 }

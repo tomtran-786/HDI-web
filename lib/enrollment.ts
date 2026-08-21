@@ -11,7 +11,7 @@ import type { Prisma } from "./generated/prisma/client";
 export type Db = Prisma.TransactionClient | typeof prisma;
 
 /**
- * When recorded access ends, given the cohort's policy. NULL accessDays means
+ * When recorded access ends, given the course's policy. NULL accessDays means
  * no expiry, which is not the same as "expires now".
  */
 export function accessExpiry(accessDays: number | null, from: Date): Date | null {
@@ -42,7 +42,7 @@ export async function confirmEnrollment(
 ) {
   const enrollment = await db.enrollment.findUnique({
     where: { id: enrollmentId },
-    select: { cohort: { select: { accessDays: true } } },
+    select: { course: { select: { accessDays: true } } },
   });
   if (!enrollment) return { confirmed: false, reason: "not_found" as const };
 
@@ -51,7 +51,7 @@ export async function confirmEnrollment(
     data: {
       status: "paid",
       paidAt,
-      accessExpiresAt: accessExpiry(enrollment.cohort.accessDays, paidAt),
+      accessExpiresAt: accessExpiry(enrollment.course.accessDays, paidAt),
     },
   });
 

@@ -1,4 +1,5 @@
 import { appUrl } from "./email";
+import { findCourse } from "./courses";
 import { prisma } from "./prisma";
 import { isPayosNotFound, payosClient } from "./payos";
 import { cancelOrder } from "./orders";
@@ -26,7 +27,7 @@ export async function ensurePayosCheckout(
       items: {
         select: {
           priceVnd: true,
-          cohort: { select: { courseSlug: true, ky: true } },
+          course: { select: { slug: true } },
         },
       },
     },
@@ -58,7 +59,7 @@ export async function ensurePayosCheckout(
       buyerEmail: order.user.email,
       buyerPhone: order.user.phone ?? undefined,
       items: order.items.map((item) => ({
-        name: `${item.cohort.courseSlug} ${item.cohort.ky}`.slice(0, 80),
+        name: (findCourse(item.course.slug)?.title ?? item.course.slug).slice(0, 80),
         quantity: 1,
         price: item.priceVnd,
       })),
@@ -118,4 +119,3 @@ export async function ensurePayosCheckout(
     }
   }
 }
-

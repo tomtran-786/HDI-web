@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { forgotPage } from "@/content/auth";
+import { safeNext } from "@/lib/safe-path";
 import { Section, SectionHeading } from "@/components/ui/section";
 import { Card } from "@/components/ui/card";
 import { IconCheck } from "@/components/ui/icons";
@@ -14,7 +15,10 @@ export const metadata: Metadata = {
 export default async function ForgotPasswordPage({
   searchParams,
 }: PageProps<"/quen-mat-khau">) {
-  const { sent } = await searchParams;
+  const { sent, tiep } = await searchParams;
+  const next = safeNext(tiep);
+  const nextQuery =
+    next === "/tai-khoan" ? "" : `?tiep=${encodeURIComponent(next)}`;
 
   return (
     <Section soft>
@@ -42,11 +46,11 @@ export default async function ForgotPasswordPage({
               <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
                 <Link
                   className="text-sm font-bold text-primary underline underline-offset-4"
-                  href="/quen-mat-khau"
+                  href={`/quen-mat-khau${nextQuery}`}
                 >
                   {forgotPage.sent.again}
                 </Link>
-                <Link className="text-sm font-bold text-primary" href="/dang-nhap">
+                <Link className="text-sm font-bold text-primary" href={`/dang-nhap${nextQuery}`}>
                   {forgotPage.backToSignIn}
                 </Link>
               </div>
@@ -54,6 +58,7 @@ export default async function ForgotPasswordPage({
           ) : (
             <>
               <form action={requestPasswordReset} className="space-y-4">
+                <input type="hidden" name="tiep" value={next} />
                 <label className="block text-sm font-semibold">
                   {forgotPage.label}
                   <input
@@ -76,7 +81,7 @@ export default async function ForgotPasswordPage({
               </form>
 
               <p className="mt-5 text-center text-sm">
-                <Link className="font-bold text-primary" href="/dang-nhap">
+                <Link className="font-bold text-primary" href={`/dang-nhap${nextQuery}`}>
                   {forgotPage.backToSignIn}
                 </Link>
               </p>

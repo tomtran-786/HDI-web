@@ -7,22 +7,26 @@ import { allowAuthEmail, serverActionIp } from "@/lib/auth-throttle";
 import { createAuthToken, VERIFY_TOKEN_TTL_MS } from "@/lib/auth-tokens";
 import { sendVerificationEmail } from "@/lib/email";
 import { prisma } from "@/lib/prisma";
+import { safeNext } from "@/lib/safe-path";
 
 const REGISTER = "/dang-ky-tai-khoan";
 
 export async function registerAccount(formData: FormData) {
+  const next = safeNext(formData.get("tiep"));
+  const nextSuffix =
+    next === "/tai-khoan" ? "" : `&tiep=${encodeURIComponent(next)}`;
   const parsed = registrationSchema.safeParse({
     name: formData.get("name"),
     email: formData.get("email"),
     password: formData.get("password"),
     confirmPassword: formData.get("confirmPassword"),
   });
-  if (!parsed.success) redirect(`${REGISTER}?error=invalid`);
+  if (!parsed.success) redirect(`${REGISTER}?error=invalid${nextSuffix}`);
 
   const { name, email, password } = parsed.data;
   const ip = await serverActionIp();
   if (!(await allowAuthEmail("register", email, ip))) {
-    redirect(`${REGISTER}?sent=1`);
+    redirect(`${REGISTER}?sent=1${nextSuffix}`);
   }
 
   let recipient: { id: string; email: string; name: string } | null = null;
@@ -73,9 +77,9 @@ export async function registerAccount(formData: FormData) {
       to: recipient.email,
       name: recipient.name,
       token,
+      ...(next !== "/tai-khoan" ? { next } : {}),
     }).catch((error) => console.error("[register] Không gửi được email:", error));
   }
 
-  redirect(`${REGISTER}?sent=1`);
+  redirect(`${REGISTER}?sent=1${nextSuffix}`);
 }
-

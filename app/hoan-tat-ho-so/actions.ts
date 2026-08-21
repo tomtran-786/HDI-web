@@ -26,17 +26,18 @@ export async function saveProfile(
   _prev: ProfileState,
   formData: FormData,
 ): Promise<ProfileState> {
+  const next = safeNext(formData.get("tiep"));
   // A server action is its own endpoint — re-check the session here rather than
   // trusting the page that rendered the form.
   const session = await auth();
-  if (!session?.user?.id) redirect("/dang-nhap");
+  if (!session?.user?.id) {
+    redirect(`/dang-nhap?tiep=${encodeURIComponent(next)}`);
+  }
 
   const phone = normalizePhone(String(formData.get("phone") ?? ""));
   const stage = String(formData.get("stage") ?? "");
   // Read before the validation returns below, so a rejected submit does not
   // forget where the student was headed.
-  const next = safeNext(formData.get("tiep"));
-
   if (!PHONE_RE.test(phone)) {
     return {
       error: "Số điện thoại chưa đúng. Ví dụ: 0939979890 hoặc +84939979890.",

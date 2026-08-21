@@ -6,6 +6,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useState,
   useSyncExternalStore,
   type ReactNode,
 } from "react";
@@ -17,6 +18,7 @@ import {
   parseCart,
   serializeCart,
 } from "@/lib/cart-cookie";
+import { CartModal } from "./cart-modal";
 
 // --- the cookie, as an external store --------------------------------------
 //
@@ -68,6 +70,8 @@ type CartContext = {
   add: (id: string) => void;
   remove: (id: string) => void;
   clear: () => void;
+  openCart: (courseSlug?: string) => void;
+  closeCart: () => void;
 };
 
 const Ctx = createContext<CartContext | null>(null);
@@ -76,6 +80,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const raw = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
   const ids = useMemo(() => parseCart(raw), [raw]);
   const pathname = usePathname();
+  const [modalOpen, setModalOpen] = useState(false);
+  const [focusSlug, setFocusSlug] = useState<string | null>(null);
 
   // Checkout clears the cart from the server, where this component cannot
   // observe the write. A navigation is the one moment that can have happened,
@@ -83,6 +89,30 @@ export function CartProvider({ children }: { children: ReactNode }) {
   // showing three items on the order confirmation page.
   useEffect(() => {
     emit();
+  }, [pathname]);
+
+  // Authentication and profile-completion routes return here with these
+  // short-lived controls. Open once, then leave the canonical landing URL in
+  // the address bar without causing another navigation or server render.
+  useEffect(() => {
+    if (pathname !== "/") return;
+    const url = new URL(window.location.href);
+    if (url.searchParams.get("cart") !== "1") return;
+    const course = url.searchParams.get("course");
+    // Strip the parameters only once the modal is actually opening. Clearing
+    // them up here instead loses the handoff whenever this effect runs twice:
+    // the cleanup cancels the pending frame, and the second pass reads a URL
+    // the first already emptied. React's StrictMode does exactly that on every
+    // development mount, which left a student returning from login staring at
+    // the plain landing page with no cart in sight.
+    const frame = window.requestAnimationFrame(() => {
+      url.searchParams.delete("cart");
+      url.searchParams.delete("course");
+      window.history.replaceState(window.history.state, "", url);
+      setFocusSlug(course);
+      setModalOpen(true);
+    });
+    return () => window.cancelAnimationFrame(frame);
   }, [pathname]);
 
   const add = useCallback((id: string) => {
@@ -96,6 +126,12 @@ export function CartProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const clear = useCallback(() => writeCookie([]), []);
+  const openCart = useCallback((courseSlug?: string) => {
+    emit();
+    setFocusSlug(courseSlug ?? null);
+    setModalOpen(true);
+  }, []);
+  const closeCart = useCallback(() => setModalOpen(false), []);
 
   const value = useMemo<CartContext>(
     () => ({
@@ -106,11 +142,28 @@ export function CartProvider({ children }: { children: ReactNode }) {
       add,
       remove,
       clear,
+      openCart,
+      closeCart,
     }),
-    [ids, add, remove, clear],
+    [ids, add, remove, clear, openCart, closeCart],
   );
 
-  return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
+  return (
+    <Ctx.Provider value={value}>
+      {children}
+      {modalOpen && (
+        <CartModal
+          open
+          focusSlug={focusSlug}
+          ids={ids}
+          full={ids.length >= CART_MAX_ITEMS}
+          add={add}
+          remove={remove}
+          onClose={closeCart}
+        />
+      )}
+    </Ctx.Provider>
+  );
 }
 
 export function useCart() {

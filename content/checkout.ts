@@ -1,55 +1,33 @@
 /**
- * Copy for the cart, the intake picker and the order pages.
+ * Copy for the cart modal and order pages.
  *
  * Nothing here states a fact about the world that HDI has not supplied. In
  * Payment copy points students to the hosted PayOS link and never publishes
  * bank details or treats return-page query parameters as proof of payment.
  */
 
-export const enrolPage = {
-  eyebrow: "Đăng ký",
-  emptyTitle: "Chưa mở kỳ mới cho khóa này",
-  emptyBody:
-    "Các kỳ học được mở theo đợt. Để lại lời nhắn qua Zalo hoặc email, HDI sẽ báo bạn ngay khi có lịch khai giảng mới.",
-  seatsLabel: "Chỗ còn lại",
-  addLabel: "Thêm vào giỏ",
-  addedLabel: "Đã có trong giỏ",
-  enrolledLabel: "Bạn đã ghi danh kỳ này",
-  fullLabel: "Đã hết chỗ",
-  listedPriceNote:
-    "Học phí hiển thị theo kỳ. Mức niêm yết trên trang khóa học có thể khác nếu HDI điều chỉnh giá cho kỳ này.",
-} as const;
-
-export const cartPage = {
-  eyebrow: "Giỏ hàng",
-  title: "Các kỳ học bạn chọn",
-  empty: "Giỏ hàng đang trống.",
-  emptyBody:
-    "Chọn một khóa học, mở lộ trình và thêm kỳ bạn muốn tham gia vào giỏ.",
-  browse: "Xem các khóa học",
+export const cartModal = {
+  eyebrow: "Đăng ký học",
+  title: "Chọn khóa học",
+  intro: "Chọn các khóa còn chỗ, kiểm tra tổng tiền rồi thanh toán một lần.",
+  close: "Đóng giỏ hàng",
+  loading: "Đang tải khóa học",
+  loadError: "Chưa tải được khóa học. Vui lòng thử lại.",
+  pruned:
+    "Một số khóa không còn mở, đã hết chỗ hoặc không còn tồn tại nên được bỏ khỏi giỏ.",
+  selected: "Đã chọn",
+  empty: "Chọn ít nhất một khóa đang mở để thanh toán.",
   total: "Tổng cộng",
-  checkout: "Đặt đơn và giữ chỗ",
-  checkoutSignedOut: "Đăng nhập để đặt đơn",
-  removeLabel: "Bỏ khỏi giỏ",
-  droppedNotice:
-    "Một số kỳ trong giỏ đã đóng đăng ký và được bỏ ra khỏi giỏ hàng.",
-  blockedNotice:
-    "Những kỳ được đánh dấu bên dưới sẽ không nằm trong đơn hàng.",
-  holdNote:
-    "Đặt đơn giữ chỗ trong 2 giờ và chuyển sang PayOS. Quyền record được cấp cho email đăng nhập, nên email đó cần thuộc một tài khoản Google.",
-  confirmTitle: "Xác nhận trước khi đặt đơn",
-  confirmTotal: "Thành tiền",
-  confirmCta: "Xác nhận và giữ chỗ",
-  confirmCancel: "Quay lại giỏ hàng",
+  paying: "Đang kết nối PayOS…",
+  checkout: "Thanh toán",
+  availability: {
+    buyable: "Còn chỗ",
+    not_open: "Chưa mở đăng ký",
+    full: "Đã hết chỗ",
+    pending: "Đang chờ thanh toán",
+    already_enrolled: "Bạn đang có quyền truy cập",
+  },
 } as const;
-
-/** Bước hiện tại trong luồng đăng ký → giỏ hàng → thanh toán → hoàn tất. */
-export const checkoutSteps = [
-  "Chọn kỳ",
-  "Giỏ hàng",
-  "Thanh toán",
-  "Hoàn tất",
-] as const;
 
 export const orderPage = {
   eyebrow: "Đơn hàng",
@@ -62,7 +40,7 @@ export const orderPage = {
     title: "Chờ thanh toán qua PayOS",
     body:
       "Chỗ học đang được giữ trong 2 giờ. Hoàn tất trên PayOS; HDI chỉ xác nhận khi nhận được webhook có chữ ký hợp lệ.",
-    hint: "Nếu đường dẫn chưa xuất hiện, PayOS có thể đang gián đoạn. Không tạo thêm đơn cho cùng kỳ học.",
+    hint: "Nếu đường dẫn chưa xuất hiện, PayOS có thể đang gián đoạn. Không tạo thêm đơn cho cùng khóa học.",
   },
   paid: {
     title: "Đã thanh toán",
@@ -72,7 +50,7 @@ export const orderPage = {
   closed: {
     cancelled: "Đơn này đã hủy. Chỗ học đã được trả lại.",
     expired:
-      "Đơn này đã quá hạn giữ chỗ và tự đóng. Bạn có thể đặt lại nếu kỳ học vẫn còn chỗ.",
+      "Đơn này đã quá hạn giữ chỗ và tự đóng. Bạn có thể đặt lại nếu khóa học vẫn còn chỗ.",
     refunded: "Đơn này đã được hoàn tiền.",
   },
 } as const;

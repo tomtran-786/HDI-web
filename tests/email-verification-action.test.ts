@@ -79,4 +79,13 @@ describe("email verification action", () => {
     });
     expect(mocks.updateMany).not.toHaveBeenCalled();
   });
+
+  it("preserves the cart return after a successful verification", async () => {
+    const form = verificationForm();
+    form.set("tiep", "/?cart=1&course=viet-bao-cao-khoa-hoc");
+    await expect(verifyEmail(form)).rejects.toMatchObject({
+      url:
+        "/dang-nhap?verified=1&tiep=%2F%3Fcart%3D1%26course%3Dviet-bao-cao-khoa-hoc",
+    });
+  });
 });
