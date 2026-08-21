@@ -36,9 +36,10 @@ thiệu các chương trình kèm cặp nghiên cứu và khóa học 8 buổi; 
 > (đăng nhập bằng email/mật khẩu hoặc Google → PayOS → webhook → cấp quyền Google Drive).
 > Kế hoạch đầy đủ ở
 > `~/.claude/plans/b-t-u-phi-n-m-i-twinkly-karp.md`. **Chốt 2026-08-20: HDI tách khỏi edubit**
-> — nút chặn của GĐ2–GĐ4 đã gỡ. Đã xong phần code của **GĐ0–GĐ4** trên nhánh
-> `feat/gd2-nen-tang`; PayOS, Resend và Google Drive còn cần bí mật/tài khoản production
-> của HDI trước khi kiểm thử sandbox và mở bán.
+> — nút chặn của GĐ2–GĐ4 đã gỡ. Phần code của **GĐ0–GĐ4 đã xong và đã merge vào
+> `main`** ngày 2026-08-21 (nhánh `feat/gd2-nen-tang` đã hoàn thành vai trò);
+> PayOS, Resend và Google Drive còn cần bí mật/tài khoản production của HDI trước
+> khi mở bán — xem mục 8.
 >
 > Kế hoạch chi tiết GĐ2 ở `~/.claude/plans/users-tranvomanhtuan-portfolio-app-hdi-cryptic-kite.md`.
 > **Repo nguồn để chép code nền tảng: `/Users/tranvomanhtuan/portfolio-app`, nhánh `main`.**
@@ -79,7 +80,10 @@ components/
   cart-provider.tsx ← "use client": giỏ hàng đọc từ cookie qua useSyncExternalStore
   cart-button.tsx   ← "use client": nút giỏ + badge ở header
   add-to-cart.tsx   ← "use client": nút "Thêm vào giỏ" ở /dang-ky/[slug]
-  ui/     section.tsx  card.tsx  badge.tsx  reveal.tsx  icons.tsx
+  checkout-steps.tsx ← chỉ báo bước 1-4, co lại thành "Bước n/4" dưới sm:
+  hold-countdown.tsx ← "use client": đếm ngược 2 giờ giữ chỗ từ expiresAt
+  payment-poll.tsx   ← "use client": kiểm lại kết quả PayOS, có giới hạn số lần
+  ui/     section.tsx  card.tsx  badge.tsx  reveal.tsx  icons.tsx  skeleton.tsx
           cta-link.tsx ← "use client": MỌI CTA đi qua đây (tư vấn / Zalo / đăng ký)
   sections/  hero  stats  programs  featured-course  services
              about  publications  projects  conferences  teaching  contact
@@ -87,8 +91,14 @@ lib/
   analytics.ts     3 event đo phễu + union CtaSource
   prisma.ts        singleton pg.Pool + PrismaPg (GĐ2)
   auth.ts          Auth.js v5 + Credentials + Google + JWT + isAdminEmail
-  auth-tokens.ts   token xác minh/reset chỉ lưu SHA-256 + giới hạn thời gian
+  auth-tokens.ts   token xác minh/reset chỉ lưu SHA-256 + findVerifyRecipient()
+                   (tra token mà KHÔNG tiêu thụ — bộ quét thư đừng đốt liên kết)
   auth-throttle.ts giới hạn đăng nhập và email bằng khoá HMAC trong Postgres
+  auth-input.ts    schema Zod cho auth + maskEmail() che địa chỉ khi hiển thị
+  auth-secret.ts   requiredAuthSecret() — ném lỗi lúc nạp module, không fallback
+  auth-session.ts  jwtSurvivesSessionCutoff() — fail closed khi thiếu issue time
+  auth-account-link.ts  chặn chiếm tài khoản khi Google liên kết đè lên
+  credential-password.ts  bcrypt so cả khi không có user (chống timing oracle)
   admin.ts         requireAdmin() cho server action (GĐ2)
   courses.ts       cầu nối DB ↔ content/course.ts (GĐ2)
   profile.ts       isProfileComplete + chuẩn hoá SĐT (GĐ2)
@@ -98,7 +108,11 @@ lib/
   cart-cookie.ts   định dạng cookie, dùng chung cho cả client lẫn server (GĐ3)
   orders.ts        createOrder · processPayosPayment · cancelOrder · expireStaleOrders
   payos.ts         client PayOS + xác minh chữ ký webhook
+  payment-checkout.ts  ensurePayosCheckout() — khôi phục link cũ thay vì tạo trùng
   fulfillment.ts   cấp/thu hồi quyền Google Drive có lease và đối soát
+  google-drive.ts  grant/revoke idempotent, revoke tự tra lại id nếu đã 404
+  external-lease.ts  lease TTL trong Postgres, chặn webhook và cron ghi đè nhau
+  email.ts         Resend + template dùng ĐÚNG bảng màu của site (xem chú thích)
   format.ts        Intl dùng chung (ngày giờ Asia/Ho_Chi_Minh, tiền VNĐ)
   safe-path.ts     safeNext() — chặn open redirect ở ?tiep=
   generated/       Prisma Client — SINH RA lúc postinstall, đã gitignore
@@ -107,14 +121,18 @@ prisma/
                    + Order/OrderItem/Payment + AuthThrottle/ExternalSyncLease
   load-env.ts      nạp .env.local TRƯỚC mọi import khác — xem chú thích trong file
   seed.ts          upsert kỳ học từ prisma/cohorts.json (gitignore)
-  cohorts.example.json
-  migrations/      3 migration, chạy lại từ DB trống là dựng đủ schema
+  cohorts.example.json  drive-folders.example.json
+  migrations/      4 migration; dựng lại từ DB trống đã được kiểm chứng thật
+                   bằng Postgres disposable (xem mục 6)
 prisma.config.ts   CLI trỏ DIRECT_DATABASE_URL (session pooler :5432)
 content/    ← TOÀN BỘ chữ nghĩa nằm ở đây, không hardcode trong JSX
   site.ts  programs.ts  course.ts  services.ts  about.ts
   publications.ts  projects.ts  conferences.ts  teaching.ts  stats.ts
   account.ts   ← 5 lựa chọn "giai đoạn" chép nguyên từ Google Form cũ
   checkout.ts  ← chữ cho giỏ hàng, trang chọn kỳ và trang đơn hàng
+  auth.ts      ← chữ cho cả 5 trang auth; chú thích ở đầu file ghi hai ràng buộc
+                 của backend mà chữ nghĩa BẮT BUỘC phải phản ánh
+tests/         24 file · `npm test` (unit) và tests/integration/ (Postgres thật)
 vercel.json   ghim Framework Preset = nextjs (xem Nhật ký phiên, sự cố 404)
               + regions: icn1 (cùng Seoul với DB) + cron dọn đơn quá hạn
 public/
@@ -220,19 +238,19 @@ Về chúng tôi(bg) · Công bố(soft) · Dự án(bg) · Hội thảo(soft) �
 | 12 | Liên hệ | `#lien-he` | ✅ xong |
 | 13 | Footer 4 cột | — | ✅ xong |
 
-**GĐ2 — khu vực học viên** (nhánh `feat/gd2-nen-tang`):
+**GĐ2 — khu vực học viên** (đã merge vào `main` ngày 2026-08-21):
 
 | # | Hạng mục | Route | Trạng thái |
 |---|---|---|---|
-| 14 | Schema Prisma + `lib/prisma.ts` + 2 migration đã áp | — | ✅ xong (qua MCP Supabase) |
-| 15 | Auth.js v5 + email/mật khẩu + Google OAuth | `/api/auth/*` | ✅ xong · JWT 30 ngày, xác minh/reset email, liên kết Google an toàn |
-| 16 | Trang đăng nhập | `/dang-nhap` | ✅ xong, đã chụp ảnh sáng + tối |
+| 14 | Schema Prisma + `lib/prisma.ts` + khoá PostgREST | — | ✅ xong · **4 migration**, dựng lại từ DB trống đã kiểm chứng thật |
+| 15 | Auth.js v5 + Google OAuth | `/api/auth/*` | ✅ xong · **JWT** 30 ngày + cutoff `sessionsValidAfter` (Credentials buộc phải JWT) |
+| 16 | Trang đăng nhập | `/dang-nhap` | ✅ xong · có test render, chặn `?tiep=` trỏ ra ngoài site |
 | 17 | Dashboard học viên | `/tai-khoan` | ✅ xong · đã test đủ 3 trạng thái + cách ly |
 | 18 | Trang quản trị | `/quan-tri` | ✅ xong · đã test 3 mức quyền |
 | 19 | Header/footer chuyển lên `layout.tsx` | — | ✅ xong, `/` **pixel-identical** |
 | 20 | Hoàn tất hồ sơ (SĐT + giai đoạn) | `/hoan-tat-ho-so` | ✅ xong · lấy đúng 5 lựa chọn của form cũ |
 
-**GĐ3 — giỏ hàng và đơn hàng** (cùng nhánh):
+**GĐ3 — giỏ hàng và đơn hàng:**
 
 | # | Hạng mục | Route | Trạng thái |
 |---|---|---|---|
@@ -243,7 +261,29 @@ Về chúng tôi(bg) · Công bố(soft) · Dự án(bg) · Hội thảo(soft) �
 | 25 | Đơn hàng của học viên | `/tai-khoan/don-hang[/mã]` | ✅ xong · truy vấn luôn kèm `userId` |
 | 26 | Hàng chờ đối soát (chỉ xem) | `/quan-tri` | ✅ xong · **không có nút duyệt tay** |
 | 27 | Cron đối soát đơn/Drive và dọn dữ liệu ngắn hạn | `/api/cron/...` | ✅ xong · housekeeping có giới hạn, không quyết định tính đúng của checkout |
-| 28 | PayOS + webhook + Google Drive fulfillment | `/api/webhooks/payos` | ✅ code + full local E2E bằng Google Account phụ xong · còn đăng ký webhook production sau deploy |
+
+**GĐ4 — thanh toán, email và cấp quyền:**
+
+| # | Hạng mục | Route | Trạng thái |
+|---|---|---|---|
+| 28 | PayOS + webhook có chữ ký + idempotency | `/api/webhooks/payos` | ✅ code + E2E thật xong · **còn đăng ký webhook production sau deploy** |
+| 29 | Đăng ký tài khoản + xác thực email | `/dang-ky-tai-khoan` · `/xac-thuc-email` | ✅ xong · token chỉ lưu SHA-256, TTL 24 giờ, GET **không** tiêu thụ token |
+| 30 | Quên / đặt lại mật khẩu | `/quen-mat-khau` · `/dat-lai-mat-khau` | ✅ xong · TTL 30 phút, dùng một lần, đẩy `sessionsValidAfter` |
+| 31 | Rate limit mọi endpoint auth | — | ✅ xong · `auth_throttles`, gồm cả **lượt tiêu thụ** token reset |
+| 32 | Email giao dịch (Resend) | — | ✅ code xong · **còn xác minh domain HDI** thì mới gửi được cho học viên thật |
+| 33 | Cấp/thu hồi quyền Google Drive có lease | — | ✅ xong · idempotent, revoke kiểm tra folder dùng chung trước khi thu hồi |
+
+**Hoàn thiện giao diện + audit** (2026-08-21):
+
+| # | Hạng mục | Route | Trạng thái |
+|---|---|---|---|
+| 34 | Xác nhận báo giá trước khi tạo đơn | `/gio-hang` | ✅ xong · đóng dialog **không** tạo `Order`; chừa sẵn chỗ cho dòng giảm giá sau này |
+| 35 | Chỉ báo bước · đếm ngược giữ chỗ · polling kết quả PayOS | 4 route trong luồng | ✅ xong |
+| 36 | `loading.tsx` cho 5 route gọi DB/PayOS | — | ✅ xong |
+| 37 | Toàn bộ chữ của 5 trang auth vào `content/auth.ts` | — | ✅ xong · chỉ còn `metadata.title` hardcode, giống mọi trang khác |
+
+**Kiểm thử tự động:** `npm test` **104/104** · `npm run test:integration` **4/4**
+(Postgres 16 disposable trong Docker, 4 migration áp từ DB trống).
 
 **Kiểm chứng số liệu** (đối chiếu với `reference/site`): 13 công bố · 14 hội thảo ·
 3 đề tài (US$31,000 + US$2,100 + US$4,200 = US$37,300) · 4 luận án hướng dẫn ·
@@ -258,7 +298,27 @@ npm run dev      # http://localhost:3000
 npm run build    # phải sạch TypeScript
 npx eslint .     # phải sạch
 npx tsc --noEmit # phải sạch
+npm test         # 104 unit test, không cần CSDL
 ```
+
+**Integration test cần một Postgres dùng-một-lần**, không bao giờ chạy vào DB thật —
+runner tự từ chối nếu `TEST_DATABASE_URL` trùng `DATABASE_URL`, và bắt buộc phải khai
+báo rằng CSDL đó được phép xoá:
+
+```bash
+docker run -d --name hdi-int-test -e POSTGRES_PASSWORD=disposable \
+  -e POSTGRES_DB=hdi_integration -p 55433:5432 postgres:16-alpine
+
+TEST_DATABASE_URL="postgresql://postgres:disposable@127.0.0.1:55433/hdi_integration" \
+HDI_TEST_DATABASE_CONFIRM_DISPOSABLE=1 npm run test:integration
+
+docker rm -f hdi-int-test   # nhớ dọn
+```
+
+> Đây cũng là cách duy nhất kiểm được lời hứa "dựng lại DB từ số 0": runner chạy
+> `migrate deploy` lên một CSDL trống trước khi test. Ảnh Postgres sạch **không** có
+> hai role `anon`/`authenticated` mà Supabase tạo sẵn — runner tự tạo chúng, dưới
+> guard xác nhận CSDL là dùng-một-lần.
 
 **Cơ sở dữ liệu (GĐ2).** Cần `.env.local` có `DATABASE_URL` (:6543) và
 `DIRECT_DATABASE_URL` (:5432) — xem `.env.example`:
@@ -1007,6 +1067,7 @@ thật được tạo** → trang đơn hàng hiện đúng badge/countdown/step
   Không phát hiện sai lệch so với Plan.MD.
 - `npm run test:integration` **bỏ qua** vì Docker daemon không chạy trong môi trường
   này (binary có, daemon không) — không phải lỗ hổng, chỉ là chưa chạy được lần này.
+  → **Đã chạy được ngay sau đó**, xem mục Phiên 7 (tiếp) bên dưới: 4/4 qua.
 
 **Kiểm chứng:** `tsc --noEmit` + `eslint` + `build` sạch; `npm test` **84/84** (tăng từ
 69, thêm `tests/auth-throttle.test.ts` + `tests/auth-pages.test.tsx`); `/` vẫn
@@ -1107,7 +1168,7 @@ khoản); `npm run test:integration` **4/4**; `/` vẫn `○ (Static)`; `overflo
 - [ ] **Đặt `CRON_SECRET` trên Vercel** — thiếu nó thì route housekeeping luôn trả 404. Checkout vẫn tự đối soát đơn quá hạn trước khi bán chỗ; cron mỗi ngày xử lý thêm retry/revoke Drive và dọn token/lease/throttle.
 - [ ] **Sequence mã đơn đã tiến thêm trong lúc kiểm thử sandbox.** Vô hại — sequence không lùi, và mã đơn không được phép dùng lại. Đừng reset cho đẹp.
 - [ ] **Chính sách hoàn tiền / huỷ đơn** chưa có chữ nào. Trạng thái `refunded` đã có trong DB nhưng chưa có luồng nào dẫn tới nó. Cần Dr. Trinh quyết trước khi thu tiền thật.
-- [ ] **GĐ2 — việc tay còn lại:** (1) ~~điền mật khẩu DB~~ ✅ xong; (2) xác nhận OAuth Client ID có redirect `/api/auth/callback/google` cho localhost + preview + prod; (3) service account có quyền quản lý Shared Drive; (4) lịch kỳ học thật từ Dr. Trinh để seed.
+- [ ] **GĐ2 — việc tay còn lại:** (1) ~~điền mật khẩu DB~~ ✅ xong; (2) OAuth redirect `/api/auth/callback/google` — ~~localhost~~ ✅ đã xác nhận bằng lần đăng nhập Google thật, **preview + prod thì chưa**; (3) ~~service account quản lý được Shared Drive~~ ✅ đã kiểm thật trên cả 5 folder; (4) lịch kỳ học thật từ Dr. Trinh để seed — **đây là thứ duy nhất còn chặn việc mở bán**, vì kỳ học mặc định là `draft` và mọi trang bán hàng chỉ đọc kỳ `open`.
 - [ ] **Trang chính sách bảo mật + dòng đồng ý.** Từ GĐ2 trang đã lưu tên, email, lịch sử ghi danh — hiện chưa có trang chính sách nào. Nên làm trước khi có học viên thật.
 - [ ] **Bật sao lưu DB** (Point-in-Time Recovery của Supabase). Từ giờ có dữ liệu không tái tạo được từ git.
 - [ ] **Học phí:** `content/course.ts` đang mirror giá edubit. Đã tách khỏi edubit thì `Cohort.priceVnd` mới là giá thật — cần đối chiếu hai chỗ khi seed.
