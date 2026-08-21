@@ -1,5 +1,6 @@
 {
   "framework": "nextjs",
+  "buildCommand": "prisma migrate deploy && next build",
   "regions": [
     "icn1"
   ],
