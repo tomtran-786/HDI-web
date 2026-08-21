@@ -1,7 +1,7 @@
 import { programIcons } from "../ui/icons";
 import { programs, programsIntro } from "@/content/programs";
-import { links } from "@/content/site";
 import { Card } from "../ui/card";
+import { CtaLink } from "../ui/cta-link";
 import { Reveal } from "../ui/reveal";
 import { Section, SectionHeading } from "../ui/section";
 import { IconArrow } from "../ui/icons";
@@ -43,15 +43,14 @@ export function Programs() {
       <Reveal delay={140}>
         <div className="mt-8 flex flex-col items-start justify-between gap-4 rounded-card border border-line bg-card px-6 py-5 sm:flex-row sm:items-center">
           <p className="text-sm text-fg-muted">{programsIntro.note}</p>
-          <a
-            href={links.register}
-            target="_blank"
-            rel="noopener noreferrer"
+          <CtaLink
+            source="chuong-trinh"
+            target="tu-van"
             className="inline-flex shrink-0 items-center gap-2 text-sm font-bold text-primary hover:underline"
           >
             Đăng ký buổi tư vấn miễn phí
             <IconArrow size={15} />
-          </a>
+          </CtaLink>
         </div>
       </Reveal>
     </Section>

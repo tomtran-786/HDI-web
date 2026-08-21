@@ -1,0 +1,375 @@
+// HDI Research Center — GĐ2 schema.
+//
+// Two groups of models live here:
+//   1. The four Auth.js tables (User, Account, Session, VerificationToken).
+//      Their FIELD names are dictated by @auth/prisma-adapter — renaming any of
+//      them breaks the adapter at runtime, not at compile time. Only the TABLE
+//      names are ours, via @@map.
+//   2. HDI's domain: Cohort and Enrollment.
+//
+// Every column is lowercase snake_case via @map, while the Prisma field names
+// stay camelCase. The adapter binds to Prisma FIELD names, so it never sees the
+// mapping — and Postgres never ends up with quoted mixed-case identifiers that
+// every other tool then has to quote forever.
+//
+// Course marketing copy stays in content/course.ts (Plan.MD §3: every fact must
+// trace back to reference/). Only the *intake* lives here — because meetingUrl
+// and driveFolderId are secrets and this repo is public.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../lib/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ---------------------------------------------------------------- Auth.js ---
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String    @unique
+  emailVerified DateTime? @map("email_verified") @db.Timestamptz(6)
+  image         String?
+
+  /// Credentials are optional because an account may use Google only. Never
+  /// select this field into a session or page response.
+  passwordHash String? @map("password_hash") @db.VarChar(100)
+
+  /// JWTs issued before this instant are rejected. Credentials requires JWT
+  /// sessions in Auth.js, so this is the server-side global sign-out cutoff.
+  sessionsValidAfter DateTime? @map("sessions_valid_after") @db.Timestamptz(6)
+
+  // Ours. Google supplies name + email; these two are what it cannot give us, so
+  // /hoan-tat-ho-so asks for them once after the first sign-in. They mirror the
+  // Google Form this app replaces (Họ tên · Email · SĐT · Giai đoạn), which is
+  // why `stage` uses exactly that form's five options.
+  phone     String?        @db.VarChar(20)
+  stage     ResearchStage?
+  createdAt DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime       @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  accounts    Account[]
+  sessions    Session[]
+  enrollments Enrollment[]
+  orders      Order[]
+
+  @@map("users")
+}
+
+model Account {
+  userId            String  @map("user_id")
+  type              String
+  provider          String
+  providerAccountId String  @map("provider_account_id")
+  // Google's tokens run past 255 chars; VarChar would truncate and the failure
+  // only shows up on refresh, long after sign-in appeared to work.
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([provider, providerAccountId])
+  @@index([userId])
+  @@map("accounts")
+}
+
+model Session {
+  sessionToken String   @unique @map("session_token")
+  userId       String   @map("user_id")
+  expires      DateTime @db.Timestamptz(6)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("sessions")
+}
+
+// Auth.js adapter compatibility plus hashed verification/reset bearer tokens.
+model VerificationToken {
+  identifier String
+  token      String
+  expires    DateTime @db.Timestamptz(6)
+
+  @@id([identifier, token])
+  @@unique([token])
+  @@index([identifier])
+  @@map("verification_tokens")
+}
+
+/// Fixed-window authentication throttles. Keys are HMACs, never raw email or
+/// IP addresses, so the table cannot be used as an account/address directory.
+model AuthThrottle {
+  action      String   @db.VarChar(32)
+  keyHash     String   @map("key_hash") @db.Char(64)
+  windowStart DateTime @map("window_start") @db.Timestamptz(6)
+  count       Int      @default(1)
+  expiresAt   DateTime @map("expires_at") @db.Timestamptz(6)
+
+  @@id([action, keyHash, windowStart])
+  @@index([expiresAt])
+  @@map("auth_throttles")
+}
+
+/// A crash-safe, expiring lease for external resources such as one Drive
+/// folder. It serializes API mutations without holding a Postgres transaction
+/// open while waiting on the network.
+model ExternalSyncLease {
+  resourceKey String   @id @map("resource_key") @db.VarChar(180)
+  owner       String   @db.VarChar(80)
+  lockedUntil DateTime @map("locked_until") @db.Timestamptz(6)
+  updatedAt   DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@index([lockedUntil])
+  @@map("external_sync_leases")
+}
+
+// ------------------------------------------------------------------- HDI ---
+
+/// The five options from the intake Google Form, unchanged. Labels live in
+/// content/account.ts — this is only the stored value.
+enum ResearchStage {
+  undergraduate_thesis
+  masters_thesis
+  phd_research
+  journal_article
+  other
+
+  @@map("research_stage")
+}
+
+enum CohortStatus {
+  draft
+  open
+  running
+  closed
+
+  @@map("cohort_status")
+}
+
+enum EnrollmentStatus {
+  pending
+  paid
+  cancelled
+  refunded
+
+  @@map("enrollment_status")
+}
+
+/// One intake (kỳ) of one course. `courseSlug` points at a slug in
+/// content/course.ts — Postgres cannot foreign-key into a TypeScript module, so
+/// lib/courses.ts and the seed script are what keep the two honest.
+model Cohort {
+  id         String   @id @default(cuid())
+  courseSlug String   @map("course_slug") @db.VarChar(80)
+  ky         String   @db.VarChar(40)
+  khaiGiang  DateTime @map("khai_giang") @db.Timestamptz(6)
+  lichHoc    String   @map("lich_hoc") @db.VarChar(200)
+  capacity   Int
+  // The real price. content/course.ts carries the advertised price; once HDI
+  // sets its own pricing (no longer mirroring edubit) this column is the truth.
+  priceVnd   Int      @map("price_vnd")
+
+  // SECRETS. Never select these unless the caller's enrollment is `paid`.
+  meetingUrl    String? @map("meeting_url") @db.VarChar(500)
+  driveFolderId String? @map("drive_folder_id") @db.VarChar(100)
+
+  // How long recordings stay watchable after payment. NULL = no expiry.
+  accessDays Int? @map("access_days")
+
+  status    CohortStatus @default(draft)
+  createdAt DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime     @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  enrollments Enrollment[]
+  orderItems  OrderItem[]
+
+  @@unique([courseSlug, ky])
+  @@index([status, khaiGiang])
+  @@map("cohorts")
+}
+
+/// A student's place in one intake.
+///
+/// `status` is the single seam between reservations and fulfillment. Only a
+/// verified PayOS webhook may flip pending → paid; admin cancellation operates
+/// on the owning order aggregate instead of mutating this row directly.
+model Enrollment {
+  id       String           @id @default(cuid())
+  userId   String           @map("user_id")
+  cohortId String           @map("cohort_id")
+  status   EnrollmentStatus @default(pending)
+  paidAt   DateTime?        @map("paid_at") @db.Timestamptz(6)
+
+  // Access lifecycle — unused in GĐ2, declared now because adding columns to a
+  // table that already holds real enrolments is the more painful order.
+  accessExpiresAt   DateTime? @map("access_expires_at") @db.Timestamptz(6)
+  accessRevokedAt   DateTime? @map("access_revoked_at") @db.Timestamptz(6)
+  drivePermissionId String?   @map("drive_permission_id") @db.VarChar(64)
+
+  note      String?
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  user       User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  // Restrict, not Cascade: deleting a cohort must not silently erase the record
+  // that someone paid for it.
+  cohort     Cohort      @relation(fields: [cohortId], references: [id], onDelete: Restrict)
+  // The order lines that reserved this enrolment. Usually one; more than one
+  // once a student re-orders an intake whose earlier order was cancelled.
+  orderItems OrderItem[]
+
+  // Enforced by the database, not by the application — two concurrent requests
+  // cannot both pass an application-level "already enrolled?" check.
+  @@unique([userId, cohortId])
+  @@index([cohortId, status])
+  @@index([userId, status])
+  @@map("enrollments")
+}
+
+// --------------------------------------------------------------- Đơn hàng ---
+//
+// The cart itself is NOT here. A cart is a browser-local list of cohort ids in
+// a cookie — it holds no prices and grants nothing, so there is nothing worth
+// persisting or protecting. An Order is the opposite: the moment money is
+// expected, every number has to be one the server computed.
+
+enum OrderStatus {
+  pending
+  paid
+  cancelled
+  /// Never paid within `expiresAt`. Distinct from `cancelled` so the seat that
+  /// was released can be told apart from a deliberate refusal.
+  expired
+  refunded
+
+  @@map("order_status")
+}
+
+enum PaymentStatus {
+  pending
+  succeeded
+  failed
+  /// Real money or provider state exists, but automatic access is unsafe.
+  requires_review
+
+  @@map("payment_status")
+}
+
+/// One checkout: the basket at the moment it was priced.
+model Order {
+  id String @id @default(cuid())
+
+  /// The number a student writes in the bank transfer memo, and the number the
+  /// payment provider knows this order by.
+  ///
+  /// A sequence, not a random string and not the cuid `id`: PayOS's `orderCode`
+  /// must be an integer, unique per merchant forever, and a transfer memo field
+  /// is short. A sequence is also the only collision-free generator that needs
+  /// no retry loop.
+  ///
+  /// `autoincrement()` rather than a hand-written `dbgenerated("nextval(...)")`:
+  /// the hand-written form does not round-trip, and `migrate diff` kept wanting
+  /// to drop the very sequence the column depends on. The migration restarts it
+  /// at 100001 so no order code is ever four digits.
+  code Int @unique @default(autoincrement())
+
+  userId String      @map("user_id")
+  status OrderStatus @default(pending)
+
+  /// Sum of the item snapshots, in đồng. Recomputed server-side at creation and
+  /// never accepted from the client — the browser only ever names cohort ids.
+  amountVnd Int @map("amount_vnd")
+
+  /// A pending order holds a seat. Without a deadline an abandoned checkout
+  /// takes that seat forever, and the cohort silently looks full.
+  expiresAt DateTime  @map("expires_at") @db.Timestamptz(6)
+  paidAt    DateTime? @map("paid_at") @db.Timestamptz(6)
+  /// When it stopped being pending for any reason other than payment.
+  closedAt  DateTime? @map("closed_at") @db.Timestamptz(6)
+
+  /// Which gateway this order was handed to, once one exists. Null means the
+  /// order was created before any provider was wired up.
+  provider    String? @db.VarChar(20)
+  providerRef String? @map("provider_ref") @db.VarChar(120)
+  checkoutUrl String? @map("checkout_url") @db.Text
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  user     User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items    OrderItem[]
+  payments Payment[]
+
+  @@index([userId, status])
+  @@index([status, expiresAt])
+  @@map("orders")
+}
+
+/// One cohort on one order.
+model OrderItem {
+  id       String @id @default(cuid())
+  orderId  String @map("order_id")
+  cohortId String @map("cohort_id")
+
+  /// The price as it stood when the order was placed. Cohort.priceVnd is the
+  /// current asking price and may change; what someone owes must not.
+  priceVnd Int @map("price_vnd")
+
+  /// The enrolment this line reserves. Created `pending` together with the
+  /// order — that is what actually holds the seat — and flipped to `paid` by
+  /// confirmEnrollment() when the payment lands.
+  ///
+  /// Not unique. An enrolment that was cancelled (an order expired, say) is
+  /// reused when the student tries again, so the same enrolment id legitimately
+  /// appears on the abandoned order line and on the new one. Only one of those
+  /// orders is ever live.
+  enrollmentId String? @map("enrollment_id")
+
+  order      Order       @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  cohort     Cohort      @relation(fields: [cohortId], references: [id], onDelete: Restrict)
+  enrollment Enrollment? @relation(fields: [enrollmentId], references: [id], onDelete: SetNull)
+
+  // One line per cohort per order: the cart is a set, and buying the same
+  // intake twice is never what anyone meant.
+  @@unique([orderId, cohortId])
+  @@index([cohortId])
+  @@index([enrollmentId])
+  @@map("order_items")
+}
+
+/// A payment event as the provider reported it.
+///
+/// Separate from Order because the two are not one-to-one: a failed attempt, a
+/// redelivered webhook and a refund are all events against the same order. The
+/// `(provider, providerRef)` unique key is the idempotency lock — a replayed
+/// webhook collides here and can be answered 200 without touching anything.
+model Payment {
+  id          String        @id @default(cuid())
+  orderId     String        @map("order_id")
+  provider    String        @db.VarChar(20)
+  providerRef String        @map("provider_ref") @db.VarChar(120)
+  amountVnd   Int           @map("amount_vnd")
+  status      PaymentStatus @default(pending)
+
+  /// The provider's payload, stored verbatim for reconciliation. It is evidence
+  /// of what was actually received, which a parsed summary is not — but it can
+  /// carry personal data, so nothing renders it outside /quan-tri.
+  payload Json?
+
+  receivedAt DateTime @default(now()) @map("received_at") @db.Timestamptz(6)
+
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerRef])
+  @@index([orderId])
+  @@index([status, receivedAt])
+  @@map("payments")
+}

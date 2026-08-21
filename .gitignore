@@ -32,6 +32,10 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+# ...except the template. `.env*` was swallowing it, so the one file that
+# documents every variable this app needs could never reach a fresh clone.
+# It holds placeholders only — real values live in .env.local and Vercel.
+!.env.example
 
 # vercel
 .vercel
@@ -42,3 +46,18 @@ next-env.d.ts
 
 # crawl output + its 700MB venv — research input, not part of the app
 /reference
+
+# prisma client is generated at install time (postinstall)
+/lib/generated
+
+# real cohort data carries the Zoom link and Drive folder id
+/prisma/cohorts.json
+/prisma/drive-folders.json
+
+# local MCP server config and installed agent skills
+.mcp.json
+.agents/
+# .claude/skills/* are symlinks into .agents/ — committing them would give
+# every other clone a dangling link. skills-lock.json is the manifest that
+# lets the skills be reinstalled, and that one IS committed.
+.claude/skills/

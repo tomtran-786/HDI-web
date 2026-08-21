@@ -16,6 +16,8 @@
   --primary-fg: #ffffff;
   --tint: #e8f0fe;
   --success: #1c7a4d;
+  --warning: #9a6400;
+  --danger: #b3261e;
 }
 
 .dark {
@@ -31,6 +33,8 @@
   --primary-fg: #08121e;
   --tint: #14304e;
   --success: #4fbe8b;
+  --warning: #e0aa3e;
+  --danger: #f28b82;
 }
 
 @theme inline {
@@ -46,6 +50,8 @@
   --color-primary-fg: var(--primary-fg);
   --color-tint: var(--tint);
   --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-danger: var(--danger);
 
   --font-sans: var(--font-source-sans), ui-sans-serif, system-ui, sans-serif;
 

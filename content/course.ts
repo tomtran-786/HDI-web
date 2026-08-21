@@ -104,14 +104,13 @@ export type Course = {
 };
 
 /**
- * The registration form is one shared Google Form. Only the flagship course has
- * a documented option to pick ("Research Class (Advanced)", from the flyer);
- * for the edubit-sourced courses the form's own wording has not been checked,
- * so the note stays generic rather than sending people to a field that may not
- * exist. Replace with the real option name once the form is confirmed.
+ * Registration is an account now, not a Google Form — so this note no longer
+ * explains how to fill a form in. It sets the expectation instead: seats are
+ * sold per intake, and there is no intake on sale until Dr. Trinh confirms the
+ * schedule. Revisit once cohorts exist and checkout opens.
  */
 const REGISTER_NOTE_GENERIC =
-  "Khi điền form đăng ký, ghi rõ tên khóa học bạn muốn tham gia để được xếp đúng lớp.";
+  "Tạo tài khoản để giữ chỗ. Kỳ khai giảng tiếp theo sẽ được thông báo qua email và Zalo.";
 
 export const coursesIntro = {
   eyebrow: "Khóa học",
@@ -122,7 +121,13 @@ export const coursesIntro = {
     "Mỗi khóa học ứng với một chặng khác nhau của hành trình nghiên cứu. Bấm vào từng khóa để xem lộ trình chi tiết.",
 };
 
-export const courses: Course[] = [
+/**
+ * `satisfies` rather than a `: Course[]` annotation, so TypeScript keeps the
+ * literal slug strings instead of widening them to `string`. That is what makes
+ * `CourseSlug` below a real union — and what turns a typo in a cohort's
+ * `courseSlug` into a compile error instead of an empty dashboard.
+ */
+export const courses = [
   {
     slug: "viet-bao-cao-khoa-hoc",
     eyebrow: "Khóa đào tạo",
@@ -176,7 +181,7 @@ export const courses: Course[] = [
       "Ba tháng hỗ trợ sau khóa để hoàn thành bài viết và submit tạp chí dưới sự hướng dẫn của giảng viên.",
     ],
     registerNote:
-      'Khi điền form đăng ký, chọn mục "Research Class (Advanced)" để vào đúng lớp học này.',
+      "Tạo tài khoản để giữ chỗ khóa Research Class (Advanced). Kỳ khai giảng tiếp theo sẽ được thông báo qua email và Zalo.",
   },
 
   {
@@ -510,4 +515,11 @@ export const courses: Course[] = [
     ],
     registerNote: REGISTER_NOTE_GENERIC,
   },
-];
+] satisfies Course[];
+
+/**
+ * Every course slug, as a union. The database stores `Cohort.courseSlug` as a
+ * plain string — Postgres cannot foreign-key into a TypeScript module — so this
+ * type plus `lib/courses.ts` are the only things keeping the two in step.
+ */
+export type CourseSlug = (typeof courses)[number]["slug"];
