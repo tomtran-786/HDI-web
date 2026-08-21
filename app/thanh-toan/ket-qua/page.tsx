@@ -4,6 +4,8 @@ import { notFound, redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { Section, SectionHeading } from "@/components/ui/section";
+import { CheckoutSteps } from "@/components/checkout-steps";
+import { PaymentPoll } from "@/components/payment-poll";
 
 export const metadata: Metadata = {
   title: "Kết quả thanh toán — HDI Research Center",
@@ -44,9 +46,11 @@ export default async function PaymentResultPage({
               : "Trang quay lại không tự đánh dấu đã trả tiền. HDI đang chờ webhook có chữ ký hợp lệ."
           }
         />
+        <CheckoutSteps current={3} />
         <Link className="inline-flex rounded-full bg-primary px-6 py-3 text-sm font-bold text-primary-fg" href={`/tai-khoan/don-hang/${order.code}`}>
           Xem đơn #{order.code}
         </Link>
+        {!paid && <PaymentPoll />}
       </div>
     </Section>
   );

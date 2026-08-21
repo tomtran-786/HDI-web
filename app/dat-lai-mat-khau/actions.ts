@@ -3,6 +3,7 @@
 import bcrypt from "bcryptjs";
 import { redirect } from "next/navigation";
 import { resetPasswordSchema } from "@/lib/auth-input";
+import { allowResetConsume, serverActionIp } from "@/lib/auth-throttle";
 import { consumeAuthToken } from "@/lib/auth-tokens";
 import { prisma } from "@/lib/prisma";
 
@@ -15,6 +16,10 @@ export async function resetPassword(formData: FormData) {
     confirmPassword: formData.get("confirmPassword"),
   });
   if (!parsed.success) redirect(`${RESET}?error=invalid`);
+
+  if (!(await allowResetConsume(await serverActionIp()))) {
+    redirect(`${RESET}?error=invalid`);
+  }
 
   const passwordHash = await bcrypt.hash(parsed.data.password, 12);
   const changed = await prisma.$transaction(async (tx) => {

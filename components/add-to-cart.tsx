@@ -6,6 +6,22 @@ import { trackCartAdd } from "@/lib/analytics";
 import { IconArrow, IconCart, IconCheck } from "./ui/icons";
 import { enrolPage } from "@/content/checkout";
 
+const base =
+  "inline-flex items-center justify-center gap-2 rounded-full px-5 py-2.5 text-sm font-bold transition";
+
+/**
+ * One consistent state language across all five branches: filled primary is
+ * a real action ("thêm vào giỏ" / sign in to continue), outline is something
+ * already done (in cart / already enrolled), muted+disabled is a hard stop
+ * (no seats). Five differently-styled buttons for closely related states
+ * used to read as five different affordances.
+ */
+const variant = {
+  primary: "bg-primary text-primary-fg hover:bg-primary-deep",
+  outline: "border border-line text-fg hover:border-primary hover:text-primary",
+  muted: "cursor-not-allowed border border-line text-fg-subtle",
+} as const;
+
 /**
  * The button that puts one intake in the cart.
  *
@@ -34,11 +50,8 @@ export function AddToCart({
 
   if (blocked === "already_enrolled") {
     return (
-      <Link
-        href="/tai-khoan"
-        className="inline-flex items-center justify-center gap-2 rounded-full border border-line px-5 py-2.5 text-sm font-bold text-success transition hover:border-primary hover:text-primary"
-      >
-        <IconCheck size={16} />
+      <Link href="/tai-khoan" className={`${base} ${variant.outline}`}>
+        <IconCheck size={16} className="text-success" />
         {enrolPage.enrolledLabel}
       </Link>
     );
@@ -46,9 +59,7 @@ export function AddToCart({
 
   if (blocked === "no_seats") {
     return (
-      <span className="inline-flex cursor-not-allowed items-center justify-center rounded-full border border-line px-5 py-2.5 text-sm font-bold text-fg-subtle">
-        {enrolPage.fullLabel}
-      </span>
+      <span className={`${base} ${variant.muted}`}>{enrolPage.fullLabel}</span>
     );
   }
 
@@ -56,7 +67,7 @@ export function AddToCart({
     return (
       <Link
         href={`/dang-nhap?tiep=${encodeURIComponent(loginReturnTo)}`}
-        className="inline-flex items-center justify-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-bold text-primary-fg transition hover:bg-primary-deep"
+        className={`${base} ${variant.primary}`}
       >
         Đăng nhập để đăng ký
         <IconArrow size={15} />
@@ -66,10 +77,7 @@ export function AddToCart({
 
   if (has(cohortId)) {
     return (
-      <Link
-        href="/gio-hang"
-        className="inline-flex items-center justify-center gap-2 rounded-full border border-primary px-5 py-2.5 text-sm font-bold text-primary transition hover:bg-primary hover:text-primary-fg"
-      >
+      <Link href="/gio-hang" className={`${base} ${variant.outline}`}>
         {enrolPage.addedLabel}
         <IconArrow size={15} />
       </Link>
@@ -84,7 +92,7 @@ export function AddToCart({
         add(cohortId);
         trackCartAdd(courseSlug, ky);
       }}
-      className="inline-flex items-center justify-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-bold text-primary-fg transition hover:bg-primary-deep disabled:cursor-not-allowed disabled:opacity-50"
+      className={`${base} ${variant.primary} disabled:cursor-not-allowed disabled:opacity-50`}
     >
       <IconCart size={16} />
       {enrolPage.addLabel}

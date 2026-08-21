@@ -4,9 +4,11 @@ import { notFound } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { findCourse } from "@/lib/courses";
-import { formatDate, formatDateTime, formatVnd } from "@/lib/format";
-import { orderPage, orderStatusLabel } from "@/content/checkout";
+import { formatDate, formatVnd } from "@/lib/format";
+import { orderPage, orderStatusLabel, orderStatusTone } from "@/content/checkout";
 import { contact, links } from "@/content/site";
+import { CheckoutSteps } from "@/components/checkout-steps";
+import { HoldCountdown } from "@/components/hold-countdown";
 import { Section, SectionHeading } from "@/components/ui/section";
 import { Badge } from "@/components/ui/badge";
 import { IconArrow, IconMail, IconMessage } from "@/components/ui/icons";
@@ -69,17 +71,16 @@ export default async function OrderDetailPage({
         title={`${orderPage.codeLabel} #${order.code}`}
         subtitle={`Đặt ngày ${formatDate(order.createdAt)}`}
       />
+      <CheckoutSteps current={pending ? 3 : 4} />
 
       <div className="mx-auto max-w-2xl">
         <div className="rounded-card border border-line bg-card p-6 sm:p-7">
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <Badge tone={order.status === "paid" ? "success" : "cool"}>
+            <Badge tone={orderStatusTone[order.status] ?? "cool"}>
               {orderStatusLabel[order.status] ?? order.status}
             </Badge>
             {pending && (
-              <p className="text-[13px] text-fg-subtle">
-                {orderPage.holdUntil} {formatDateTime(order.expiresAt)}
-              </p>
+              <HoldCountdown expiresAtIso={order.expiresAt.toISOString()} />
             )}
           </div>
 

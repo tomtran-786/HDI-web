@@ -12,10 +12,16 @@ const mocks = vi.hoisted(() => ({
   transaction: vi.fn(),
   consumeToken: vi.fn(),
   updateMany: vi.fn(),
+  allowResetConsume: vi.fn(),
+  serverActionIp: vi.fn(),
 }));
 
 vi.mock("next/navigation", () => ({ redirect: mocks.redirect }));
 vi.mock("@/lib/auth-tokens", () => ({ consumeAuthToken: mocks.consumeToken }));
+vi.mock("@/lib/auth-throttle", () => ({
+  allowResetConsume: mocks.allowResetConsume,
+  serverActionIp: mocks.serverActionIp,
+}));
 vi.mock("@/lib/prisma", () => ({
   prisma: { $transaction: mocks.transaction },
 }));
@@ -41,6 +47,8 @@ describe("password reset action", () => {
     );
     mocks.consumeToken.mockResolvedValue({ userId: "user-1" });
     mocks.updateMany.mockResolvedValue({ count: 1 });
+    mocks.allowResetConsume.mockResolvedValue(true);
+    mocks.serverActionIp.mockResolvedValue("203.0.113.1");
   });
 
   it("sets a cost-12 password and advances the session cutoff transactionally", async () => {
@@ -81,5 +89,15 @@ describe("password reset action", () => {
     await expect(resetPassword(resetForm())).rejects.toMatchObject({
       url: "/dat-lai-mat-khau?error=invalid",
     });
+  });
+
+  it("throttles token consumption by IP before touching the token", async () => {
+    mocks.allowResetConsume.mockResolvedValue(false);
+
+    await expect(resetPassword(resetForm())).rejects.toMatchObject({
+      url: "/dat-lai-mat-khau?error=invalid",
+    });
+    expect(mocks.consumeToken).not.toHaveBeenCalled();
+    expect(mocks.transaction).not.toHaveBeenCalled();
   });
 });

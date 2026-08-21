@@ -4,7 +4,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { findCourse } from "@/lib/courses";
 import { formatDate, formatDateTime, formatVnd } from "@/lib/format";
-import { orderPage, orderStatusLabel } from "@/content/checkout";
+import { orderPage, orderStatusLabel, orderStatusTone } from "@/content/checkout";
 import { Section, SectionHeading } from "@/components/ui/section";
 import { Badge } from "@/components/ui/badge";
 import { IconArrow } from "@/components/ui/icons";
@@ -71,7 +71,7 @@ export default async function OrderListPage() {
                     <p className="font-bold tabular-nums tracking-tight">
                       #{order.code}
                     </p>
-                    <Badge tone={order.status === "paid" ? "success" : "cool"}>
+                    <Badge tone={orderStatusTone[order.status] ?? "cool"}>
                       {orderStatusLabel[order.status] ?? order.status}
                     </Badge>
                   </div>

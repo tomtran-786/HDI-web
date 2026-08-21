@@ -65,6 +65,22 @@ export async function allowLoginAttempt(email: string, ip: string) {
   });
 }
 
+/**
+ * Guards the token-*consuming* side of password reset, not just the request
+ * side. `allowAuthEmail` throttles asking for a reset link; nothing throttled
+ * actually spending one, even though that is the step where a guessed token
+ * gets tried. Keyed by IP only — the reset form carries a token, not an
+ * email, so there is no account identity to key on until the token resolves.
+ */
+export async function allowResetConsume(ip: string) {
+  return consumeAuthLimit({
+    action: "reset_consume",
+    key: `ip:${ip}`,
+    limit: 10,
+    windowMs: 15 * 60 * 1000,
+  });
+}
+
 export async function allowAuthEmail(action: string, email: string, ip: string) {
   const [emailAllowed, ipAllowed] = await Promise.all([
     consumeAuthLimit({

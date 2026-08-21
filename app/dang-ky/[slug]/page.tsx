@@ -8,7 +8,9 @@ import { formatDate, formatVnd } from "@/lib/format";
 import { enrolPage } from "@/content/checkout";
 import { links } from "@/content/site";
 import { AddToCart } from "@/components/add-to-cart";
+import { CheckoutSteps } from "@/components/checkout-steps";
 import { Section, SectionHeading } from "@/components/ui/section";
+import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { IconArrow, IconMessage } from "@/components/ui/icons";
 
@@ -51,9 +53,10 @@ export default async function EnrolPage({
         title={course.title}
         subtitle={course.audience}
       />
+      <CheckoutSteps current={1} />
 
       {cohorts.length === 0 ? (
-        <div className="rounded-card border border-line bg-card p-8 text-center sm:p-10">
+        <Card className="p-8 text-center sm:p-10" hover={false}>
           <p className="text-lg font-bold tracking-tight">
             {enrolPage.emptyTitle}
           </p>
@@ -78,7 +81,7 @@ export default async function EnrolPage({
               <IconArrow size={16} />
             </Link>
           </div>
-        </div>
+        </Card>
       ) : (
         <>
           <ul className="space-y-4">
@@ -94,42 +97,44 @@ export default async function EnrolPage({
                   : null;
 
               return (
-                <li
-                  key={cohort.id}
-                  className="flex flex-col gap-5 rounded-card border border-line bg-card p-6 sm:flex-row sm:items-center sm:justify-between sm:p-7"
-                >
-                  <div className="min-w-0">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <Badge>{cohort.ky}</Badge>
-                      {/* Scarcity only when it is actually scarce: "còn 38/40
-                          chỗ" argues against buying. */}
-                      {seatsLeft > 0 && seatsLeft <= 5 && (
-                        <Badge tone="success">
-                          {enrolPage.seatsLabel}: {seatsLeft}
-                        </Badge>
-                      )}
+                <li key={cohort.id}>
+                  <Card
+                    className="flex flex-col gap-5 p-6 sm:flex-row sm:items-center sm:justify-between sm:p-7"
+                    hover={false}
+                  >
+                    <div className="min-w-0">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <Badge>{cohort.ky}</Badge>
+                        {/* Scarcity only when it is actually scarce: "còn 38/40
+                            chỗ" argues against buying. */}
+                        {seatsLeft > 0 && seatsLeft <= 5 && (
+                          <Badge tone="success">
+                            {enrolPage.seatsLabel}: {seatsLeft}
+                          </Badge>
+                        )}
+                      </div>
+                      <p className="mt-2.5 text-lg font-bold tracking-tight">
+                        Khai giảng {formatDate(cohort.khaiGiang)}
+                      </p>
+                      <p className="mt-1 text-sm text-fg-muted">
+                        {cohort.lichHoc}
+                      </p>
                     </div>
-                    <p className="mt-2.5 text-lg font-bold tracking-tight">
-                      Khai giảng {formatDate(cohort.khaiGiang)}
-                    </p>
-                    <p className="mt-1 text-sm text-fg-muted">
-                      {cohort.lichHoc}
-                    </p>
-                  </div>
 
-                  <div className="flex shrink-0 flex-col items-start gap-3 sm:items-end">
-                    <p className="text-2xl font-bold tracking-tight text-primary">
-                      {formatVnd(cohort.priceVnd)}
-                    </p>
-                    <AddToCart
-                      cohortId={cohort.id}
-                      courseSlug={cohort.courseSlug}
-                      ky={cohort.ky}
-                      blocked={blocked}
-                      signedIn={Boolean(session?.user?.id)}
-                      loginReturnTo={`/dang-ky/${slug}`}
-                    />
-                  </div>
+                    <div className="flex shrink-0 flex-col items-start gap-3 sm:items-end">
+                      <p className="text-2xl font-bold tracking-tight text-primary">
+                        {formatVnd(cohort.priceVnd)}
+                      </p>
+                      <AddToCart
+                        cohortId={cohort.id}
+                        courseSlug={cohort.courseSlug}
+                        ky={cohort.ky}
+                        blocked={blocked}
+                        signedIn={Boolean(session?.user?.id)}
+                        loginReturnTo={`/dang-ky/${slug}`}
+                      />
+                    </div>
+                  </Card>
                 </li>
               );
             })}

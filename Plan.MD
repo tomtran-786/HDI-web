@@ -939,6 +939,83 @@ tràn ngang = 0 ở 375 sáng và 1280 tối trên cả 5 route mới · `/` v�
   số 0 xong, cả 4 migration và 4/4 integration tests đều qua. Container đã được xoá và port đã
   trả lại; `.env.local` không cần lưu `TEST_DATABASE_URL` tạm.
 
+### 2026-08-21 — Phiên 7: refine UI giỏ hàng/đơn hàng + audit auth/thanh toán/cấp quyền
+
+**1. Commit checkpoint.** Toàn bộ Phiên 5-6 (GĐ4 PayOS/webhook/Drive, auth mở rộng,
+bộ test) còn nằm chưa commit từ đầu phiên — đã soát `.env.example`/`.gitignore` không
+lộ secret rồi commit riêng thành `3d55ce9`, tách khỏi việc của phiên này.
+
+**2. Refine giỏ hàng/đơn hàng.** Tham khảo UX của `portfolio-app` (iCloud) nhưng
+**không** chép kiến trúc giỏ dạng drawer/in-memory của repo đó — giữ nguyên cookie +
+định giá lại từ DB.
+
+- Thêm **dialog xác nhận báo giá trước khi tạo đơn** (`CheckoutButton` trong
+  `cart-controls.tsx`, theo yêu cầu người dùng để dành chỗ cho chính sách giảm giá
+  sau này): nút "Đặt đơn và giữ chỗ" giờ chỉ mở `<dialog>` liệt kê từng dòng + tổng
+  tiền; `checkout()` server action chỉ chạy khi bấm "Xác nhận và giữ chỗ" bên trong
+  dialog. Đã kiểm bằng dữ liệu thật: đóng dialog qua backdrop **không** tạo `Order`
+  nào; xác nhận thì tạo đúng một `Order` + link PayOS thật.
+- `Badge` thêm tone `warning`/`danger` (+ token `--warning`/`--danger` trong
+  `globals.css`); áp cho trạng thái đơn (`pending` = warning, `cancelled`/`expired` =
+  danger, `paid` = success) và dòng giỏ hàng bị chặn.
+- `components/checkout-steps.tsx` (mới) — chỉ báo bước 1-4 xuyên suốt
+  `/dang-ky/[slug]` → `/gio-hang` → `/thanh-toan/ket-qua` → `/tai-khoan/don-hang/[code]`,
+  co lại thành text "Bước n/4" dưới `sm:`.
+- `components/hold-countdown.tsx` (mới, client) — đếm ngược "Còn HH:MM giữ chỗ" thật
+  từ `expiresAt` đã có sẵn, không thêm API. Đã kiểm chạy thật trên trình duyệt (số
+  phút giảm dần qua nhiều lần chụp).
+- `components/payment-poll.tsx` (mới, client) — `/thanh-toan/ket-qua` tự
+  `router.refresh()` tối đa 8 lần rồi rơi về nút "Kiểm tra lại" thủ công, thay vì im
+  lặng chờ người dùng tự reload.
+- `app/tai-khoan/don-hang/[code]/cancel.tsx` viết lại bằng `<dialog>` gốc (đúng mẫu
+  `course-card.tsx`) thay cho toggle hai bước cũ.
+- `AddToCart` gộp 5 kiểu nút rời rạc về một ngôn ngữ nhất quán (filled = hành động
+  chính, outline = đã xử lý, muted = hết chỗ).
+- `dang-ky/[slug]` và `gio-hang` chuyển sang dùng `Card` thay vì tự viết tay class
+  viền/nền; thêm `loading.tsx` (skeleton dùng `Skeleton` mới) cho 5 route có gọi
+  DB/PayOS.
+
+**Kiểm chứng — không chỉ đọc code, chạy thật trên DB dev** (`szzspwwjapxnxskgeyww`,
+không phải Chemistery production): tạo user + session + cohort test qua Prisma, đăng
+nhập **qua chính form thật** (Credentials — phát hiện app đã chuyển từ session
+`database` sang **`strategy: "jwt"`** ở Phiên 6 vì Credentials bắt buộc JWT, nên seed
+thẳng một dòng `Session` không đăng nhập được, phải login thật để có JWT cookie hợp
+lệ) → thêm vào giỏ → mở dialog báo giá → xác nhận → **đơn thật #100012 + link PayOS
+thật được tạo** → trang đơn hàng hiện đúng badge/countdown/step → hủy qua dialog mới
+→ xác nhận `cancelOrder` gọi PayOS thật trước khi đổi trạng thái local (remote-first,
+đúng như tài liệu). Toàn bộ dữ liệu test đã xóa sạch sau đó (0 dòng còn lại).
+
+> **Gotcha:** ảnh chụp qua Browser pane **không hiện được nội dung `<dialog>` mở**
+> (top layer không được composite vào screenshot của công cụ), dù DOM/`open`/rect đều
+> đúng. Không phải lỗi ứng dụng — xác nhận bằng `document.querySelector('dialog').open`
+> và tương tác trực tiếp qua DOM khi cần thay vì chỉ tin ảnh chụp.
+
+**3. Audit auth/thanh toán/cấp quyền.**
+
+- **Vá một khoảng trống rate-limit:** `resetPassword` (tiêu thụ token đặt lại mật
+  khẩu) là hành động auth duy nhất **không** qua `allowAuthEmail`/`allowLoginAttempt`.
+  Thêm `allowResetConsume()` (khoá theo IP, 10/15 phút — form chỉ có token, không có
+  email để khoá theo cặp) vào `lib/auth-throttle.ts`, gọi trước `consumeAuthToken`.
+- Thêm `tests/auth-throttle.test.ts` (test trực tiếp toán học cửa sổ cố định — trước
+  đây chỉ được test gián tiếp qua các action) và `tests/auth-pages.test.tsx` (test
+  render 4 trang `/dang-ky-tai-khoan`, `/quen-mat-khau`, `/dat-lai-mat-khau`,
+  `/xac-thuc-email` — trước đây chỉ test server action, chưa test page component).
+- Đọc lại và xác nhận lại trực tiếp trên code hiện tại (không chỉ tin tài liệu cũ):
+  `Payment` có `@@unique([provider, providerRef])`; `processPayosPayment` append-only
+  — một `providerRef` đã ghi `requires_review` không bao giờ bị diễn giải lại thành
+  `succeeded`; `cancelOrder` remote-first, fail-closed khi PayOS không phản hồi được.
+  Không phát hiện sai lệch so với Plan.MD.
+- `npm run test:integration` **bỏ qua** vì Docker daemon không chạy trong môi trường
+  này (binary có, daemon không) — không phải lỗ hổng, chỉ là chưa chạy được lần này.
+
+**Kiểm chứng:** `tsc --noEmit` + `eslint` + `build` sạch; `npm test` **84/84** (tăng từ
+69, thêm `tests/auth-throttle.test.ts` + `tests/auth-pages.test.tsx`); `/` vẫn
+`○ (Static)`.
+
+**4. Commit + merge + push** (theo yêu cầu người dùng: test xong thì merge
+`feat/gd2-nen-tang` vào `main` rồi push, không chỉ push nhánh feature).
+
+---
 
 ## 8. Việc tiếp theo (gợi ý, chưa làm)
 

@@ -37,7 +37,19 @@ export const cartPage = {
     "Những kỳ được đánh dấu bên dưới sẽ không nằm trong đơn hàng.",
   holdNote:
     "Đặt đơn giữ chỗ trong 2 giờ và chuyển sang PayOS. Quyền record được cấp cho email đăng nhập, nên email đó cần thuộc một tài khoản Google.",
+  confirmTitle: "Xác nhận trước khi đặt đơn",
+  confirmTotal: "Thành tiền",
+  confirmCta: "Xác nhận và giữ chỗ",
+  confirmCancel: "Quay lại giỏ hàng",
 } as const;
+
+/** Bước hiện tại trong luồng đăng ký → giỏ hàng → thanh toán → hoàn tất. */
+export const checkoutSteps = [
+  "Chọn kỳ",
+  "Giỏ hàng",
+  "Thanh toán",
+  "Hoàn tất",
+] as const;
 
 export const orderPage = {
   eyebrow: "Đơn hàng",
@@ -65,10 +77,29 @@ export const orderPage = {
   },
 } as const;
 
+export const paymentResultPage = {
+  pollingHint: "Đang tự động kiểm tra xác nhận từ PayOS…",
+  pollingExhausted:
+    "Vẫn chưa nhận được xác nhận. PayOS đôi khi mất vài phút để gửi webhook — bấm kiểm tra lại, hoặc liên hệ Zalo/email nếu bạn chắc đã thanh toán.",
+  retryLabel: "Kiểm tra lại",
+} as const;
+
 export const orderStatusLabel: Record<string, string> = {
   pending: "Chờ thanh toán",
   paid: "Đã thanh toán",
   cancelled: "Đã hủy",
   expired: "Quá hạn",
   refunded: "Đã hoàn tiền",
+};
+
+/** Badge tone per order status, so "hết chỗ"/"đã hủy" reads differently from "đã thanh toán" at a glance. */
+export const orderStatusTone: Record<
+  string,
+  "cool" | "success" | "warning" | "danger"
+> = {
+  pending: "warning",
+  paid: "success",
+  cancelled: "danger",
+  expired: "danger",
+  refunded: "cool",
 };

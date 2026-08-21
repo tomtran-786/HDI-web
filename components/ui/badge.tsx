@@ -1,18 +1,22 @@
 import type { ReactNode } from "react";
 
+const toneClass = {
+  cool: "bg-tint text-primary",
+  success: "bg-tint text-success",
+  warning: "bg-tint text-warning",
+  danger: "bg-tint text-danger",
+} as const;
+
 export function Badge({
   children,
   tone = "cool",
 }: {
   children: ReactNode;
-  tone?: "cool" | "success";
+  tone?: keyof typeof toneClass;
 }) {
-  const styles =
-    tone === "success" ? "bg-tint text-success" : "bg-tint text-primary";
-
   return (
     <span
-      className={`inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-semibold leading-none ${styles}`}
+      className={`inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-semibold leading-none ${toneClass[tone]}`}
     >
       {children}
     </span>

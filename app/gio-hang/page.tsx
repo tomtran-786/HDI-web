@@ -4,7 +4,9 @@ import { auth } from "@/lib/auth";
 import { loadCart, readCartIds } from "@/lib/cart";
 import { formatDate, formatVnd } from "@/lib/format";
 import { cartPage } from "@/content/checkout";
+import { CheckoutSteps } from "@/components/checkout-steps";
 import { Section, SectionHeading } from "@/components/ui/section";
+import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { IconArrow, IconClock } from "@/components/ui/icons";
 import { CheckoutButton, PruneCart, RemoveFromCart } from "./cart-controls";
@@ -27,13 +29,14 @@ export default async function CartPage() {
   return (
     <Section soft>
       <SectionHeading eyebrow={cartPage.eyebrow} title={cartPage.title} />
+      <CheckoutSteps current={2} />
 
       {/* Ids the cookie still names but that no longer resolve. Rendered as a
           component so the removal happens in the browser, where the cookie is. */}
       {cart.droppedIds.length > 0 && <PruneCart ids={cart.droppedIds} />}
 
       {cart.lines.length === 0 ? (
-        <div className="rounded-card border border-line bg-card p-8 text-center sm:p-10">
+        <Card className="p-8 text-center sm:p-10" hover={false}>
           <p className="text-lg font-bold tracking-tight">{cartPage.empty}</p>
           <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-fg-muted">
             {cartPage.emptyBody}
@@ -45,7 +48,7 @@ export default async function CartPage() {
             {cartPage.browse}
             <IconArrow size={16} />
           </Link>
-        </div>
+        </Card>
       ) : (
         <>
           {cart.droppedIds.length > 0 && (
@@ -56,39 +59,39 @@ export default async function CartPage() {
 
           <ul className="space-y-4">
             {cart.lines.map((line) => (
-              <li
-                key={line.cohortId}
-                className={`flex flex-col gap-4 rounded-card border bg-card p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6 ${
-                  line.blocked ? "border-line opacity-70" : "border-line"
-                }`}
-              >
-                <div className="min-w-0">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <Badge>{line.ky}</Badge>
-                    {line.blocked && (
-                      <span className="text-[11px] font-semibold text-fg-subtle">
-                        {blockedNote[line.blocked]}
-                      </span>
-                    )}
+              <li key={line.cohortId}>
+                <Card
+                  className={`flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6 ${
+                    line.blocked ? "opacity-70" : ""
+                  }`}
+                  hover={false}
+                >
+                  <div className="min-w-0">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Badge>{line.ky}</Badge>
+                      {line.blocked && (
+                        <Badge tone="danger">{blockedNote[line.blocked]}</Badge>
+                      )}
+                    </div>
+                    <p className="mt-2 font-bold leading-snug tracking-tight">
+                      {line.courseTitle}
+                    </p>
+                    <p className="mt-1 text-[13px] text-fg-muted">
+                      Khai giảng {formatDate(line.khaiGiang)} · {line.lichHoc}
+                    </p>
                   </div>
-                  <p className="mt-2 font-bold leading-snug tracking-tight">
-                    {line.courseTitle}
-                  </p>
-                  <p className="mt-1 text-[13px] text-fg-muted">
-                    Khai giảng {formatDate(line.khaiGiang)} · {line.lichHoc}
-                  </p>
-                </div>
 
-                <div className="flex shrink-0 items-center gap-4">
-                  <p className="text-lg font-bold tracking-tight text-primary">
-                    {formatVnd(line.priceVnd)}
-                  </p>
-                  <RemoveFromCart
-                    cohortId={line.cohortId}
-                    courseSlug={line.courseSlug}
-                    ky={line.ky}
-                  />
-                </div>
+                  <div className="flex shrink-0 items-center gap-4">
+                    <p className="text-lg font-bold tracking-tight text-primary">
+                      {formatVnd(line.priceVnd)}
+                    </p>
+                    <RemoveFromCart
+                      cohortId={line.cohortId}
+                      courseSlug={line.courseSlug}
+                      ky={line.ky}
+                    />
+                  </div>
+                </Card>
               </li>
             ))}
           </ul>
@@ -99,7 +102,7 @@ export default async function CartPage() {
             </p>
           )}
 
-          <div className="mt-8 rounded-card border border-line bg-card p-6 sm:p-7">
+          <Card className="mt-8 p-6 sm:p-7" hover={false}>
             <div className="flex flex-wrap items-baseline justify-between gap-3 border-b border-line pb-5">
               <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-fg-subtle">
                 {cartPage.total} · {cart.buyable.length} kỳ
@@ -115,13 +118,18 @@ export default async function CartPage() {
                 {cartPage.holdNote}
               </p>
               <CheckoutButton
-                items={cart.buyable.length}
+                lines={cart.buyable.map((line) => ({
+                  cohortId: line.cohortId,
+                  courseTitle: line.courseTitle,
+                  ky: line.ky,
+                  priceVnd: line.priceVnd,
+                }))}
                 amountVnd={cart.totalVnd}
                 signedIn={Boolean(session?.user?.id)}
                 disabled={cart.buyable.length === 0}
               />
             </div>
-          </div>
+          </Card>
         </>
       )}
     </Section>
