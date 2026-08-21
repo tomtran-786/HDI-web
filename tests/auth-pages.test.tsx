@@ -14,8 +14,15 @@ class RedirectSignal extends Error {
   }
 }
 
-const mocks = vi.hoisted(() => ({ auth: vi.fn(), redirect: vi.fn() }));
+const mocks = vi.hoisted(() => ({
+  auth: vi.fn(),
+  redirect: vi.fn(),
+  findVerifyRecipient: vi.fn(),
+}));
 vi.mock("@/lib/auth", () => ({ auth: mocks.auth }));
+vi.mock("@/lib/auth-tokens", () => ({
+  findVerifyRecipient: mocks.findVerifyRecipient,
+}));
 vi.mock("next/navigation", () => ({
   redirect: mocks.redirect,
 }));
@@ -28,6 +35,8 @@ import VerifyEmailPage from "@/app/xac-thuc-email/page";
 beforeEach(() => {
   mocks.auth.mockReset();
   mocks.redirect.mockReset();
+  mocks.findVerifyRecipient.mockReset();
+  mocks.findVerifyRecipient.mockResolvedValue(null);
   mocks.redirect.mockImplementation((url: string) => {
     throw new RedirectSignal(url);
   });
@@ -55,21 +64,42 @@ describe("/dang-ky-tai-khoan", () => {
     ).rejects.toMatchObject({ url: "/tai-khoan" });
   });
 
-  it("shows the generic sent/error copy without echoing which one applied to a real account", async () => {
+  it("replaces the form with a check-your-inbox state after a successful submit", async () => {
     mocks.auth.mockResolvedValue(null);
     const sentHtml = renderToStaticMarkup(
       await RegisterPage({
         searchParams: Promise.resolve({ sent: "1" }),
       } as never),
     );
-    expect(sentHtml).toContain("HDI đã gửi hướng dẫn xác thực");
 
+    expect(sentHtml).toContain("Kiểm tra hộp thư của bạn");
+    // The empty form must be gone: re-rendering it reads as a failed submit and
+    // costs another of the three hourly verification sends.
+    expect(sentHtml).not.toContain('name="password"');
+    expect(sentHtml).not.toContain('name="confirmPassword"');
+    // And there is a way onward to a fresh link rather than a dead end.
+    expect(sentHtml).toContain("/xac-thuc-email");
+  });
+
+  it("keeps the sent copy generic so it never confirms an address has an account", async () => {
+    mocks.auth.mockResolvedValue(null);
+    const sentHtml = renderToStaticMarkup(
+      await RegisterPage({
+        searchParams: Promise.resolve({ sent: "1" }),
+      } as never),
+    );
+    expect(sentHtml).toContain("Nếu email có thể đăng ký");
+  });
+
+  it("shows the validation error alongside a form that can be corrected", async () => {
+    mocks.auth.mockResolvedValue(null);
     const errorHtml = renderToStaticMarkup(
       await RegisterPage({
         searchParams: Promise.resolve({ error: "invalid" }),
       } as never),
     );
     expect(errorHtml).toContain("Vui lòng kiểm tra họ tên, email và mật khẩu");
+    expect(errorHtml).toContain('name="password"');
   });
 });
 
@@ -122,21 +152,65 @@ describe("/dat-lai-mat-khau", () => {
 });
 
 describe("/xac-thuc-email", () => {
-  it("shows the verify button when a token is present, and the resend form otherwise", async () => {
-    const withToken = renderToStaticMarkup(
+  it("names the address and explains the extra click when the link still resolves", async () => {
+    mocks.findVerifyRecipient.mockResolvedValue({
+      maskedEmail: "ngu•••@example.com",
+    });
+    const html = renderToStaticMarkup(
       await VerifyEmailPage({
         searchParams: Promise.resolve({ token: "xyz" }),
       } as never),
     );
-    expect(withToken).toContain("Xác thực email này");
-    expect(withToken).not.toContain('name="email"');
 
-    const withoutToken = renderToStaticMarkup(
+    expect(html).toContain("Xác thực email này");
+    expect(html).toContain("ngu•••@example.com");
+    // Why a second click exists at all — otherwise the page reads as an error.
+    expect(html).toContain("bộ quét thư");
+    expect(html).toContain('value="xyz"');
+    expect(html).not.toContain('name="email"');
+  });
+
+  it("reports a dead link up front instead of behind a button that must fail", async () => {
+    mocks.findVerifyRecipient.mockResolvedValue(null);
+    const html = renderToStaticMarkup(
       await VerifyEmailPage({
-        searchParams: Promise.resolve({}),
+        searchParams: Promise.resolve({ token: "stale" }),
       } as never),
     );
-    expect(withoutToken).toContain('name="email"');
-    expect(withoutToken).toContain("Gửi lại email xác thực");
+
+    expect(html).toContain("Liên kết không dùng được");
+    expect(html).not.toContain("Xác thực email này");
+    // …and offers the way out in the same breath.
+    expect(html).toContain('name="email"');
+  });
+
+  it("shows the resend form with its rate limit stated when there is no token", async () => {
+    const html = renderToStaticMarkup(
+      await VerifyEmailPage({ searchParams: Promise.resolve({}) } as never),
+    );
+    expect(html).toContain('name="email"');
+    expect(html).toContain("tối đa 3 liên kết mỗi giờ");
+    expect(mocks.findVerifyRecipient).not.toHaveBeenCalled();
+  });
+
+  it("replaces the resend form after sending so the hourly allowance is not spent on retries", async () => {
+    const html = renderToStaticMarkup(
+      await VerifyEmailPage({
+        searchParams: Promise.resolve({ sent: "1" }),
+      } as never),
+    );
+
+    expect(html).toContain("Đã gửi nếu tài khoản đang chờ xác thực");
+    expect(html).not.toContain('name="email"');
+    expect(html).toContain("đợi hết giờ rồi thử lại");
+  });
+
+  it("never consumes the token while rendering", async () => {
+    mocks.findVerifyRecipient.mockResolvedValue({ maskedEmail: "a•••@b.com" });
+    await VerifyEmailPage({
+      searchParams: Promise.resolve({ token: "xyz" }),
+    } as never);
+    // A GET may be issued by a mail scanner; verification must stay a POST.
+    expect(mocks.findVerifyRecipient).toHaveBeenCalledWith("xyz");
   });
 });

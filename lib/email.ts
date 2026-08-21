@@ -42,14 +42,24 @@ export async function sendEmail(input: SendEmailInput) {
   return { sent: true as const, id: data?.id };
 }
 
+/**
+ * The palette here is the site's own, hardcoded because mail clients strip CSS
+ * custom properties: --primary #0c498f, --fg #172636, --fg-subtle #6b7785.
+ * Keep them in step with app/globals.css by hand.
+ *
+ * Note for anyone tempted to brighten the button: the orange accent this
+ * template originally used was retired from the whole site on 2026-08-19
+ * (Plan.MD §2 — one palette only). An email is the first HDI surface a student
+ * ever sees, so it does not get its own colour scheme.
+ */
 function emailShell(name: string, body: string, action: string, href: string) {
   return `
-    <div style="font-family:Arial,sans-serif;max-width:600px;margin:auto;padding:24px;color:#172033">
-      <h2 style="color:#173f5f">HDI Research Center</h2>
+    <div style="font-family:Arial,sans-serif;max-width:600px;margin:auto;padding:24px;color:#172636">
+      <h2 style="color:#0c498f">HDI Research Center</h2>
       <p>Xin chào <strong>${escapeHtml(name)}</strong>,</p>
       ${body}
-      <p style="margin:28px 0"><a href="${href}" style="background:#bd7a25;color:#fff;padding:12px 20px;border-radius:999px;text-decoration:none;font-weight:700">${action}</a></p>
-      <p style="font-size:13px;color:#667085">Nếu bạn không thực hiện yêu cầu này, hãy bỏ qua email.</p>
+      <p style="margin:28px 0"><a href="${href}" style="background:#0c498f;color:#ffffff;padding:12px 20px;border-radius:999px;text-decoration:none;font-weight:700">${action}</a></p>
+      <p style="font-size:13px;color:#6b7785">Nếu bạn không thực hiện yêu cầu này, hãy bỏ qua email.</p>
     </div>`;
 }
 

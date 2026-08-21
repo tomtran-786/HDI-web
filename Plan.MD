@@ -1015,6 +1015,59 @@ thật được tạo** → trang đơn hàng hiện đúng badge/countdown/step
 **4. Commit + merge + push** (theo yêu cầu người dùng: test xong thì merge
 `feat/gd2-nen-tang` vào `main` rồi push, không chỉ push nhánh feature).
 
+### 2026-08-21 — Phiên 7 (tiếp): chạy integration test và sửa luồng xác thực email
+
+**Integration test đã chạy được.** Bật Docker, dựng PostgreSQL 16 disposable
+(`postgres:16-alpine`, cổng 55433) → `migrate deploy` áp **cả 4 migration từ DB
+trống** không lỗi → **4/4 test qua**. Container đã xoá và cổng đã trả lại. Đây là
+lần đầu chuỗi "dựng lại DB từ số 0" được kiểm chứng sau khi thêm migration thứ tư.
+
+**Soi luồng xác thực email so với backend — tìm được 4 chỗ giao diện nói sai
+hoặc không nói điều backend đang làm:**
+
+1. **Email vẫn dùng bảng màu cam đã bị khai tử.** `lib/email.ts` dựng nút CTA bằng
+   `#bd7a25` và heading `#173f5f` — **không màu nào** nằm trong bảng màu đã chốt, và
+   cam chính là thứ mục 2 ghi rõ đã bỏ từ 2026-08-19. Email là bề mặt HDI đầu tiên
+   học viên nhìn thấy, trước cả trang web. Đổi về `--primary #0c498f` / `--fg #172636`
+   / `--fg-subtle #6b7785`, kèm comment cảnh báo đừng "làm sáng lại" nút.
+2. **Giới hạn 3 lượt gửi mỗi giờ hoàn toàn vô hình.** `allowAuthEmail` chặn ở lượt
+   thứ 4 nhưng vẫn trả về đúng màn hình "đã gửi" (cố ý, để không lộ email nào có tài
+   khoản). Hệ quả: học viên bấm gửi lại vài lần rồi ngồi chờ một email **không bao giờ
+   tới**, và không có gì trên màn hình giải thích. Đã nói thẳng con số trong chữ —
+   câu này không lộ gì về một tài khoản cụ thể.
+3. **Gửi xong, form trống vẫn hiện nguyên.** Ở cả `/dang-ky-tai-khoan?sent=1` và
+   `/xac-thuc-email?sent=1`: thông báo là một dòng xám mảnh nằm **trên** một form
+   rỗng vẫn mời điền tiếp — trông như submit hỏng, và mỗi lần bấm lại đốt thêm một
+   lượt trong ba lượt của giờ đó. Giờ trạng thái "đã gửi" **thay chỗ** form, kèm
+   đường đi tiếp rõ ràng.
+4. **Trang xác thực không nói đang xác thực email nào, cũng không nói vì sao còn
+   một nút nữa.** Người dùng vừa bấm liên kết trong thư lại gặp một trang gần như
+   trống với đúng một nút. Thêm `findVerifyRecipient()` — tra token **không tiêu thụ**
+   — để hiện địa chỉ đã che (`ngu•••@gmail.com`, hàm `maskEmail` mới) và giải thích
+   lý do thật: bộ quét thư của một số nhà cung cấp tự mở liên kết, nên việc xác thực
+   phải do một cú bấm POST kích hoạt.
+
+> **Lợi thêm từ (4):** liên kết chết giờ được báo **ngay khi mở**, thay vì hiện một
+> nút mà bấm vào chắc chắn thất bại — token hết hạn, đã dùng, hoặc tài khoản đã xác
+> thực xong đều rơi thẳng vào màn hình "Liên kết không dùng được" + form gửi lại.
+
+**Kiểm chứng bằng token thật trên DB dev, không chỉ bằng query param giả:**
+tạo user chưa xác thực + token thật → mở liên kết **hai lần** bằng GET, xác nhận
+`verificationToken` **vẫn còn 1 dòng** và `emailVerified` **vẫn null** (bộ quét thư
+không đốt được liên kết) → bấm nút → token về **0**, `emailVerified` được đặt,
+redirect `/dang-nhap?verified=1` hiện đúng thông báo → mở lại chính liên kết đó →
+màn hình "Liên kết không dùng được". Dữ liệu thử đã xoá sạch (mọi bảng về 0).
+
+**Chữ nghĩa chuyển vào `content/auth.ts`** theo đúng quy ước mục 4 (hai trang này
+trước đây hardcode trong JSX). Ba trang auth còn lại (`/dang-nhap`,
+`/quen-mat-khau`, `/dat-lai-mat-khau`) **vẫn hardcode** — chưa đụng tới để giữ diff
+gọn quanh luồng xác thực.
+
+**Kiểm chứng:** `tsc` + `eslint` + `build` sạch; `npm test` **96/96** (từ 84 — thêm
+test cho `maskEmail`, `findVerifyRecipient` và 4 trạng thái của trang xác thực);
+`npm run test:integration` **4/4**; `/` vẫn `○ (Static)`; `overflow-x = 0` ở 375 và
+1280, sáng và tối.
+
 ---
 
 ## 8. Việc tiếp theo (gợi ý, chưa làm)

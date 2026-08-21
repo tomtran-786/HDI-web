@@ -1,5 +1,6 @@
 import { createHash, randomBytes } from "node:crypto";
 import type { Prisma } from "./generated/prisma/client";
+import { maskEmail } from "./auth-input";
 import { prisma } from "./prisma";
 
 export type AuthTokenPurpose = "verify" | "reset";
@@ -82,6 +83,31 @@ export async function consumeAuthToken(
     where: { identifier: found.record.identifier },
   });
   return { userId: found.userId };
+}
+
+/**
+ * Read-only look-up behind the verification page, so the page can say whose
+ * address it is about to verify — and can show "link expired" before the
+ * student clicks a button that was always going to fail.
+ *
+ * Deliberately does NOT consume: this runs on a GET, and mail scanners follow
+ * links in email. Spending the token here would verify accounts nobody asked
+ * to verify, and burn the link before the real person ever opened it. Only the
+ * POST action calls `consumeAuthToken`.
+ */
+export async function findVerifyRecipient(token: string) {
+  if (!token) return null;
+  const found = await findAuthToken(prisma, "verify", token);
+  if (!found) return null;
+
+  const user = await prisma.user.findUnique({
+    where: { id: found.userId },
+    select: { email: true, emailVerified: true },
+  });
+  // Already verified is "link no longer usable", not "ready to verify": the
+  // action filters on `emailVerified: null` and would reject it anyway.
+  if (!user || user.emailVerified) return null;
+  return { maskedEmail: maskEmail(user.email) };
 }
 
 export async function pruneExpiredAuthTokens(now = new Date()) {
