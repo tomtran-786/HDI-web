@@ -5,7 +5,7 @@ import { formatDateTime } from "@/lib/format";
 import { orderStatusLabel } from "@/content/checkout";
 import { Section, SectionHeading } from "@/components/ui/section";
 import { Badge } from "@/components/ui/badge";
-import { markCancelled } from "./actions";
+import { cancelPendingOrder } from "./actions";
 
 export const metadata: Metadata = {
   title: "Quản trị — HDI Research Center",
@@ -29,7 +29,7 @@ const statusLabel: Record<string, string> = {
 };
 
 export default async function AdminPage() {
-  const [orders, enrollments, cohorts] = await Promise.all([
+  const [orders, enrollments, cohorts, reviewPayments] = await Promise.all([
     // The reconciliation queue: money expected but not yet confirmed. There is
     // no "mark paid" button beside it, deliberately — confirmation belongs to
     // the payment webhook and nowhere else, so a row leaving this list is
@@ -61,8 +61,18 @@ export default async function AdminPage() {
         id: true,
         status: true,
         createdAt: true,
+        accessExpiresAt: true,
+        accessRevokedAt: true,
+        drivePermissionId: true,
         user: { select: { name: true, email: true } },
-        cohort: { select: { courseSlug: true, ky: true, priceVnd: true } },
+        cohort: {
+          select: {
+            courseSlug: true,
+            ky: true,
+            priceVnd: true,
+            driveFolderId: true,
+          },
+        },
       },
     }),
     prisma.cohort.findMany({
@@ -79,17 +89,64 @@ export default async function AdminPage() {
         _count: { select: { enrollments: true } },
       },
     }),
+    prisma.payment.findMany({
+      where: {
+        OR: [
+          { status: "requires_review" },
+          { status: "succeeded", order: { status: { not: "paid" } } },
+        ],
+      },
+      orderBy: { receivedAt: "desc" },
+      take: 25,
+      select: {
+        id: true,
+        amountVnd: true,
+        providerRef: true,
+        receivedAt: true,
+        order: {
+          select: {
+            code: true,
+            status: true,
+            amountVnd: true,
+            user: { select: { email: true } },
+          },
+        },
+      },
+    }),
   ]);
 
   const awaitingPayment = orders.filter((o) => o.status === "pending");
+  const missingDrive = enrollments.filter(
+    (e) =>
+      e.status === "paid" &&
+      !e.accessRevokedAt &&
+      (!e.accessExpiresAt || e.accessExpiresAt > new Date()) &&
+      e.cohort.driveFolderId &&
+      !e.drivePermissionId,
+  );
 
   return (
     <Section soft>
       <SectionHeading
         eyebrow="Quản trị"
         title="Ghi danh & kỳ học"
-        subtitle={`${awaitingPayment.length} đơn đang chờ thanh toán. Xác nhận là việc của webhook — trang này chỉ để theo dõi.`}
+        subtitle={`${awaitingPayment.length} đơn chờ thanh toán · ${reviewPayments.length} giao dịch cần kiểm tra · ${missingDrive.length} quyền Drive đang thiếu.`}
       />
+
+      {reviewPayments.length > 0 && (
+        <div className="mb-10 rounded-card border border-primary bg-tint p-5 sm:p-6">
+          <h3 className="text-sm font-bold uppercase tracking-[0.16em] text-primary">
+            Thanh toán cần kiểm tra thủ công
+          </h3>
+          <ul className="mt-4 space-y-3">
+            {reviewPayments.map((payment) => (
+              <li key={payment.id} className="text-sm text-fg-muted">
+                Đơn #{payment.order.code} · nhận {vnd.format(payment.amountVnd)}đ / chờ {vnd.format(payment.order.amountVnd)}đ · {payment.order.user.email} · ref {payment.providerRef}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       <h3 className="mb-4 text-sm font-bold uppercase tracking-[0.16em] text-fg-subtle">
         Đơn hàng
@@ -137,9 +194,26 @@ export default async function AdminPage() {
                   </p>
                 )}
               </div>
-              <p className="shrink-0 text-lg font-bold tracking-tight text-primary">
-                {vnd.format(order.amountVnd)}đ
-              </p>
+              <div className="flex shrink-0 flex-wrap items-center gap-3">
+                <p className="text-lg font-bold tracking-tight text-primary">
+                  {vnd.format(order.amountVnd)}đ
+                </p>
+                {order.status === "pending" && (
+                  <form
+                    action={async () => {
+                      "use server";
+                      await cancelPendingOrder(order.id);
+                    }}
+                  >
+                    <button
+                      type="submit"
+                      className="inline-flex items-center rounded-full border border-line px-4 py-2 text-sm font-bold text-fg-muted transition hover:border-primary hover:text-primary"
+                    >
+                      Hủy đơn
+                    </button>
+                  </form>
+                )}
+              </div>
             </li>
           ))}
         </ul>
@@ -169,6 +243,9 @@ export default async function AdminPage() {
                     <Badge tone={e.status === "paid" ? "success" : "cool"}>
                       {statusLabel[e.status] ?? e.status}
                     </Badge>
+                    {missingDrive.some((item) => item.id === e.id) && (
+                      <Badge tone="cool">Thiếu quyền Drive</Badge>
+                    )}
                   </div>
                   {/* break-all: a long address must wrap instead of pushing the
                       row wide and giving the page a horizontal scrollbar. */}
@@ -182,23 +259,6 @@ export default async function AdminPage() {
                   </p>
                 </div>
 
-                {(e.status === "pending" || e.status === "paid") && (
-                  <div className="flex shrink-0 flex-wrap gap-2">
-                    <form
-                      action={async () => {
-                        "use server";
-                        await markCancelled(e.id);
-                      }}
-                    >
-                      <button
-                        type="submit"
-                        className="inline-flex items-center rounded-full border border-line px-5 py-2.5 text-sm font-bold text-fg-muted transition hover:border-primary hover:text-primary"
-                      >
-                        Hủy
-                      </button>
-                    </form>
-                  </div>
-                )}
               </li>
             );
           })}

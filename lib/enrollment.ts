@@ -35,21 +35,23 @@ export function accessExpiry(accessDays: number | null, from: Date): Date | null
  * `count === 0` therefore means "already handled", which is a success, not an
  * error — the caller should still answer the webhook 200.
  */
-export async function confirmEnrollment(enrollmentId: string, db: Db = prisma) {
+export async function confirmEnrollment(
+  enrollmentId: string,
+  db: Db = prisma,
+  paidAt = new Date(),
+) {
   const enrollment = await db.enrollment.findUnique({
     where: { id: enrollmentId },
     select: { cohort: { select: { accessDays: true } } },
   });
   if (!enrollment) return { confirmed: false, reason: "not_found" as const };
 
-  const now = new Date();
-
   const flipped = await db.enrollment.updateMany({
     where: { id: enrollmentId, status: "pending" },
     data: {
       status: "paid",
-      paidAt: now,
-      accessExpiresAt: accessExpiry(enrollment.cohort.accessDays, now),
+      paidAt,
+      accessExpiresAt: accessExpiry(enrollment.cohort.accessDays, paidAt),
     },
   });
 

@@ -13,7 +13,7 @@ import { trackCta, type CtaSource, type CtaTarget } from "@/lib/analytics";
  * people were being sent anyway.
  *
  * `dang-ky` resolves per course, to that course's intake list. Signing in is
- * not asked for here: someone can fill a cart first and sign in at checkout,
+ * not asked for here: the registration page asks for sign-in before adding,
  * which is the point at which an account actually becomes necessary. The
  * account-less fallback exists only so the union stays total — every current
  * caller of `dang-ky` sits inside a course modal and passes a slug.

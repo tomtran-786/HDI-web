@@ -33,10 +33,12 @@ thiệu các chương trình kèm cặp nghiên cứu và khóa học 8 buổi; 
 
 > ⚠️ **Phạm vi đang mở rộng.** Đây hiện là landing page, nhưng kế hoạch đã duyệt ngày
 > 2026-08-20 sẽ biến nó thành **ứng dụng có tài khoản, CSDL và tiền thật chạy qua**
-> (đăng nhập Google → thanh toán → webhook → truy cập record). Kế hoạch đầy đủ ở
+> (đăng nhập bằng email/mật khẩu hoặc Google → PayOS → webhook → cấp quyền Google Drive).
+> Kế hoạch đầy đủ ở
 > `~/.claude/plans/b-t-u-phi-n-m-i-twinkly-karp.md`. **Chốt 2026-08-20: HDI tách khỏi edubit**
-> — nút chặn của GĐ2–GĐ4 đã gỡ. Đã xong **GĐ0**, **GĐ1**, và phần code của **GĐ2**
-> (nhánh `feat/gd2-nen-tang`, xem Nhật ký phiên 5). GĐ3–GĐ4 chưa làm.
+> — nút chặn của GĐ2–GĐ4 đã gỡ. Đã xong phần code của **GĐ0–GĐ4** trên nhánh
+> `feat/gd2-nen-tang`; PayOS, Resend và Google Drive còn cần bí mật/tài khoản production
+> của HDI trước khi kiểm thử sandbox và mở bán.
 >
 > Kế hoạch chi tiết GĐ2 ở `~/.claude/plans/users-tranvomanhtuan-portfolio-app-hdi-cryptic-kite.md`.
 > **Repo nguồn để chép code nền tảng: `/Users/tranvomanhtuan/portfolio-app`, nhánh `main`.**
@@ -84,7 +86,9 @@ components/
 lib/
   analytics.ts     3 event đo phễu + union CtaSource
   prisma.ts        singleton pg.Pool + PrismaPg (GĐ2)
-  auth.ts          Auth.js v5 + Google + isAdminEmail (GĐ2)
+  auth.ts          Auth.js v5 + Credentials + Google + JWT + isAdminEmail
+  auth-tokens.ts   token xác minh/reset chỉ lưu SHA-256 + giới hạn thời gian
+  auth-throttle.ts giới hạn đăng nhập và email bằng khoá HMAC trong Postgres
   admin.ts         requireAdmin() cho server action (GĐ2)
   courses.ts       cầu nối DB ↔ content/course.ts (GĐ2)
   profile.ts       isProfileComplete + chuẩn hoá SĐT (GĐ2)
@@ -92,13 +96,15 @@ lib/
   cohorts.ts       kỳ đang mở · đếm chỗ · kỳ học viên đã giữ (GĐ3)
   cart.ts          đọc cookie giỏ hàng và ĐỊNH GIÁ LẠI từ DB (GĐ3)
   cart-cookie.ts   định dạng cookie, dùng chung cho cả client lẫn server (GĐ3)
-  orders.ts        createOrder · confirmOrder · cancelOrder · expireStaleOrders
+  orders.ts        createOrder · processPayosPayment · cancelOrder · expireStaleOrders
+  payos.ts         client PayOS + xác minh chữ ký webhook
+  fulfillment.ts   cấp/thu hồi quyền Google Drive có lease và đối soát
   format.ts        Intl dùng chung (ngày giờ Asia/Ho_Chi_Minh, tiền VNĐ)
   safe-path.ts     safeNext() — chặn open redirect ở ?tiep=
   generated/       Prisma Client — SINH RA lúc postinstall, đã gitignore
 prisma/
   schema.prisma    User/Account/Session/VerificationToken + Cohort/Enrollment
-                   + Order/OrderItem/Payment (GĐ3)
+                   + Order/OrderItem/Payment + AuthThrottle/ExternalSyncLease
   load-env.ts      nạp .env.local TRƯỚC mọi import khác — xem chú thích trong file
   seed.ts          upsert kỳ học từ prisma/cohorts.json (gitignore)
   cohorts.example.json
@@ -219,7 +225,7 @@ Về chúng tôi(bg) · Công bố(soft) · Dự án(bg) · Hội thảo(soft) �
 | # | Hạng mục | Route | Trạng thái |
 |---|---|---|---|
 | 14 | Schema Prisma + `lib/prisma.ts` + 2 migration đã áp | — | ✅ xong (qua MCP Supabase) |
-| 15 | Auth.js v5 + Google OAuth | `/api/auth/*` | ✅ xong · Google chấp nhận client_id + redirect_uri |
+| 15 | Auth.js v5 + email/mật khẩu + Google OAuth | `/api/auth/*` | ✅ xong · JWT 30 ngày, xác minh/reset email, liên kết Google an toàn |
 | 16 | Trang đăng nhập | `/dang-nhap` | ✅ xong, đã chụp ảnh sáng + tối |
 | 17 | Dashboard học viên | `/tai-khoan` | ✅ xong · đã test đủ 3 trạng thái + cách ly |
 | 18 | Trang quản trị | `/quan-tri` | ✅ xong · đã test 3 mức quyền |
@@ -231,13 +237,13 @@ Về chúng tôi(bg) · Công bố(soft) · Dự án(bg) · Hội thảo(soft) �
 | # | Hạng mục | Route | Trạng thái |
 |---|---|---|---|
 | 21 | Bảng `Order` / `OrderItem` / `Payment` + migration | — | ✅ xong · mã đơn từ sequence, khởi điểm 100001 |
-| 22 | Chọn kỳ học của một khóa | `/dang-ky/[slug]` | ✅ xong · chạy được khi chưa đăng nhập |
+| 22 | Chọn kỳ học của một khóa | `/dang-ky/[slug]` | ✅ xong · xem công khai, phải đăng nhập trước khi thêm vào giỏ |
 | 23 | Giỏ hàng (cookie) + nút giỏ ở header | `/gio-hang` | ✅ xong · giá luôn tính lại phía server |
-| 24 | Đặt đơn, giữ chỗ 48 giờ | — | ✅ xong · khoá hàng `FOR UPDATE`, không bán quá chỗ |
+| 24 | Đặt đơn, giữ chỗ 2 giờ | — | ✅ xong · khoá hàng `FOR UPDATE`, đối soát PayOS trước khi nhả chỗ |
 | 25 | Đơn hàng của học viên | `/tai-khoan/don-hang[/mã]` | ✅ xong · truy vấn luôn kèm `userId` |
 | 26 | Hàng chờ đối soát (chỉ xem) | `/quan-tri` | ✅ xong · **không có nút duyệt tay** |
-| 27 | Cron trả lại chỗ của đơn quá hạn | `/api/cron/...` | ✅ xong · Bearer so sánh hằng thời gian |
-| 28 | Cắm PayOS (client + webhook) | — | ⏳ **chưa làm** — chờ tài khoản PayOS |
+| 27 | Cron đối soát đơn/Drive và dọn dữ liệu ngắn hạn | `/api/cron/...` | ✅ xong · housekeeping có giới hạn, không quyết định tính đúng của checkout |
+| 28 | PayOS + webhook + Google Drive fulfillment | `/api/webhooks/payos` | ✅ code + full local E2E bằng Google Account phụ xong · còn đăng ký webhook production sau deploy |
 
 **Kiểm chứng số liệu** (đối chiếu với `reference/site`): 13 công bố · 14 hội thảo ·
 3 đề tài (US$31,000 + US$2,100 + US$4,200 = US$37,300) · 4 luận án hướng dẫn ·
@@ -581,8 +587,9 @@ hình.
 **Chủ trang chốt: HDI tách khỏi edubit**, và chỉ định lấy `/Users/tranvomanhtuan/portfolio-app`
 ("Chemistery Academy" — app bán khóa học **đang chạy tiền thật**) làm repo nguồn cho phần
 CSDL + thanh toán. Bốn quyết định kèm theo: làm trên nhánh mới trong HDI-web · HDI **đã có
-pháp nhân + MST** nên GĐ3 dùng PayOS · **chỉ đăng nhập Google OAuth** · ship hai nhịp, nhịp
-này chỉ GĐ2 (tiền vẫn thu tay).
+pháp nhân + MST** nên GĐ3 dùng PayOS · ban đầu **chỉ đăng nhập Google OAuth** · ship hai
+nhịp, nhịp này chỉ GĐ2 (tiền vẫn thu tay). Quyết định đăng nhập được mở rộng ngày
+2026-08-21: thêm email/mật khẩu có xác minh và khôi phục tài khoản, vẫn dùng Auth.js.
 
 **Đã dựng:** `lib/prisma.ts` · `lib/auth.ts` · `lib/admin.ts` · `lib/courses.ts` ·
 `prisma/schema.prisma` + `seed.ts` · `prisma.config.ts` · `/dang-nhap` · `/tai-khoan` ·
@@ -824,10 +831,12 @@ hai lần.
 hai người mua chỗ cuối cùng cùng đọc "đã lấy 1/2" và cùng thành công. Khoá **theo thứ tự
 id** để hai giỏ hàng giao nhau không kẹt cứng lẫn nhau.
 
-**Đơn hết hạn sau 48 giờ.** Một đơn `pending` giữ chỗ; không có hạn thì một lần bỏ giữa
-chừng là chỗ đó mất vĩnh viễn và lớp *trông như* đã đầy — hỏng mà không báo lỗi, không
-log, không ai kêu. `expireStaleOrders()` chạy bằng cron của Vercel, xác thực Bearer so
-sánh **hằng thời gian**, sai secret trả **404** chứ không 401.
+**Đơn mới hết hạn sau 2 giờ.** Một đơn `pending` giữ chỗ; trước khi bán chỗ, checkout đối
+soát đơn cũ với PayOS và chỉ nhả chỗ khi provider xác nhận link đã hết hạn, bị huỷ hoặc
+không tồn tại. Trạng thái paid/processing/underpaid và lỗi kết nối đều giữ chỗ (fail
+closed). `expireStaleOrders()` trong cron Vercel chỉ là housekeeping có giới hạn; tính
+đúng không phụ thuộc lịch cron mỗi ngày. Route cron xác thực Bearer theo thời gian hằng,
+sai secret trả **404** chứ không 401.
 
 **Mã đơn là `SERIAL` bắt đầu từ 100001**, không phải cuid: PayOS bắt `orderCode` là số
 nguyên, duy nhất vĩnh viễn, và ô nội dung chuyển khoản thì ngắn. Bản đầu viết
@@ -870,6 +879,66 @@ tràn ngang = 0 ở 375 sáng và 1280 tối trên cả 5 route mới · `/` v�
 > `open`. Chừng nào chưa có lịch thật thì **không thứ gì thêm vào giỏ được** — đúng ý
 > "chờ có lịch thật rồi mới bật", và không cần thêm biến môi trường nào.
 
+### 2026-08-21 — Phiên 6: kiểm thử tích hợp Auth, PayOS, Resend và Drive
+
+- Migration trên Supabase đã ở trạng thái mới nhất; RLS/revoke của
+  `auth_throttles` và `external_sync_leases`, unique `lower(email)` và enum
+  `requires_review` đều được xác nhận trực tiếp.
+- Resend local gửi thành công qua `onboarding@resend.dev` tới địa chỉ test chính thức của
+  Resend. Gửi cho học viên thật vẫn chờ domain HDI được xác minh.
+- PayOS thật đã tạo, truy vấn và huỷ hosted link. Luồng trình duyệt đã kiểm từ đăng nhập →
+  thêm giỏ → giữ chỗ 2 giờ → redirect PayOS. Không thực hiện chuyển tiền.
+- Webhook ký bằng SDK: chữ ký sai trả 400; chữ ký đúng chuyển đơn + ghi danh sang `paid`;
+  phát lại trả `duplicate` và chỉ có một Payment. Query string giả `status=CANCELLED`
+  không đổi được trang kết quả đã thanh toán.
+- Kiểm thử DB trực tiếp đạt: bcrypt cost 12; token chỉ lưu SHA-256; verify 24 giờ;
+  reset 30 phút; token replay bị từ chối; reset đẩy `sessionsValidAfter`; rate limit
+  cho đúng 10/12 lần; tranh chấp chỗ cuối cùng chỉ một đơn thắng.
+- Đối soát đơn quá hạn đã huỷ link PayOS trước, rồi mới đổi local thành `expired` và trả
+  ghế. Mọi link PayOS/fixture Supabase tạo trong phiên đã được huỷ/xoá.
+- Service account đọc và quản lý được cả 5 folder. Nhánh lỗi cấp quyền cho email không có
+  Google Account được kiểm thật: đơn vẫn `paid`, `drivePermissionId` để null để retry.
+  Với Google Account phụ `manhtuanktvn123@gmail.com`, live test trên folder SPSS đã grant
+  `reader`, retry tái sử dụng cùng permission, revoke và xác nhận permission biến mất; không còn
+  quyền tạm sau test.
+- Sau khi giải phóng cổng 3000, Google chấp nhận chính xác callback
+  `http://localhost:3000/api/auth/callback/google`: request không tương tác quay về callback
+  với `interaction_required`, không còn `redirect_uri_mismatch`. Full OAuth sau đó hoàn tất bằng
+  `manhtuanktvn123@gmail.com`: Auth.js tạo User emailVerified + Account `google/oidc`, không tạo
+  passwordHash, profile gate chạy rồi dashboard mở đúng. Email chưa tồn tại trước test.
+- Cùng session đó đã chạy browser E2E: tạo cohort SPSS 20.000đ → add cart → checkout → hosted
+  PayOS #100011 đúng giá và hạn 2 giờ → webhook có chữ ký trả `succeeded` → DB có đúng một
+  Payment + Order/Enrollment `paid` → Drive permission lưu trong DB khớp permission live. Payload
+  phát lại trả `duplicate`; URL giả `status=CANCELLED` không đổi kết quả DB-paid.
+- Đẩy access expiry fixture về quá khứ rồi chạy reconciliation đã revoke đúng một permission,
+  ghi `accessRevokedAt` và xác nhận quyền Drive biến mất. Link PayOS remote được huỷ từ `PENDING`
+  sang `CANCELLED`, `amountPaid=0`; sau logout, toàn bộ User/Account/Order/Payment/Enrollment/
+  Cohort/lease fixture đều được xác nhận bằng 0.
+- Live test phát hiện Server Action logout điều hướng nhưng JWT sống lại do race với request
+  SessionProvider. Nút logout đã chuyển sang Auth.js client `signOut`, nơi CSRF + session broadcast
+  được phối hợp; retest thật xác nhận `/dang-nhap` không còn redirect ngược về dashboard.
+- Profile-completion gate đã kiểm bằng browser và DB: user thiếu SĐT/giai đoạn bị đưa về
+  `/hoan-tat-ho-so?tiep=%2Fgio-hang`, không tạo Order hay link PayOS. Cron thật trả 404/200
+  đúng Bearer; template reset Resend cũng gửi thành công tới địa chỉ test chính thức.
+- Audit bổ sung đã sửa bốn cạnh an toàn: JWT có cutoff nhưng thiếu issue time phải fail closed;
+  bank reference đã `requires_review` không thể được diễn giải lại để cấp quyền; webhook bắt
+  buộc `paymentLinkId` không rỗng và phục hồi ID có chữ ký khi DB chưa kịp lưu; Drive grant
+  chỉ nhắm enrollment của order, có budget toàn batch và gia hạn lease theo owner.
+- `npm test`: 69/69; ESLint, TypeScript, Prisma validate, `git diff --check` và production
+  build đều sạch. Bổ sung hồi quy cho auth linking/session/registration/reset, cron,
+  remote-first cancel, PayOS create/recovery/replay và Drive idempotency/retry/budget/lease.
+- Server Action xác thực email và đổi mật khẩu giờ có regression riêng: token expired/replay
+  không chạm user; consume + update nằm cùng transaction; reset tạo bcrypt cost 12 và đẩy
+  `sessionsValidAfter` chỉ cho tài khoản đã xác minh.
+- `codex mcp list/get supabase` xác nhận server Supabase đúng project ref, đủ feature và đang
+  `enabled`. Task Codex hiện tại được mở trước khi server được nạp nên chưa thấy tool Supabase;
+  cần restart Codex/task nếu muốn dùng feature branching trực tiếp.
+- Không chờ MCP reload: đã dựng PostgreSQL 16 disposable bằng Docker trên port riêng. Lần chạy
+  đầu phát hiện database sạch thiếu hai role PostgREST do Supabase cấp sẵn; runner integration
+  giờ tự bootstrap `anon`/`authenticated` dưới guard xác nhận database disposable. Tạo lại DB từ
+  số 0 xong, cả 4 migration và 4/4 integration tests đều qua. Container đã được xoá và port đã
+  trả lại; `.env.local` không cần lưu `TEST_DATABASE_URL` tạm.
+
 
 ## 8. Việc tiếp theo (gợi ý, chưa làm)
 
@@ -878,11 +947,12 @@ tràn ngang = 0 ở 375 sáng và 1280 tối trên cả 5 route mới · `/` v�
 - [ ] Hai dịch vụ ở `#dich-vu` mới chỉ có tiêu đề, vì trang gốc cũng chỉ có tiêu đề. Cần Dr. Trinh cung cấp mô tả và bảng giá thật — **đừng tự viết**.
 - [ ] Deploy Vercel: đã sửa preset + thêm `vercel.json`, cần Redeploy và xác nhận trang chạy.
 - [ ] **Bật Web Analytics trong dashboard Vercel** — GĐ1 đã gắn code nhưng không tự bật được.
-- [ ] **GĐ4 — cắm PayOS.** Phần còn lại đúng bằng hai file: `lib/payos.ts` (tạo link thanh toán từ `order.code` và `order.amountVnd`) và `app/api/webhooks/payos/route.ts` (kiểm chữ ký → `recordPayment()` → `confirmOrder()`). Không phải sửa gì trong `lib/orders.ts`. Cần: tài khoản PayOS **riêng của HDI** (dùng chung tài khoản Chemistery thì tiền về sai pháp nhân) và `PAYOS_CLIENT_ID` / `PAYOS_API_KEY` / `PAYOS_CHECKSUM_KEY`.
-- [ ] **Đặt `CRON_SECRET` trên Vercel** — thiếu nó thì route dọn đơn quá hạn luôn trả 404 và chỗ của đơn bỏ quên không bao giờ được trả lại. Lịch chạy đã khai trong `vercel.json` (03:00 UTC = 10:00 giờ VN, mỗi ngày một lần cho vừa giới hạn gói Hobby).
-- [ ] **Mã đơn hiện bắt đầu từ 100006** vì 5 số đầu đã tiêu trong lúc kiểm thử. Vô hại — sequence không lùi, và mã đơn không được phép dùng lại. Đừng "sửa" cho đẹp.
+- [x] **GĐ4 — code PayOS + fulfillment.** Đã có tạo/recover link, webhook có chữ ký và idempotency, huỷ remote-first, trạng thái `requires_review`, đối soát, và cấp quyền Google Drive best-effort. Còn việc production: dùng tài khoản PayOS **riêng của HDI**, đặt `PAYOS_CLIENT_ID` / `PAYOS_API_KEY` / `PAYOS_CHECKSUM_KEY`, rồi đăng ký webhook sau deploy.
+- [ ] **Đặt bí mật dịch vụ trên Vercel:** `APP_URL`, PayOS, `RESEND_API_KEY`, `EMAIL_FROM`, `GOOGLE_CLIENT_EMAIL`, `GOOGLE_PRIVATE_KEY`, cùng các biến Auth.js/DB/admin/cron hiện có. Domain gửi Resend phải được xác minh; email mua hàng phải thuộc một Google Account để Drive cấp quyền.
+- [ ] **Đặt `CRON_SECRET` trên Vercel** — thiếu nó thì route housekeeping luôn trả 404. Checkout vẫn tự đối soát đơn quá hạn trước khi bán chỗ; cron mỗi ngày xử lý thêm retry/revoke Drive và dọn token/lease/throttle.
+- [ ] **Sequence mã đơn đã tiến thêm trong lúc kiểm thử sandbox.** Vô hại — sequence không lùi, và mã đơn không được phép dùng lại. Đừng reset cho đẹp.
 - [ ] **Chính sách hoàn tiền / huỷ đơn** chưa có chữ nào. Trạng thái `refunded` đã có trong DB nhưng chưa có luồng nào dẫn tới nó. Cần Dr. Trinh quyết trước khi thu tiền thật.
-- [ ] **GĐ2 — việc tay còn lại:** (1) ~~điền mật khẩu DB~~ ✅ xong; (2) tạo OAuth Client ID ở Google Cloud Console (redirect `/api/auth/callback/google` cho localhost + preview + prod); (3) service account + Shared Drive; (4) lịch kỳ học thật từ Dr. Trinh để seed.
+- [ ] **GĐ2 — việc tay còn lại:** (1) ~~điền mật khẩu DB~~ ✅ xong; (2) xác nhận OAuth Client ID có redirect `/api/auth/callback/google` cho localhost + preview + prod; (3) service account có quyền quản lý Shared Drive; (4) lịch kỳ học thật từ Dr. Trinh để seed.
 - [ ] **Trang chính sách bảo mật + dòng đồng ý.** Từ GĐ2 trang đã lưu tên, email, lịch sử ghi danh — hiện chưa có trang chính sách nào. Nên làm trước khi có học viên thật.
 - [ ] **Bật sao lưu DB** (Point-in-Time Recovery của Supabase). Từ giờ có dữ liệu không tái tạo được từ git.
 - [ ] **Học phí:** `content/course.ts` đang mirror giá edubit. Đã tách khỏi edubit thì `Cohort.priceVnd` mới là giá thật — cần đối chiếu hai chỗ khi seed.

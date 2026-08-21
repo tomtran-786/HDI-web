@@ -48,8 +48,8 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
             falls back to the marketing CTA while it loads. */}
         <SessionProvider>
           {/* The cart lives in a cookie, so it wraps the header (which shows the
-              badge) and the pages (which add to it) alike. It holds no session
-              state — a signed-out visitor has a cart too. */}
+              badge) and the pages (which add to it) alike. Purchase surfaces
+              require a session before they write it. */}
           <CartProvider>
             <SiteHeader />
             <main className="flex-1">{children}</main>

@@ -1,8 +1,15 @@
 import { timingSafeEqual } from "node:crypto";
 import { NextResponse } from "next/server";
 import { expireStaleOrders } from "@/lib/orders";
+import { pruneAuthThrottles } from "@/lib/auth-throttle";
+import { pruneExpiredAuthTokens } from "@/lib/auth-tokens";
+import { pruneExpiredLeases } from "@/lib/external-lease";
+import {
+  reconcileMissingDriveGrants,
+  revokeExpiredDriveAccess,
+} from "@/lib/fulfillment";
 
-// Database sessions and the pg driver both need Node, not the edge runtime.
+// Prisma, PayOS and Google SDKs need Node, not the edge runtime.
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
@@ -36,10 +43,25 @@ export async function GET(request: Request) {
   }
 
   const result = await expireStaleOrders();
+  // Permission mutations for one folder must not run concurrently. Keep grant
+  // then revoke deterministic even though each operation also has a DB lease.
+  const driveGrants = await reconcileMissingDriveGrants();
+  const driveRevokes = await revokeExpiredDriveAccess();
+  const [throttles, tokens, leases] = await Promise.all([
+    pruneAuthThrottles(),
+    pruneExpiredAuthTokens(),
+    pruneExpiredLeases(),
+  ]);
   if (result.expired > 0) {
     console.log(
       `[cron] Đóng ${result.expired} đơn quá hạn, trả lại ${result.released} chỗ.`,
     );
   }
-  return NextResponse.json({ ok: true, ...result });
+  return NextResponse.json({
+    ok: true,
+    orders: result,
+    driveGrants,
+    driveRevokes,
+    pruned: { throttles, tokens, leases },
+  });
 }

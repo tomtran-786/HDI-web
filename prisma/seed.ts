@@ -1,9 +1,10 @@
 /**
  * Seed / update cohorts from prisma/cohorts.json.
  *
- * That file is gitignored because it carries the two secrets this repo must
- * never hold: the Zoom link and the Drive folder id. Copy
- * prisma/cohorts.example.json to prisma/cohorts.json and fill it in.
+ * That file is gitignored because it carries private schedule/meeting data.
+ * Course-level Drive folders live in the separately gitignored
+ * prisma/drive-folders.json and are used as defaults for every cohort. A
+ * cohort may still override its folder with `driveFolderId` when needed.
  *
  *   npx tsx prisma/seed.ts
  *
@@ -31,6 +32,27 @@ type SeedCohort = {
   driveFolderId?: string | null;
 };
 
+function loadDriveFolders(known: Set<string>) {
+  const file = join(process.cwd(), "prisma", "drive-folders.json");
+  if (!existsSync(file)) return new Map<string, string>();
+
+  const parsed = JSON.parse(readFileSync(file, "utf8")) as Record<string, unknown>;
+  const entries = Object.entries(parsed);
+  const invalid = entries.filter(
+    ([slug, folderId]) =>
+      !known.has(slug) ||
+      typeof folderId !== "string" ||
+      !/^[A-Za-z0-9_-]{10,100}$/.test(folderId),
+  );
+  if (invalid.length > 0) {
+    throw new Error(
+      "prisma/drive-folders.json chứa courseSlug hoặc Google Drive folder ID không hợp lệ: " +
+        invalid.map(([slug]) => slug).join(", "),
+    );
+  }
+  return new Map(entries as [string, string][]);
+}
+
 async function main() {
   const file = join(process.cwd(), "prisma", "cohorts.json");
   if (!existsSync(file)) {
@@ -43,6 +65,7 @@ async function main() {
 
   const rows: SeedCohort[] = JSON.parse(readFileSync(file, "utf8"));
   const known = new Set(courses.map((c) => c.slug));
+  const driveFolders = loadDriveFolders(known);
 
   // Validate everything before writing anything: a half-applied seed is worse
   // than a rejected one.
@@ -65,7 +88,7 @@ async function main() {
       accessDays: r.accessDays ?? null,
       status: r.status ?? "draft",
       meetingUrl: r.meetingUrl ?? null,
-      driveFolderId: r.driveFolderId ?? null,
+      driveFolderId: r.driveFolderId ?? driveFolders.get(r.courseSlug) ?? null,
     };
     await prisma.cohort.upsert({
       where: { courseSlug_ky: { courseSlug: r.courseSlug, ky: r.ky } },

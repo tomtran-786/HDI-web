@@ -11,6 +11,7 @@ import { Section, SectionHeading } from "@/components/ui/section";
 import { Badge } from "@/components/ui/badge";
 import { IconArrow, IconMail, IconMessage } from "@/components/ui/icons";
 import { CancelOrder } from "./cancel";
+import { RetryPayment } from "./retry";
 
 export const metadata: Metadata = {
   title: "Đơn hàng — HDI Research Center",
@@ -40,6 +41,7 @@ export default async function OrderDetailPage({
       createdAt: true,
       expiresAt: true,
       paidAt: true,
+      checkoutUrl: true,
       items: {
         select: {
           id: true,
@@ -121,23 +123,19 @@ export default async function OrderDetailPage({
             <p className="text-lg font-bold tracking-tight text-primary">
               {orderPage.awaitingGateway.title}
             </p>
-            {/* No bank account number here. PayOS is still being registered, and
-                inventing transfer details would be inventing a fact — Plan.MD §3.
-                When the gateway is live this block becomes the pay button and
-                the webhook confirms the order without anyone being messaged. */}
             <p className="mt-2 text-[15px] leading-relaxed text-fg-muted">
               {orderPage.awaitingGateway.body}
             </p>
             <div className="mt-5 flex flex-wrap gap-3">
-              <a
-                href={links.zalo}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-bold text-primary-fg transition hover:bg-primary-deep"
-              >
-                <IconMessage size={16} />
-                Nhắn Zalo
-              </a>
+              {order.checkoutUrl && (
+                <a
+                  href={order.checkoutUrl}
+                  className="inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-bold text-primary-fg transition hover:bg-primary-deep"
+                >
+                  Thanh toán với PayOS
+                  <IconArrow size={16} />
+                </a>
+              )}
               <a
                 href={`mailto:${contact.email}?subject=${encodeURIComponent(`Thanh toán đơn #${order.code}`)}`}
                 className="inline-flex items-center gap-2 rounded-full border border-line px-5 py-2.5 text-sm font-bold text-fg transition hover:border-primary hover:text-primary"
@@ -145,7 +143,23 @@ export default async function OrderDetailPage({
                 <IconMail size={16} />
                 Gửi email
               </a>
+              {!order.checkoutUrl && (
+                <a
+                  href={links.zalo}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 rounded-full border border-line px-5 py-2.5 text-sm font-bold text-fg transition hover:border-primary hover:text-primary"
+                >
+                  <IconMessage size={16} />
+                  Nhắn Zalo
+                </a>
+              )}
             </div>
+            {!order.checkoutUrl && (
+              <div className="mt-4">
+                <RetryPayment orderId={order.id} />
+              </div>
+            )}
             <p className="mt-3 text-xs leading-relaxed text-fg-subtle">
               {orderPage.awaitingGateway.hint}
             </p>

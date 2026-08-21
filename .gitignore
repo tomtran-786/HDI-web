@@ -52,6 +52,7 @@ next-env.d.ts
 
 # real cohort data carries the Zoom link and Drive folder id
 /prisma/cohorts.json
+/prisma/drive-folders.json
 
 # local MCP server config and installed agent skills
 .mcp.json

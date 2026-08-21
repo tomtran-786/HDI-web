@@ -20,11 +20,15 @@ export function AddToCart({
   courseSlug,
   ky,
   blocked,
+  signedIn,
+  loginReturnTo,
 }: {
   cohortId: string;
   courseSlug: string;
   ky: string;
   blocked: "no_seats" | "already_enrolled" | null;
+  signedIn: boolean;
+  loginReturnTo: string;
 }) {
   const { has, add, full } = useCart();
 
@@ -45,6 +49,18 @@ export function AddToCart({
       <span className="inline-flex cursor-not-allowed items-center justify-center rounded-full border border-line px-5 py-2.5 text-sm font-bold text-fg-subtle">
         {enrolPage.fullLabel}
       </span>
+    );
+  }
+
+  if (!signedIn) {
+    return (
+      <Link
+        href={`/dang-nhap?tiep=${encodeURIComponent(loginReturnTo)}`}
+        className="inline-flex items-center justify-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-bold text-primary-fg transition hover:bg-primary-deep"
+      >
+        Đăng nhập để đăng ký
+        <IconArrow size={15} />
+      </Link>
     );
   }
 

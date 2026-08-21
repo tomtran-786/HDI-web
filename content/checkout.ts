@@ -2,10 +2,8 @@
  * Copy for the cart, the intake picker and the order pages.
  *
  * Nothing here states a fact about the world that HDI has not supplied. In
- * particular there are NO bank details: the payment gateway is still being
- * registered, so the order page tells students that HDI will contact them
- * rather than inventing an account number for them to transfer money to.
- * Per Plan.MD §3, that stays true until Dr. Trinh provides the real thing.
+ * Payment copy points students to the hosted PayOS link and never publishes
+ * bank details or treats return-page query parameters as proof of payment.
  */
 
 export const enrolPage = {
@@ -38,7 +36,7 @@ export const cartPage = {
   blockedNotice:
     "Những kỳ được đánh dấu bên dưới sẽ không nằm trong đơn hàng.",
   holdNote:
-    "Đặt đơn sẽ giữ chỗ cho bạn trong 48 giờ. Chưa trừ tiền ở bước này.",
+    "Đặt đơn giữ chỗ trong 2 giờ và chuyển sang PayOS. Quyền record được cấp cho email đăng nhập, nên email đó cần thuộc một tài khoản Google.",
 } as const;
 
 export const orderPage = {
@@ -48,17 +46,16 @@ export const orderPage = {
   codeLabel: "Mã đơn",
   holdUntil: "Giữ chỗ đến",
   cancel: "Hủy đơn",
-  /** Shown while no payment gateway is connected yet. */
   awaitingGateway: {
-    title: "Đơn đã được ghi nhận",
+    title: "Chờ thanh toán qua PayOS",
     body:
-      "Chỗ học của bạn đang được giữ. Cổng thanh toán trực tuyến đang trong quá trình kích hoạt, nên HDI sẽ liên hệ trực tiếp với bạn để hướng dẫn hoàn tất học phí.",
-    hint: "Nhắn kèm mã đơn ở trên để được xử lý nhanh hơn.",
+      "Chỗ học đang được giữ trong 2 giờ. Hoàn tất trên PayOS; HDI chỉ xác nhận khi nhận được webhook có chữ ký hợp lệ.",
+    hint: "Nếu đường dẫn chưa xuất hiện, PayOS có thể đang gián đoạn. Không tạo thêm đơn cho cùng kỳ học.",
   },
   paid: {
     title: "Đã thanh toán",
     body:
-      "Học phí đã được xác nhận. Link vào lớp và kho record hiện đã mở trong trang tài khoản.",
+      "Học phí đã được xác nhận. HDI đang cấp quyền Google Drive; link vào lớp và trạng thái record nằm trong trang tài khoản.",
   },
   closed: {
     cancelled: "Đơn này đã hủy. Chỗ học đã được trả lại.",

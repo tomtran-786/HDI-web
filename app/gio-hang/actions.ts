@@ -6,6 +6,7 @@ import { prisma } from "@/lib/prisma";
 import { isProfileComplete } from "@/lib/profile";
 import { loadCart, readCartIds, writeCartIds } from "@/lib/cart";
 import { createOrder } from "@/lib/orders";
+import { ensurePayosCheckout } from "@/lib/payment-checkout";
 
 export type CheckoutState = { error?: string };
 
@@ -50,11 +51,17 @@ export async function checkout(): Promise<CheckoutState> {
   );
   if (!result.ok) return { error: result.message };
 
+  const payment = await ensurePayosCheckout(result.orderId, session.user.id);
+  if (!payment.ok && payment.state !== "pending_gateway") {
+    return { error: payment.message };
+  }
+
   // Take only what was ordered out of the cart. Lines that were blocked (full,
   // or already enrolled) stay, so the student can see what did not go through
   // instead of watching the whole cart vanish.
   const ordered = new Set(cart.buyable.map((line) => line.cohortId));
   await writeCartIds(ids.filter((id) => !ordered.has(id)));
 
+  if (payment.ok) redirect(payment.checkoutUrl);
   redirect(`/tai-khoan/don-hang/${result.code}`);
 }

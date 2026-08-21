@@ -126,6 +126,8 @@ export default async function EnrolPage({
                       courseSlug={cohort.courseSlug}
                       ky={cohort.ky}
                       blocked={blocked}
+                      signedIn={Boolean(session?.user?.id)}
+                      loginReturnTo={`/dang-ky/${slug}`}
                     />
                   </div>
                 </li>
@@ -140,4 +142,3 @@ export default async function EnrolPage({
     </Section>
   );
 }
-

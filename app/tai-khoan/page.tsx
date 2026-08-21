@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { auth, signOut } from "@/lib/auth";
+import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { findCourse } from "@/lib/courses";
 import { links } from "@/content/site";
@@ -10,11 +10,12 @@ import {
   IconArrow,
   IconCalendar,
   IconFolder,
-  IconLogout,
   IconMessage,
   IconReceipt,
   IconVideo,
 } from "@/components/ui/icons";
+import { retryDriveAccess } from "./actions";
+import { LogoutButton } from "./logout-button";
 
 export const metadata: Metadata = {
   title: "Tài khoản — HDI Research Center",
@@ -65,6 +66,7 @@ export default async function AccountPage() {
       status: true,
       accessExpiresAt: true,
       accessRevokedAt: true,
+      drivePermissionId: true,
       cohort: {
         select: {
           id: true,
@@ -115,20 +117,7 @@ export default async function AccountPage() {
           <IconReceipt size={16} />
           Đơn hàng
         </Link>
-        <form
-          action={async () => {
-            "use server";
-            await signOut({ redirectTo: "/" });
-          }}
-        >
-          <button
-            type="submit"
-            className="inline-flex items-center gap-2 rounded-full border border-line px-5 py-2.5 text-sm font-bold text-fg-muted transition hover:border-primary hover:text-primary"
-          >
-            <IconLogout size={16} />
-            Đăng xuất
-          </button>
-        </form>
+        <LogoutButton />
         </div>
       </div>
 
@@ -227,7 +216,7 @@ export default async function AccountPage() {
                           Vào lớp
                         </a>
                       )}
-                      {secret?.driveFolderId && (
+                      {secret?.driveFolderId && e.drivePermissionId && (
                         <a
                           href={`https://drive.google.com/drive/folders/${secret.driveFolderId}`}
                           target="_blank"
@@ -237,6 +226,23 @@ export default async function AccountPage() {
                           <IconFolder size={16} />
                           Kho record
                         </a>
+                      )}
+                      {secret?.driveFolderId && !e.drivePermissionId && (
+                        <form
+                          className="flex-1"
+                          action={async () => {
+                            "use server";
+                            await retryDriveAccess(e.id);
+                          }}
+                        >
+                          <button
+                            type="submit"
+                            className="inline-flex w-full items-center justify-center gap-2 rounded-full border border-line px-5 py-3 text-sm font-bold text-fg transition hover:border-primary hover:text-primary"
+                          >
+                            <IconFolder size={16} />
+                            Thử cấp lại quyền record
+                          </button>
+                        </form>
                       )}
                       {!secret?.meetingUrl && !secret?.driveFolderId && (
                         <p className="text-sm leading-relaxed text-fg-muted">

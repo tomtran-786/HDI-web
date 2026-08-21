@@ -34,6 +34,14 @@ model User {
   emailVerified DateTime? @map("email_verified") @db.Timestamptz(6)
   image         String?
 
+  /// Credentials are optional because an account may use Google only. Never
+  /// select this field into a session or page response.
+  passwordHash String? @map("password_hash") @db.VarChar(100)
+
+  /// JWTs issued before this instant are rejected. Credentials requires JWT
+  /// sessions in Auth.js, so this is the server-side global sign-out cutoff.
+  sessionsValidAfter DateTime? @map("sessions_valid_after") @db.Timestamptz(6)
+
   // Ours. Google supplies name + email; these two are what it cannot give us, so
   // /hoan-tat-ho-so asks for them once after the first sign-in. They mirror the
   // Google Form this app replaces (Họ tên · Email · SĐT · Giai đoạn), which is
@@ -84,15 +92,43 @@ model Session {
   @@map("sessions")
 }
 
-// Unused while Google is the only provider, but the adapter calls into it for
-// any email flow. Cheap to carry; expensive to discover missing.
+// Auth.js adapter compatibility plus hashed verification/reset bearer tokens.
 model VerificationToken {
   identifier String
   token      String
   expires    DateTime @db.Timestamptz(6)
 
   @@id([identifier, token])
+  @@unique([token])
+  @@index([identifier])
   @@map("verification_tokens")
+}
+
+/// Fixed-window authentication throttles. Keys are HMACs, never raw email or
+/// IP addresses, so the table cannot be used as an account/address directory.
+model AuthThrottle {
+  action      String   @db.VarChar(32)
+  keyHash     String   @map("key_hash") @db.Char(64)
+  windowStart DateTime @map("window_start") @db.Timestamptz(6)
+  count       Int      @default(1)
+  expiresAt   DateTime @map("expires_at") @db.Timestamptz(6)
+
+  @@id([action, keyHash, windowStart])
+  @@index([expiresAt])
+  @@map("auth_throttles")
+}
+
+/// A crash-safe, expiring lease for external resources such as one Drive
+/// folder. It serializes API mutations without holding a Postgres transaction
+/// open while waiting on the network.
+model ExternalSyncLease {
+  resourceKey String   @id @map("resource_key") @db.VarChar(180)
+  owner       String   @db.VarChar(80)
+  lockedUntil DateTime @map("locked_until") @db.Timestamptz(6)
+  updatedAt   DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@index([lockedUntil])
+  @@map("external_sync_leases")
 }
 
 // ------------------------------------------------------------------- HDI ---
@@ -162,9 +198,9 @@ model Cohort {
 
 /// A student's place in one intake.
 ///
-/// `status` is the single seam between GĐ2 and GĐ3: today an admin flips
-/// pending → paid by hand, later the PayOS webhook flips the same field with a
-/// conditional updateMany so a replayed webhook is a no-op.
+/// `status` is the single seam between reservations and fulfillment. Only a
+/// verified PayOS webhook may flip pending → paid; admin cancellation operates
+/// on the owning order aggregate instead of mutating this row directly.
 model Enrollment {
   id       String           @id @default(cuid())
   userId   String           @map("user_id")
@@ -221,6 +257,8 @@ enum PaymentStatus {
   pending
   succeeded
   failed
+  /// Real money or provider state exists, but automatic access is unsafe.
+  requires_review
 
   @@map("payment_status")
 }
@@ -261,6 +299,7 @@ model Order {
   /// order was created before any provider was wired up.
   provider    String? @db.VarChar(20)
   providerRef String? @map("provider_ref") @db.VarChar(120)
+  checkoutUrl String? @map("checkout_url") @db.Text
 
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
@@ -331,5 +370,6 @@ model Payment {
 
   @@unique([provider, providerRef])
   @@index([orderId])
+  @@index([status, receivedAt])
   @@map("payments")
 }

@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import { AuthError } from "next-auth";
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth, signIn } from "@/lib/auth";
 import { safeNext } from "@/lib/safe-path";
@@ -15,7 +17,7 @@ export const metadata: Metadata = {
 export default async function SignInPage({
   searchParams,
 }: PageProps<"/dang-nhap">) {
-  const { error, tiep } = await searchParams;
+  const { error, tiep, verified, reset } = await searchParams;
   // Where to land afterwards. Checkout sends people here mid-purchase, and
   // dropping them on the dashboard instead of back at their cart is how a
   // filled cart gets abandoned.
@@ -31,19 +33,78 @@ export default async function SignInPage({
           align="center"
           eyebrow="Khu vực học viên"
           title="Đăng nhập"
-          subtitle="Dùng tài khoản Google của bạn để vào lớp và xem lại record."
+          subtitle="Đăng nhập bằng email và mật khẩu hoặc bằng Google."
         />
 
         <div className="rounded-card border border-line bg-card p-6 sm:p-8">
+          {(verified || reset) && (
+            <p className="mb-5 rounded-card border border-line bg-bg-soft px-4 py-3 text-sm text-fg-muted">
+              {verified
+                ? "Email đã được xác thực. Bạn có thể đăng nhập ngay."
+                : "Mật khẩu đã được đổi và các phiên đăng nhập cũ đã hết hiệu lực."}
+            </p>
+          )}
           {error && (
             <p className="mb-5 rounded-card border border-line bg-bg-soft px-4 py-3 text-sm text-fg-muted">
-              Đăng nhập chưa thành công. Vui lòng thử lại, hoặc nhắn Zalo nếu
-              vẫn không vào được.
+              Email hoặc mật khẩu chưa đúng, tài khoản chưa xác thực, hoặc lượt
+              thử tạm thời đã vượt giới hạn.
             </p>
           )}
 
-          {/* A server action, so no client component and no JavaScript is
-              needed to start the OAuth flow. */}
+          <form
+            className="space-y-4"
+            action={async (formData) => {
+              "use server";
+              try {
+                await signIn("credentials", {
+                  email: formData.get("email"),
+                  password: formData.get("password"),
+                  redirectTo: next,
+                });
+              } catch (authError) {
+                if (authError instanceof AuthError) {
+                  redirect(
+                    `/dang-nhap?error=CredentialsSignin&tiep=${encodeURIComponent(next)}`,
+                  );
+                }
+                throw authError;
+              }
+            }}
+          >
+            <label className="block text-sm font-semibold">
+              Email
+              <input
+                className="mt-1.5 w-full rounded-card border border-line bg-bg px-4 py-3 text-sm outline-none transition focus:border-primary"
+                name="email"
+                type="email"
+                autoComplete="email"
+                required
+              />
+            </label>
+            <label className="block text-sm font-semibold">
+              Mật khẩu
+              <input
+                className="mt-1.5 w-full rounded-card border border-line bg-bg px-4 py-3 text-sm outline-none transition focus:border-primary"
+                name="password"
+                type="password"
+                autoComplete="current-password"
+                required
+              />
+            </label>
+            <button
+              type="submit"
+              className="w-full rounded-full bg-primary px-6 py-3 text-sm font-bold text-primary-fg transition hover:bg-primary-deep"
+            >
+              Đăng nhập
+            </button>
+          </form>
+
+          <div className="my-5 flex items-center gap-3 text-xs text-fg-subtle">
+            <span className="h-px flex-1 bg-line" />
+            hoặc
+            <span className="h-px flex-1 bg-line" />
+          </div>
+
           <form
             action={async () => {
               "use server";
@@ -59,13 +120,21 @@ export default async function SignInPage({
             </button>
           </form>
 
-          {/* Not a formality: recordings are served from Google Drive, which
-              grants access per Google account. Signing in with the address you
-              actually watch from is what makes that work. */}
           <p className="mt-5 text-center text-xs leading-relaxed text-fg-subtle">
-            Record khóa học được chia sẻ qua Google Drive, nên hãy đăng nhập
-            bằng chính tài khoản Google bạn dùng để xem.
+            Record được chia sẻ qua Google Drive. Email đăng nhập cần thuộc tài
+            khoản Google bạn dùng để xem; không nhất thiết phải là Gmail.
           </p>
+          <div className="mt-5 flex flex-wrap justify-center gap-x-5 gap-y-2 text-sm">
+            <Link className="font-bold text-primary" href="/dang-ky-tai-khoan">
+              Tạo tài khoản
+            </Link>
+            <Link className="font-bold text-primary" href="/quen-mat-khau">
+              Quên mật khẩu
+            </Link>
+            <Link className="font-bold text-primary" href="/xac-thuc-email">
+              Gửi lại xác thực
+            </Link>
+          </div>
         </div>
       </div>
     </Section>

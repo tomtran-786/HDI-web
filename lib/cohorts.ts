@@ -16,12 +16,31 @@ export async function seatsTaken(cohortIds: string[]) {
   const taken = new Map<string, number>();
   if (cohortIds.length === 0) return taken;
 
-  const rows = await prisma.enrollment.groupBy({
-    by: ["cohortId"],
-    where: { cohortId: { in: cohortIds }, status: { in: SEAT_HELD } },
-    _count: { _all: true },
-  });
-  for (const row of rows) taken.set(row.cohortId, row._count._all);
+  const rows = await prisma.$queryRaw<{ cohortId: string; held: bigint }[]>`
+    SELECT e.cohort_id AS "cohortId", count(*)::bigint AS held
+      FROM enrollments e
+     WHERE e.cohort_id = ANY(${cohortIds}::text[])
+       AND (
+         e.status = 'paid'::enrollment_status
+         OR (
+           e.status = 'pending'::enrollment_status
+           AND (
+             NOT EXISTS (
+               SELECT 1 FROM order_items oi WHERE oi.enrollment_id = e.id
+             )
+             OR EXISTS (
+               SELECT 1
+                 FROM order_items oi
+                 JOIN orders o ON o.id = oi.order_id
+                WHERE oi.enrollment_id = e.id
+                  AND o.status = 'pending'::order_status
+                  AND o.expires_at > now()
+             )
+           )
+         )
+       )
+     GROUP BY e.cohort_id`;
+  for (const row of rows) taken.set(row.cohortId, Number(row.held));
   return taken;
 }
 
@@ -34,10 +53,32 @@ export async function heldByUser(userId: string, cohortIds: string[]) {
   const held = new Map<string, EnrollmentStatus>();
   if (cohortIds.length === 0) return held;
 
-  const rows = await prisma.enrollment.findMany({
-    where: { userId, cohortId: { in: cohortIds }, status: { in: SEAT_HELD } },
-    select: { cohortId: true, status: true },
-  });
+  const rows = await prisma.$queryRaw<
+    { cohortId: string; status: EnrollmentStatus }[]
+  >`
+    SELECT e.cohort_id AS "cohortId", e.status::text AS status
+      FROM enrollments e
+     WHERE e.user_id = ${userId}
+       AND e.cohort_id = ANY(${cohortIds}::text[])
+       AND (
+         e.status = 'paid'::enrollment_status
+         OR (
+           e.status = 'pending'::enrollment_status
+           AND (
+             NOT EXISTS (
+               SELECT 1 FROM order_items oi WHERE oi.enrollment_id = e.id
+             )
+             OR EXISTS (
+               SELECT 1
+                 FROM order_items oi
+                 JOIN orders o ON o.id = oi.order_id
+                WHERE oi.enrollment_id = e.id
+                  AND o.status = 'pending'::order_status
+                  AND o.expires_at > now()
+             )
+           )
+         )
+       )`;
   for (const row of rows) held.set(row.cohortId, row.status);
   return held;
 }
