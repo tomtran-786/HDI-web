@@ -31,7 +31,7 @@ export const nav = [
 ] as const;
 
 export const contact = {
-  email: "congtam.trinh@gmail.com",
+  email: "hdiresearchgroup@gmail.com",
   phone: "0939 979 890",
   phoneHref: "tel:+84939979890",
   phoneNote: "Ưu tiên liên hệ qua Zalo",

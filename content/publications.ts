@@ -17,10 +17,34 @@ export type Publication = {
 export const publicationsIntro = {
   eyebrow: "Công bố",
   title: "Công bố khoa học",
-  subtitle: "13 bài báo trên các tạp chí quốc tế có bình duyệt",
+  subtitle: "15 bài báo trên các tạp chí quốc tế có bình duyệt",
 };
 
 export const publications: Publication[] = [
+  {
+    year: 2026,
+    authors: "Nguyen, D.G., Su, T.O.H., and Trinh, C.T.",
+    title:
+      "The Role of Destination Social Responsibility in Shaping Tourists' Responsible Behaviour: A Case Study in Vietnam",
+    venue: "Journal for International Business and Entrepreneurship Development, 18(1)",
+    metrics: ["ESCI Q2"],
+    status: "forthcoming",
+  },
+  {
+    year: 2026,
+    authors: "Hong Hanh Doan, Ngoc Duy Phuong Nguyen, Cong Tam Trinh",
+    title:
+      "Does digital transformation promote economic growth? New evidence in Vietnam",
+    venue: "Journal for International Business and Entrepreneurship Development, 18(1), 1-29",
+    metrics: ["ESCI Q2"],
+  },
+  {
+    year: 2026,
+    authors: "Trinh, C.T., Chao, C.C., and Nguyen, X.",
+    title: "Green Energy and Wage Inequality: Is There a Causal Effect?",
+    venue: "Energy Economics, 109456",
+    metrics: ["A*-ranked (ABDC)", "SSCI Q1"],
+  },
   {
     year: 2025,
     authors: "Chao, C.C., Trinh, C.T. and Nguyen, X.",
@@ -34,8 +58,15 @@ export const publications: Publication[] = [
     year: 2025,
     authors: "Beladi, H., Chao, C.C., Trinh, C.T., and Ee, M.S.",
     title: "Green Financing for ESG Investments and Wages in a Sustainable Economy",
-    venue: "International Review of Financial Analysis",
+    venue: "International Review of Financial Analysis, 104569",
     metrics: ["A-ranked (ABDC)", "SSCI Q1", "IF 9.8"],
+  },
+  {
+    year: 2025,
+    authors: "Minh-Tri Ha, Cong Tam Trinh",
+    title: "Intellectual Capital And Economic Growth: New Evidence From Vietnam",
+    venue: "Journal for International Business and Entrepreneurship Development, 17(4)",
+    metrics: ["ESCI Q2", "IF 1.98"],
     status: "forthcoming",
   },
   {
@@ -43,23 +74,6 @@ export const publications: Publication[] = [
     authors: "Cong Tam Trinh, Minh-Tri Ha, Nhut Quang Ho, Thanh Trung Bui",
     title:
       "Cultural distance, environmentally sustainable social development, and tourism: A study of international visitors to Vietnam",
-    venue: "Journal for International Business and Entrepreneurship Development",
-    metrics: ["ESCI Q2", "IF 1.98"],
-    status: "forthcoming",
-  },
-  {
-    year: 2025,
-    authors: "Hong Hanh Doan, Ngoc Duy Phuong Nguyen, Cong Tam Trinh",
-    title:
-      "Does digital transformation promote economic growth? New evidence in Vietnam",
-    venue: "Journal for International Business and Entrepreneurship Development",
-    metrics: ["ESCI Q2", "IF 1.98"],
-    status: "forthcoming",
-  },
-  {
-    year: 2025,
-    authors: "Minh-Tri Ha, Cong Tam Trinh",
-    title: "Intellectual Capital And Economic Growth: New Evidence From Vietnam",
     venue: "Journal for International Business and Entrepreneurship Development",
     metrics: ["ESCI Q2", "IF 1.98"],
     status: "forthcoming",
@@ -110,7 +124,7 @@ export const publications: Publication[] = [
     authors: "Trinh, C.T., Nguyen, X., and Sgro, P.",
     title:
       "Culture and the demand for non-life insurance: Empirical evidences from middle-income and high-income economies",
-    venue: "Economics of Transition and Institutional Change, 1-28",
+    venue: "Economics of Transition and Institutional Change, 29(3), 431-458",
     metrics: ["A-ranked (ABDC)", "SSCI Q2", "IF 0.914"],
   },
   {
@@ -127,7 +141,7 @@ export const publications: Publication[] = [
     title:
       "Determinants of Non-life Insurance Expenditure in Developed and Developing Countries: An Empirical Investigation",
     venue: "Applied Economics, 48(58): 5639-5653",
-    metrics: ["A-ranked (ABDC)", "IF 1.835"],
+    metrics: ["A-ranked (ABDC)", "SSCI Q2", "IF 1.835"],
   },
 ];
 
