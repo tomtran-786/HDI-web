@@ -13,8 +13,10 @@ import {
   allowAuthEmail,
   allowLoginAttempt,
   allowResetConsume,
+  allowUserAction,
   consumeAuthLimit,
   pruneAuthThrottles,
+  requestIp,
 } from "@/lib/auth-throttle";
 
 /**
@@ -123,5 +125,69 @@ describe("auth throttle window math", () => {
     expect(mocks.deleteMany).toHaveBeenCalledWith({
       where: { expiresAt: { lt: now } },
     });
+  });
+
+  it("allowLoginAttempt caps one email globally even when the IP keeps changing", async () => {
+    fakeThrottleTable();
+    // Rotating the source IP resets the email|ip bucket every time. Without the
+    // email-only counter this loop would never be refused, which is exactly
+    // what credential stuffing looks like from the server's side.
+    for (let i = 0; i < 30; i++) {
+      expect(await allowLoginAttempt("victim@example.com", `10.0.0.${i}`)).toBe(true);
+    }
+    expect(await allowLoginAttempt("victim@example.com", "10.0.1.1")).toBe(false);
+    // Another account is untouched — the cap is per email, not global.
+    expect(await allowLoginAttempt("someone@example.com", "10.0.1.1")).toBe(true);
+  });
+
+  it("allowLoginAttempt consumes both counters even when the first refuses", async () => {
+    const rows = fakeThrottleTable();
+    for (let i = 0; i < 11; i++) {
+      await allowLoginAttempt("a@example.com", "1.2.3.4");
+    }
+    // A short-circuiting `&&` would leave the email bucket at 10, not 11.
+    const emailBucket = [...rows.entries()].find(([key]) =>
+      key.startsWith("password_login_email|"),
+    );
+    expect(emailBucket?.[1]).toBe(11);
+  });
+
+  it("allowUserAction gives each user their own bucket per action", async () => {
+    fakeThrottleTable();
+    for (let i = 0; i < 5; i++) {
+      expect(await allowUserAction("drive_retry", "user-a", 5)).toBe(true);
+    }
+    expect(await allowUserAction("drive_retry", "user-a", 5)).toBe(false);
+    // Same user, different action: independent budget.
+    expect(await allowUserAction("checkout", "user-a", 5)).toBe(true);
+    // Different user, same action: independent budget.
+    expect(await allowUserAction("drive_retry", "user-b", 5)).toBe(true);
+  });
+});
+
+describe("nguồn IP", () => {
+  const ip = (headers: Record<string, string>) =>
+    requestIp(new Request("https://hdi.test/", { headers }));
+
+  it("ưu tiên x-vercel-forwarded-for hơn header client tự đặt được", () => {
+    // Kẻ tấn công gửi x-forwarded-for giả để reset throttle theo IP; Vercel đặt
+    // x-vercel-forwarded-for ở edge và đó mới là thứ được tin.
+    expect(
+      ip({
+        "x-forwarded-for": "1.1.1.1",
+        "x-real-ip": "2.2.2.2",
+        "x-vercel-forwarded-for": "203.0.113.7",
+      }),
+    ).toBe("203.0.113.7");
+  });
+
+  it("vẫn rơi về x-forwarded-for khi chạy local, không có edge phía trước", () => {
+    expect(ip({ "x-forwarded-for": "198.51.100.9, 10.0.0.1" })).toBe("198.51.100.9");
+    expect(ip({ "x-real-ip": "198.51.100.9" })).toBe("198.51.100.9");
+  });
+
+  it("trả 'unknown' thay vì chuỗi rỗng khi không có header nào", () => {
+    expect(ip({})).toBe("unknown");
+    expect(ip({ "x-vercel-forwarded-for": "   " })).toBe("unknown");
   });
 });

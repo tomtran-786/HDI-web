@@ -14,6 +14,7 @@ const mocks = vi.hoisted(() => ({
   writeCartIds: vi.fn(),
   createOrder: vi.fn(),
   ensurePayosCheckout: vi.fn(),
+  allowUserAction: vi.fn(),
 }));
 
 vi.mock("next/navigation", () => ({ redirect: mocks.redirect }));
@@ -26,6 +27,7 @@ vi.mock("@/lib/cart", () => ({
   writeCartIds: mocks.writeCartIds,
 }));
 vi.mock("@/lib/orders", () => ({ createOrder: mocks.createOrder }));
+vi.mock("@/lib/auth-throttle", () => ({ allowUserAction: mocks.allowUserAction }));
 vi.mock("@/lib/payment-checkout", () => ({
   ensurePayosCheckout: mocks.ensurePayosCheckout,
 }));
@@ -41,6 +43,7 @@ describe("one-step cart checkout action", () => {
     mocks.auth.mockResolvedValue({ user: { id: "user-1" } });
     mocks.findUnique.mockResolvedValue({ phone: "0900000000", stage: "other" });
     mocks.readCartIds.mockResolvedValue(["course-b", "course-a"]);
+    mocks.allowUserAction.mockResolvedValue(true);
   });
 
   it("passes the complete cookie basket to server pricing and redirects to PayOS", async () => {
@@ -103,5 +106,17 @@ describe("one-step cart checkout action", () => {
       url: "/tai-khoan/don-hang/100001",
     });
     expect(mocks.writeCartIds).toHaveBeenCalledWith([]);
+  });
+  it("từ chối trước khi khóa hàng nào khi người dùng bấm đặt đơn quá nhiều lần", async () => {
+    mocks.allowUserAction.mockResolvedValue(false);
+
+    const state = await checkout({}, new FormData());
+
+    expect(state.error).toMatch(/quá nhiều lần/);
+    expect(state.refreshCatalog).toBe(true);
+    // Điểm mấu chốt: từ chối phải xảy ra TRƯỚC createOrder, nếu không thì mỗi
+    // lần bấm vẫn khóa hàng courses và tạo enrolment rồi mới bị chặn.
+    expect(mocks.createOrder).not.toHaveBeenCalled();
+    expect(mocks.ensurePayosCheckout).not.toHaveBeenCalled();
   });
 });

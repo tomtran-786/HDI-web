@@ -2,6 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
+import { allowUserAction } from "@/lib/auth-throttle";
 import { prisma } from "@/lib/prisma";
 import { isProfileComplete } from "@/lib/profile";
 import { readCartIds, writeCartIds } from "@/lib/cart";
@@ -35,6 +36,15 @@ export async function checkout(
   if (!user) redirect("/dang-nhap");
   if (!isProfileComplete(user)) {
     redirect(`/hoan-tat-ho-so?tiep=${encodeURIComponent(LANDING_CART)}`);
+  }
+
+  // Mỗi lần chạy tới đây đều khóa hàng courses, tạo enrolment và gọi PayOS tạo
+  // payment link. Xác thực nói người gọi là ai, không nói họ gọi bao nhiêu lần.
+  if (!(await allowUserAction("checkout", session.user.id, 10))) {
+    return {
+      error: "Bạn vừa đặt đơn quá nhiều lần. Vui lòng thử lại sau ít phút.",
+      refreshCatalog: true,
+    };
   }
 
   const ids = await readCartIds();

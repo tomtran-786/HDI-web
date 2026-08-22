@@ -86,6 +86,36 @@ tạo/reuse hosted link. Cookie chỉ được xóa khi đã có URL PayOS hoặ
   hiệu lực.
 - Giá/tổng tiền từ client không được chấp nhận.
 - Return path qua auth luôn đi qua `safeNext` để chặn open redirect.
+- Header bảo mật: hằng số (HSTS, nosniff, Referrer-Policy, X-Frame-Options,
+  Permissions-Policy) phát từ `next.config.ts`; CSP phát từ `middleware.ts` vì
+  cần nonce mới mỗi request. Cả hai đọc chung `lib/security-headers.ts`.
+- CSP **đang ở Report-Only**. Đổi `CSP_ENFORCED` trong `lib/security-headers.ts`
+  sang `true` sau khi đã mở preview và xác nhận console không còn vi phạm nào;
+  `tests/security-headers.test.ts` khẳng định cờ này nên việc bật enforce không
+  thể đi qua lặng lẽ.
+- Mọi Server Action nhận id từ trình duyệt đều `parseId` trước tiên
+  (`lib/action-input.ts`). Kiểu `string` chỉ tồn tại lúc biên dịch; payload RSC
+  deserialize được object, và một object lọt vào `where` được Prisma đọc như bộ
+  lọc chứ không phải giá trị.
+- Throttle không chỉ dành cho đường chưa đăng nhập. `allowUserAction` giới hạn
+  checkout, hủy/thử lại thanh toán và cấp lại quyền Drive theo từng tài khoản —
+  mỗi lần bấm là một lần gọi PayOS hoặc Google Drive tốn tiền và hạn ngạch thật.
+- Đăng nhập có hai bộ đếm: `email|ip` và chỉ-email. Bộ đếm cặp một mình không
+  chặn được credential stuffing vì đổi IP là ngân sách reset.
+- IP đọc theo thứ tự `x-vercel-forwarded-for` → `x-real-ip` → `x-forwarded-for`.
+  Hai header sau client tự đặt được; chỉ header đầu do edge của Vercel ghi.
+
+### Cần cấu hình trên Vercel dashboard (không nằm trong repo)
+
+1. Firewall → bật **Bot Protection**.
+2. Rate limit rule cho `/dang-nhap`, `/dang-ky-tai-khoan`, `/quen-mat-khau`,
+   `/dat-lai-mat-khau` (khoảng 20 req/phút/IP).
+3. **Allow rule** cho `/api/webhooks/payos` và `/api/cron/*`, đặt TRÊN mọi rule
+   chặn. Đây là bước dễ quên nhất: PayOS hoặc Vercel Cron bị challenge là mất
+   tiền thật, không phải một trang lỗi.
+4. Xác nhận `AUTH_SECRET`, `PAYOS_*`, `GOOGLE_PRIVATE_KEY`, `CRON_SECRET`,
+   `RESEND_API_KEY` chỉ tồn tại ở Environment Variables, Production và Preview
+   tách riêng.
 
 ## Màn hình vận hành
 
@@ -118,7 +148,12 @@ RLS/revoke, foreign-key indexes và mua lại sau revoke.
 
 Tiêu chí build:
 
-- `/` xuất hiện là route `○` (static);
+- mọi route là `ƒ` (dynamic) và manifest có dòng `ƒ Proxy (Middleware)`. Trang
+  chủ từng là `○` (static); nonce của CSP đổi theo từng request nên
+  `app/layout.tsx` phải đọc `headers()`, và điều đó kéo mọi route sang dynamic.
+  Đây là cái giá đã biết của một CSP enforce được, không phải một hồi quy —
+  Next phát script inline có nội dung đổi mỗi lần render, nên hash không thay
+  được nonce;
 - `/api/gio-hang` và các màn hình tài khoản/quản trị là dynamic;
 - không có `/dang-ky/[slug]` hoặc `/gio-hang` trong route manifest;
 - modal native `<dialog>` có focus trap, Esc, backdrop, giới hạn chiều cao,

@@ -20,8 +20,14 @@ export const CART_MAX_ITEMS = 8;
 
 export const CART_MAX_AGE = 30 * 24 * 60 * 60;
 
-/** The shape of a cuid, which is what every id in this schema is. */
-const ID = /^[a-z0-9]{20,36}$/i;
+/**
+ * The shape of a cuid, which is what every id in this schema is.
+ *
+ * Exported because Server Actions need the same test: an id arriving in an RSC
+ * action payload is exactly as attacker-controlled as one arriving in this
+ * cookie, and two copies of this regex would drift.
+ */
+export const ID_RE = /^[a-z0-9]{20,36}$/i;
 
 /**
  * Order is preserved and duplicates collapse — a cart is a set, and adding the
@@ -34,7 +40,7 @@ export function parseCart(raw: string | null | undefined): string[] {
     const id = part.trim();
     // Anything that is not id-shaped is dropped rather than passed to the
     // database: a hand-edited cookie should be inert, not an error page.
-    if (!ID.test(id) || out.includes(id)) continue;
+    if (!ID_RE.test(id) || out.includes(id)) continue;
     out.push(id);
     if (out.length >= CART_MAX_ITEMS) break;
   }
