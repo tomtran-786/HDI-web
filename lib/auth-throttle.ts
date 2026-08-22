@@ -11,21 +11,32 @@ function throttleKey(value: string) {
     .digest("hex");
 }
 
+/**
+ * Địa chỉ IP đáng tin nhất mà request cho biết.
+ *
+ * `x-vercel-forwarded-for` đứng trước có lý do: `x-forwarded-for` là header do
+ * client tự đặt được, nên nếu chỉ đọc nó thì mọi throttle theo IP bên dưới đều
+ * bỏ qua được bằng cách đổi một dòng header mỗi lần thử. Vercel tự đặt
+ * `x-vercel-forwarded-for` ở edge và ghi đè bất cứ giá trị nào client gửi lên.
+ * Hai header còn lại chỉ để chạy local, nơi không có edge nào ở phía trước.
+ */
+const IP_HEADERS = ["x-vercel-forwarded-for", "x-real-ip", "x-forwarded-for"];
+
+function firstIp(read: (name: string) => string | null) {
+  for (const name of IP_HEADERS) {
+    const value = read(name)?.split(",")[0]?.trim();
+    if (value) return value;
+  }
+  return "unknown";
+}
+
 export function requestIp(request: Request) {
-  return (
-    request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
-    request.headers.get("x-real-ip")?.trim() ||
-    "unknown"
-  );
+  return firstIp((name) => request.headers.get(name));
 }
 
 export async function serverActionIp() {
   const values = await headers();
-  return (
-    values.get("x-forwarded-for")?.split(",")[0]?.trim() ||
-    values.get("x-real-ip")?.trim() ||
-    "unknown"
-  );
+  return firstIp((name) => values.get(name));
 }
 
 /** Atomically consume one fixed-window attempt. */
@@ -56,13 +67,53 @@ export async function consumeAuthLimit(input: {
   return (rows[0]?.count ?? input.limit + 1) <= input.limit;
 }
 
+/**
+ * Hai bộ đếm, không phải một.
+ *
+ * Bộ đếm theo cặp `email|ip` một mình không chặn được credential stuffing: đổi
+ * IP là ngân sách của email đó reset về 0, nên một botnet có bao nhiêu IP thì
+ * có bấy nhiêu lần đoán vào cùng một tài khoản. Bộ đếm chỉ-theo-email đặt một
+ * trần tuyệt đối cho mỗi tài khoản, bất kể request đến từ đâu.
+ *
+ * Trần theo email rộng hơn hẳn (30/giờ) để một người thật gõ sai mật khẩu vài
+ * lần từ điện thoại rồi từ laptop không tự khóa mình ra ngoài.
+ *
+ * Cả hai luôn được tiêu thụ, không short-circuit: `&&` sẽ bỏ qua bộ đếm thứ hai
+ * ngay khi bộ đầu từ chối, và một bộ đếm không tăng là một bộ đếm không đếm.
+ */
 export async function allowLoginAttempt(email: string, ip: string) {
-  return consumeAuthLimit({
-    action: "password_login",
-    key: `${email}|${ip}`,
-    limit: 10,
-    windowMs: 15 * 60 * 1000,
-  });
+  const [pairAllowed, emailAllowed] = await Promise.all([
+    consumeAuthLimit({
+      action: "password_login",
+      key: `${email}|${ip}`,
+      limit: 10,
+      windowMs: 15 * 60 * 1000,
+    }),
+    consumeAuthLimit({
+      action: "password_login_email",
+      key: `email:${email}`,
+      limit: 30,
+      windowMs: 60 * 60 * 1000,
+    }),
+  ]);
+  return pairAllowed && emailAllowed;
+}
+
+/**
+ * Trần cho một hành động đã đăng nhập của một tài khoản.
+ *
+ * Xác thực chứng minh người gọi là ai, không chứng minh họ gọi bao nhiêu lần.
+ * Những action gọi thẳng sang PayOS hay Google Drive tiêu tiền và hạn ngạch
+ * thật ở mỗi lần bấm, nên một tài khoản hợp lệ lặp vô hạn vẫn là một vấn đề —
+ * dù nó không chạm được vào dữ liệu của ai khác.
+ */
+export async function allowUserAction(
+  action: string,
+  userId: string,
+  limit: number,
+  windowMs = 60 * 60 * 1000,
+) {
+  return consumeAuthLimit({ action, key: `user:${userId}`, limit, windowMs });
 }
 
 /**
