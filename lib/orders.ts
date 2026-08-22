@@ -511,8 +511,7 @@ async function reconcileStaleOrdersForCourses(courseIds: string[], now = new Dat
 /**
  * Release the seats held by orders nobody ever paid for.
  *
- * Called by the housekeeping cron (mỗi 6 giờ). Written as a loop over
- * cancelOrder rather than one
+ * Called by the daily cron. Written as a loop over cancelOrder rather than one
  * bulk update so that each order's seats are released in the same transaction
  * that closes it.
  */

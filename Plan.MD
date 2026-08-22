@@ -117,6 +117,20 @@ tạo/reuse hosted link. Cookie chỉ được xóa khi đã có URL PayOS hoặ
    `RESEND_API_KEY` chỉ tồn tại ở Environment Variables, Production và Preview
    tách riêng.
 
+### Ràng buộc gói Vercel Hobby
+
+Tài khoản đang ở gói **Hobby**, nơi cron chỉ được chạy **tối đa một lần mỗi
+ngày**. Biểu thức dày hơn — ví dụ `0 */6 * * *` — làm **hỏng deployment**, không
+phải bị âm thầm hạ tần suất; nghĩa là lỗi chỉ lộ ra lúc deploy, sau khi test và
+build local đã xanh hết. Vì vậy `vercel.json` giữ `0 3 * * *`.
+
+Hệ quả phải chấp nhận: quyền Google Drive của một enrollment đã qua
+`accessExpiresAt` có thể còn sống thêm tới 24 giờ trước khi
+`revokeExpiredDriveAccess` chạy. Giao diện đã ẩn link ngay lập tức qua
+`hasLiveAccess`, nên đây là độ trễ ở quyền thật trên Drive, không phải ở màn
+hình. Nếu độ trễ này thành vấn đề, cách xử lý là đối soát ngay tại thời điểm
+render trang tài khoản hoặc lúc mua — KHÔNG phải tăng tần suất cron.
+
 ## Màn hình vận hành
 
 - Tài khoản hiển thị từng lần mua riêng: khóa, ngày thanh toán/đặt chỗ, hạn truy
