@@ -26,50 +26,55 @@ export async function registerAccount(formData: FormData) {
   const { name, email, password } = parsed.data;
   const ip = await serverActionIp();
   if (!(await allowAuthEmail("register", email, ip))) {
-    redirect(`${REGISTER}?sent=1${nextSuffix}`);
+    redirect(`${REGISTER}?error=throttled${nextSuffix}`);
+  }
+
+  /**
+   * Một email đã có tài khoản thì dừng ở đây, không đi tiếp.
+   *
+   * Nhánh cũ nhận đăng ký lại cho tài khoản chưa xác thực và chỉ gửi lại thư,
+   * lặng lẽ bỏ qua mật khẩu vừa nhập. Người dùng thấy "đã gửi thư", bấm xác
+   * thực, rồi không đăng nhập được bằng mật khẩu họ vừa đặt — vì mật khẩu thật
+   * vẫn là của lần đăng ký đầu. Ghi đè mật khẩu ở đây thì lại mở đường chiếm
+   * tài khoản: kẻ khác đăng ký chèn lên một địa chỉ đang chờ xác thực, chủ hộp
+   * thư bấm liên kết trong thư của chính mình, và tài khoản thành đã xác thực
+   * với mật khẩu của kẻ đó. Nên đúng cách là từ chối và nói rõ lý do.
+   */
+  const existing = await prisma.user.findUnique({
+    where: { email },
+    select: { emailVerified: true },
+  });
+  if (existing) {
+    const reason = existing.emailVerified ? "taken" : "pending";
+    redirect(`${REGISTER}?error=${reason}${nextSuffix}`);
   }
 
   let recipient: { id: string; email: string; name: string } | null = null;
   let token: string | null = null;
 
   try {
-    const existing = await prisma.user.findUnique({
-      where: { email },
-      select: { id: true, email: true, name: true, emailVerified: true },
-    });
-
-    if (!existing) {
-      const passwordHash = await bcrypt.hash(password, 12);
-      const created = await prisma.$transaction(async (tx) => {
-        const user = await tx.user.create({
-          data: { name, email, passwordHash },
-          select: { id: true, email: true, name: true },
-        });
-        const createdToken = await createAuthToken(tx, {
-          userId: user.id,
-          purpose: "verify",
-          ttlMs: VERIFY_TOKEN_TTL_MS,
-        });
-        return { user, token: createdToken.token };
+    const passwordHash = await bcrypt.hash(password, 12);
+    const created = await prisma.$transaction(async (tx) => {
+      const user = await tx.user.create({
+        data: { name, email, passwordHash },
+        select: { id: true, email: true, name: true },
       });
-      recipient = { ...created.user, name: created.user.name ?? created.user.email };
-      token = created.token;
-    } else if (!existing.emailVerified) {
-      const createdToken = await createAuthToken(prisma, {
-        userId: existing.id,
+      const createdToken = await createAuthToken(tx, {
+        userId: user.id,
         purpose: "verify",
         ttlMs: VERIFY_TOKEN_TTL_MS,
       });
-      recipient = {
-        id: existing.id,
-        email: existing.email,
-        name: existing.name ?? existing.email,
-      };
-      token = createdToken.token;
-    }
+      return { user, token: createdToken.token };
+    });
+    recipient = { ...created.user, name: created.user.name ?? created.user.email };
+    token = created.token;
   } catch (error) {
-    const code = (error as { code?: string }).code;
-    if (code !== "P2002") console.error("[register] Không tạo được tài khoản:", error);
+    // Thua cuộc đua với một lượt đăng ký song song cho cùng địa chỉ. Hàng vừa
+    // được tạo nên nó chắc chắn chưa xác thực — "pending" mới là mô tả đúng.
+    if ((error as { code?: string }).code === "P2002") {
+      redirect(`${REGISTER}?error=pending${nextSuffix}`);
+    }
+    console.error("[register] Không tạo được tài khoản:", error);
   }
 
   if (recipient && token) {

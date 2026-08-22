@@ -91,26 +91,46 @@ describe("credential registration action", () => {
     });
   });
 
-  it("returns the same generic response for an already verified email", async () => {
-    mocks.findUnique.mockResolvedValue({
-      id: "user-1",
-      email: "student@example.com",
-      name: "Học viên",
-      emailVerified: new Date(),
-    });
+  it("refuses an email that already has a verified account", async () => {
+    mocks.findUnique.mockResolvedValue({ emailVerified: new Date() });
 
     await expect(registerAccount(registrationForm())).rejects.toMatchObject({
-      url: "/dang-ky-tai-khoan?sent=1",
+      url: "/dang-ky-tai-khoan?error=taken",
     });
     expect(mocks.transaction).not.toHaveBeenCalled();
     expect(mocks.sendVerification).not.toHaveBeenCalled();
   });
 
-  it("returns the generic response without a lookup when throttled", async () => {
+  /**
+   * Nhánh từng gây lỗi thật: đăng ký lại một địa chỉ đang chờ xác thực trả về
+   * "đã gửi thư" và bỏ qua mật khẩu vừa nhập, nên sau khi xác thực người dùng
+   * đăng nhập bằng mật khẩu đó không được.
+   */
+  it("refuses an email whose account is still awaiting verification", async () => {
+    mocks.findUnique.mockResolvedValue({ emailVerified: null });
+
+    await expect(registerAccount(registrationForm())).rejects.toMatchObject({
+      url: "/dang-ky-tai-khoan?error=pending",
+    });
+    expect(mocks.transaction).not.toHaveBeenCalled();
+    expect(mocks.sendVerification).not.toHaveBeenCalled();
+  });
+
+  it("reports the pending state when a concurrent signup wins the unique index", async () => {
+    mocks.findUnique.mockResolvedValue(null);
+    mocks.transaction.mockRejectedValue(Object.assign(new Error("dup"), { code: "P2002" }));
+
+    await expect(registerAccount(registrationForm())).rejects.toMatchObject({
+      url: "/dang-ky-tai-khoan?error=pending",
+    });
+    expect(mocks.sendVerification).not.toHaveBeenCalled();
+  });
+
+  it("says so without a lookup when throttled", async () => {
     mocks.allow.mockResolvedValue(false);
 
     await expect(registerAccount(registrationForm())).rejects.toMatchObject({
-      url: "/dang-ky-tai-khoan?sent=1",
+      url: "/dang-ky-tai-khoan?error=throttled",
     });
     expect(mocks.findUnique).not.toHaveBeenCalled();
   });

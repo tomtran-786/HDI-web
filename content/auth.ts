@@ -138,8 +138,32 @@ export const registerPage = {
     signInCta: "Tới trang đăng nhập",
   },
 
-  error:
-    "Vui lòng kiểm tra họ tên, email và mật khẩu. Mật khẩu cần ít nhất 12 ký tự và tối đa 72 byte.",
+  /**
+   * Đăng ký nói thẳng khi email đã có tài khoản, thay vì trả lời chung chung.
+   *
+   * Đánh đổi đã biết: người ngoài dò được địa chỉ nào đã đăng ký. Chấp nhận vì
+   * câu trả lời chung chung từng dẫn tới một lỗi thật — người dùng đăng ký lại
+   * bằng mật khẩu mới, thấy báo "đã gửi thư", xác thực xong rồi không đăng nhập
+   * được, vì mật khẩu thật vẫn là mật khẩu của lần đăng ký đầu. Trần 3 lần mỗi
+   * email và 10 lần mỗi IP trong `allowAuthEmail` mới là thứ giữ cho việc dò
+   * không chạy được ở quy mô lớn, không phải câu chữ mập mờ.
+   */
+  errors: {
+    invalid:
+      "Vui lòng kiểm tra họ tên, email và mật khẩu. Mật khẩu cần ít nhất 12 ký tự và tối đa 72 byte.",
+    taken:
+      "Email này đã có tài khoản. Hãy đăng nhập, hoặc đặt lại mật khẩu nếu bạn không nhớ.",
+    pending:
+      "Email này đã đăng ký nhưng chưa xác thực. Mật khẩu vẫn là mật khẩu của lần đăng ký đầu — hãy mở hộp thư và bấm liên kết xác thực, hoặc yêu cầu gửi lại.",
+    throttled:
+      "Đã có quá nhiều lượt đăng ký cho email này. Vui lòng đợi ít phút rồi thử lại.",
+  },
+
+  errorLinks: {
+    signIn: "Đăng nhập",
+    reset: "Quên mật khẩu",
+    resend: "Gửi lại liên kết xác thực",
+  },
 
   fields: {
     name: "Họ và tên",

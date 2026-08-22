@@ -26,6 +26,15 @@ export default async function RegisterPage({
     next === "/tai-khoan" ? "" : `?tiep=${encodeURIComponent(next)}`;
   if ((await auth())?.user) redirect(next);
 
+  // Mã lỗi đến từ thanh địa chỉ, nên nó chỉ được dùng để tra bảng thông điệp có
+  // sẵn — một giá trị lạ rơi về "invalid" thay vì được hiển thị nguyên văn.
+  const raw = Array.isArray(error) ? error[0] : error;
+  const errorKey = raw
+    ? raw in registerPage.errors
+      ? (raw as keyof typeof registerPage.errors)
+      : ("invalid" as const)
+    : null;
+
   return (
     <Section soft>
       <div className="mx-auto max-w-md">
@@ -66,10 +75,30 @@ export default async function RegisterPage({
             </div>
           ) : (
             <>
-              {error && (
-                <p className="mb-5 rounded-card border border-line bg-bg-soft px-4 py-3 text-sm text-danger">
-                  {registerPage.error}
-                </p>
+              {errorKey && (
+                <div className="mb-5 rounded-card border border-line bg-bg-soft px-4 py-3 text-sm text-danger">
+                  <p>{registerPage.errors[errorKey]}</p>
+                  {/* Một lỗi "email đã dùng" mà không kèm lối đi tiếp thì chỉ
+                      chặn người dùng lại; hai nhánh này đưa thẳng họ tới việc
+                      cần làm. */}
+                  {errorKey === "taken" && (
+                    <p className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
+                      <Link className="font-bold underline" href={`/dang-nhap${nextQuery}`}>
+                        {registerPage.errorLinks.signIn}
+                      </Link>
+                      <Link className="font-bold underline" href={`/quen-mat-khau${nextQuery}`}>
+                        {registerPage.errorLinks.reset}
+                      </Link>
+                    </p>
+                  )}
+                  {errorKey === "pending" && (
+                    <p className="mt-2">
+                      <Link className="font-bold underline" href={`/xac-thuc-email${nextQuery}`}>
+                        {registerPage.errorLinks.resend}
+                      </Link>
+                    </p>
+                  )}
+                </div>
               )}
 
               <form action={registerAccount} className="space-y-4">
