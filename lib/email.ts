@@ -1,4 +1,9 @@
 import { Resend } from "resend";
+import { appUrl } from "./app-url";
+
+// Re-exported so callers that already reach for the email module — and the
+// tests that mock it — keep working after the helper moved to ./app-url.
+export { appUrl };
 
 type SendEmailInput = { to: string; subject: string; html: string };
 
@@ -10,15 +15,6 @@ function escapeHtml(value: string) {
         char
       ]!,
   );
-}
-
-export function appUrl() {
-  const value = process.env.APP_URL || process.env.AUTH_URL;
-  if (!value) {
-    if (process.env.NODE_ENV !== "production") return "http://localhost:3000";
-    throw new Error("Thiếu APP_URL cho liên kết email và callback thanh toán.");
-  }
-  return value.replace(/\/$/, "");
 }
 
 export async function sendEmail(input: SendEmailInput) {

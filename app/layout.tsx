@@ -7,6 +7,7 @@ import { CartProvider } from "@/components/cart-provider";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { themeBootstrap } from "@/lib/theme-script";
+import { appUrl } from "@/lib/app-url";
 import "./globals.css";
 
 const sourceSans = Source_Sans_3({
@@ -17,9 +18,24 @@ const sourceSans = Source_Sans_3({
 });
 
 export const metadata: Metadata = {
+  // Without a base, Next resolves canonical and Open Graph URLs relative to
+  // localhost, so a shared link would preview against the wrong host. The
+  // origin comes from APP_URL — the same value the emails and PayOS callbacks
+  // use — so a domain move never leaves the two disagreeing.
+  metadataBase: new URL(appUrl()),
   title: "HDI Research Center — Huấn luyện nghiên cứu & công bố quốc tế",
   description:
     "Chương trình kèm cặp nghiên cứu và công bố quốc tế do Dr. Cong Tam Trinh (PhD in Economics, Deakin University) dẫn dắt.",
+  alternates: { canonical: "/" },
+  openGraph: {
+    type: "website",
+    locale: "vi_VN",
+    url: "/",
+    siteName: "HDI Research Center",
+    title: "HDI Research Center — Huấn luyện nghiên cứu & công bố quốc tế",
+    description:
+      "Chương trình kèm cặp nghiên cứu và công bố quốc tế do Dr. Cong Tam Trinh (PhD in Economics, Deakin University) dẫn dắt.",
+  },
 };
 
 export default async function RootLayout({ children }: LayoutProps<"/">) {
