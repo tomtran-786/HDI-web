@@ -80,6 +80,7 @@ describe("authentication tokens", () => {
           identifier: "verify:user-1",
           token: hashAuthToken(token),
           expires: new Date(Date.now() + 60_000),
+          pendingPasswordHash: null,
         }),
         deleteMany: async (query: unknown) => {
           deletes.push(query);
@@ -90,8 +91,35 @@ describe("authentication tokens", () => {
 
     await expect(
       consumeAuthToken(db as never, "verify", token),
-    ).resolves.toEqual({ userId: "user-1" });
+    ).resolves.toEqual({ userId: "user-1", pendingPasswordHash: null });
     expect(deletes).toHaveLength(2);
+  });
+
+  /**
+   * Mật khẩu phải đi cùng đúng liên kết được bấm. Nếu nó nằm trên tài khoản thay
+   * vì trên token, người đăng ký chèn một địa chỉ trước sẽ đặt được mật khẩu cho
+   * tài khoản mà chủ hộp thư kích hoạt hộ.
+   */
+  it("hands back the password submitted with the link that was clicked", async () => {
+    const token = "c".repeat(43);
+    const db = {
+      verificationToken: {
+        findUnique: async () => ({
+          identifier: "verify:user-1",
+          token: hashAuthToken(token),
+          expires: new Date(Date.now() + 60_000),
+          pendingPasswordHash: "$2b$12$hash-from-this-registration",
+        }),
+        deleteMany: async () => ({ count: 1 }),
+      },
+    };
+
+    await expect(
+      consumeAuthToken(db as never, "verify", token),
+    ).resolves.toEqual({
+      userId: "user-1",
+      pendingPasswordHash: "$2b$12$hash-from-this-registration",
+    });
   });
 });
 

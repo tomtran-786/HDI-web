@@ -265,6 +265,51 @@ describe("/dang-nhap", () => {
     expect(html).toContain("tài khoản chưa xác thực");
     expect(html).toContain("vượt giới hạn");
   });
+
+  /**
+   * `pages.error` trong lib/auth.ts đưa lỗi OAuth về đây, nên mã lỗi phải được
+   * tra bảng. Trước đây trang in đúng một câu cho mọi giá trị, tức một lỗi cấu
+   * hình sẽ hiện ra thành "sai mật khẩu".
+   */
+  it("tells an OAuth refusal apart from a wrong password", async () => {
+    const denied = renderToStaticMarkup(
+      await SignInPage({
+        searchParams: Promise.resolve({ error: "AccessDenied" }),
+      } as never),
+    );
+    expect(denied).toContain("Google không xác nhận địa chỉ email");
+    expect(denied).not.toContain("Email hoặc mật khẩu chưa đúng");
+
+    const misconfigured = renderToStaticMarkup(
+      await SignInPage({
+        searchParams: Promise.resolve({ error: "Configuration" }),
+      } as never),
+    );
+    expect(misconfigured).toContain("lỗi cấu hình");
+  });
+
+  it("falls back to the pooled sentence for an error code it does not know", async () => {
+    const html = renderToStaticMarkup(
+      await SignInPage({
+        searchParams: Promise.resolve({ error: "<script>alert(1)</script>" }),
+      } as never),
+    );
+    expect(html).toContain("Email hoặc mật khẩu chưa đúng");
+    expect(html).not.toContain("alert(1)");
+  });
+
+  /**
+   * Tài khoản tạo bằng Google không có mật khẩu, nên gõ mật khẩu vào đó chỉ ra
+   * câu lỗi gộp mãi mãi. Dòng gợi ý là cách duy nhất nói ra điều đó mà không
+   * tiết lộ email nào có tài khoản.
+   */
+  it("points Google-only accounts at the button that works for them", async () => {
+    const html = renderToStaticMarkup(
+      await SignInPage({ searchParams: Promise.resolve({}) } as never),
+    );
+    expect(html).toContain("Tiếp tục với Google");
+    expect(html).toContain("tài khoản đó chưa có mật khẩu");
+  });
 });
 
 describe("/xac-thuc-email", () => {
@@ -282,6 +327,9 @@ describe("/xac-thuc-email", () => {
     expect(html).toContain("ngu•••@example.com");
     // Why a second click exists at all — otherwise the page reads as an error.
     expect(html).toContain("bộ quét thư");
+    // Bấm nút này kích hoạt mật khẩu của lần đăng ký đã phát ra liên kết, và
+    // lần đăng ký đó không nhất thiết là của chủ hộp thư.
+    expect(html).toContain("Nếu bạn không tạo tài khoản này, đừng bấm");
     expect(html).toContain('value="xyz"');
     expect(html).not.toContain('name="email"');
   });

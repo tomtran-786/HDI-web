@@ -18,5 +18,11 @@ export function safeNext(
   if (raw.startsWith("//")) return fallback;
   // Backslashes: some browsers normalise "/\evil.example" to "//evil.example".
   if (raw.includes("\\")) return fallback;
+  // Ký tự điều khiển, vì cùng lý do với hai dòng trên nhưng khó thấy hơn:
+  // trình duyệt bỏ tab, CR và LF khi phân tích URL, nên "/<TAB>/evil.example"
+  // qua được cả ba lớp kiểm tra ở trên rồi trở thành "//evil.example" đúng lúc
+  // nó được đi theo. Tab lại là ký tự hợp lệ trong header value nên không có
+  // tầng nào phía dưới chặn hộ.
+  if (/[\u0000-\u001F\u007F]/.test(raw)) return fallback;
   return raw;
 }

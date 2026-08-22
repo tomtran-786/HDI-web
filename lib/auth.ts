@@ -3,15 +3,14 @@ import Google from "next-auth/providers/google";
 import Credentials from "next-auth/providers/credentials";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import { prisma } from "./prisma";
-import { credentialsSchema, normalizeEmail } from "./auth-input";
-import { allowLoginAttempt, requestIp } from "./auth-throttle";
+import { normalizeEmail } from "./auth-input";
+import { authorizeCredentials } from "./authorize-credentials";
 import { requiredAuthSecret } from "./auth-secret";
 import {
   googleProfileHasVerifiedEmail,
   secureGoogleAccountLink,
 } from "./auth-account-link";
 import { jwtSurvivesSessionCutoff } from "./auth-session";
-import { verifiedCredentialIdentity } from "./credential-password";
 
 /**
  * Fail loudly at module load rather than signing sessions with a default.
@@ -39,27 +38,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     }),
     Credentials({
       credentials: { email: {}, password: {} },
-      async authorize(credentials, request) {
-        const parsed = credentialsSchema.safeParse(credentials);
-        if (!parsed.success) return null;
-
-        const { email, password } = parsed.data;
-        if (!(await allowLoginAttempt(email, requestIp(request)))) return null;
-
-        const user = await prisma.user.findUnique({
-          where: { email },
-          select: {
-            id: true,
-            email: true,
-            name: true,
-            image: true,
-            emailVerified: true,
-            passwordHash: true,
-          },
-        });
-
-        return verifiedCredentialIdentity(user, password);
-      },
+      // Toàn bộ logic nằm trong lib/authorize-credentials.ts để test gọi được.
+      authorize: (credentials, request) =>
+        authorizeCredentials(credentials, request),
     }),
   ],
   // Auth.js Credentials only supports JWT sessions. The cutoff check below
@@ -71,6 +52,11 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   },
   pages: {
     signIn: "/dang-nhap",
+    // Không khai `error` thì mọi lỗi OAuth — ví dụ Google trả về một địa chỉ
+    // chưa xác thực và callback `signIn` bên dưới từ chối — rơi vào trang lỗi
+    // mặc định của Auth.js, một trang trắng không thuộc site này và không có
+    // lối nào đi tiếp. Trang đăng nhập tra mã lỗi thành câu tiếng Việt.
+    error: "/dang-nhap",
   },
   callbacks: {
     async signIn({ account, profile }) {

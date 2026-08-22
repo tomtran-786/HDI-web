@@ -91,13 +91,6 @@ export default async function RegisterPage({
                       </Link>
                     </p>
                   )}
-                  {errorKey === "pending" && (
-                    <p className="mt-2">
-                      <Link className="font-bold underline" href={`/xac-thuc-email${nextQuery}`}>
-                        {registerPage.errorLinks.resend}
-                      </Link>
-                    </p>
-                  )}
                 </div>
               )}
 

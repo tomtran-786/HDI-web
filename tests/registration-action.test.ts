@@ -27,6 +27,11 @@ vi.mock("@/lib/auth-tokens", () => ({
   createAuthToken: mocks.createToken,
   VERIFY_TOKEN_TTL_MS: 24 * 60 * 60 * 1000,
 }));
+
+async function pendingHashFromLastToken() {
+  const call = mocks.createToken.mock.calls.at(-1)?.[1];
+  return call?.pendingPasswordHash as string;
+}
 vi.mock("@/lib/email", () => ({
   sendVerificationEmail: mocks.sendVerification,
 }));
@@ -68,17 +73,24 @@ describe("credential registration action", () => {
     mocks.sendVerification.mockResolvedValue({ sent: true, id: "email-1" });
   });
 
-  it("stores a bcrypt cost-12 hash and sends a 24-hour verification link", async () => {
+  /**
+   * Tài khoản chưa xác thực không được giữ mật khẩu: hash đi theo token, và chỉ
+   * được áp lên tài khoản khi đúng liên kết đó được bấm.
+   */
+  it("puts the bcrypt cost-12 hash on the token, not on the new account", async () => {
     mocks.findUnique.mockResolvedValue(null);
 
     await expect(registerAccount(registrationForm())).rejects.toMatchObject({
       url: "/dang-ky-tai-khoan?sent=1",
     });
     const createInput = mocks.userCreate.mock.calls[0]?.[0];
-    expect(createInput.data.passwordHash).not.toBe("correct horse battery staple");
-    expect(bcrypt.getRounds(createInput.data.passwordHash)).toBe(12);
+    expect(createInput.data).not.toHaveProperty("passwordHash");
+
+    const pending = await pendingHashFromLastToken();
+    expect(pending).not.toBe("correct horse battery staple");
+    expect(bcrypt.getRounds(pending)).toBe(12);
     await expect(
-      bcrypt.compare("correct horse battery staple", createInput.data.passwordHash),
+      bcrypt.compare("correct horse battery staple", pending),
     ).resolves.toBe(true);
     expect(mocks.createToken).toHaveBeenCalledWith(
       expect.anything(),
@@ -92,7 +104,12 @@ describe("credential registration action", () => {
   });
 
   it("refuses an email that already has a verified account", async () => {
-    mocks.findUnique.mockResolvedValue({ emailVerified: new Date() });
+    mocks.findUnique.mockResolvedValue({
+      id: "user-1",
+      email: "student@example.com",
+      name: "Học viên",
+      emailVerified: new Date(),
+    });
 
     await expect(registerAccount(registrationForm())).rejects.toMatchObject({
       url: "/dang-ky-tai-khoan?error=taken",
@@ -102,26 +119,38 @@ describe("credential registration action", () => {
   });
 
   /**
-   * Nhánh từng gây lỗi thật: đăng ký lại một địa chỉ đang chờ xác thực trả về
-   * "đã gửi thư" và bỏ qua mật khẩu vừa nhập, nên sau khi xác thực người dùng
-   * đăng nhập bằng mật khẩu đó không được.
+   * Nhánh từng gây lỗi thật: đăng ký lại một địa chỉ đang chờ xác thực chỉ gửi
+   * lại thư và bỏ qua mật khẩu vừa nhập, nên sau khi xác thực người dùng đăng
+   * nhập bằng mật khẩu đó không được. Giờ nó phát token mới mang đúng mật khẩu
+   * vừa nhập, và token cũ bị `createAuthToken` xoá.
    */
-  it("refuses an email whose account is still awaiting verification", async () => {
-    mocks.findUnique.mockResolvedValue({ emailVerified: null });
+  it("re-issues a link carrying the new password for an unverified account", async () => {
+    mocks.findUnique.mockResolvedValue({
+      id: "user-1",
+      email: "student@example.com",
+      name: "Học viên",
+      emailVerified: null,
+    });
 
     await expect(registerAccount(registrationForm())).rejects.toMatchObject({
-      url: "/dang-ky-tai-khoan?error=pending",
+      url: "/dang-ky-tai-khoan?sent=1",
     });
+    // Không tạo tài khoản thứ hai cho cùng địa chỉ.
     expect(mocks.transaction).not.toHaveBeenCalled();
-    expect(mocks.sendVerification).not.toHaveBeenCalled();
+    await expect(
+      bcrypt.compare("correct horse battery staple", await pendingHashFromLastToken()),
+    ).resolves.toBe(true);
+    expect(mocks.sendVerification).toHaveBeenCalledWith(
+      expect.objectContaining({ to: "student@example.com", token: "verify-token" }),
+    );
   });
 
-  it("reports the pending state when a concurrent signup wins the unique index", async () => {
+  it("reports a temporary failure when the account cannot be created", async () => {
     mocks.findUnique.mockResolvedValue(null);
     mocks.transaction.mockRejectedValue(Object.assign(new Error("dup"), { code: "P2002" }));
 
     await expect(registerAccount(registrationForm())).rejects.toMatchObject({
-      url: "/dang-ky-tai-khoan?error=pending",
+      url: "/dang-ky-tai-khoan?error=failed",
     });
     expect(mocks.sendVerification).not.toHaveBeenCalled();
   });

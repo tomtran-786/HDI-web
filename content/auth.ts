@@ -24,6 +24,9 @@ export const verifyPage = {
     // cung cấp tự mở liên kết trong email, nên việc xác thực phải do một cú
     // bấm thật kích hoạt, không phải do trang được tải.
     why: "Cần thêm một bước này vì bộ quét thư của một số nhà cung cấp tự mở liên kết trong email. Xác thực chỉ diễn ra khi bạn bấm nút bên dưới.",
+    // Bấm nút này kích hoạt mật khẩu của lần đăng ký đã phát ra liên kết, và
+    // lần đăng ký đó không nhất thiết là của chủ hộp thư.
+    warning: "Nếu bạn không tạo tài khoản này, đừng bấm — làm vậy sẽ kích hoạt tài khoản cùng mật khẩu do người đã đăng ký đặt.",
     action: "Xác thực email này",
   },
 
@@ -61,11 +64,29 @@ export const signInPage = {
   verified: "Email đã được xác thực. Bạn có thể đăng nhập ngay.",
   reset: "Mật khẩu đã được đổi và các phiên đăng nhập cũ đã hết hiệu lực.",
 
-  // Gộp ba nguyên nhân vào một câu là có chủ ý: tách ra sẽ cho biết email nào
-  // có tài khoản. Đổi lại, người chưa xác thực cần thấy ngay đường đi tiếp,
-  // nên ba liên kết dưới form không phải trang trí.
-  error:
-    "Email hoặc mật khẩu chưa đúng, tài khoản chưa xác thực, hoặc lượt thử tạm thời đã vượt giới hạn.",
+  /**
+   * Gộp mọi nguyên nhân liên quan tới một tài khoản cụ thể vào một câu là có
+   * chủ ý: tách ra sẽ cho biết email nào có tài khoản, và trang đăng nhập là
+   * đúng nơi kẻ dò mật khẩu hàng loạt làm việc. Đổi lại, người chưa xác thực
+   * cần thấy ngay đường đi tiếp, nên ba liên kết dưới form không phải trang trí.
+   *
+   * Các mã còn lại không nói gì về một tài khoản nào, nên nói thẳng được. Chúng
+   * đến từ `pages.error` trong lib/auth.ts; mã lạ rơi về câu gộp.
+   */
+  errors: {
+    credentials:
+      "Email hoặc mật khẩu chưa đúng, tài khoản chưa xác thực, hoặc lượt thử tạm thời đã vượt giới hạn.",
+    accessDenied:
+      "Google không xác nhận địa chỉ email của tài khoản này, nên đăng nhập bằng Google chưa dùng được. Hãy xác minh email trong tài khoản Google, hoặc đăng nhập bằng mật khẩu.",
+    configuration:
+      "Đăng nhập đang gặp lỗi cấu hình phía hệ thống. Vui lòng thử lại sau ít phút hoặc liên hệ HDI.",
+  },
+
+  // Tài khoản tạo bằng Google không có mật khẩu, nên gõ mật khẩu vào đó sẽ mãi
+  // ra câu lỗi gộp ở trên mà không có manh mối nào. Một dòng chữ là cách duy
+  // nhất nói ra điều đó mà không lộ email nào có tài khoản.
+  googleHint:
+    "Nếu bạn tạo tài khoản bằng Google, hãy dùng nút Tiếp tục với Google — tài khoản đó chưa có mật khẩu.",
 
   fields: { email: "Email", password: "Mật khẩu" },
   action: "Đăng nhập",
@@ -144,25 +165,27 @@ export const registerPage = {
    * Đánh đổi đã biết: người ngoài dò được địa chỉ nào đã đăng ký. Chấp nhận vì
    * câu trả lời chung chung từng dẫn tới một lỗi thật — người dùng đăng ký lại
    * bằng mật khẩu mới, thấy báo "đã gửi thư", xác thực xong rồi không đăng nhập
-   * được, vì mật khẩu thật vẫn là mật khẩu của lần đăng ký đầu. Trần 3 lần mỗi
-   * email và 10 lần mỗi IP trong `allowAuthEmail` mới là thứ giữ cho việc dò
-   * không chạy được ở quy mô lớn, không phải câu chữ mập mờ.
+   * được. Trần 3 lần mỗi email và 10 lần mỗi IP trong `allowAuthEmail` mới là
+   * thứ giữ cho việc dò không chạy được ở quy mô lớn, không phải câu chữ mập mờ.
+   *
+   * Chỉ địa chỉ ĐÃ xác thực mới bị từ chối. Đăng ký lại một địa chỉ chưa xác
+   * thực nay chạy đúng — mật khẩu đi theo token nên mật khẩu vừa nhập chính là
+   * mật khẩu có hiệu lực — nên nó quay về màn hình "đã gửi thư" bình thường.
    */
   errors: {
     invalid:
       "Vui lòng kiểm tra họ tên, email và mật khẩu. Mật khẩu cần ít nhất 12 ký tự và tối đa 72 byte.",
     taken:
       "Email này đã có tài khoản. Hãy đăng nhập, hoặc đặt lại mật khẩu nếu bạn không nhớ.",
-    pending:
-      "Email này đã đăng ký nhưng chưa xác thực. Mật khẩu vẫn là mật khẩu của lần đăng ký đầu — hãy mở hộp thư và bấm liên kết xác thực, hoặc yêu cầu gửi lại.",
     throttled:
       "Đã có quá nhiều lượt đăng ký cho email này. Vui lòng đợi ít phút rồi thử lại.",
+    failed:
+      "Chưa tạo được tài khoản do lỗi tạm thời ở hệ thống. Vui lòng thử lại sau ít phút.",
   },
 
   errorLinks: {
     signIn: "Đăng nhập",
     reset: "Quên mật khẩu",
-    resend: "Gửi lại liên kết xác thực",
   },
 
   fields: {

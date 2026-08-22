@@ -11,6 +11,7 @@ const mocks = vi.hoisted(() => ({
   transaction: vi.fn(),
   consumeToken: vi.fn(),
   updateMany: vi.fn(),
+  allowVerifyConsume: vi.fn(),
 }));
 
 vi.mock("next/navigation", () => ({ redirect: mocks.redirect }));
@@ -18,10 +19,12 @@ vi.mock("@/lib/auth-tokens", () => ({
   consumeAuthToken: mocks.consumeToken,
   authTokenIdentifier: vi.fn(),
   createAuthToken: vi.fn(),
+  pendingPasswordHashFor: vi.fn(),
   VERIFY_TOKEN_TTL_MS: 24 * 60 * 60 * 1000,
 }));
 vi.mock("@/lib/auth-throttle", () => ({
   allowAuthEmail: vi.fn(),
+  allowVerifyConsume: mocks.allowVerifyConsume,
   serverActionIp: vi.fn(),
 }));
 vi.mock("@/lib/email", () => ({ sendVerificationEmail: vi.fn() }));
@@ -50,8 +53,12 @@ describe("email verification action", () => {
     mocks.transaction.mockImplementation(async (callback) =>
       callback({ user: { updateMany: mocks.updateMany } }),
     );
-    mocks.consumeToken.mockResolvedValue({ userId: "user-1" });
+    mocks.consumeToken.mockResolvedValue({
+      userId: "user-1",
+      pendingPasswordHash: null,
+    });
     mocks.updateMany.mockResolvedValue({ count: 1 });
+    mocks.allowVerifyConsume.mockResolvedValue(true);
   });
 
   it("consumes and verifies the account in one transaction", async () => {
@@ -69,6 +76,38 @@ describe("email verification action", () => {
       where: { id: "user-1", emailVerified: null },
       data: { emailVerified: expect.any(Date) },
     });
+  });
+
+  /**
+   * Nếu mật khẩu nằm trên tài khoản thay vì trên token, người đăng ký chèn một
+   * địa chỉ trước sẽ đặt được mật khẩu cho tài khoản mà chính chủ hộp thư kích
+   * hoạt hộ. Chỉ hash đi cùng liên kết vừa bấm mới được ghi.
+   */
+  it("applies the password that came with the consumed link", async () => {
+    mocks.consumeToken.mockResolvedValue({
+      userId: "user-1",
+      pendingPasswordHash: "$2b$12$hash-from-this-registration",
+    });
+
+    await expect(verifyEmail(verificationForm())).rejects.toMatchObject({
+      url: "/dang-nhap?verified=1",
+    });
+    expect(mocks.updateMany).toHaveBeenCalledWith({
+      where: { id: "user-1", emailVerified: null },
+      data: {
+        emailVerified: expect.any(Date),
+        passwordHash: "$2b$12$hash-from-this-registration",
+      },
+    });
+  });
+
+  it("refuses to consume once the per-IP limit is spent", async () => {
+    mocks.allowVerifyConsume.mockResolvedValue(false);
+
+    await expect(verifyEmail(verificationForm())).rejects.toMatchObject({
+      url: "/xac-thuc-email?error=invalid",
+    });
+    expect(mocks.consumeToken).not.toHaveBeenCalled();
   });
 
   it("rejects an expired or replayed token without updating the user", async () => {

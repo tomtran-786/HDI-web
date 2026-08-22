@@ -109,6 +109,9 @@ export default async function VerifyEmailPage({
               <p className="mt-4 text-xs leading-relaxed text-fg-subtle">
                 {verifyPage.confirm.why}
               </p>
+              <p className="mt-2 text-xs leading-relaxed text-danger">
+                {verifyPage.confirm.warning}
+              </p>
             </div>
           ) : (
             <div>

@@ -98,6 +98,13 @@ model VerificationToken {
   token      String
   expires    DateTime @db.Timestamptz(6)
 
+  /// Mật khẩu bcrypt do chính lần đăng ký phát ra token này gửi lên, chỉ có ở
+  /// token `verify`. Tài khoản chưa xác thực không được giữ mật khẩu trên hàng
+  /// User: nếu giữ, người đăng ký chèn một địa chỉ trước sẽ đặt được mật khẩu
+  /// cho tài khoản mà chủ hộp thư kích hoạt hộ. Buộc mật khẩu vào token khiến
+  /// liên kết nào được bấm thì mật khẩu của lần đăng ký đó có hiệu lực.
+  pendingPasswordHash String? @map("pending_password_hash") @db.VarChar(100)
+
   @@id([identifier, token])
   @@unique([token])
   @@index([identifier])

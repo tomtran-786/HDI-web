@@ -74,7 +74,11 @@ export function sendVerificationEmail(input: {
     subject: "Xác thực tài khoản học viên — HDI Research Center",
     html: emailShell(
       input.name,
-      "<p>Hãy xác nhận địa chỉ email để kích hoạt đăng nhập bằng mật khẩu. Liên kết có hiệu lực trong <strong>24 giờ</strong>.</p>",
+      // Dòng cảnh báo không phải khách sáo. Bấm liên kết này kích hoạt mật khẩu
+      // của lần đăng ký đã phát ra nó, và lần đăng ký đó không nhất thiết là
+      // của chủ hộp thư — xem chú thích ở registerAccount.
+      "<p>Hãy xác nhận địa chỉ email để kích hoạt đăng nhập bằng mật khẩu. Liên kết có hiệu lực trong <strong>24 giờ</strong>.</p>" +
+        "<p><strong>Nếu bạn không tạo tài khoản này, đừng bấm nút bên dưới.</strong> Bấm vào đó sẽ kích hoạt tài khoản cùng mật khẩu do người đã đăng ký đặt.</p>",
       "Xác thực email",
       href,
     ),

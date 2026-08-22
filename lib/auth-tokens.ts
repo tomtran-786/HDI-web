@@ -27,7 +27,17 @@ export function parseAuthTokenIdentifier(
 
 export async function createAuthToken(
   db: AuthDb,
-  input: { userId: string; purpose: AuthTokenPurpose; ttlMs: number },
+  input: {
+    userId: string;
+    purpose: AuthTokenPurpose;
+    ttlMs: number;
+    /**
+     * Chỉ dùng cho token `verify`: mật khẩu bcrypt của chính lần đăng ký phát ra
+     * token này, sẽ được áp lên tài khoản khi liên kết được bấm. Xem chú thích
+     * của `VerificationToken.pendingPasswordHash` trong schema.
+     */
+    pendingPasswordHash?: string | null;
+  },
 ) {
   const identifier = authTokenIdentifier(input.purpose, input.userId);
   const token = randomBytes(32).toString("base64url");
@@ -36,9 +46,29 @@ export async function createAuthToken(
 
   await db.verificationToken.deleteMany({ where: { identifier } });
   await db.verificationToken.create({
-    data: { identifier, token: tokenHash, expires },
+    data: {
+      identifier,
+      token: tokenHash,
+      expires,
+      pendingPasswordHash: input.pendingPasswordHash ?? null,
+    },
   });
   return { token, expires };
+}
+
+/**
+ * Hash chờ của token `verify` đang sống, đọc trước khi phát token mới.
+ *
+ * `createAuthToken` xoá token cũ trước khi tạo token mới, nên một lượt "gửi lại
+ * liên kết" không đọc trước sẽ làm mất mật khẩu người dùng đã đặt lúc đăng ký,
+ * và họ xác thực xong lại không có mật khẩu nào để đăng nhập.
+ */
+export async function pendingPasswordHashFor(db: AuthDb, userId: string) {
+  const record = await db.verificationToken.findFirst({
+    where: { identifier: authTokenIdentifier("verify", userId) },
+    select: { pendingPasswordHash: true },
+  });
+  return record?.pendingPasswordHash ?? null;
 }
 
 export async function findAuthToken(
@@ -82,7 +112,10 @@ export async function consumeAuthToken(
   await db.verificationToken.deleteMany({
     where: { identifier: found.record.identifier },
   });
-  return { userId: found.userId };
+  return {
+    userId: found.userId,
+    pendingPasswordHash: found.record.pendingPasswordHash ?? null,
+  };
 }
 
 /**

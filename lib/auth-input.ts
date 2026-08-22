@@ -26,7 +26,16 @@ const password = z
     message: "Mật khẩu không được dài quá 72 byte.",
   });
 
-export const credentialsSchema = z.object({ email, password: z.string().min(1) });
+/**
+ * Trần 200 ký tự không phải để khớp quy tắc mật khẩu (đăng ký đã lo việc đó);
+ * nó chỉ để `authorize` không nhận một chuỗi dài tuỳ ý rồi đem đi bcrypt. Không
+ * dùng chung ràng buộc với `password` ở trên: mật khẩu cũ đặt trước khi có quy
+ * tắc hiện tại vẫn phải đăng nhập được.
+ */
+export const credentialsSchema = z.object({
+  email,
+  password: z.string().min(1).max(200),
+});
 
 export const registrationSchema = z
   .object({

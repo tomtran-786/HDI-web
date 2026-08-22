@@ -29,6 +29,21 @@ export default async function SignInPage({
   const next = safeNext(tiep);
   const nextQuery =
     next === "/tai-khoan" ? "" : `?tiep=${encodeURIComponent(next)}`;
+  // Cùng quy ước với các trang xác thực khác: không nhét lại giá trị mặc định
+  // vào URL lỗi.
+  const nextSuffix =
+    next === "/tai-khoan" ? "" : `&tiep=${encodeURIComponent(next)}`;
+
+  // Mã lỗi đến từ Auth.js qua `pages.error`, tức là từ thanh địa chỉ. Nó chỉ
+  // được dùng để tra bảng có sẵn; mọi giá trị khác rơi về câu gộp.
+  const rawError = Array.isArray(error) ? error[0] : error;
+  const errorMessage = rawError
+    ? rawError === "AccessDenied"
+      ? signInPage.errors.accessDenied
+      : rawError === "Configuration"
+        ? signInPage.errors.configuration
+        : signInPage.errors.credentials
+    : null;
 
   const session = await auth();
   if (session?.user) redirect(next);
@@ -51,9 +66,9 @@ export default async function SignInPage({
               {verified ? signInPage.verified : signInPage.reset}
             </p>
           )}
-          {error && (
+          {errorMessage && (
             <p className="mb-5 rounded-card border border-line bg-bg-soft px-4 py-3 text-sm text-danger">
-              {signInPage.error}
+              {errorMessage}
             </p>
           )}
 
@@ -69,9 +84,7 @@ export default async function SignInPage({
                 });
               } catch (authError) {
                 if (authError instanceof AuthError) {
-                  redirect(
-                    `/dang-nhap?error=CredentialsSignin&tiep=${encodeURIComponent(next)}`,
-                  );
+                  redirect(`/dang-nhap?error=CredentialsSignin${nextSuffix}`);
                 }
                 throw authError;
               }
@@ -127,6 +140,9 @@ export default async function SignInPage({
           </form>
 
           <p className="mt-5 text-center text-xs leading-relaxed text-fg-subtle">
+            {signInPage.googleHint}
+          </p>
+          <p className="mt-3 text-center text-xs leading-relaxed text-fg-subtle">
             {signInPage.driveNote}
           </p>
           <div className="mt-5 flex flex-wrap justify-center gap-x-5 gap-y-2 text-sm">

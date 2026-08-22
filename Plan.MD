@@ -131,6 +131,41 @@ Hệ quả phải chấp nhận: quyền Google Drive của một enrollment đ�
 hình. Nếu độ trễ này thành vấn đề, cách xử lý là đối soát ngay tại thời điểm
 render trang tài khoản hoặc lúc mua — KHÔNG phải tăng tần suất cron.
 
+### Mật khẩu của tài khoản chưa xác thực nằm trên token, không trên tài khoản
+
+`users.password_hash` từng được ghi ngay lúc đăng ký, trước khi có ai chứng minh
+sở hữu hộp thư. Đó là một đường chiếm tài khoản: kẻ đăng ký chèn địa chỉ của
+người khác đặt được mật khẩu, rồi chính chủ hộp thư bấm liên kết xác thực và
+kích hoạt tài khoản với mật khẩu của kẻ đó. `secureGoogleAccountLink` đã bịt
+đúng lỗ này cho nhánh Google (xoá mật khẩu chưa được chứng minh khi liên kết),
+nhưng nhánh xác thực email thì chưa.
+
+Nay mật khẩu bcrypt nằm ở `verification_tokens.pending_password_hash` và chỉ
+được áp lên tài khoản khi đúng token đó bị tiêu. Nhờ vậy đăng ký lại một địa chỉ
+**chưa xác thực** là an toàn và được cho phép — `createAuthToken` xoá token cũ
+nên chỉ liên kết mới nhất còn sống, và mật khẩu có hiệu lực luôn là mật khẩu vừa
+nhập. Địa chỉ **đã xác thực** thì bị từ chối thẳng.
+
+**Rủi ro còn lại, đã biết và chấp nhận:** nếu kẻ tấn công đăng ký chèn *sau* khi
+nạn nhân đăng ký, hộp thư nạn nhân có hai thư và bấm nhầm thư mới hơn vẫn kích
+hoạt mật khẩu của kẻ đó. Trần 3 lượt đăng ký mỗi email mỗi giờ giới hạn việc lặp
+lại, và cả thư lẫn màn hình xác nhận đều nói rõ "nếu bạn không tạo tài khoản này,
+đừng bấm". Bịt hẳn thì phải đổi luồng thành **đặt mật khẩu ngay tại trang xác
+thực** — khi đó mật khẩu do đúng người mở được hộp thư chọn. Chưa làm.
+
+### Khoá tài khoản từ xa là đánh đổi có chủ ý
+
+`allowLoginAttempt` giữ hai bộ đếm, trong đó bộ chỉ-theo-email có trần 30 lượt
+mỗi giờ. Hệ quả: ai biết địa chỉ email cũng có thể tiêu hết ngân sách đó và khoá
+chủ tài khoản ra ngoài trong phần còn lại của giờ. Đây là cái giá của việc chặn
+credential stuffing đổi-IP, không phải sơ suất — bỏ bộ đếm này thì một botnet có
+bao nhiêu IP là có bấy nhiêu lần đoán vào cùng một tài khoản.
+
+`clearLoginThrottle` làm dịu phần lớn: mỗi lần đăng nhập đúng đều xoá cả hai bộ
+đếm, nên người thật hiếm khi chạm trần và cửa sổ khoá của kẻ tấn công bị đóng
+lại ngay khi chủ tài khoản vào được. Nếu việc khoá thành vấn đề thật, cách xử lý
+là thêm captcha hoặc backoff luỹ tiến — KHÔNG phải nâng trần.
+
 ## Màn hình vận hành
 
 - Tài khoản hiển thị từng lần mua riêng: khóa, ngày thanh toán/đặt chỗ, hạn truy

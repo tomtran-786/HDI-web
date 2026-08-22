@@ -81,22 +81,46 @@ export async function consumeAuthLimit(input: {
  * Cả hai luôn được tiêu thụ, không short-circuit: `&&` sẽ bỏ qua bộ đếm thứ hai
  * ngay khi bộ đầu từ chối, và một bộ đếm không tăng là một bộ đếm không đếm.
  */
-export async function allowLoginAttempt(email: string, ip: string) {
-  const [pairAllowed, emailAllowed] = await Promise.all([
-    consumeAuthLimit({
+function loginBuckets(email: string, ip: string) {
+  return [
+    {
       action: "password_login",
       key: `${email}|${ip}`,
       limit: 10,
       windowMs: 15 * 60 * 1000,
-    }),
-    consumeAuthLimit({
+    },
+    {
       action: "password_login_email",
       key: `email:${email}`,
       limit: 30,
       windowMs: 60 * 60 * 1000,
-    }),
-  ]);
-  return pairAllowed && emailAllowed;
+    },
+  ];
+}
+
+export async function allowLoginAttempt(email: string, ip: string) {
+  const results = await Promise.all(loginBuckets(email, ip).map(consumeAuthLimit));
+  return results.every(Boolean);
+}
+
+/**
+ * Trả lại ngân sách cho một tài khoản vừa đăng nhập đúng.
+ *
+ * Không có bước này thì bộ đếm chỉ đi một chiều: gõ sai chín lần rồi gõ đúng
+ * vẫn để lại đúng một lượt cho mười lăm phút kế tiếp, nên lần đăng nhập hợp lệ
+ * tiếp theo có thể bị chặn. Việc xoá cũng thu hẹp cửa sổ khoá-từ-xa mô tả ở
+ * `allowLoginAttempt`: mỗi lần chủ tài khoản vào được là ngân sách của kẻ dò
+ * cũng bị xoá theo.
+ */
+export async function clearLoginThrottle(email: string, ip: string) {
+  await prisma.authThrottle.deleteMany({
+    where: {
+      OR: loginBuckets(email, ip).map((bucket) => ({
+        action: bucket.action,
+        keyHash: throttleKey(`${bucket.action}:${bucket.key}`),
+      })),
+    },
+  });
 }
 
 /**
@@ -126,6 +150,20 @@ export async function allowUserAction(
 export async function allowResetConsume(ip: string) {
   return consumeAuthLimit({
     action: "reset_consume",
+    key: `ip:${ip}`,
+    limit: 10,
+    windowMs: 15 * 60 * 1000,
+  });
+}
+
+/**
+ * Đối xứng với `allowResetConsume`: chặn việc thử token xác thực hàng loạt từ
+ * một IP. Token là 32 byte ngẫu nhiên nên đoán được là chuyện không xảy ra,
+ * nhưng hai đường tiêu token thì không có lý do gì để được bảo vệ khác nhau.
+ */
+export async function allowVerifyConsume(ip: string) {
+  return consumeAuthLimit({
+    action: "verify_consume",
     key: `ip:${ip}`,
     limit: 10,
     windowMs: 15 * 60 * 1000,

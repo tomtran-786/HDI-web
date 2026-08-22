@@ -30,51 +30,71 @@ export async function registerAccount(formData: FormData) {
   }
 
   /**
-   * Một email đã có tài khoản thì dừng ở đây, không đi tiếp.
+   * Mật khẩu đi theo token xác thực, không nằm sẵn trên tài khoản.
    *
-   * Nhánh cũ nhận đăng ký lại cho tài khoản chưa xác thực và chỉ gửi lại thư,
-   * lặng lẽ bỏ qua mật khẩu vừa nhập. Người dùng thấy "đã gửi thư", bấm xác
-   * thực, rồi không đăng nhập được bằng mật khẩu họ vừa đặt — vì mật khẩu thật
-   * vẫn là của lần đăng ký đầu. Ghi đè mật khẩu ở đây thì lại mở đường chiếm
-   * tài khoản: kẻ khác đăng ký chèn lên một địa chỉ đang chờ xác thực, chủ hộp
-   * thư bấm liên kết trong thư của chính mình, và tài khoản thành đã xác thực
-   * với mật khẩu của kẻ đó. Nên đúng cách là từ chối và nói rõ lý do.
+   * `users.password_hash` từng được ghi ngay lúc đăng ký, trước khi có ai chứng
+   * minh sở hữu hộp thư. Kẻ đăng ký chèn địa chỉ của người khác đặt được mật
+   * khẩu, rồi chính chủ hộp thư bấm liên kết xác thực và kích hoạt tài khoản với
+   * mật khẩu của kẻ đó. Giờ hash nằm trên hàng token, và `verifyEmail` chỉ áp
+   * hash của đúng token vừa được bấm.
+   *
+   * Nhờ vậy đăng ký lại một địa chỉ CHƯA xác thực là an toàn và được cho phép:
+   * `createAuthToken` xoá token cũ, nên chỉ liên kết mới nhất còn sống và mật
+   * khẩu có hiệu lực luôn là mật khẩu vừa nhập. Địa chỉ ĐÃ xác thực thì không —
+   * ở đó việc đăng ký lại chỉ có thể là nhầm lẫn hoặc dò tài khoản.
    */
+  const passwordHash = await bcrypt.hash(password, 12);
   const existing = await prisma.user.findUnique({
     where: { email },
-    select: { emailVerified: true },
+    select: { id: true, email: true, name: true, emailVerified: true },
   });
-  if (existing) {
-    const reason = existing.emailVerified ? "taken" : "pending";
-    redirect(`${REGISTER}?error=${reason}${nextSuffix}`);
+  if (existing?.emailVerified) {
+    redirect(`${REGISTER}?error=taken${nextSuffix}`);
   }
 
-  let recipient: { id: string; email: string; name: string } | null = null;
+  let recipient: { email: string; name: string } | null = null;
   let token: string | null = null;
 
   try {
-    const passwordHash = await bcrypt.hash(password, 12);
-    const created = await prisma.$transaction(async (tx) => {
-      const user = await tx.user.create({
-        data: { name, email, passwordHash },
-        select: { id: true, email: true, name: true },
-      });
-      const createdToken = await createAuthToken(tx, {
-        userId: user.id,
+    if (existing) {
+      const created = await createAuthToken(prisma, {
+        userId: existing.id,
         purpose: "verify",
         ttlMs: VERIFY_TOKEN_TTL_MS,
+        pendingPasswordHash: passwordHash,
       });
-      return { user, token: createdToken.token };
-    });
-    recipient = { ...created.user, name: created.user.name ?? created.user.email };
-    token = created.token;
+      recipient = {
+        email: existing.email,
+        name: existing.name ?? existing.email,
+      };
+      token = created.token;
+    } else {
+      const created = await prisma.$transaction(async (tx) => {
+        const user = await tx.user.create({
+          data: { name, email },
+          select: { id: true, email: true, name: true },
+        });
+        const createdToken = await createAuthToken(tx, {
+          userId: user.id,
+          purpose: "verify",
+          ttlMs: VERIFY_TOKEN_TTL_MS,
+          pendingPasswordHash: passwordHash,
+        });
+        return { user, token: createdToken.token };
+      });
+      recipient = {
+        email: created.user.email,
+        name: created.user.name ?? created.user.email,
+      };
+      token = created.token;
+    }
   } catch (error) {
     // Thua cuộc đua với một lượt đăng ký song song cho cùng địa chỉ. Hàng vừa
-    // được tạo nên nó chắc chắn chưa xác thực — "pending" mới là mô tả đúng.
-    if ((error as { code?: string }).code === "P2002") {
-      redirect(`${REGISTER}?error=pending${nextSuffix}`);
-    }
+    // được tạo nên nó chưa xác thực, và nhánh trên đã xử lý đúng trường hợp đó —
+    // nhưng lặp lại ở đây chỉ để chiều một cuộc đua hiếm thì không đáng, nên báo
+    // lỗi tạm thời và mời thử lại.
     console.error("[register] Không tạo được tài khoản:", error);
+    redirect(`${REGISTER}?error=failed${nextSuffix}`);
   }
 
   if (recipient && token) {
