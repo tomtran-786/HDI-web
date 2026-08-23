@@ -173,8 +173,9 @@ export function QuoteForm() {
         {!pending && <IconArrow size={16} />}
       </button>
       <p className="mt-3 text-center text-xs leading-relaxed text-fg-subtle">
-        Thanh toán qua PayOS (quét QR hoặc chuyển khoản). Sau khi trả, bạn được
-        đưa về trang có mã đơn để gửi bài qua Zalo. Bảng giá áp dụng đến{" "}
+        Cần đăng nhập để đặt dịch vụ — đơn được lưu trong trang tài khoản của
+        bạn. Thanh toán qua PayOS (quét QR hoặc chuyển khoản); sau khi trả, bạn
+        được đưa về trang có mã đơn để gửi bài qua Zalo. Bảng giá áp dụng đến{" "}
         {WORD_LIMIT.toLocaleString("vi-VN")} từ.
       </p>
     </form>

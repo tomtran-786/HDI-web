@@ -51,11 +51,12 @@ model User {
   createdAt DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt DateTime       @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
 
-  accounts    Account[]
-  sessions    Session[]
-  enrollments Enrollment[]
-  orders      Order[]
-  reviews     CourseReview[]
+  accounts      Account[]
+  sessions      Session[]
+  enrollments   Enrollment[]
+  orders        Order[]
+  reviews       CourseReview[]
+  serviceOrders ServiceOrder[]
 
   @@map("users")
 }
@@ -443,10 +444,12 @@ model CourseReview {
 /// dịch vụ sẽ làm rỗng ruột đúng những ràng buộc đang giữ luồng mua khóa học
 /// đúng đắn — đổi lấy một bảng mười cột là một cái giá rẻ.
 ///
-/// Đơn này KHÔNG giữ chỗ của ai và không cần tài khoản: nó chỉ là một báo giá
-/// đã được server tính, kèm một mã để đối chiếu giữa tin nhắn Zalo và tiền về.
+/// Đơn này KHÔNG giữ chỗ của ai, nhưng vẫn thuộc về một tài khoản: mọi thứ có
+/// thu tiền trên trang này đều đi qua đăng nhập, nên đơn dịch vụ có chủ giống
+/// hệt đơn khóa học và học viên tìm lại được nó trong trang tài khoản.
 model ServiceOrder {
-  id String @id @default(cuid())
+  id     String @id @default(cuid())
+  userId String @map("user_id")
 
   /// PayOS bắt `orderCode` là số nguyên duy nhất VĨNH VIỄN cho mỗi merchant.
   /// Sequence riêng, nhưng migration đẩy sàn lên 900000001 để không bao giờ
@@ -480,11 +483,14 @@ model ServiceOrder {
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
 
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   /// Bằng chứng thanh toán nằm ở `payments` chung với đơn khóa học, không phải
   /// ở một cột trên hàng này: một đơn có thể nhận nhiều sự kiện (thử hụt, rồi
   /// thành công, rồi webhook gửi lại), và một cột chỉ giữ được sự kiện cuối.
   payments Payment[]
 
+  @@index([userId, status])
   @@index([status, expiresAt])
   @@map("service_orders")
 }

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
+import { auth } from "@/lib/auth";
 import { aiCheck, aiCheckKinds } from "@/content/ai-check";
 import { orderStatusLabel, orderStatusTone } from "@/content/checkout";
 import { links } from "@/content/site";
@@ -21,9 +22,18 @@ export default async function ServiceOrderResultPage({
   params,
 }: PageProps<"/kiem-tra-ai-dao-van/ket-qua/[ref]">) {
   const { ref } = await params;
-  // `ref` là 16 byte ngẫu nhiên chứ không phải mã đơn tuần tự, nên trang này
-  // không mở được bằng cách đếm lên — đó là lý do nó không cần đăng nhập.
-  const order = await findServiceOrder(ref);
+  const session = await auth();
+  if (!session?.user?.id) {
+    redirect(
+      `/dang-nhap?tiep=${encodeURIComponent(`/kiem-tra-ai-dao-van/ket-qua/${ref}`)}`,
+    );
+  }
+
+  // Truy vấn tự thu hẹp theo chủ đơn. `ref` ngẫu nhiên khiến không ai đếm lên
+  // mà tìm được đơn; `userId` khiến một đường link bị chuyển tiếp cũng không mở
+  // ra được nội dung. Không tìm thấy và không phải của mình trả về cùng một 404
+  // — phân biệt hai trường hợp là tự xác nhận đơn đó có tồn tại.
+  const order = await findServiceOrder(ref, session.user.id);
   if (!order) notFound();
 
   const kindLabel =

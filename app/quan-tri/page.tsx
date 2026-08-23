@@ -164,6 +164,7 @@ export default async function AdminPage() {
         amountVnd: true,
         status: true,
         createdAt: true,
+        user: { select: { name: true, email: true, phone: true } },
       },
     }),
   ]);
@@ -503,7 +504,11 @@ export default async function AdminPage() {
                     {orderStatusLabel[order.status] ?? order.status}
                   </Badge>
                 </div>
-                <p className="mt-1 text-sm text-fg-muted">
+                <p className="mt-1 break-all text-sm text-fg-muted">
+                  {order.user.name ?? "—"} · {order.user.email}
+                  {order.user.phone ? ` · ${order.user.phone}` : ""}
+                </p>
+                <p className="mt-1.5 text-[13px] text-fg-subtle">
                   {kindLabel(order.kind)} · {vnd.format(order.wordCount)} từ ·{" "}
                   {formatDateTime(order.createdAt)}
                 </p>

@@ -56,9 +56,11 @@ function refuse(reason: RefuseReason): ServiceOrderResult {
  *
  * `wordCount` và `kind` là thứ DUY NHẤT đến từ trình duyệt. Số tiền không nằm
  * trong tham số và không thể nằm trong tham số: nó được `quote()` tra ra từ
- * bảng giá ngay tại đây, cùng một hàm mà trang đã dùng để hiển thị.
+ * bảng giá ngay tại đây, cùng một hàm mà trang đã dùng để hiển thị. `userId`
+ * đến từ phiên đăng nhập ở phía server, không bao giờ từ form.
  */
 export async function createServiceOrder(input: {
+  userId: string;
   kind: unknown;
   wordCount: unknown;
 }): Promise<ServiceOrderResult> {
@@ -80,6 +82,7 @@ export async function createServiceOrder(input: {
       // 16 byte ngẫu nhiên. `code` tuần tự là số đi vào nội dung chuyển khoản
       // nên nó phải ngắn và đoán được; `ref` là thứ đi vào URL trang kết quả
       // nên nó phải là thứ không đoán được.
+      userId: input.userId,
       ref: randomBytes(16).toString("hex"),
       kind: input.kind,
       wordCount: input.wordCount,
@@ -114,9 +117,13 @@ export type ServiceCheckoutResult =
  */
 export async function ensureServiceCheckout(
   ref: string,
+  userId: string,
 ): Promise<ServiceCheckoutResult> {
-  const order = await prisma.serviceOrder.findUnique({
-    where: { ref },
+  // `userId` trong `where`, không phải kiểm sau khi đọc: một action là endpoint
+  // POST riêng, và `ref` của người khác không được phép tạo ra link thanh toán
+  // dù người gọi có đăng nhập hợp lệ.
+  const order = await prisma.serviceOrder.findFirst({
+    where: { ref, userId },
     select: {
       id: true,
       code: true,
@@ -125,6 +132,7 @@ export async function ensureServiceCheckout(
       expiresAt: true,
       checkoutUrl: true,
       kind: true,
+      user: { select: { name: true, email: true, phone: true } },
     },
   });
   if (!order) {
@@ -149,10 +157,13 @@ export async function ensureServiceCheckout(
       cancelUrl: back,
       returnUrl: back,
       expiredAt: Math.floor(order.expiresAt.getTime() / 1000),
+      buyerName: order.user.name ?? undefined,
+      buyerEmail: order.user.email,
+      buyerPhone: order.user.phone ?? undefined,
     });
 
     const saved = await prisma.serviceOrder.updateMany({
-      where: { id: order.id, status: "pending" },
+      where: { id: order.id, userId, status: "pending" },
       data: {
         provider: "payos",
         providerRef: link.paymentLinkId,
@@ -344,11 +355,17 @@ export async function expireStaleServiceOrders(now = new Date()) {
   return { expired: closed.count };
 }
 
-/** Đơn dịch vụ tra theo `ref`, cho trang kết quả. */
-export async function findServiceOrder(ref: string) {
+/**
+ * Đơn dịch vụ của CHÍNH người đang đăng nhập, tra theo `ref`.
+ *
+ * Hai lớp, và cả hai đều cần: `ref` là 16 byte ngẫu nhiên nên không đếm lên
+ * được, còn `userId` là thứ khiến một đường link bị chuyển tiếp cho người khác
+ * cũng không mở ra được nội dung đơn.
+ */
+export async function findServiceOrder(ref: string, userId: string) {
   if (!/^[0-9a-f]{32}$/.test(ref)) return null;
-  return prisma.serviceOrder.findUnique({
-    where: { ref },
+  return prisma.serviceOrder.findFirst({
+    where: { ref, userId },
     select: {
       code: true,
       kind: true,

@@ -4,6 +4,9 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { findCourse } from "@/lib/courses";
 import { links } from "@/content/site";
+import { aiCheckKinds } from "@/content/ai-check";
+import { orderStatusLabel } from "@/content/checkout";
+import { formatVnd } from "@/lib/format";
 import { Section, SectionHeading } from "@/components/ui/section";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -28,6 +31,11 @@ const dateFmt = new Intl.DateTimeFormat("vi-VN", {
   year: "numeric",
   timeZone: "Asia/Ho_Chi_Minh",
 });
+
+/** Nhãn tiếng Việt của một loại dịch vụ, trả lại chính mã nếu bảng giá đã đổi. */
+function serviceKindLabel(kind: string) {
+  return aiCheckKinds.find((item) => item.id === kind)?.label ?? kind;
+}
 
 /** Access is live only while all three conditions hold. */
 function hasLiveAccess(e: {
@@ -87,6 +95,24 @@ export default async function AccountPage() {
           slug: true,
         },
       },
+    },
+  });
+
+  // Đơn dịch vụ của chính người này. Sau khi thanh toán, trang kết quả là nơi
+  // có mã đơn để gửi bài qua Zalo — đóng tab xong thì đây là đường quay lại.
+  const serviceOrders = await prisma.serviceOrder.findMany({
+    where: { userId },
+    orderBy: { createdAt: "desc" },
+    take: 10,
+    select: {
+      id: true,
+      ref: true,
+      code: true,
+      kind: true,
+      wordCount: true,
+      amountVnd: true,
+      status: true,
+      createdAt: true,
     },
   });
 
@@ -301,6 +327,50 @@ export default async function AccountPage() {
             );
           })}
         </div>
+      )}
+
+      {serviceOrders.length > 0 && (
+        <>
+          <h3 className="mt-12 mb-4 text-sm font-bold uppercase tracking-[0.16em] text-fg-subtle">
+            Đơn dịch vụ
+          </h3>
+          <ul className="space-y-3">
+            {serviceOrders.map((order) => (
+              <li
+                key={order.id}
+                className="flex flex-col gap-3 rounded-card border border-line bg-card p-5 sm:flex-row sm:items-center sm:justify-between"
+              >
+                <div className="min-w-0">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <p className="font-bold tabular-nums tracking-tight">
+                      #{order.code}
+                    </p>
+                    <Badge tone={order.status === "paid" ? "success" : "cool"}>
+                      {orderStatusLabel[order.status] ?? order.status}
+                    </Badge>
+                  </div>
+                  <p className="mt-1 text-sm text-fg-muted">
+                    {serviceKindLabel(order.kind)} ·{" "}
+                    {order.wordCount.toLocaleString("vi-VN")} từ ·{" "}
+                    {dateFmt.format(order.createdAt)}
+                  </p>
+                </div>
+                <div className="flex shrink-0 flex-wrap items-center gap-4">
+                  <p className="text-lg font-bold tracking-tight text-primary">
+                    {formatVnd(order.amountVnd)}
+                  </p>
+                  <Link
+                    href={`/kiem-tra-ai-dao-van/ket-qua/${order.ref}`}
+                    className="inline-flex items-center gap-2 rounded-full border border-line px-4 py-2 text-sm font-bold text-fg-muted transition hover:border-primary hover:text-primary"
+                  >
+                    Xem đơn
+                    <IconArrow size={15} />
+                  </Link>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </>
       )}
     </Section>
   );
