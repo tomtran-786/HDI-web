@@ -1,6 +1,7 @@
 import { timingSafeEqual } from "node:crypto";
 import { NextResponse } from "next/server";
 import { expireStaleOrders } from "@/lib/orders";
+import { expireStaleServiceOrders } from "@/lib/service-orders";
 import { pruneAuthThrottles } from "@/lib/auth-throttle";
 import { pruneExpiredAuthTokens } from "@/lib/auth-tokens";
 import { pruneExpiredLeases } from "@/lib/external-lease";
@@ -47,7 +48,10 @@ export async function GET(request: Request) {
   // then revoke deterministic even though each operation also has a DB lease.
   const driveGrants = await reconcileMissingDriveGrants();
   const driveRevokes = await revokeExpiredDriveAccess();
-  const [throttles, tokens, leases] = await Promise.all([
+  // Đơn dịch vụ không giữ chỗ của ai nên nó không cần đứng chung hàng với hai
+  // bước Drive ở trên; nó chỉ là một lượt dọn trạng thái, chạy song song được.
+  const [services, throttles, tokens, leases] = await Promise.all([
+    expireStaleServiceOrders(),
     pruneAuthThrottles(),
     pruneExpiredAuthTokens(),
     pruneExpiredLeases(),
@@ -60,6 +64,7 @@ export async function GET(request: Request) {
   return NextResponse.json({
     ok: true,
     orders: result,
+    services,
     driveGrants,
     driveRevokes,
     pruned: { throttles, tokens, leases },

@@ -3,8 +3,11 @@
 import { useRef } from "react";
 import type { Course } from "@/content/course";
 import { trackCourseModal, trackCta } from "@/lib/analytics";
+import { formatDate } from "@/lib/format";
+import type { PublicReview, ReviewSummary } from "@/lib/reviews";
 import { useCart } from "./cart-provider";
 import { CtaLink } from "./ui/cta-link";
+import { Stars } from "./ui/stars";
 import { IconArrow, IconCheck, IconClose, IconMessage } from "./ui/icons";
 
 /** Running index of the first session in each phase, so numbering stays 1…8. */
@@ -19,7 +22,16 @@ function phaseKind(course: Course) {
   return course.curriculum === "modules" ? "Module" : "Giai đoạn";
 }
 
-export function CourseCard({ course }: { course: Course }) {
+export function CourseCard({
+  course,
+  summary,
+  reviews = [],
+}: {
+  course: Course;
+  /** Vắng mặt khi khóa chưa có đánh giá nào được duyệt. */
+  summary?: ReviewSummary;
+  reviews?: PublicReview[];
+}) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const titleId = `${course.slug}-title`;
   const { openCart } = useCart();
@@ -45,6 +57,18 @@ export function CourseCard({ course }: { course: Course }) {
           {course.title}
         </h3>
         <p className="mt-1.5 text-sm text-fg-muted">{course.audience}</p>
+
+        {/* Khóa chưa có đánh giá nào được duyệt thì KHÔNG in gì cả. In "0 sao"
+            hay "chưa có đánh giá" là tự đặt một con số 0 cạnh giá tiền — nó đọc
+            như một điểm kém chứ không như một ô còn trống. */}
+        {summary && (
+          <span className="mt-3 inline-flex items-center gap-2">
+            <Stars value={summary.average} />
+            <span className="text-[13px] font-semibold text-fg-muted">
+              {summary.average.toFixed(1)} · {summary.count} đánh giá
+            </span>
+          </span>
+        )}
 
         <p className="mt-6 text-[10px] font-bold uppercase tracking-[0.16em] text-fg-subtle">
           Học phí
@@ -210,6 +234,39 @@ export function CourseCard({ course }: { course: Course }) {
                 </li>
               ))}
             </ul>
+
+            {reviews.length > 0 && (
+              <>
+                <p className="mt-7 text-[10px] font-bold uppercase tracking-[0.16em] text-fg-subtle">
+                  Học viên đánh giá
+                </p>
+                <ul className="mt-3 space-y-3">
+                  {reviews.map((review) => (
+                    <li
+                      key={review.id}
+                      className="rounded-card border border-line p-4"
+                    >
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <span className="text-sm font-bold text-fg">
+                          {review.author}
+                        </span>
+                        <span className="inline-flex items-center gap-2">
+                          <Stars value={review.rating} size={14} />
+                          <span className="text-xs text-fg-subtle">
+                            {formatDate(review.createdAt)}
+                          </span>
+                        </span>
+                      </div>
+                      {review.comment && (
+                        <p className="mt-2 text-[15px] leading-relaxed text-fg-muted">
+                          {review.comment}
+                        </p>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              </>
+            )}
 
             {/* The label says "tư vấn", not "đăng ký khóa học": this link goes
                 to the same free consultation form as the other six CTAs. A

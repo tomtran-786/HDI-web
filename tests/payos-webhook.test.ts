@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const mocks = vi.hoisted(() => ({
   verify: vi.fn(),
   process: vi.fn(),
+  processService: vi.fn(),
   fulfill: vi.fn(),
 }));
 
@@ -11,6 +12,9 @@ vi.mock("@/lib/payos", () => ({
   verifyPayosWebhook: mocks.verify,
 }));
 vi.mock("@/lib/orders", () => ({ processPayosPayment: mocks.process }));
+vi.mock("@/lib/service-orders", () => ({
+  processServicePayment: mocks.processService,
+}));
 vi.mock("@/lib/fulfillment", () => ({ fulfillOrderDrive: mocks.fulfill }));
 
 import { POST } from "@/app/api/webhooks/payos/route";
@@ -35,9 +39,7 @@ const verified = {
 
 describe("PayOS webhook route", () => {
   beforeEach(() => {
-    mocks.verify.mockReset();
-    mocks.process.mockReset();
-    mocks.fulfill.mockReset();
+    for (const mock of Object.values(mocks)) mock.mockReset();
   });
 
   it("rejects an invalid signature before touching payment state", async () => {
@@ -71,6 +73,55 @@ describe("PayOS webhook route", () => {
     const response = await POST(request({ signed: true }));
     expect(response.status).toBe(200);
     expect(mocks.fulfill).toHaveBeenCalledWith("order-1");
+  });
+
+  it("falls through to the service ledger when the code is not a course order", async () => {
+    // Đơn dịch vụ và đơn khóa học đi chung một cổng PayOS. Rẽ nhánh phải dựa
+    // vào KẾT QUẢ TRA CỨU, không vào dải số — dải số là quy ước của migration.
+    mocks.verify.mockResolvedValue({ ...verified, orderCode: 900_000_001 });
+    mocks.process.mockResolvedValue({ handled: true, outcome: "unknown_order" });
+    mocks.processService.mockResolvedValue({
+      handled: true,
+      outcome: "succeeded",
+      serviceOrderId: "svc-1",
+    });
+
+    const response = await POST(request({ signed: true }));
+    expect(response.status).toBe(200);
+    expect(await response.json()).toMatchObject({
+      scope: "service",
+      outcome: "succeeded",
+    });
+    expect(mocks.processService).toHaveBeenCalledWith(
+      expect.objectContaining({ orderCode: 900_000_001 }),
+    );
+    // Cấp quyền Drive là việc của đơn khóa học; đơn dịch vụ không có gì để cấp.
+    expect(mocks.fulfill).not.toHaveBeenCalled();
+  });
+
+  it("never reaches the service ledger for a code that is a course order", async () => {
+    mocks.verify.mockResolvedValue(verified);
+    mocks.process.mockResolvedValue({
+      handled: true,
+      outcome: "duplicate",
+      orderId: "order-1",
+    });
+    const response = await POST(request({ signed: true }));
+    expect(response.status).toBe(200);
+    expect(await response.json()).toMatchObject({ scope: "order" });
+    expect(mocks.processService).not.toHaveBeenCalled();
+  });
+
+  it("acknowledges a code that belongs to neither ledger instead of retrying forever", async () => {
+    mocks.verify.mockResolvedValue(verified);
+    mocks.process.mockResolvedValue({ handled: true, outcome: "unknown_order" });
+    mocks.processService.mockResolvedValue({
+      handled: true,
+      outcome: "unknown_order",
+    });
+    const response = await POST(request({ signed: true }));
+    // 2xx: PayOS gửi lại mãi một mã không thuộc về ai chỉ tạo ra tiếng ồn.
+    expect(response.status).toBe(200);
   });
 
   it("returns 500 for database failures so PayOS can retry", async () => {

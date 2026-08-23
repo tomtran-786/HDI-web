@@ -1,0 +1,93 @@
+/**
+ * Dịch vụ kiểm tra AI & đạo văn — bảng giá và toàn bộ chữ của trang
+ * /kiem-tra-ai-dao-van.
+ *
+ * NGUỒN: bảng giá do HDI cung cấp ngày 2026-08-23, chép nguyên văn hai bậc và
+ * sáu mức giá. Không có mức nào được nội suy, làm tròn hay suy ra từ mức khác.
+ *
+ * Bảng giá là DỮ LIỆU chứ không phải JSX vì đúng những con số này còn được
+ * server dùng lại để tính số tiền gửi sang PayOS (lib/ai-check-pricing.ts).
+ * Giá trên màn hình và giá trong đơn hàng phải đến từ một nguồn duy nhất —
+ * nếu chép sang chỗ thứ hai thì một lần sửa giá sẽ chỉ sửa được một nửa.
+ */
+
+export const aiCheckKinds = [
+  { id: "ai", label: "Check AI" },
+  { id: "plagiarism", label: "Check đạo văn" },
+  { id: "combo", label: "Combo Check AI + Đạo văn" },
+] as const;
+
+export type AiCheckKind = (typeof aiCheckKinds)[number]["id"];
+
+export const aiCheckTiers = [
+  {
+    id: "duoi-40-trang",
+    label: "Dưới 40 trang",
+    words: "≤ 10.000 từ",
+    // Đúng 10.000 từ thuộc bậc này: bảng ghi "≤ 10.000 từ", còn bậc sau mở
+    // bằng "10.000 – 29.000". Chỗ chồng lấn đó được xử theo dấu "≤", tức là
+    // theo mức có lợi cho học viên.
+    maxWords: 10_000,
+    prices: { ai: 35_000, plagiarism: 25_000, combo: 50_000 },
+  },
+  {
+    id: "tren-40-trang",
+    label: "Trên 40 trang",
+    words: "10.000 – 29.000 từ",
+    maxWords: 29_000,
+    prices: { ai: 50_000, plagiarism: 35_000, combo: 70_000 },
+  },
+] as const;
+
+export type AiCheckTier = (typeof aiCheckTiers)[number];
+export type AiCheckTierId = AiCheckTier["id"];
+
+/**
+ * Trần của bảng giá, lấy từ bậc cuối chứ không viết tay lại: bảng giá chỉ có
+ * hai bậc và dừng ở 29.000 từ, nên bài dài hơn không có giá để báo. Trang sẽ
+ * chuyển sang mời liên hệ thay vì đoán một con số.
+ */
+export const WORD_LIMIT = aiCheckTiers[aiCheckTiers.length - 1].maxWords;
+
+export const aiCheck = {
+  eyebrow: "Dịch vụ",
+  title: "Kiểm tra AI & đạo văn",
+  subtitle:
+    "Nhập số từ của bản thảo để biết ngay chi phí, thanh toán trực tuyến rồi gửi bài qua Zalo.",
+  intro:
+    "Bản thảo được kiểm tra tỷ lệ nội dung do AI sinh và tỷ lệ trùng lặp, trả về báo cáo để bạn chỉnh sửa trước khi nộp hoặc gửi đăng. Giá tính theo độ dài bản thảo, không tính theo số lần kiểm tra lại.",
+  tableTitle: "Bảng giá",
+  formTitle: "Tính chi phí cho bản thảo của bạn",
+  wordLabel: "Số từ của bản thảo",
+  wordHint: "Đếm bằng Word: Review → Word Count. Không tính phụ lục và tài liệu tham khảo.",
+  kindLabel: "Chọn dịch vụ",
+  amountLabel: "Chi phí",
+  payLabel: "Thanh toán",
+  paying: "Đang kết nối PayOS…",
+  tooLongTitle: "Bản thảo dài hơn bảng giá",
+  tooLongBody:
+    "Bảng giá dừng ở 29.000 từ. Bản thảo dài hơn được báo giá riêng — nhắn Zalo kèm số từ, HDI trả lời trong ngày.",
+  emptyHint: "Nhập số từ để xem chi phí.",
+  invalidWords: "Số từ phải là một số nguyên lớn hơn 0.",
+  // Zalo không nhận sẵn nội dung tin nhắn qua deep link, nên mã đơn phải được
+  // học viên tự mang sang. Chữ ở trang kết quả nói đúng điều đó.
+  result: {
+    eyebrow: "Đơn dịch vụ",
+    pendingTitle: "Đơn đã tạo, đang chờ thanh toán",
+    pendingBody:
+      "Nếu bạn đã chuyển khoản, trạng thái sẽ đổi trong ít phút sau khi ngân hàng báo về. Bạn có thể gửi bài trước.",
+    paidTitle: "Đã nhận thanh toán",
+    paidBody: "Gửi bản thảo qua Zalo kèm mã đơn bên dưới để HDI bắt đầu kiểm tra.",
+    closedTitle: "Đơn này đã đóng",
+    closedBody:
+      "Đơn quá hạn hoặc đã hủy. Bạn có thể tạo lại đơn mới với cùng số từ.",
+    codeLabel: "Mã đơn",
+    copy: "Sao chép mã",
+    copied: "Đã sao chép",
+    sendTitle: "Gửi bài qua Zalo",
+    sendBody:
+      "Nhắn cho HDI kèm mã đơn ở trên và đính kèm file bản thảo (.doc/.docx/.pdf).",
+    sendCta: "Mở Zalo để gửi bài",
+    back: "Tạo đơn khác",
+  },
+} as const;

@@ -7,9 +7,13 @@ const mocks = vi.hoisted(() => ({
   throttles: vi.fn(),
   tokens: vi.fn(),
   leases: vi.fn(),
+  services: vi.fn(),
 }));
 
 vi.mock("@/lib/orders", () => ({ expireStaleOrders: mocks.expire }));
+vi.mock("@/lib/service-orders", () => ({
+  expireStaleServiceOrders: mocks.services,
+}));
 vi.mock("@/lib/fulfillment", () => ({
   reconcileMissingDriveGrants: mocks.grants,
   revokeExpiredDriveAccess: mocks.revokes,
@@ -30,6 +34,7 @@ describe("bounded housekeeping cron route", () => {
     mocks.throttles.mockResolvedValue(0);
     mocks.tokens.mockResolvedValue(0);
     mocks.leases.mockResolvedValue(0);
+    mocks.services.mockResolvedValue({ expired: 0 });
   });
 
   it("returns 404 without the bearer secret and performs no work", async () => {
@@ -48,6 +53,7 @@ describe("bounded housekeeping cron route", () => {
     expect(await response.json()).toMatchObject({
       ok: true,
       orders: { scanned: 0, expired: 0, released: 0 },
+      services: { expired: 0 },
       driveGrants: { checked: 0, granted: 0 },
       pruned: { throttles: 0, tokens: 0, leases: 0 },
     });

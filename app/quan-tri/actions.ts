@@ -5,7 +5,7 @@ import { parseId } from "@/lib/action-input";
 import { requireAdmin } from "@/lib/admin";
 import { cancelOrder } from "@/lib/orders";
 import { prisma } from "@/lib/prisma";
-import type { CourseStatus } from "@/lib/generated/prisma/enums";
+import type { CourseStatus, ReviewStatus } from "@/lib/generated/prisma/enums";
 
 // There is deliberately no `markPaid` here. Confirming payment is the payment
 // webhook's job and only its job — a hand-operated button beside it is a second
@@ -44,5 +44,36 @@ export async function updateCourseStatus(formData: FormData) {
     data: { status: status as CourseStatus },
   });
   revalidatePath("/quan-tri");
+  revalidatePath("/");
+}
+
+/**
+ * Duyệt hoặc từ chối một đánh giá.
+ *
+ * `requireAdmin()` chứ không dựa vào layout của /quan-tri: layout bảo vệ TRANG,
+ * còn đây là một endpoint POST riêng mà bất kỳ ai có cookie phiên hợp lệ và
+ * đúng action id đều gọi được — canh cái nút mà không canh tay xử lý của nó là
+ * không canh gì cả.
+ *
+ * Không có nhánh nào sửa `rating` hay `comment`: quản trị viên quyết định đánh
+ * giá có được đăng hay không, chứ không viết lại lời của học viên.
+ */
+export async function moderateReview(formData: FormData) {
+  await requireAdmin();
+  const reviewId = parseId(formData.get("reviewId"));
+  const status = String(formData.get("status") ?? "");
+  const allowed = new Set<ReviewStatus>(["published", "rejected"]);
+  if (!reviewId || !allowed.has(status as ReviewStatus)) {
+    throw new Error("Thao tác duyệt đánh giá không hợp lệ.");
+  }
+
+  await prisma.courseReview.update({
+    where: { id: reviewId },
+    data: { status: status as ReviewStatus, moderatedAt: new Date() },
+  });
+
+  revalidatePath("/quan-tri");
+  // Điểm trung bình nằm trên thẻ khóa học ở trang chủ, nên duyệt xong phải làm
+  // mới cả trang đó chứ không riêng trang quản trị.
   revalidatePath("/");
 }

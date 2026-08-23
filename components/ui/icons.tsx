@@ -119,6 +119,30 @@ export function IconCheck({ className, size = 18 }: IconProps) {
   );
 }
 
+/**
+ * Ngôi sao đánh giá — icon duy nhất ở đây nhận `filled`.
+ *
+ * Sao rỗng và sao đầy phải là CÙNG một đường path, khác nhau đúng ở phần tô:
+ * <Stars> chồng một hàng sao đầy lên một hàng sao rỗng và cắt theo chiều ngang,
+ * nên hai hình lệch nhau dù chỉ một pixel là thấy ngay ở rìa chỗ cắt.
+ */
+export function IconStar({
+  className,
+  size = 16,
+  filled = false,
+}: IconProps & { filled?: boolean }) {
+  return (
+    <svg
+      {...base(size)}
+      fill={filled ? "currentColor" : "none"}
+      className={className}
+      aria-hidden
+    >
+      <path d="m12 3.6 2.6 5.3 5.8.8-4.2 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8-4.2-4.1 5.8-.8z" />
+    </svg>
+  );
+}
+
 export function IconMenu({ className, size = 22 }: IconProps) {
   return (
     <svg {...base(size)} className={className} aria-hidden>

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
-import { processPayosPayment } from "@/lib/orders";
+import { processPayosPayment, type PayosPaymentEvent } from "@/lib/orders";
 import { PayosConfigurationError, verifyPayosWebhook } from "@/lib/payos";
+import { processServicePayment } from "@/lib/service-orders";
 import { fulfillOrderDrive } from "@/lib/fulfillment";
 
 export const runtime = "nodejs";
@@ -29,17 +30,42 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: false, error: "invalid_signature" }, { status: 400 });
   }
 
+  const event: PayosPaymentEvent = {
+    orderCode: data.orderCode,
+    amount: data.amount,
+    currency: data.currency,
+    reference: data.reference,
+    paymentLinkId: data.paymentLinkId,
+    transactionDateTime: data.transactionDateTime,
+    code: data.code,
+    payload,
+  };
+
   try {
-    const result = await processPayosPayment({
-      orderCode: data.orderCode,
-      amount: data.amount,
-      currency: data.currency,
-      reference: data.reference,
-      paymentLinkId: data.paymentLinkId,
-      transactionDateTime: data.transactionDateTime,
-      code: data.code,
-      payload,
-    });
+    const result = await processPayosPayment(event);
+
+    // Mã không nằm trong `orders` thì thử `service_orders` — cùng một cổng
+    // PayOS phục vụ hai loại đơn. Rẽ nhánh bằng KẾT QUẢ TRA CỨU chứ không bằng
+    // dải số: dải mã (100001 với 900000001) là một quy ước của migration, và
+    // một quy ước thì sửa được ở nơi khác mà webhook không hay biết.
+    if (result.outcome === "unknown_order") {
+      const service = await processServicePayment(event);
+      if (service.outcome === "unknown_order") {
+        console.warn(
+          `[payos-webhook] Mã ${event.orderCode} không thuộc đơn hàng hay đơn dịch vụ nào.`,
+        );
+      } else if (
+        service.outcome === "requires_review" ||
+        service.outcome === "reference_conflict"
+      ) {
+        console.error("[payos-webhook] Đơn dịch vụ cần kiểm tra thủ công:", service);
+      }
+      return NextResponse.json({
+        ok: true,
+        scope: "service",
+        outcome: service.outcome,
+      });
+    }
 
     if (result.outcome === "requires_review" || result.outcome === "reference_conflict") {
       console.error("[payos-webhook] Thanh toán cần kiểm tra thủ công:", result);
@@ -52,7 +78,7 @@ export async function POST(request: Request) {
 
     // PayOS treats every 2xx as acknowledged. Business mismatches are persisted
     // for review; only infrastructure exceptions below ask it to retry.
-    return NextResponse.json({ ok: true, outcome: result.outcome });
+    return NextResponse.json({ ok: true, scope: "order", outcome: result.outcome });
   } catch (error) {
     console.error("[payos-webhook] Không xử lý được giao dịch:", error);
     return NextResponse.json({ ok: false, error: "processing_failed" }, { status: 500 });

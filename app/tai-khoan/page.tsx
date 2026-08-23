@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/icons";
 import { retryDriveAccess } from "./actions";
 import { LogoutButton } from "./logout-button";
+import { ReviewForm } from "./review-form";
 
 export const metadata: Metadata = {
   title: "Tài khoản — HDI Research Center",
@@ -88,6 +89,23 @@ export default async function AccountPage() {
       },
     },
   });
+
+  // Đánh giá của CHÍNH người này, mọi trạng thái — form phải nạp lại được cả
+  // bản đang chờ duyệt lẫn bản bị từ chối, nếu không học viên sẽ tưởng lần gửi
+  // trước bị mất và gõ lại từ đầu.
+  const myReviews = new Map(
+    (
+      await prisma.courseReview.findMany({
+        where: { userId },
+        select: { courseId: true, rating: true, comment: true, status: true },
+      })
+    ).map((review) => [review.courseId, review]),
+  );
+
+  // Một khóa chỉ có một đánh giá, nhưng một học viên có thể mua lại khóa đó và
+  // do đó có nhiều thẻ ghi danh. Form chỉ mọc trên thẻ đầu tiên của mỗi khóa;
+  // hai form cùng ghi vào một hàng là hai form ghi đè lẫn nhau.
+  const reviewFormShown = new Set<string>();
 
   // Second query, only for courses this student currently has access to.
   const liveCourseIds = enrollments
@@ -165,6 +183,10 @@ export default async function AccountPage() {
             const course = findCourse(e.course.slug);
             const live = hasLiveAccess(e);
             const secret = secrets.get(e.course.id);
+            const canRate =
+              e.status === "paid" && !reviewFormShown.has(e.course.id);
+            if (canRate) reviewFormShown.add(e.course.id);
+            const myReview = myReviews.get(e.course.id);
 
             return (
               <div
@@ -266,6 +288,15 @@ export default async function AccountPage() {
                     </div>
                   )}
                 </div>
+
+                {canRate && (
+                  <ReviewForm
+                    courseId={e.course.id}
+                    defaultRating={myReview?.rating}
+                    defaultComment={myReview?.comment}
+                    status={myReview?.status}
+                  />
+                )}
               </div>
             );
           })}

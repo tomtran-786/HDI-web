@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import type { Course } from "@/content/course";
 import { trackCourseSort } from "@/lib/analytics";
+import type { PublicReview, ReviewSummary } from "@/lib/reviews";
 import { CourseCard } from "./course-card";
 import { Reveal } from "./ui/reveal";
 
@@ -25,7 +26,16 @@ const sorts = {
 
 type SortKey = keyof typeof sorts;
 
-export function CourseList({ courses }: { courses: Course[] }) {
+export function CourseList({
+  courses,
+  summaries = {},
+  reviews = {},
+}: {
+  courses: Course[];
+  /** Điểm trung bình đã duyệt, khóa theo slug. Rỗng khi chưa ai đánh giá. */
+  summaries?: Record<string, ReviewSummary>;
+  reviews?: Record<string, PublicReview[]>;
+}) {
   const [sort, setSort] = useState<SortKey>("default");
 
   const shown = useMemo(() => {
@@ -71,7 +81,11 @@ export function CourseList({ courses }: { courses: Course[] }) {
       <div className="grid gap-5 md:grid-cols-2">
         {shown.map((course, i) => (
           <Reveal key={course.slug} delay={110 + i * 70} className="h-full">
-            <CourseCard course={course} />
+            <CourseCard
+              course={course}
+              summary={summaries[course.slug]}
+              reviews={reviews[course.slug]}
+            />
           </Reveal>
         ))}
       </div>

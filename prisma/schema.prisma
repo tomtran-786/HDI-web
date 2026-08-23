@@ -55,6 +55,7 @@ model User {
   sessions    Session[]
   enrollments Enrollment[]
   orders      Order[]
+  reviews     CourseReview[]
 
   @@map("users")
 }
@@ -194,6 +195,7 @@ model Course {
 
   enrollments Enrollment[]
   orderItems  OrderItem[]
+  reviews     CourseReview[]
 
   @@index([status])
   @@map("courses")
@@ -351,8 +353,16 @@ model OrderItem {
 /// `(provider, providerRef)` unique key is the idempotency lock — a replayed
 /// webhook collides here and can be answered 200 without touching anything.
 model Payment {
-  id          String        @id @default(cuid())
-  orderId     String        @map("order_id")
+  id String @id @default(cuid())
+
+  /// Đúng MỘT trong hai được đặt, ràng buộc bằng CHECK num_nonnulls(...) = 1
+  /// trong migration. Hai loại đơn đi qua cùng một cổng PayOS nên chúng phải
+  /// dùng chung một sổ tiền: khóa idempotency `(provider, providerRef)` bên
+  /// dưới chỉ có nghĩa khi nó là DUY NHẤT trên toàn hệ thống — hai bảng payment
+  /// riêng là hai khóa riêng, và một mã giao dịch ngân hàng sẽ ghi được hai lần.
+  orderId        String? @map("order_id")
+  serviceOrderId String? @map("service_order_id")
+
   provider    String        @db.VarChar(20)
   providerRef String        @map("provider_ref") @db.VarChar(120)
   amountVnd   Int           @map("amount_vnd")
@@ -365,10 +375,116 @@ model Payment {
 
   receivedAt DateTime @default(now()) @map("received_at") @db.Timestamptz(6)
 
-  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  order        Order?        @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  serviceOrder ServiceOrder? @relation(fields: [serviceOrderId], references: [id], onDelete: Cascade)
 
   @@unique([provider, providerRef])
   @@index([orderId])
+  @@index([serviceOrderId])
   @@index([status, receivedAt])
   @@map("payments")
+}
+
+// ------------------------------------------------------- Đánh giá khóa học ---
+
+/// Đánh giá phải được duyệt trước khi hiện ra trang công khai, nên trạng thái
+/// là một enum chứ không phải một cờ boolean: `rejected` và `pending` là hai
+/// tình huống khác nhau, và gộp chúng lại thì một bình luận bị từ chối sẽ quay
+/// về hàng chờ mỗi lần ai đó đọc lại danh sách.
+enum ReviewStatus {
+  pending
+  published
+  rejected
+
+  @@map("review_status")
+}
+
+/// Một học viên đánh giá một khóa mình đã trả tiền.
+///
+/// Điều kiện "đã trả tiền" KHÔNG nằm trong schema được — Postgres không có cách
+/// nào ràng buộc rằng hàng này chỉ tồn tại khi có một `enrollments.status =
+/// 'paid'` tương ứng mà không đánh đổi bằng trigger. Nó được canh ở
+/// `lib/reviews.ts#canReview`, và mọi đường ghi đều phải đi qua đó.
+model CourseReview {
+  id       String @id @default(cuid())
+  courseId String @map("course_id")
+  userId   String @map("user_id")
+
+  /// 1–5. CHECK nằm trong migration vì Prisma không diễn đạt được ràng buộc
+  /// miền giá trị; thiếu nó thì một action quên kiểm tra sẽ ghi được số 0 hoặc
+  /// 99 và điểm trung bình của cả khóa sai vĩnh viễn.
+  rating  Int
+  comment String? @db.VarChar(1000)
+
+  status      ReviewStatus @default(pending)
+  moderatedAt DateTime?    @map("moderated_at") @db.Timestamptz(6)
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  // Cascade cả hai phía: một đánh giá không có khóa hay không có người viết thì
+  // không còn nghĩa gì. Khác với Enrollment, ở đây không có tiền nào cần giữ.
+  course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Một học viên chỉ có một đánh giá cho mỗi khóa; sửa là ghi đè, không phải
+  // thêm hàng mới — nếu không, ai cũng có thể tự khuếch đại điểm của một khóa.
+  @@unique([courseId, userId])
+  @@index([courseId, status])
+  @@map("course_reviews")
+}
+
+// ------------------------------------------------------ Đơn dịch vụ lẻ ---
+
+/// Một lần đặt dịch vụ kiểm tra AI/đạo văn.
+///
+/// KHÔNG dùng chung bảng `orders`: `Order.userId` là khóa ngoại bắt buộc và mọi
+/// `OrderItem` trỏ tới một `Course`. Cho hai thứ đó nullable để chứa được đơn
+/// dịch vụ sẽ làm rỗng ruột đúng những ràng buộc đang giữ luồng mua khóa học
+/// đúng đắn — đổi lấy một bảng mười cột là một cái giá rẻ.
+///
+/// Đơn này KHÔNG giữ chỗ của ai và không cần tài khoản: nó chỉ là một báo giá
+/// đã được server tính, kèm một mã để đối chiếu giữa tin nhắn Zalo và tiền về.
+model ServiceOrder {
+  id String @id @default(cuid())
+
+  /// PayOS bắt `orderCode` là số nguyên duy nhất VĨNH VIỄN cho mỗi merchant.
+  /// Sequence riêng, nhưng migration đẩy sàn lên 900000001 để không bao giờ
+  /// đụng dải của `orders` (bắt đầu ở 100001): hai bảng, một không gian mã.
+  code Int @unique @default(autoincrement())
+
+  /// Định danh công khai đi trong URL trang kết quả. `code` là số đi vào nội
+  /// dung chuyển khoản nên nó tuần tự và đoán được — một trang mở bằng số đoán
+  /// được là một trang ai cũng đọc được.
+  ref String @unique @db.VarChar(32)
+
+  /// ai | plagiarism | combo. Là VarChar chứ không phải enum vì bảng giá còn
+  /// đổi; danh sách hợp lệ nằm ở content/ai-check.ts và được kiểm ở action.
+  kind      String @db.VarChar(20)
+  wordCount Int    @map("word_count")
+  tier      String @db.VarChar(30)
+
+  /// Số tiền do server tính lại từ `kind` + `wordCount`, không bao giờ nhận từ
+  /// trình duyệt. Đây là con số được đối chiếu với số tiền PayOS báo về.
+  amountVnd Int @map("amount_vnd")
+
+  status    OrderStatus @default(pending)
+  expiresAt DateTime    @map("expires_at") @db.Timestamptz(6)
+  paidAt    DateTime?   @map("paid_at") @db.Timestamptz(6)
+  closedAt  DateTime?   @map("closed_at") @db.Timestamptz(6)
+
+  provider    String? @db.VarChar(20)
+  providerRef String? @map("provider_ref") @db.VarChar(120)
+  checkoutUrl String? @map("checkout_url") @db.Text
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  /// Bằng chứng thanh toán nằm ở `payments` chung với đơn khóa học, không phải
+  /// ở một cột trên hàng này: một đơn có thể nhận nhiều sự kiện (thử hụt, rồi
+  /// thành công, rồi webhook gửi lại), và một cột chỉ giữ được sự kiện cuối.
+  payments Payment[]
+
+  @@index([status, expiresAt])
+  @@map("service_orders")
 }

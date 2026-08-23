@@ -1,0 +1,363 @@
+import { randomBytes } from "node:crypto";
+import { appUrl } from "./app-url";
+import { isAiCheckKind, isValidWordCount, quote } from "./ai-check-pricing";
+import {
+  classifyPayosPayment,
+  payosPaymentLinkMatches,
+  payosTransactionTime,
+  type PayosPaymentEvent,
+} from "./orders";
+import { isPayosNotFound, payosClient } from "./payos";
+import { prisma } from "./prisma";
+
+/**
+ * Đơn dịch vụ kiểm tra AI/đạo văn.
+ *
+ * Bản song song của lib/orders.ts cho một luồng đơn giản hơn hẳn: không tài
+ * khoản, không giỏ hàng, không chỗ ngồi nào bị giữ. Cái được giữ lại nguyên vẹn
+ * từ luồng khóa học là phần khó: giá luôn do server tính, và mọi kết luận về
+ * một sự kiện PayOS đều đi qua `classifyPayosPayment` chung — có đúng một định
+ * nghĩa thế nào là "đã trả tiền" trong toàn bộ mã nguồn này.
+ */
+
+/**
+ * Đơn dịch vụ sống 24 giờ, dài hơn hẳn 2 giờ của đơn khóa học.
+ *
+ * Không phải sự thiếu nhất quán: 2 giờ của đơn khóa học là thời hạn GIỮ CHỖ, và
+ * nó ngắn vì mỗi phút trôi qua là một chỗ ngồi bị treo khỏi tay người khác. Đơn
+ * dịch vụ không giữ tài nguyên của ai; hết hạn ở đây chỉ là dọn dẹp, nên thời
+ * hạn được chọn theo sự thuận tiện của học viên chứ không theo sức ép nào.
+ */
+export const SERVICE_ORDER_TTL_HOURS = 24;
+
+export type ServiceOrderResult =
+  | { ok: true; ref: string; code: number; amountVnd: number }
+  | {
+      ok: false;
+      reason: "invalid_words" | "invalid_kind" | "too_long";
+      message: string;
+    };
+
+type RefuseReason = "invalid_words" | "invalid_kind" | "too_long";
+
+const refuseMessage: Record<RefuseReason, string> = {
+  invalid_words: "Số từ phải là một số nguyên lớn hơn 0.",
+  invalid_kind: "Vui lòng chọn một dịch vụ trong danh sách.",
+  too_long:
+    "Bản thảo dài hơn bảng giá. Vui lòng nhắn Zalo để được báo giá riêng.",
+};
+
+function refuse(reason: RefuseReason): ServiceOrderResult {
+  return { ok: false, reason, message: refuseMessage[reason] };
+}
+
+/**
+ * Tạo một đơn dịch vụ đã được server định giá.
+ *
+ * `wordCount` và `kind` là thứ DUY NHẤT đến từ trình duyệt. Số tiền không nằm
+ * trong tham số và không thể nằm trong tham số: nó được `quote()` tra ra từ
+ * bảng giá ngay tại đây, cùng một hàm mà trang đã dùng để hiển thị.
+ */
+export async function createServiceOrder(input: {
+  kind: unknown;
+  wordCount: unknown;
+}): Promise<ServiceOrderResult> {
+  // Hai guard chạy TRƯỚC `quote()` dù `quote()` cũng kiểm đúng hai điều kiện
+  // đó. Lý do là kiểu: sau hai dòng này TypeScript mới biết `input.wordCount`
+  // là `number` và `input.kind` là `AiCheckKind`, nên không chỗ nào bên dưới
+  // phải ép kiểu một giá trị đến từ payload của trình duyệt.
+  if (!isValidWordCount(input.wordCount)) return refuse("invalid_words");
+  if (!isAiCheckKind(input.kind)) return refuse("invalid_kind");
+
+  const priced = quote(input.wordCount, input.kind);
+  if (!priced.ok) return refuse(priced.reason);
+
+  const expiresAt = new Date(
+    Date.now() + SERVICE_ORDER_TTL_HOURS * 3600 * 1000,
+  );
+  const order = await prisma.serviceOrder.create({
+    data: {
+      // 16 byte ngẫu nhiên. `code` tuần tự là số đi vào nội dung chuyển khoản
+      // nên nó phải ngắn và đoán được; `ref` là thứ đi vào URL trang kết quả
+      // nên nó phải là thứ không đoán được.
+      ref: randomBytes(16).toString("hex"),
+      kind: input.kind,
+      wordCount: input.wordCount,
+      tier: priced.tier,
+      amountVnd: priced.amountVnd,
+      expiresAt,
+      provider: "payos",
+    },
+    select: { ref: true, code: true, amountVnd: true },
+  });
+
+  return {
+    ok: true,
+    ref: order.ref,
+    code: order.code,
+    amountVnd: order.amountVnd,
+  };
+}
+
+export type ServiceCheckoutResult =
+  | { ok: true; checkoutUrl: string }
+  | { ok: false; state: "closed" | "not_found" | "pending_gateway"; message: string };
+
+/**
+ * Tạo link thanh toán PayOS cho một đơn dịch vụ, hoặc trả lại link đã có.
+ *
+ * Giống `ensurePayosCheckout`, kể cả ở phần xử lý lỗi tưởng như thừa: khi
+ * `create` ném lỗi, phản hồi của PayOS có thể đã mất trên đường về SAU KHI link
+ * được tạo. Hỏi lại theo `orderCode` — con số duy nhất toàn cục — trước khi
+ * đóng đơn, vì đóng nhầm một đơn đã có link là mở đường cho một link thứ hai
+ * cùng số tiền.
+ */
+export async function ensureServiceCheckout(
+  ref: string,
+): Promise<ServiceCheckoutResult> {
+  const order = await prisma.serviceOrder.findUnique({
+    where: { ref },
+    select: {
+      id: true,
+      code: true,
+      status: true,
+      amountVnd: true,
+      expiresAt: true,
+      checkoutUrl: true,
+      kind: true,
+    },
+  });
+  if (!order) {
+    return { ok: false, state: "not_found", message: "Không tìm thấy đơn dịch vụ." };
+  }
+  if (order.status !== "pending" || order.expiresAt <= new Date()) {
+    return { ok: false, state: "closed", message: "Đơn này không còn chờ thanh toán." };
+  }
+  if (order.checkoutUrl) {
+    return { ok: true, checkoutUrl: order.checkoutUrl };
+  }
+
+  const base = appUrl();
+  const back = `${base}/kiem-tra-ai-dao-van/ket-qua/${ref}`;
+  try {
+    const link = await payosClient().paymentRequests.create({
+      orderCode: order.code,
+      amount: order.amountVnd,
+      // PayOS cắt phần mô tả rất ngắn; tiền tố "AI" là thứ phân biệt đơn dịch
+      // vụ với đơn khóa học ("HDI <code>") khi đọc sao kê ngân hàng.
+      description: `HDI AI ${order.code}`,
+      cancelUrl: back,
+      returnUrl: back,
+      expiredAt: Math.floor(order.expiresAt.getTime() / 1000),
+    });
+
+    const saved = await prisma.serviceOrder.updateMany({
+      where: { id: order.id, status: "pending" },
+      data: {
+        provider: "payos",
+        providerRef: link.paymentLinkId,
+        checkoutUrl: link.checkoutUrl,
+      },
+    });
+    if (saved.count === 0) {
+      return {
+        ok: false,
+        state: "closed",
+        message: "Đơn vừa được xử lý ở một yêu cầu khác.",
+      };
+    }
+    return { ok: true, checkoutUrl: link.checkoutUrl };
+  } catch (createError) {
+    try {
+      const remote = await payosClient().paymentRequests.get(order.code);
+      await prisma.serviceOrder.updateMany({
+        where: { id: order.id, status: "pending" },
+        data: { provider: "payos", providerRef: remote.id },
+      });
+      console.error(
+        `[payos] Link dịch vụ #${order.code} tồn tại nhưng checkoutUrl không khôi phục được:`,
+        createError,
+      );
+      return {
+        ok: false,
+        state: "pending_gateway",
+        message:
+          "PayOS đã nhận đơn nhưng chưa trả lại đường dẫn. Vui lòng mở lại đơn sau ít phút.",
+      };
+    } catch (lookupError) {
+      if (isPayosNotFound(lookupError)) {
+        await prisma.serviceOrder.updateMany({
+          where: { id: order.id, status: "pending" },
+          data: { status: "cancelled", closedAt: new Date() },
+        });
+        return {
+          ok: false,
+          state: "closed",
+          message: "Chưa tạo được liên kết PayOS. Vui lòng tạo lại đơn.",
+        };
+      }
+      console.error(
+        `[payos] Không xác định được trạng thái link dịch vụ #${order.code}:`,
+        lookupError,
+      );
+      return {
+        ok: false,
+        state: "pending_gateway",
+        message: "PayOS đang gián đoạn. Đơn vẫn được giữ; vui lòng mở lại sau.",
+      };
+    }
+  }
+}
+
+type LockedServiceOrder = {
+  id: string;
+  status: "pending" | "paid" | "cancelled" | "expired" | "refunded";
+  amountVnd: number;
+  expiresAt: Date;
+  providerRef: string | null;
+};
+
+/**
+ * Ghi nhận một sự kiện PayOS đã xác thực chữ ký cho một đơn dịch vụ.
+ *
+ * Chỉ được gọi sau khi `processPayosPayment` trả về `unknown_order`, tức mã này
+ * không thuộc `orders`. Toàn bộ phần phán xét — mã trả về, số tiền, đơn vị tiền
+ * tệ, thời điểm giao dịch so với hạn đơn, link thanh toán có khớp không — dùng
+ * lại `classifyPayosPayment` của luồng khóa học chứ không viết lại: hai định
+ * nghĩa "đã trả tiền" là hai định nghĩa sẽ trôi khỏi nhau.
+ */
+export async function processServicePayment(input: PayosPaymentEvent) {
+  return prisma.$transaction(async (tx) => {
+    const locked = await tx.$queryRaw<LockedServiceOrder[]>`
+      SELECT id,
+             status::text AS status,
+             amount_vnd   AS "amountVnd",
+             expires_at   AS "expiresAt",
+             provider_ref AS "providerRef"
+        FROM service_orders
+       WHERE code = ${input.orderCode}
+       FOR UPDATE`;
+    const order = locked[0];
+    if (!order) {
+      return { handled: true as const, outcome: "unknown_order" as const };
+    }
+
+    const providerRef =
+      input.reference ||
+      `${input.paymentLinkId}:${input.orderCode}:${input.amount}:${input.transactionDateTime}`;
+    // `payments` là sổ chung của cả hai loại đơn, nên khóa (provider,
+    // providerRef) ở đây cũng bắt được trường hợp cùng một mã giao dịch ngân
+    // hàng bị gán cho một đơn khóa học — thứ mà hai bảng payment riêng sẽ không
+    // bao giờ thấy.
+    const existing = await tx.payment.findUnique({
+      where: { provider_providerRef: { provider: "payos", providerRef } },
+      select: { serviceOrderId: true, status: true },
+    });
+    if (existing && existing.serviceOrderId !== order.id) {
+      return { handled: true as const, outcome: "reference_conflict" as const };
+    }
+    if (existing) {
+      return {
+        handled: true as const,
+        outcome:
+          existing.status === "requires_review"
+            ? ("requires_review" as const)
+            : ("duplicate" as const),
+        serviceOrderId: order.id,
+      };
+    }
+
+    const paidAt = payosTransactionTime(input.transactionDateTime);
+    const paymentStatus = classifyPayosPayment({
+      providerCode: input.code,
+      orderStatus: order.status,
+      expectedAmount: order.amountVnd,
+      receivedAmount: input.amount,
+      currency: input.currency,
+      transactionAt: paidAt,
+      expiresAt: order.expiresAt,
+      paymentLinkMatches: payosPaymentLinkMatches(
+        order.providerRef,
+        input.paymentLinkId,
+      ),
+      // Đơn dịch vụ không sinh ghi danh nào, nên điều kiện về tính nhất quán
+      // của ghi danh luôn thỏa. Truyền `true` thay vì tách nhánh khỏi hàm phân
+      // loại: mọi điều kiện còn lại phải giống hệt luồng khóa học.
+      consistentEnrollments: true,
+    });
+
+    await tx.payment.create({
+      data: {
+        serviceOrderId: order.id,
+        provider: "payos",
+        providerRef,
+        amountVnd: input.amount,
+        status: paymentStatus,
+        payload: input.payload as never,
+      },
+    });
+
+    if (paymentStatus !== "succeeded") {
+      return {
+        handled: true as const,
+        outcome: paymentStatus,
+        serviceOrderId: order.id,
+      };
+    }
+
+    const moment = paidAt!;
+    const flipped = await tx.serviceOrder.updateMany({
+      where: { id: order.id, status: "pending" },
+      data: {
+        status: "paid",
+        paidAt: moment,
+        closedAt: moment,
+        provider: "payos",
+        providerRef: order.providerRef ?? input.paymentLinkId,
+      },
+    });
+    if (flipped.count !== 1) {
+      throw new Error(`Không thể xác nhận nguyên tử đơn dịch vụ ${order.id}.`);
+    }
+
+    return {
+      handled: true as const,
+      outcome: "succeeded" as const,
+      serviceOrderId: order.id,
+    };
+  });
+}
+
+/**
+ * Đóng các đơn dịch vụ quá hạn mà không ai trả tiền.
+ *
+ * Khác `expireStaleOrders`, ở đây KHÔNG gọi PayOS để hủy link: link PayOS đã
+ * mang `expiredAt` bằng đúng hạn của đơn nên nó tự chết, và một lượt cron gọi
+ * ra ngoài mạng cho việc chỉ mang tính dọn dẹp là một lượt cron có thể hỏng vì
+ * lý do không liên quan gì tới nó.
+ */
+export async function expireStaleServiceOrders(now = new Date()) {
+  const closed = await prisma.serviceOrder.updateMany({
+    where: { status: "pending", expiresAt: { lt: now } },
+    data: { status: "expired", closedAt: now },
+  });
+  return { expired: closed.count };
+}
+
+/** Đơn dịch vụ tra theo `ref`, cho trang kết quả. */
+export async function findServiceOrder(ref: string) {
+  if (!/^[0-9a-f]{32}$/.test(ref)) return null;
+  return prisma.serviceOrder.findUnique({
+    where: { ref },
+    select: {
+      code: true,
+      kind: true,
+      tier: true,
+      wordCount: true,
+      amountVnd: true,
+      status: true,
+      expiresAt: true,
+      checkoutUrl: true,
+    },
+  });
+}
