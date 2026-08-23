@@ -10,8 +10,12 @@ export const site = {
   tagline: "Huấn luyện nghiên cứu & công bố quốc tế",
   blurb:
     "Đồng hành cùng sinh viên, học viên cao học và giảng viên trên hành trình từ ý tưởng nghiên cứu đến bài báo được đăng.",
+  // The centre is the subject of the page; the professor advises it. Keep the
+  // role next to the name everywhere it renders, so no surface can imply that
+  // HDI is one person again.
   lead: {
-    name: "Dr. Cong Tam Trinh",
+    role: "Cố vấn học thuật",
+    name: "Dr. Tam Trinh",
     credential: "PhD in Economics, Deakin University",
   },
 } as const;
@@ -26,16 +30,29 @@ export const nav = [
   { label: "Khóa học", href: "/#khoa-hoc" },
   { label: "Dịch vụ", href: "/#dich-vu" },
   { label: "Về chúng tôi", href: "/#ve-chung-toi" },
-  { label: "Công bố", href: "/#cong-bo" },
+  { label: "Công bố", href: "/cong-bo" },
   { label: "Liên hệ", href: "/#lien-he" },
 ] as const;
 
 export const contact = {
   email: "hdiresearchgroup@gmail.com",
-  phone: "0939 979 890",
-  phoneHref: "tel:+84939979890",
+  phone: "0333443388",
+  phoneHref: "tel:+84333443388",
   phoneNote: "Ưu tiên liên hệ qua Zalo",
 } as const;
+
+/**
+ * Every "gửi email" button points here rather than at `mailto:`. A mailto link
+ * only does something when the device has a default mail client registered —
+ * on the desktop browsers most readers use, clicking one is silently a no-op.
+ * The address is a Gmail one and so is the audience's, so Gmail's compose
+ * window is the destination that actually opens.
+ */
+export function composeEmailHref(subject?: string): string {
+  const params = new URLSearchParams({ view: "cm", fs: "1", to: contact.email });
+  if (subject) params.set("su", subject);
+  return `https://mail.google.com/mail/?${params.toString()}`;
+}
 
 export const links = {
   // The intake Google Form is no longer linked from the page: consultation now
@@ -46,7 +63,7 @@ export const links = {
   // Same number as `contact.phoneHref`, in the form zalo.me expects: country
   // code without "+", no spaces. `contact.phoneNote` tells people to prefer
   // Zalo, so the page has to actually give them a way there.
-  zalo: "https://zalo.me/84939979890",
+  zalo: "https://zalo.me/84333443388",
   linktree: "https://linktr.ee/minandkin",
   tiktok: "https://www.tiktok.com/@minandkin.official",
   legacySite: "https://www.congtamtrinh.com/",

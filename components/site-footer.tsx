@@ -1,4 +1,5 @@
-import { contact, links, nav, site } from "@/content/site";
+import Image from "next/image";
+import { composeEmailHref, contact, links, nav, site } from "@/content/site";
 import type { CtaSource } from "@/lib/analytics";
 import { CtaLink } from "./ui/cta-link";
 
@@ -20,15 +21,24 @@ export function SiteFooter() {
     <footer className="border-t border-line bg-bg">
       <div className="shell grid gap-10 py-14 sm:grid-cols-2 lg:grid-cols-4">
         <div>
-          <p className="flex items-baseline gap-2 font-bold tracking-tight">
-            <span className="text-lg text-primary">{site.short}</span>
-            <span className="text-sm text-fg-muted">Research Center</span>
+          <p className="flex items-center gap-2.5 font-bold tracking-tight">
+            <Image
+              src="/images/logo-mark.png"
+              alt=""
+              width={256}
+              height={256}
+              className="h-9 w-9 rounded-lg"
+            />
+            <span className="flex items-baseline gap-2">
+              <span className="text-lg text-primary">{site.short}</span>
+              <span className="text-sm text-fg-muted">Research Center</span>
+            </span>
           </p>
           <p className="mt-3 max-w-xs text-sm leading-relaxed text-fg-muted">
             {site.blurb}
           </p>
           <p className="mt-4 text-sm text-fg-subtle">
-            {site.lead.name}
+            {site.lead.role}: {site.lead.name}
             <br />
             {site.lead.credential}
           </p>
@@ -48,7 +58,12 @@ export function SiteFooter() {
             © {new Date().getFullYear()} {site.name}
           </p>
           <p>
-            <a className="hover:text-primary" href={`mailto:${contact.email}`}>
+            <a
+              className="hover:text-primary"
+              href={composeEmailHref()}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
               {contact.email}
             </a>
             <span className="px-2">·</span>

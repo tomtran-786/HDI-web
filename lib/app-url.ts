@@ -13,5 +13,6 @@ export function appUrl() {
     if (process.env.NODE_ENV !== "production") return "http://localhost:3000";
     throw new Error("Thiếu APP_URL cho liên kết email và callback thanh toán.");
   }
-  return value.replace(/\/$/, "");
+  const withScheme = /^https?:\/\//.test(value) ? value : `https://${value}`;
+  return withScheme.replace(/\/$/, "");
 }

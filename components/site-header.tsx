@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { nav, site } from "@/content/site";
@@ -34,9 +35,20 @@ export function SiteHeader() {
       }`}
     >
       <div className="shell flex h-16 items-center justify-between gap-4">
-        <Link href="/#top" className="flex items-baseline gap-2 font-bold tracking-tight">
-          <span className="text-lg text-primary">{site.short}</span>
-          <span className="text-sm text-fg-muted">Research Center</span>
+        <Link href="/#top" className="flex items-center gap-2.5 font-bold tracking-tight">
+          {/* alt="" — the wordmark right next to it already names the centre,
+              so labelling the mark too would read the name twice. */}
+          <Image
+            src="/images/logo-mark.png"
+            alt=""
+            width={256}
+            height={256}
+            className="h-9 w-9 rounded-lg"
+          />
+          <span className="flex items-baseline gap-2">
+            <span className="text-lg text-primary">{site.short}</span>
+            <span className="text-sm text-fg-muted">Research Center</span>
+          </span>
         </Link>
 
         <nav className="hidden items-center gap-6 lg:flex">

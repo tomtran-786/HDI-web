@@ -6,7 +6,7 @@ import { prisma } from "@/lib/prisma";
 import { findCourse } from "@/lib/courses";
 import { formatDate, formatVnd } from "@/lib/format";
 import { orderPage, orderStatusLabel, orderStatusTone } from "@/content/checkout";
-import { contact, links } from "@/content/site";
+import { composeEmailHref, links } from "@/content/site";
 import { HoldCountdown } from "@/components/hold-countdown";
 import { Section, SectionHeading } from "@/components/ui/section";
 import { Badge } from "@/components/ui/badge";
@@ -123,7 +123,9 @@ export default async function OrderDetailPage({
                 </a>
               )}
               <a
-                href={`mailto:${contact.email}?subject=${encodeURIComponent(`Thanh toán đơn #${order.code}`)}`}
+                href={composeEmailHref(`Thanh toán đơn #${order.code}`)}
+                target="_blank"
+                rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 rounded-full border border-line px-5 py-2.5 text-sm font-bold text-fg transition hover:border-primary hover:text-primary"
               >
                 <IconMail size={16} />

@@ -4,8 +4,13 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 :root {
+  /* The light theme is deliberately all-white: page, alternate band and card
+     surfaces are the same #ffffff, so sections are separated by their rules and
+     cards by their borders, not by a change of tone. `soft` on <Section> is
+     therefore invisible here — it still does its job in the dark theme below,
+     so keep the alternating flags in place. */
   --bg: #ffffff;
-  --bg-soft: #f7f9fc;
+  --bg-soft: #ffffff;
   --card: #ffffff;
   --border: #e3e9f1;
   --fg: #172636;

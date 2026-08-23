@@ -3,7 +3,7 @@
  *
  * SOURCES — every fact below is transcribed, not invented:
  *
- * 1. `viet-bao-cao-khoa-hoc` — the eight session titles, the tuition, the group
+ * A. `viet-bao-cao-khoa-hoc` — the eight session titles, the tuition, the group
  *    discount, the format, the duration and the class hours all come from the
  *    course flyer at reference/site/images/image-53a4a7a37922.png (linked from
  *    pages/courses.md). Its four `phases` names are the one exception: an
@@ -12,7 +12,7 @@
  *    flyer's exact wording and order, so "Buổi 1" … "Buổi 8" still map
  *    one-to-one onto the poster.
  *
- * 2. The other four are transcribed from reference/edubit/courses/*.md, crawled
+ * B. The other four are transcribed from reference/edubit/courses/*.md, crawled
  *    from thayphongdang.edubit.vn by reference/scrape_edubit_courses.py.
  *    Syllabus, tuition, duration and class size are that site's own text.
  *
@@ -100,6 +100,12 @@ export const coursesIntro = {
 };
 
 /**
+ * ORDER — the array order is what #khoa-hoc shows by default, and it is the
+ * learning path, not a ranking: foundations (tiểu luận/NCKH/KLTN) → SPSS →
+ * Stata → viết bài tạp chí → viết luận văn/báo cáo khoa học. Nothing reads a
+ * course by index (cart, seed and lookups all go by slug), so this order is
+ * free to follow the path a student actually walks.
+ *
  * `satisfies` rather than a `: Course[]` annotation, so TypeScript keeps the
  * literal slug strings instead of widening them to `string`. That is what makes
  * `CourseSlug` below a real union and keeps authored content aligned with the
@@ -107,133 +113,65 @@ export const coursesIntro = {
  */
 export const courses = [
   {
-    slug: "viet-bao-cao-khoa-hoc",
-    eyebrow: "Khóa đào tạo",
-    title: "Viết báo cáo khoa học, luận văn chuẩn quốc tế",
-    audience: "Dành cho sinh viên và học viên cao học",
-    intro:
-      "Tám buổi đi từ việc chọn đề tài đến lúc bấm nút gửi bài — kèm ba tháng đồng hành sau khóa để bản thảo thật sự tới được tòa soạn.",
-    curriculum: "sessions",
-    price: {
-      amount: "1.000.000 đ",
-      note: "Giảm 10% cho nhóm từ 03 người",
-      vnd: 1000000,
-    },
-    facts: [
-      { label: "Hình thức", value: "Trực tuyến qua Zoom" },
-      { label: "Thời lượng", value: "08 buổi / khóa — 02 buổi / tuần" },
-      { label: "Giờ học", value: "19:30 – 21:00" },
-    ],
-    phases: [
-      {
-        name: "Định hình đề tài",
-        sessions: [
-          "Xác định chủ đề và hướng nghiên cứu",
-          "Triển khai đề tài và viết proposal",
-        ],
-      },
-      {
-        name: "Tổng quan tài liệu",
-        sessions: [
-          "Tổng quan tài liệu — kỹ thuật tìm kiếm và lọc",
-          "Viết Literature Review chuyên sâu",
-        ],
-      },
-      {
-        name: "Dữ liệu và phân tích",
-        sessions: [
-          "Dữ liệu và phân tích định lượng",
-          "Thực hành hồi quy và đọc kết quả",
-        ],
-      },
-      {
-        name: "Viết và công bố",
-        sessions: [
-          "Thực chiến viết bài báo học thuật",
-          "Gửi bài, chọn tạp chí và quy trình phản biện",
-        ],
-      },
-    ],
-    outcomes: [
-      "Mỗi học viên có một đề tài rõ ràng và dàn ý bài báo đầy đủ.",
-      "Ba tháng hỗ trợ sau khóa để hoàn thành bài viết và submit tạp chí dưới sự hướng dẫn của giảng viên.",
-    ],
-    registerNote:
-      "Tạo tài khoản để giữ chỗ khóa Research Class (Advanced). Kỳ khai giảng tiếp theo sẽ được thông báo qua email và Zalo.",
-  },
-
-  {
-    slug: "stata-kinh-te-luong",
-    eyebrow: "Khóa chuyên sâu",
-    title: "Nghiên cứu khoa học chuyên sâu với phần mềm Stata",
+    slug: "training-tieu-luan-nckh-kltn",
+    eyebrow: "Khóa nền tảng",
+    title: "Training viết tiểu luận, NCKH, khóa luận tốt nghiệp",
     audience:
-      "Dành cho sinh viên, học viên cao học, nghiên cứu sinh và giảng viên khối kinh tế, tài chính, quản trị",
+      "Dành cho sinh viên từ năm nhất đến năm tư và học viên cao học chưa được hướng dẫn bài bản",
     intro:
-      "Phần lớn người học dừng lại ở các phần mềm thống kê cơ bản. Khóa này đi thẳng vào những estimator mà bài báo và luận án thực sự cần — FGLS, IV/2SLS, 3SLS, GMM động, PMG — trên dữ liệu kinh tế – tài chính thật.",
+      "Ba buổi Zoom cùng học liệu online, đi từ cách đặt tên đề tài và tìm nguồn tài liệu uy tín đến văn phong khoa học, trích dẫn, định dạng Word và cách viết không bị đạo văn.",
     curriculum: "modules",
     price: {
-      amount: "1.100.000 đ",
+      amount: "220.000 đ",
       note: "Giảm 10% cho nhóm từ 03 người",
-      vnd: 1100000,
+      vnd: 220000,
     },
     facts: [
-      { label: "Lớp trực tiếp", value: "05 module qua Zoom — tối đa 40 học viên" },
-      { label: "Kho record", value: "47 giờ 29 phút — 42 bài học" },
-      { label: "Xem lại", value: "02 năm kể từ ngày đăng ký" },
+      { label: "Lớp trực tiếp", value: "03 buổi Zoom + học liệu online" },
+      { label: "Kho record", value: "35 giờ 34 phút — 40 bài học" },
+      { label: "Xem lại", value: "03 năm kể từ ngày đăng ký" },
     ],
     phases: [
       {
-        name: "Tổng quan về kinh tế lượng ứng dụng và phần mềm Stata",
+        name: "Đề tài, tài liệu và bố cục bài",
         sessions: [
-          "Tổng quan về kinh tế lượng ứng dụng trong nghiên cứu",
-          "Làm quen với phần mềm Stata: do-file, log-file, nhập và quản lý dữ liệu",
-          "Ôn tập hồi quy OLS trên Stata và cách đọc output",
-          "Trình bày kết quả và thực hành",
+          "Tìm kiếm, đặt tên đề tài và phân tích đề tài",
+          "Tìm kiếm các nguồn tài liệu uy tín",
+          "Cách đọc tài liệu và dùng công cụ hỗ trợ (ChatGPT, NotebookLM, EndNote 21, Literature review table)",
+          "Tư duy xây dựng bố cục bài",
+          "Cách viết phần đặt vấn đề / phần mở đầu",
+          "Nhận xét bài thực tế và chữa bài tập về nhà",
         ],
       },
       {
-        name: "Các vấn đề mô hình và FGLS trong dữ liệu cắt ngang, chuỗi thời gian",
+        name: "Viết nội dung và trình bày dữ liệu",
         sessions: [
-          "Phương sai thay đổi (Heteroskedasticity) và FGLS",
-          "Đa cộng tuyến (Multicollinearity) và chỉ số VIF",
-          "Tự tương quan (Autocorrelation) trong chuỗi thời gian",
-          "Thực hành tổng hợp: so sánh OLS, OLS robust SE và FGLS",
+          "Thiết kế bảng hỏi đơn giản, thực hành trên Google Form",
+          "Trình bày nội dung theo logic, văn phong khoa học và có tính phản biện",
+          "Cách trích dẫn tài liệu tham khảo trong bài",
+          "Trình bày và phân tích thông tin từ bảng dữ liệu, biểu đồ",
+          "Cách viết tiểu kết và kết luận cho bài",
+          "Nhận xét bài thực tế và chữa bài tập về nhà",
         ],
       },
       {
-        name: "Nội sinh, biến công cụ và hệ phương trình (IV/2SLS, 3SLS)",
+        name: "Định dạng, trích dẫn và chống đạo văn",
         sessions: [
-          "Nội sinh trong mô hình hồi quy và hậu quả với ước lượng OLS",
-          "Phương pháp biến công cụ (IV/2SLS) với lệnh ivregress",
-          "Hệ phương trình đồng thời và 3SLS với lệnh reg3",
-          "Thực hành trên bộ dữ liệu kinh tế – tài chính",
-          "Giải đáp thắc mắc",
-        ],
-      },
-      {
-        name: "Dữ liệu bảng, GMM động và PMG (Panel ARDL)",
-        sessions: [
-          "Tổng quan về dữ liệu bảng (Panel data) và thiết lập với xtset",
-          "Mô hình tác động cố định và ngẫu nhiên (FE/RE), kiểm định Hausman",
-          "Phương sai thay đổi, tự tương quan và phụ thuộc chéo trong panel",
-          "Mô hình panel động và GMM (Arellano–Bond, System GMM)",
-          "Mô hình PMG (Panel ARDL) với xtpmg",
-        ],
-      },
-      {
-        name: "Ôn tập kỹ thuật xử lý dữ liệu và thực hành đề tài của học viên",
-        sessions: [
-          "Quy trình chuẩn và thiết kế do-file hoàn chỉnh cho một nghiên cứu",
-          "Thực hành “mini research project” trên dữ liệu thực tế",
-          "Giải đáp thắc mắc và định hướng tự học tiếp",
+          "Cài đặt Microsoft Word chuẩn trước khi viết bài",
+          "Cách làm mục lục tự động",
+          "Trích dẫn nguồn cho hình ảnh, bảng biểu, sơ đồ",
+          "Tạo và edit danh mục tài liệu tham khảo trên EndNote 20, 21",
+          "Một số định dạng cơ bản khác (đánh số trang nhiều kiểu trong bài)",
+          "Cách viết bài không bị đạo văn và cách sửa khi bị đạo văn (Turnitin, Kiemtratailieu), tỷ lệ AI",
+          "Ứng dụng công cụ AI để tìm tài liệu, tổng quan nghiên cứu và giảm tỷ lệ đạo văn",
         ],
       },
     ],
     outcomes: [
-      "Nắm vững quy trình phân tích định lượng hoàn chỉnh từ xây dựng mô hình, kiểm định, ước lượng đến báo cáo kết quả trên Stata.",
-      "Phát hiện và xử lý được các vấn đề kỹ thuật trong mô hình hồi quy và dữ liệu bảng: phương sai thay đổi, đa cộng tuyến, tự tương quan, phụ thuộc chéo, nội sinh.",
-      "Triển khai thành thạo OLS với robust SE, FGLS, IV/2SLS, 3SLS, GMM động và PMG trên dữ liệu kinh tế – tài chính thực tế.",
-      "Viết được do-file chuẩn, xuất bảng kết quả và diễn giải theo ngôn ngữ học thuật, phục vụ luận văn, bài báo và báo cáo tư vấn.",
+      "Nắm được quy trình từ A–Z để hoàn thành tiểu luận, nghiên cứu khoa học, báo cáo thực tập và khóa luận tốt nghiệp.",
+      "Sử dụng được các công cụ AI hỗ trợ nghiên cứu như ChatGPT, Consensus, NotebookLM, Connected Papers và EndNote 21.",
+      "Nhận bộ tài liệu gồm 19 tài liệu khác nhau: các bài tiểu luận, NCKH, khóa luận và thuyết minh đề tài đạt điểm 9 – 9.9 (A+).",
+      "Được nhận xét và góp ý bài viết thực tế ngay trong khóa học.",
     ],
     registerNote: REGISTER_NOTE_GENERIC,
   },
@@ -328,6 +266,82 @@ export const courses = [
       "Hình thành kỹ năng tự nghiên cứu: thu thập, xử lý thông tin và trình bày được kết quả của một đề tài cụ thể một cách độc lập.",
       "Được giảng viên tư vấn trực tiếp đề tài trong khóa học, và tiếp tục đồng hành hỗ trợ sau khóa.",
       "Nhận chứng nhận sau khi hoàn thành khóa học.",
+    ],
+    registerNote: REGISTER_NOTE_GENERIC,
+  },
+
+  {
+    slug: "stata-kinh-te-luong",
+    eyebrow: "Khóa chuyên sâu",
+    title: "Nghiên cứu khoa học chuyên sâu với phần mềm Stata",
+    audience:
+      "Dành cho sinh viên, học viên cao học, nghiên cứu sinh và giảng viên khối kinh tế, tài chính, quản trị",
+    intro:
+      "Phần lớn người học dừng lại ở các phần mềm thống kê cơ bản. Khóa này đi thẳng vào những estimator mà bài báo và luận án thực sự cần — FGLS, IV/2SLS, 3SLS, GMM động, PMG — trên dữ liệu kinh tế – tài chính thật.",
+    curriculum: "modules",
+    price: {
+      amount: "1.100.000 đ",
+      note: "Giảm 10% cho nhóm từ 03 người",
+      vnd: 1100000,
+    },
+    facts: [
+      { label: "Lớp trực tiếp", value: "05 module qua Zoom — tối đa 40 học viên" },
+      { label: "Kho record", value: "47 giờ 29 phút — 42 bài học" },
+      { label: "Xem lại", value: "02 năm kể từ ngày đăng ký" },
+    ],
+    phases: [
+      {
+        name: "Tổng quan về kinh tế lượng ứng dụng và phần mềm Stata",
+        sessions: [
+          "Tổng quan về kinh tế lượng ứng dụng trong nghiên cứu",
+          "Làm quen với phần mềm Stata: do-file, log-file, nhập và quản lý dữ liệu",
+          "Ôn tập hồi quy OLS trên Stata và cách đọc output",
+          "Trình bày kết quả và thực hành",
+        ],
+      },
+      {
+        name: "Các vấn đề mô hình và FGLS trong dữ liệu cắt ngang, chuỗi thời gian",
+        sessions: [
+          "Phương sai thay đổi (Heteroskedasticity) và FGLS",
+          "Đa cộng tuyến (Multicollinearity) và chỉ số VIF",
+          "Tự tương quan (Autocorrelation) trong chuỗi thời gian",
+          "Thực hành tổng hợp: so sánh OLS, OLS robust SE và FGLS",
+        ],
+      },
+      {
+        name: "Nội sinh, biến công cụ và hệ phương trình (IV/2SLS, 3SLS)",
+        sessions: [
+          "Nội sinh trong mô hình hồi quy và hậu quả với ước lượng OLS",
+          "Phương pháp biến công cụ (IV/2SLS) với lệnh ivregress",
+          "Hệ phương trình đồng thời và 3SLS với lệnh reg3",
+          "Thực hành trên bộ dữ liệu kinh tế – tài chính",
+          "Giải đáp thắc mắc",
+        ],
+      },
+      {
+        name: "Dữ liệu bảng, GMM động và PMG (Panel ARDL)",
+        sessions: [
+          "Tổng quan về dữ liệu bảng (Panel data) và thiết lập với xtset",
+          "Mô hình tác động cố định và ngẫu nhiên (FE/RE), kiểm định Hausman",
+          "Phương sai thay đổi, tự tương quan và phụ thuộc chéo trong panel",
+          "Mô hình panel động và GMM (Arellano–Bond, System GMM)",
+          "Mô hình PMG (Panel ARDL) với xtpmg",
+        ],
+      },
+      {
+        name: "Ôn tập kỹ thuật xử lý dữ liệu và thực hành đề tài của học viên",
+        sessions: [
+          "Quy trình chuẩn và thiết kế do-file hoàn chỉnh cho một nghiên cứu",
+          "Thực hành “mini research project” trên dữ liệu thực tế",
+          "Giải đáp thắc mắc và định hướng tự học tiếp",
+        ],
+      },
+    ],
+    outcomes: [
+      "Nắm vững quy trình phân tích định lượng hoàn chỉnh từ xây dựng mô hình, kiểm định, ước lượng đến báo cáo kết quả trên Stata.",
+      "Phát hiện và xử lý được các vấn đề kỹ thuật trong mô hình hồi quy và dữ liệu bảng: phương sai thay đổi, đa cộng tuyến, tự tương quan, phụ thuộc chéo, nội sinh.",
+      "Triển khai thành thạo OLS với robust SE, FGLS, IV/2SLS, 3SLS, GMM động và PMG trên dữ liệu kinh tế – tài chính thực tế.",
+      "Viết được do-file chuẩn, xuất bảng kết quả và diễn giải theo ngôn ngữ học thuật, phục vụ luận văn, bài báo và báo cáo tư vấn.",
     ],
     registerNote: REGISTER_NOTE_GENERIC,
   },
@@ -431,67 +445,59 @@ export const courses = [
   },
 
   {
-    slug: "training-tieu-luan-nckh-kltn",
-    eyebrow: "Khóa nền tảng",
-    title: "Training viết tiểu luận, NCKH, khóa luận tốt nghiệp",
-    audience:
-      "Dành cho sinh viên từ năm nhất đến năm tư và học viên cao học chưa được hướng dẫn bài bản",
+    slug: "viet-bao-cao-khoa-hoc",
+    eyebrow: "Khóa đào tạo",
+    title: "Viết báo cáo khoa học, luận văn chuẩn quốc tế",
+    audience: "Dành cho sinh viên và học viên cao học",
     intro:
-      "Ba buổi Zoom cùng học liệu online, đi từ cách đặt tên đề tài và tìm nguồn tài liệu uy tín đến văn phong khoa học, trích dẫn, định dạng Word và cách viết không bị đạo văn.",
-    curriculum: "modules",
+      "Tám buổi đi từ việc chọn đề tài đến lúc bấm nút gửi bài — kèm ba tháng đồng hành sau khóa để bản thảo thật sự tới được tòa soạn.",
+    curriculum: "sessions",
     price: {
-      amount: "220.000 đ",
+      amount: "1.000.000 đ",
       note: "Giảm 10% cho nhóm từ 03 người",
-      vnd: 220000,
+      vnd: 1000000,
     },
     facts: [
-      { label: "Lớp trực tiếp", value: "03 buổi Zoom + học liệu online" },
-      { label: "Kho record", value: "35 giờ 34 phút — 40 bài học" },
-      { label: "Xem lại", value: "03 năm kể từ ngày đăng ký" },
+      { label: "Hình thức", value: "Trực tuyến qua Zoom" },
+      { label: "Thời lượng", value: "08 buổi / khóa — 02 buổi / tuần" },
+      { label: "Giờ học", value: "19:30 – 21:00" },
     ],
     phases: [
       {
-        name: "Đề tài, tài liệu và bố cục bài",
+        name: "Định hình đề tài",
         sessions: [
-          "Tìm kiếm, đặt tên đề tài và phân tích đề tài",
-          "Tìm kiếm các nguồn tài liệu uy tín",
-          "Cách đọc tài liệu và dùng công cụ hỗ trợ (ChatGPT, NotebookLM, EndNote 21, Literature review table)",
-          "Tư duy xây dựng bố cục bài",
-          "Cách viết phần đặt vấn đề / phần mở đầu",
-          "Nhận xét bài thực tế và chữa bài tập về nhà",
+          "Xác định chủ đề và hướng nghiên cứu",
+          "Triển khai đề tài và viết proposal",
         ],
       },
       {
-        name: "Viết nội dung và trình bày dữ liệu",
+        name: "Tổng quan tài liệu",
         sessions: [
-          "Thiết kế bảng hỏi đơn giản, thực hành trên Google Form",
-          "Trình bày nội dung theo logic, văn phong khoa học và có tính phản biện",
-          "Cách trích dẫn tài liệu tham khảo trong bài",
-          "Trình bày và phân tích thông tin từ bảng dữ liệu, biểu đồ",
-          "Cách viết tiểu kết và kết luận cho bài",
-          "Nhận xét bài thực tế và chữa bài tập về nhà",
+          "Tổng quan tài liệu — kỹ thuật tìm kiếm và lọc",
+          "Viết Literature Review chuyên sâu",
         ],
       },
       {
-        name: "Định dạng, trích dẫn và chống đạo văn",
+        name: "Dữ liệu và phân tích",
         sessions: [
-          "Cài đặt Microsoft Word chuẩn trước khi viết bài",
-          "Cách làm mục lục tự động",
-          "Trích dẫn nguồn cho hình ảnh, bảng biểu, sơ đồ",
-          "Tạo và edit danh mục tài liệu tham khảo trên EndNote 20, 21",
-          "Một số định dạng cơ bản khác (đánh số trang nhiều kiểu trong bài)",
-          "Cách viết bài không bị đạo văn và cách sửa khi bị đạo văn (Turnitin, Kiemtratailieu), tỷ lệ AI",
-          "Ứng dụng công cụ AI để tìm tài liệu, tổng quan nghiên cứu và giảm tỷ lệ đạo văn",
+          "Dữ liệu và phân tích định lượng",
+          "Thực hành hồi quy và đọc kết quả",
+        ],
+      },
+      {
+        name: "Viết và công bố",
+        sessions: [
+          "Thực chiến viết bài báo học thuật",
+          "Gửi bài, chọn tạp chí và quy trình phản biện",
         ],
       },
     ],
     outcomes: [
-      "Nắm được quy trình từ A–Z để hoàn thành tiểu luận, nghiên cứu khoa học, báo cáo thực tập và khóa luận tốt nghiệp.",
-      "Sử dụng được các công cụ AI hỗ trợ nghiên cứu như ChatGPT, Consensus, NotebookLM, Connected Papers và EndNote 21.",
-      "Nhận bộ tài liệu gồm 19 tài liệu khác nhau: các bài tiểu luận, NCKH, khóa luận và thuyết minh đề tài đạt điểm 9 – 9.9 (A+).",
-      "Được nhận xét và góp ý bài viết thực tế ngay trong khóa học.",
+      "Mỗi học viên có một đề tài rõ ràng và dàn ý bài báo đầy đủ.",
+      "Ba tháng hỗ trợ sau khóa để hoàn thành bài viết và submit tạp chí dưới sự hướng dẫn của giảng viên.",
     ],
-    registerNote: REGISTER_NOTE_GENERIC,
+    registerNote:
+      "Tạo tài khoản để giữ chỗ khóa Research Class (Advanced). Kỳ khai giảng tiếp theo sẽ được thông báo qua email và Zalo.",
   },
 ] satisfies Course[];
 

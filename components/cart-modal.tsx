@@ -164,7 +164,7 @@ export function CartModal({
             {loading && catalog.length === 0 ? (
               <div className="space-y-3" aria-label={cartModal.loading}>
                 {[0, 1, 2].map((item) => (
-                  <div key={item} className="h-24 animate-pulse rounded-card bg-bg-soft" />
+                  <div key={item} className="h-24 animate-pulse rounded-card bg-tint" />
                 ))}
               </div>
             ) : (

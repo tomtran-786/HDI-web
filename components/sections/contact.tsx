@@ -1,4 +1,4 @@
-import { contact, links } from "@/content/site";
+import { composeEmailHref, contact, links } from "@/content/site";
 import { CtaLink } from "../ui/cta-link";
 import { Reveal } from "../ui/reveal";
 import { Section, SectionHeading } from "../ui/section";
@@ -6,9 +6,8 @@ import { IconMail, IconMessage, IconPhone } from "../ui/icons";
 
 export function Contact() {
   return (
-    <Section id="lien-he" soft>
+    <Section id="lien-he">
       <SectionHeading
-        align="center"
         eyebrow="Liên hệ"
         title="Đặt lịch tư vấn"
         subtitle="Một buổi trò chuyện miễn phí để bàn về đề tài của bạn"
@@ -27,7 +26,9 @@ export function Contact() {
 
           <div className="mt-7 flex flex-wrap justify-center gap-3">
             <a
-              href={`mailto:${contact.email}`}
+              href={composeEmailHref()}
+              target="_blank"
+              rel="noopener noreferrer"
               className="inline-flex items-center gap-2 rounded-full bg-primary px-5 py-3 text-sm font-bold text-primary-fg transition hover:bg-primary-deep"
             >
               <IconMail size={16} />

@@ -40,7 +40,7 @@ export async function saveProfile(
   // forget where the student was headed.
   if (!PHONE_RE.test(phone)) {
     return {
-      error: "Số điện thoại chưa đúng. Ví dụ: 0939979890 hoặc +84939979890.",
+      error: "Số điện thoại chưa đúng. Ví dụ: 0912345678 hoặc +84912345678.",
       phone,
       stage,
     };

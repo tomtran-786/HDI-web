@@ -1,5 +1,5 @@
 import { services } from "@/content/services";
-import { contact } from "@/content/site";
+import { composeEmailHref, contact } from "@/content/site";
 import { Card } from "../ui/card";
 import { Reveal } from "../ui/reveal";
 import { Section, SectionHeading } from "../ui/section";
@@ -23,7 +23,9 @@ export function Services() {
               )}
               <p className="mt-4 text-sm text-fg-muted">{item.note}</p>
               <a
-                href={`mailto:${contact.email}`}
+                href={composeEmailHref(`Hỏi về dịch vụ: ${item.title}`)}
+                target="_blank"
+                rel="noopener noreferrer"
                 className="mt-4 inline-block text-sm font-bold text-primary hover:underline"
               >
                 {contact.email}

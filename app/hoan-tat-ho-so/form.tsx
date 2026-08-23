@@ -52,7 +52,7 @@ export function ProfileForm({
         required
         key={`phone-${state.phone ?? ""}`}
         defaultValue={phone}
-        placeholder="0939 979 890"
+        placeholder="0912 345 678"
         className="mt-2 w-full rounded-card border border-line bg-bg px-4 py-3 text-[15px] text-fg outline-none transition placeholder:text-fg-subtle focus:border-primary"
       />
       <p className="mt-2 text-xs text-fg-subtle">

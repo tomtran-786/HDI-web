@@ -25,7 +25,7 @@ export const metadata: Metadata = {
   metadataBase: new URL(appUrl()),
   title: "HDI Research Center — Huấn luyện nghiên cứu & công bố quốc tế",
   description:
-    "Chương trình kèm cặp nghiên cứu và công bố quốc tế do Dr. Cong Tam Trinh (PhD in Economics, Deakin University) dẫn dắt.",
+    "Chương trình kèm cặp, khóa đào tạo nghiên cứu và công bố quốc tế của HDI Research Center — cố vấn học thuật: Dr. Tam Trinh (PhD in Economics, Deakin University).",
   alternates: { canonical: "/" },
   openGraph: {
     type: "website",
@@ -34,7 +34,7 @@ export const metadata: Metadata = {
     siteName: "HDI Research Center",
     title: "HDI Research Center — Huấn luyện nghiên cứu & công bố quốc tế",
     description:
-      "Chương trình kèm cặp nghiên cứu và công bố quốc tế do Dr. Cong Tam Trinh (PhD in Economics, Deakin University) dẫn dắt.",
+      "Chương trình kèm cặp, khóa đào tạo nghiên cứu và công bố quốc tế của HDI Research Center — cố vấn học thuật: Dr. Tam Trinh (PhD in Economics, Deakin University).",
   },
 };
 

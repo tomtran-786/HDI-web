@@ -7,8 +7,9 @@ import { CourseCard } from "./course-card";
 import { Reveal } from "./ui/reveal";
 
 /**
- * `compare: null` keeps the authored order in content/course.ts, which puts the
- * flagship course first — that ordering is editorial, so it stays the default.
+ * `compare: null` keeps the authored order in content/course.ts, which runs the
+ * courses in learning-path order — that ordering is editorial, so it stays the
+ * default.
  */
 const sorts = {
   default: { label: "Mặc định", compare: null },

@@ -1,9 +1,8 @@
 import Image from "next/image";
-import { about } from "@/content/about";
-import { links, site } from "@/content/site";
+import { site } from "@/content/site";
 import { CtaLink } from "../ui/cta-link";
 import { Reveal } from "../ui/reveal";
-import { IconArrow, IconDownload } from "../ui/icons";
+import { IconArrow } from "../ui/icons";
 
 export function Hero() {
   return (
@@ -33,9 +32,11 @@ export function Hero() {
 
           <p className="mt-5 max-w-xl text-base leading-relaxed text-fg-muted sm:text-lg">
             {site.name} đồng hành cùng bạn từ khâu xác định câu hỏi nghiên cứu đến
-            lúc gửi bài và trả lời phản biện tại các tạp chí quốc tế. Dẫn dắt chuyên
-            môn bởi <strong className="font-semibold text-fg">{site.lead.name}</strong>{" "}
-            — {site.lead.credential}.
+            lúc gửi bài và trả lời phản biện tại các tạp chí quốc tế — qua các
+            chương trình kèm cặp, khóa đào tạo và dịch vụ hỗ trợ bản thảo.{" "}
+            {site.lead.role}:{" "}
+            <strong className="font-semibold text-fg">{site.lead.name}</strong> —{" "}
+            {site.lead.credential}.
           </p>
 
           <div className="mt-8 flex flex-wrap gap-3">
@@ -53,35 +54,28 @@ export function Hero() {
             >
               Xem chương trình
             </a>
-            <a
-              href={links.cv}
-              className="inline-flex items-center gap-2 rounded-full border border-line px-6 py-3 text-sm font-bold text-fg-muted transition hover:border-primary hover:text-primary"
-            >
-              <IconDownload size={16} />
-              Tải CV
-            </a>
           </div>
         </Reveal>
 
         <Reveal delay={120} className="justify-self-center lg:justify-self-end">
-          <figure className="relative">
+          {/* The centre's logo, not a portrait: the page is about HDI now, and
+              the mark carries its own navy so it sits on either theme. */}
+          <div className="relative">
             <div
               aria-hidden
-              className="absolute -inset-4 rounded-full bg-tint/70 blur-2xl"
+              className="absolute -inset-6 rounded-full bg-tint/70 blur-2xl"
             />
-            <Image
-              src={about.portrait.src}
-              alt={about.portrait.alt}
-              width={620}
-              height={620}
-              priority
-              className="relative h-56 w-56 rounded-full border-4 border-card object-cover shadow-[0_20px_60px_-24px_rgba(12,73,143,0.6)] sm:h-72 sm:w-72 lg:h-80 lg:w-80"
-            />
-            <figcaption className="relative mt-5 text-center">
-              <p className="font-bold text-fg">{site.lead.name}</p>
-              <p className="mt-1 text-sm text-fg-muted">{site.lead.credential}</p>
-            </figcaption>
-          </figure>
+            <div className="relative rounded-card border border-line bg-tint/50 p-5 shadow-[0_20px_60px_-24px_rgba(12,73,143,0.6)] dark:bg-card sm:p-6">
+              <Image
+                src="/images/logo.webp"
+                alt={site.name}
+                width={560}
+                height={876}
+                priority
+                className="h-auto w-48 sm:w-56 lg:w-64"
+              />
+            </div>
+          </div>
         </Reveal>
       </div>
     </section>
