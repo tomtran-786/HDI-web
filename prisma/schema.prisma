@@ -57,6 +57,7 @@ model User {
   orders        Order[]
   reviews       CourseReview[]
   serviceOrders ServiceOrder[]
+  feedbacks     Feedback[]
 
   @@map("users")
 }
@@ -443,6 +444,53 @@ model CourseReview {
   @@unique([courseId, userId])
   @@index([courseId, status])
   @@map("course_reviews")
+}
+
+// --------------------------------------------------------- Góp ý & báo lỗi ---
+
+enum FeedbackKind {
+  bug
+  idea
+
+  @@map("feedback_kind")
+}
+
+/// `open` đứng đầu có chủ ý: trang quản trị sắp xếp enum tăng dần để hàng cần
+/// xử lý luôn nằm trên những góp ý đã đóng, không cần một cột ưu tiên thứ hai.
+enum FeedbackStatus {
+  open
+  resolved
+  dismissed
+
+  @@map("feedback_status")
+}
+
+/// Một báo lỗi hoặc góp ý có cấu trúc do người đã đăng nhập gửi từ bất kỳ trang
+/// nào. Email người gửi luôn đi qua quan hệ User thay vì nhận từ form, nên một
+/// payload sửa tay không thể chuyển thư xác nhận sang địa chỉ khác.
+model Feedback {
+  id     String       @id @default(cuid())
+  userId String       @map("user_id")
+  kind   FeedbackKind
+  title  String       @db.VarChar(160)
+
+  /// Markdown thô, đúng như người gửi gõ. Render là việc của lúc đọc.
+  body   String         @db.VarChar(5000)
+  status FeedbackStatus @default(open)
+
+  /// Đường dẫn lúc bấm gửi (pathname, không query) — bớt một vòng hỏi lại.
+  pageUrl    String?   @map("page_url") @db.VarChar(300)
+  resolvedAt DateTime? @map("resolved_at") @db.Timestamptz(6)
+  createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt  DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Postgres không tự index khóa ngoại; index này giữ JOIN và ON DELETE
+  // CASCADE khỏi phải quét toàn bảng khi số góp ý tăng lên.
+  @@index([userId])
+  @@index([status, createdAt])
+  @@map("feedbacks")
 }
 
 // ------------------------------------------------------ Đơn dịch vụ lẻ ---

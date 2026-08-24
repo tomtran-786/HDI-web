@@ -2,8 +2,11 @@
 
 import { useEffect, useRef, useState } from "react";
 import { contactDock } from "@/content/site";
+import { feedbackCopy } from "@/content/feedback";
 import { trackCta } from "@/lib/analytics";
+import { FeedbackModal } from "./feedback-modal";
 import {
+  IconBulb,
   IconClose,
   IconFacebook,
   IconMail,
@@ -24,8 +27,38 @@ const channelToneClasses = {
   cool: "bg-tint text-primary",
 };
 
-export function ContactDock() {
+function FeedbackBubbleButton({
+  onClick,
+  showLabel,
+}: {
+  onClick: () => void;
+  showLabel: boolean;
+}) {
+  return (
+    <div className="flex items-center justify-end gap-2">
+      {showLabel && (
+        <span className="rounded-full border border-line bg-card px-3 py-1.5 text-xs font-bold text-fg shadow-md">
+          {feedbackCopy.bubble}
+        </span>
+      )}
+      <button
+        type="button"
+        aria-label={feedbackCopy.bubbleAria}
+        onClick={() => {
+          trackCta("bubble-gop-y", "gop-y");
+          onClick();
+        }}
+        className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-line bg-card text-primary shadow-lg transition hover:-translate-y-0.5 hover:border-primary"
+      >
+        <IconBulb size={20} />
+      </button>
+    </div>
+  );
+}
+
+export function ContactDock({ signedIn }: { signedIn: boolean }) {
   const [open, setOpen] = useState(false);
+  const [feedbackOpen, setFeedbackOpen] = useState(false);
   const dockRef = useRef<HTMLDivElement>(null);
   const channels = contactDock.filter((channel) => channel.href !== null);
 
@@ -54,11 +87,12 @@ export function ContactDock() {
   }, [open]);
 
   return (
-    <div
-      ref={dockRef}
-      data-contact-dock
-      className="fixed bottom-4 right-4 z-40 flex flex-col items-end gap-3 sm:bottom-6 sm:right-6"
-    >
+    <>
+      <div
+        ref={dockRef}
+        data-contact-dock
+        className="fixed bottom-4 right-4 z-40 flex flex-col items-end gap-3 sm:bottom-6 sm:right-6"
+      >
       <ul
         aria-hidden={!open}
         className={`flex flex-col items-end gap-2 ${open ? "" : "pointer-events-none"}`}
@@ -94,6 +128,11 @@ export function ContactDock() {
         })}
       </ul>
 
+      <FeedbackBubbleButton
+        showLabel={open}
+        onClick={() => setFeedbackOpen(true)}
+      />
+
       <button
         type="button"
         aria-expanded={open}
@@ -103,6 +142,13 @@ export function ContactDock() {
       >
         {open ? <IconClose size={23} /> : <IconMessage size={23} />}
       </button>
-    </div>
+      </div>
+      {feedbackOpen && (
+        <FeedbackModal
+          signedIn={signedIn}
+          onClose={() => setFeedbackOpen(false)}
+        />
+      )}
+    </>
   );
 }

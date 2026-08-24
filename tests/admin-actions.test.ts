@@ -5,6 +5,9 @@ const mocks = vi.hoisted(() => ({
   cancelOrder: vi.fn(),
   reconcileDriveFolder: vi.fn(),
   paymentUpdateMany: vi.fn(),
+  feedbackUpdateMany: vi.fn(),
+  feedbackFindUnique: vi.fn(),
+  sendFeedbackResolved: vi.fn(),
   enrollmentFindUnique: vi.fn(),
   revalidatePath: vi.fn(),
   revalidateTag: vi.fn(),
@@ -19,9 +22,16 @@ vi.mock("@/lib/orders", () => ({ cancelOrder: mocks.cancelOrder }));
 vi.mock("@/lib/fulfillment", () => ({
   reconcileDriveFolder: mocks.reconcileDriveFolder,
 }));
+vi.mock("@/lib/email", () => ({
+  sendFeedbackResolvedEmail: mocks.sendFeedbackResolved,
+}));
 vi.mock("@/lib/prisma", () => ({
   prisma: {
     payment: { updateMany: mocks.paymentUpdateMany },
+    feedback: {
+      updateMany: mocks.feedbackUpdateMany,
+      findUnique: mocks.feedbackFindUnique,
+    },
     enrollment: { findUnique: mocks.enrollmentFindUnique },
     course: { update: vi.fn() },
     courseReview: { update: vi.fn() },
@@ -30,6 +40,8 @@ vi.mock("@/lib/prisma", () => ({
 
 import {
   cancelPendingOrder,
+  dismissFeedback,
+  markFeedbackResolved,
   markPaymentReconciled,
   retryDriveAccessForEnrollment,
 } from "@/app/quan-tri/actions";
@@ -108,6 +120,49 @@ describe("action trang quản trị", () => {
         expect(mocks.paymentUpdateMany).not.toHaveBeenCalled();
       },
     );
+  });
+
+  describe("xử lý feedback", () => {
+    it("lần bấm thứ hai không gửi thêm email", async () => {
+      mocks.feedbackUpdateMany
+        .mockResolvedValueOnce({ count: 1 })
+        .mockResolvedValueOnce({ count: 0 });
+      mocks.feedbackFindUnique.mockResolvedValue({
+        kind: "idea",
+        title: "Thêm bộ lọc",
+        user: { name: "Lan", email: "lan@example.com" },
+      });
+      mocks.sendFeedbackResolved.mockResolvedValue({ sent: true });
+
+      await expect(markFeedbackResolved(ID)).resolves.toMatchObject({ ok: true });
+      await expect(markFeedbackResolved(ID)).resolves.toMatchObject({ ok: false });
+
+      expect(mocks.feedbackUpdateMany).toHaveBeenNthCalledWith(1, {
+        where: { id: ID, status: "open" },
+        data: { status: "resolved", resolvedAt: expect.any(Date) },
+      });
+      expect(mocks.sendFeedbackResolved).toHaveBeenCalledTimes(1);
+    });
+
+    it("bỏ qua feedback mà không đọc người gửi hoặc gửi mail", async () => {
+      mocks.feedbackUpdateMany.mockResolvedValue({ count: 1 });
+
+      await expect(dismissFeedback(ID)).resolves.toMatchObject({ ok: true });
+
+      expect(mocks.feedbackUpdateMany).toHaveBeenCalledWith({
+        where: { id: ID, status: "open" },
+        data: { status: "dismissed", resolvedAt: expect.any(Date) },
+      });
+      expect(mocks.feedbackFindUnique).not.toHaveBeenCalled();
+      expect(mocks.sendFeedbackResolved).not.toHaveBeenCalled();
+    });
+
+    it("chặn người không phải admin trước khi ghi trạng thái", async () => {
+      mocks.requireAdmin.mockRejectedValue(new Error("Không có quyền."));
+
+      await expect(markFeedbackResolved(ID)).rejects.toThrow();
+      expect(mocks.feedbackUpdateMany).not.toHaveBeenCalled();
+    });
   });
 
   describe("retryDriveAccessForEnrollment", () => {

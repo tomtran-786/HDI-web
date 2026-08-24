@@ -36,6 +36,7 @@ export type CtaSource =
   | "khoa-hoc-modal"
   | "lien-he"
   | "bubble-lien-he"
+  | "bubble-gop-y"
   | "footer";
 
 /**
@@ -49,7 +50,8 @@ export type CtaTarget =
   | "dang-ky"
   | "email"
   | "phone"
-  | "fanpage";
+  | "fanpage"
+  | "gop-y";
 
 /** Fired when a visitor presses any call to action. */
 export function trackCta(

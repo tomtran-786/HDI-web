@@ -10,11 +10,19 @@ import {
   orderStatusTone,
 } from "@/content/checkout";
 import { serviceKindLabel } from "@/content/ai-check";
+import {
+  feedbackKindLabel,
+  feedbackStatusLabel,
+  feedbackStatusTone,
+} from "@/content/feedback";
 import { Section, SectionHeading } from "@/components/ui/section";
 import { Badge } from "@/components/ui/badge";
 import { Stars } from "@/components/ui/stars";
+import { renderMarkdown } from "@/lib/markdown-lite";
 import {
   cancelPendingOrder,
+  dismissFeedback,
+  markFeedbackResolved,
   markPaymentReconciled,
   moderateReview,
   retryDriveAccessForEnrollment,
@@ -88,6 +96,7 @@ export default async function AdminPage({
     courses,
     reviewPayments,
     reviews,
+    feedbacks,
     serviceOrders,
     missingDriveCount,
     occupiedSeats,
@@ -189,6 +198,21 @@ export default async function AdminPage({
         course: { select: { slug: true } },
       },
     }),
+    prisma.feedback.findMany({
+      where: inRange("createdAt"),
+      orderBy: [{ status: "asc" }, { createdAt: "desc" }],
+      take: 50,
+      select: {
+        id: true,
+        kind: true,
+        title: true,
+        body: true,
+        status: true,
+        pageUrl: true,
+        createdAt: true,
+        user: { select: { name: true, email: true } },
+      },
+    }),
     prisma.serviceOrder.findMany({
       where: inRange("createdAt"),
       orderBy: { createdAt: "desc" },
@@ -216,6 +240,7 @@ export default async function AdminPage({
 
   const awaitingPayment = orders.filter((o) => o.status === "pending");
   const awaitingReview = reviews.filter((r) => r.status === "pending");
+  const awaitingFeedback = feedbacks.filter((feedback) => feedback.status === "open");
   const missingDriveIds = new Set(
     enrollments
       .filter((e) => hasLiveAccess(e, now))
@@ -234,7 +259,7 @@ export default async function AdminPage({
         // lọc — nó là tình trạng "ngay lúc này", lọc theo ngày sẽ làm nó vô
         // nghĩa. Ba con số còn lại đếm trong phạm vi đang lọc, nên câu chữ phải
         // nói ra, kẻo hai loại số trông như cùng một loại.
-        subtitle={`${awaitingPayment.length} đơn chờ thanh toán · ${reviewPayments.length} giao dịch cần đối soát · ${awaitingReview.length} đánh giá chờ duyệt${
+        subtitle={`${awaitingPayment.length} đơn chờ thanh toán · ${reviewPayments.length} giao dịch cần đối soát · ${awaitingReview.length} đánh giá chờ duyệt · ${awaitingFeedback.length} góp ý chờ xử lý${
           filtering ? " (trong khoảng đang lọc)" : ""
         } · ${missingDriveCount} quyền Drive đang thiếu trên toàn hệ thống.`}
       />
@@ -356,6 +381,68 @@ export default async function AdminPage({
                     label="Hủy đơn"
                     confirm={`Hủy đơn #${order.code}? Ghi danh đang giữ chỗ sẽ được thả ra.`}
                   />
+                )}
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
+
+      <h3 className="mt-12 mb-4 text-sm font-bold uppercase tracking-[0.16em] text-fg-subtle">
+        Góp ý &amp; báo lỗi
+      </h3>
+      {feedbacks.length === 0 ? (
+        <p className="rounded-card border border-line bg-card p-6 text-sm text-fg-muted">
+          Chưa có góp ý hoặc báo lỗi nào.
+        </p>
+      ) : (
+        <ul className="space-y-3">
+          {feedbacks.map((feedback) => (
+            <li
+              key={feedback.id}
+              className="rounded-card border border-line bg-card p-5"
+            >
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Badge tone={feedback.kind === "bug" ? "danger" : "cool"}>
+                      {feedbackKindLabel[feedback.kind]}
+                    </Badge>
+                    <Badge tone={feedbackStatusTone[feedback.status] ?? "cool"}>
+                      {feedbackStatusLabel[feedback.status] ?? feedback.status}
+                    </Badge>
+                  </div>
+                  <h4 className="mt-3 text-base font-bold tracking-tight text-fg">
+                    {feedback.title}
+                  </h4>
+                  <p className="mt-1 break-all text-sm text-fg-muted">
+                    {feedback.user.name ?? "—"} · {feedback.user.email} ·{" "}
+                    {formatDateTime(feedback.createdAt)}
+                  </p>
+                  {feedback.pageUrl && (
+                    <p className="mt-1 text-xs text-fg-subtle">
+                      Trang gửi: <code>{feedback.pageUrl}</code>
+                    </p>
+                  )}
+                  <div className="mt-4 rounded-card border border-line bg-bg-soft p-4">
+                    {renderMarkdown(feedback.body)}
+                  </div>
+                </div>
+
+                {feedback.status === "open" && (
+                  <div className="flex shrink-0 flex-wrap items-start gap-2 sm:max-w-64 sm:justify-end">
+                    <AdminActionButton
+                      action={markFeedbackResolved}
+                      id={feedback.id}
+                      label="Đánh dấu đã xử lý"
+                    />
+                    <AdminActionButton
+                      action={dismissFeedback}
+                      id={feedback.id}
+                      label="Bỏ qua"
+                      confirm={`Bỏ qua góp ý “${feedback.title}”? Người gửi sẽ không nhận email đã xử lý.`}
+                    />
+                  </div>
                 )}
               </div>
             </li>

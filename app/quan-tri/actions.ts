@@ -7,6 +7,7 @@ import { requireAdmin } from "@/lib/admin";
 import { reconcileDriveFolder } from "@/lib/fulfillment";
 import { cancelOrder } from "@/lib/orders";
 import { prisma } from "@/lib/prisma";
+import { sendFeedbackResolvedEmail } from "@/lib/email";
 import type { CourseStatus, ReviewStatus } from "@/lib/generated/prisma/enums";
 
 // There is deliberately no `markPaid` here. Confirming payment is the payment
@@ -109,6 +110,59 @@ export async function markPaymentReconciled(paymentId: unknown) {
   return done.count > 0
     ? { ok: true, message: "Đã đánh dấu giao dịch là đã đối soát." }
     : { ok: false, message: "Giao dịch này đã được đối soát trước đó." };
+}
+
+async function setFeedbackStatus(
+  feedbackId: unknown,
+  next: "resolved" | "dismissed",
+) {
+  await requireAdmin();
+  const id = parseId(feedbackId);
+  if (!id) return { ok: false, message: "Mã góp ý không hợp lệ." };
+
+  // Cửa idempotency nằm trong chính câu UPDATE: hai request cùng bấm một dòng
+  // không thể cùng đổi `open`, nên cũng không thể cùng gửi hai lá thư.
+  const done = await prisma.feedback.updateMany({
+    where: { id, status: "open" },
+    data: { status: next, resolvedAt: new Date() },
+  });
+  if (done.count === 0) {
+    return { ok: false, message: "Góp ý này đã được xử lý trước đó." };
+  }
+
+  if (next === "resolved") {
+    const feedback = await prisma.feedback.findUnique({
+      where: { id },
+      select: {
+        kind: true,
+        title: true,
+        user: { select: { name: true, email: true } },
+      },
+    });
+    if (feedback) {
+      await sendFeedbackResolvedEmail({
+        to: feedback.user.email,
+        name: feedback.user.name,
+        kind: feedback.kind,
+        title: feedback.title,
+      }).catch((error) =>
+        console.error("[feedback] Không gửi được thư đã xử lý:", error),
+      );
+    }
+  }
+
+  revalidatePath("/quan-tri");
+  return next === "resolved"
+    ? { ok: true, message: "Đã đánh dấu góp ý là đã xử lý." }
+    : { ok: true, message: "Đã bỏ qua góp ý." };
+}
+
+export async function markFeedbackResolved(id: unknown) {
+  return setFeedbackStatus(id, "resolved");
+}
+
+export async function dismissFeedback(id: unknown) {
+  return setFeedbackStatus(id, "dismissed");
 }
 
 /**

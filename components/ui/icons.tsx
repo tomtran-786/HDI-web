@@ -286,3 +286,84 @@ export function IconClock({ className, size = 18 }: IconProps) {
     </svg>
   );
 }
+
+export function IconBug({ className, size = 20 }: IconProps) {
+  return (
+    <svg {...base(size)} className={className} aria-hidden>
+      <path d="m8 2 1.4 2.1M16 2l-1.4 2.1M3 13h4M17 13h4M5 8l2 1M19 8l-2 1M5 18l2-1M19 18l-2-1" />
+      <rect x="7" y="5" width="10" height="15" rx="5" />
+      <path d="M9 10h6M12 10v10" />
+    </svg>
+  );
+}
+
+export function IconBulb({ className, size = 20 }: IconProps) {
+  return (
+    <svg {...base(size)} className={className} aria-hidden>
+      <path d="M9 18h6M10 22h4" />
+      <path d="M8.5 15.5A7 7 0 1 1 15.5 15.5c-.9.7-1.3 1.4-1.5 2.5h-4c-.2-1.1-.6-1.8-1.5-2.5z" />
+    </svg>
+  );
+}
+
+export function IconHeading({ className, size = 18 }: IconProps) {
+  return (
+    <svg {...base(size)} className={className} aria-hidden>
+      <path d="M4 5v14M14 5v14M4 12h10M18 12h2l-2 3h3" />
+    </svg>
+  );
+}
+
+export function IconParagraph({ className, size = 18 }: IconProps) {
+  return (
+    <svg {...base(size)} className={className} aria-hidden>
+      <path d="M13 5v14M17 5v14M13 5H9a4 4 0 0 0 0 8h4" />
+    </svg>
+  );
+}
+
+export function IconQuote({ className, size = 18 }: IconProps) {
+  return (
+    <svg {...base(size)} className={className} aria-hidden>
+      <path d="M9 10H4a5 5 0 0 1 5-5v9a5 5 0 0 1-5 5M20 10h-5a5 5 0 0 1 5-5v9a5 5 0 0 1-5 5" />
+    </svg>
+  );
+}
+
+export function IconList({ className, size = 18 }: IconProps) {
+  return (
+    <svg {...base(size)} className={className} aria-hidden>
+      <path d="M8 6h13M8 12h13M8 18h13" />
+      <circle cx="3.5" cy="6" r=".7" fill="currentColor" stroke="none" />
+      <circle cx="3.5" cy="12" r=".7" fill="currentColor" stroke="none" />
+      <circle cx="3.5" cy="18" r=".7" fill="currentColor" stroke="none" />
+    </svg>
+  );
+}
+
+export function IconOrderedList({ className, size = 18 }: IconProps) {
+  return (
+    <svg {...base(size)} className={className} aria-hidden>
+      <path d="M9 6h12M9 12h12M9 18h12M3 5h1v3M3 11h2l-2 3h2M3 17h2v3H3" />
+    </svg>
+  );
+}
+
+export function IconLink({ className, size = 18 }: IconProps) {
+  return (
+    <svg {...base(size)} className={className} aria-hidden>
+      <path d="M10 13a5 5 0 0 0 7.1.1l2-2a5 5 0 0 0-7.1-7.1l-1.1 1.1" />
+      <path d="M14 11a5 5 0 0 0-7.1-.1l-2 2A5 5 0 0 0 12 20l1.1-1.1" />
+    </svg>
+  );
+}
+
+export function IconImage({ className, size = 18 }: IconProps) {
+  return (
+    <svg {...base(size)} className={className} aria-hidden>
+      <rect x="3" y="4" width="18" height="16" rx="2" />
+      <circle cx="9" cy="9" r="2" />
+      <path d="m21 15-5-5L5 20" />
+    </svg>
+  );
+}

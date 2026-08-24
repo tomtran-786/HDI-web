@@ -7,13 +7,18 @@ vi.mock("resend", () => ({
   },
 }));
 
-import { sendEmail } from "@/lib/email";
+import {
+  sendEmail,
+  sendFeedbackReceivedEmail,
+  sendFeedbackResolvedEmail,
+} from "@/lib/email";
 
 describe("Resend boundary", () => {
   beforeEach(() => {
     send.mockReset();
     process.env.RESEND_API_KEY = "test-key";
     process.env.EMAIL_FROM = "HDI <no-reply@hdi.test>";
+    send.mockResolvedValue({ data: { id: "email-1" }, error: null });
   });
 
   it("checks Resend's returned error instead of assuming no throw means success", async () => {
@@ -29,5 +34,42 @@ describe("Resend boundary", () => {
       sendEmail({ to: "student@example.com", subject: "Test", html: "<p>Test</p>" }),
     ).resolves.toEqual({ sent: true, id: "email-1" });
   });
-});
 
+  it("gửi thư xác nhận feedback, escape tiêu đề và không in CTA/cảnh báo", async () => {
+    await sendFeedbackReceivedEmail({
+      to: "student@example.com",
+      name: "Lan",
+      kind: "bug",
+      title: '<script>alert("x")</script>',
+    });
+
+    expect(send).toHaveBeenCalledWith(
+      expect.objectContaining({
+        to: "student@example.com",
+        subject: "Đã nhận feedback của bạn — HDI Research Center",
+        html: expect.stringContaining("&lt;script&gt;alert(&quot;x&quot;)&lt;/script&gt;"),
+      }),
+    );
+    const html = send.mock.calls[0][0].html as string;
+    expect(html).toContain("Báo lỗi");
+    expect(html).not.toContain("Nếu bạn không thực hiện yêu cầu này");
+    expect(html).not.toContain("<a href=");
+  });
+
+  it("gửi thư báo feedback đã xử lý với đúng loại và tiêu đề", async () => {
+    await sendFeedbackResolvedEmail({
+      to: "student@example.com",
+      name: null,
+      kind: "idea",
+      title: "Thêm bộ lọc",
+    });
+
+    expect(send).toHaveBeenCalledWith(
+      expect.objectContaining({
+        subject: "Feedback của bạn đã được xử lý — HDI Research Center",
+        html: expect.stringContaining("Thêm bộ lọc"),
+      }),
+    );
+    expect(send.mock.calls[0][0].html).toContain("Góp ý");
+  });
+});

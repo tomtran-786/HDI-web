@@ -68,7 +68,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
       />
       <main className="flex-1">{children}</main>
       <SiteFooter />
-      <ContactDock />
+      <ContactDock signedIn={Boolean(session?.user?.id)} />
     </CartProvider>
   );
 

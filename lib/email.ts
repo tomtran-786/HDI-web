@@ -1,4 +1,6 @@
 import { Resend } from "resend";
+import { feedbackKindLabel } from "@/content/feedback";
+import type { FeedbackKindInput } from "./feedback-input";
 import { appUrl } from "./app-url";
 
 // Re-exported so callers that already reach for the email module — and the
@@ -48,14 +50,22 @@ export async function sendEmail(input: SendEmailInput) {
  * (Plan.MD §2 — one palette only). An email is the first HDI surface a student
  * ever sees, so it does not get its own colour scheme.
  */
-function emailShell(name: string, body: string, action: string, href: string) {
+function emailShell(
+  name: string,
+  body: string,
+  cta?: { action: string; href: string },
+) {
   return `
     <div style="font-family:Arial,sans-serif;max-width:600px;margin:auto;padding:24px;color:#172636">
       <h2 style="color:#0c498f">HDI Research Center</h2>
       <p>Xin chào <strong>${escapeHtml(name)}</strong>,</p>
       ${body}
-      <p style="margin:28px 0"><a href="${href}" style="background:#0c498f;color:#ffffff;padding:12px 20px;border-radius:999px;text-decoration:none;font-weight:700">${action}</a></p>
-      <p style="font-size:13px;color:#6b7785">Nếu bạn không thực hiện yêu cầu này, hãy bỏ qua email.</p>
+      ${
+        cta
+          ? `<p style="margin:28px 0"><a href="${cta.href}" style="background:#0c498f;color:#ffffff;padding:12px 20px;border-radius:999px;text-decoration:none;font-weight:700">${cta.action}</a></p>
+      <p style="font-size:13px;color:#6b7785">Nếu bạn không thực hiện yêu cầu này, hãy bỏ qua email.</p>`
+          : ""
+      }
     </div>`;
 }
 
@@ -79,8 +89,7 @@ export function sendVerificationEmail(input: {
       // của chủ hộp thư — xem chú thích ở registerAccount.
       "<p>Hãy xác nhận địa chỉ email để kích hoạt đăng nhập bằng mật khẩu. Liên kết có hiệu lực trong <strong>24 giờ</strong>.</p>" +
         "<p><strong>Nếu bạn không tạo tài khoản này, đừng bấm nút bên dưới.</strong> Bấm vào đó sẽ kích hoạt tài khoản cùng mật khẩu do người đã đăng ký đặt.</p>",
-      "Xác thực email",
-      href,
+      { action: "Xác thực email", href },
     ),
   });
 }
@@ -101,8 +110,42 @@ export function sendPasswordResetEmail(input: {
     html: emailShell(
       input.name,
       "<p>Bạn vừa yêu cầu đặt lại mật khẩu. Liên kết có hiệu lực trong <strong>30 phút</strong> và chỉ dùng được một lần.</p>",
-      "Đặt lại mật khẩu",
-      href,
+      { action: "Đặt lại mật khẩu", href },
+    ),
+  });
+}
+
+type FeedbackEmailInput = {
+  to: string;
+  name: string | null;
+  kind: FeedbackKindInput;
+  title: string;
+};
+
+function feedbackSummary(input: FeedbackEmailInput) {
+  return `<p><strong>Loại:</strong> ${feedbackKindLabel[input.kind]}<br><strong>Tiêu đề:</strong> ${escapeHtml(input.title)}</p>`;
+}
+
+export function sendFeedbackReceivedEmail(input: FeedbackEmailInput) {
+  return sendEmail({
+    to: input.to,
+    subject: "Đã nhận feedback của bạn — HDI Research Center",
+    html: emailShell(
+      input.name?.trim() || "bạn",
+      "<p>Cảm ơn bạn đã gửi phản hồi. HDI đã ghi nhận nội dung dưới đây và sẽ xem xét sớm nhất có thể.</p>" +
+        feedbackSummary(input),
+    ),
+  });
+}
+
+export function sendFeedbackResolvedEmail(input: FeedbackEmailInput) {
+  return sendEmail({
+    to: input.to,
+    subject: "Feedback của bạn đã được xử lý — HDI Research Center",
+    html: emailShell(
+      input.name?.trim() || "bạn",
+      "<p>HDI xin báo rằng phản hồi dưới đây đã được đánh dấu là đã xử lý.</p>" +
+        feedbackSummary(input),
     ),
   });
 }
