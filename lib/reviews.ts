@@ -33,31 +33,23 @@ export type PublicReview = {
 const ANONYMOUS = "Học viên";
 
 /**
- * Điểm trung bình và số lượt của từng khóa ĐÃ DUYỆT, khóa theo `slug`.
+ * Điểm trung bình, số lượt, và năm đánh giá mới nhất — trong MỘT truy vấn.
  *
- * Raw SQL vì phép tính là một AVG có GROUP BY kèm join sang `courses` để lấy
- * slug — `groupBy` của Prisma trả về `course_id`, và đổi id sang slug ở tầng JS
- * là thêm một truy vấn nữa cho đúng một cột.
+ * Trước đây đây là hai truy vấn riêng trên cùng bảng `course_reviews`. Truy vấn
+ * rẻ, nhưng mỗi truy vấn là một lượt lấy kết nối, và lấy kết nối mới chính là
+ * thứ đắt trên serverless (xem khối chú thích đầu lib/prisma.ts).
+ *
+ * `avg`/`count` là window function trên NGUYÊN partition, được tính TRƯỚC khi
+ * `rn <= 5` cắt bớt — nên con số trung bình vẫn là của toàn bộ đánh giá đã
+ * duyệt, không phải của riêng năm dòng hiện ra.
+ *
+ * Không bọc cache ở đây: hai hàm bên dưới và `landingCourseData` trong
+ * course-sales.ts mới là chỗ quyết định vòng đời cache.
  */
-export const publishedSummaries = unstable_cache(async (): Promise<Record<string, ReviewSummary>> => {
-  const rows = await prisma.$queryRaw<
-    { slug: string; average: number; count: bigint }[]
-  >`
-    SELECT c.slug                        AS slug,
-           avg(r.rating)::float8         AS average,
-           count(*)::bigint              AS count
-      FROM course_reviews r
-      JOIN courses c ON c.id = r.course_id
-     WHERE r.status = 'published'::review_status
-     GROUP BY c.slug`;
-
-  return Object.fromEntries(
-    rows.map((row) => [row.slug, { average: row.average, count: Number(row.count) }]),
-  );
-}, ["published-review-summaries"], { tags: [REVIEWS_TAG] });
-
-/** Các đánh giá đã duyệt, khóa theo `slug`, mới nhất trước. */
-export const publishedReviews = unstable_cache(async (): Promise<Record<string, PublicReview[]>> => {
+export async function readPublishedReviews(): Promise<{
+  summaries: Record<string, ReviewSummary>;
+  reviews: Record<string, PublicReview[]>;
+}> {
   const rows = await prisma.$queryRaw<
     {
       id: string;
@@ -66,6 +58,8 @@ export const publishedReviews = unstable_cache(async (): Promise<Record<string, 
       createdAt: Date;
       author: string | null;
       slug: string;
+      average: number | null;
+      total: bigint | null;
     }[]
   >`
     SELECT r.id,
@@ -73,12 +67,16 @@ export const publishedReviews = unstable_cache(async (): Promise<Record<string, 
            r.comment,
            r.created_at AS "createdAt",
            u.name       AS author,
-           c.slug       AS slug
+           c.slug       AS slug,
+           r.average    AS average,
+           r.total      AS total
       FROM (
             SELECT id, rating, comment, created_at, user_id, course_id,
                    row_number() OVER (
                      PARTITION BY course_id ORDER BY created_at DESC
-                   ) AS rn
+                   ) AS rn,
+                   (avg(rating) OVER (PARTITION BY course_id))::float8 AS average,
+                   (count(*)    OVER (PARTITION BY course_id))         AS total
               FROM course_reviews
              WHERE status = 'published'::review_status
            ) r
@@ -87,9 +85,11 @@ export const publishedReviews = unstable_cache(async (): Promise<Record<string, 
      WHERE r.rn <= 5
      ORDER BY c.slug, r.created_at DESC`;
 
-  const bySlug: Record<string, PublicReview[]> = {};
+  const summaries: Record<string, ReviewSummary> = {};
+  const reviews: Record<string, PublicReview[]> = {};
+
   for (const row of rows) {
-    const list = bySlug[row.slug] ?? [];
+    const list = reviews[row.slug] ?? [];
     list.push({
       id: row.id,
       rating: row.rating,
@@ -99,10 +99,35 @@ export const publishedReviews = unstable_cache(async (): Promise<Record<string, 
       // thẳng ra trang công khai, nơi mọi thứ nằm trong view-source.
       author: row.author?.trim() || ANONYMOUS,
     });
-    bySlug[row.slug] = list;
+    reviews[row.slug] = list;
+
+    // Mọi dòng cùng một khóa mang cùng cặp average/total, nên ghi đè là vô hại.
+    // `total` về từ Postgres dưới dạng bigint — Number() ở đây chứ không phải ở
+    // chỗ đọc, vì unstable_cache tuần tự hóa bằng JSON và JSON không có bigint.
+    summaries[row.slug] = {
+      average: row.average ?? 0,
+      count: Number(row.total ?? 0),
+    };
   }
-  return bySlug;
-}, ["published-reviews"], { tags: [REVIEWS_TAG] });
+
+  return { summaries, reviews };
+}
+
+/** Điểm trung bình và số lượt của từng khóa ĐÃ DUYỆT, khóa theo `slug`. */
+export const publishedSummaries = unstable_cache(
+  async (): Promise<Record<string, ReviewSummary>> =>
+    (await readPublishedReviews()).summaries,
+  ["published-review-summaries"],
+  { tags: [REVIEWS_TAG] },
+);
+
+/** Các đánh giá đã duyệt, khóa theo `slug`, mới nhất trước. */
+export const publishedReviews = unstable_cache(
+  async (): Promise<Record<string, PublicReview[]>> =>
+    (await readPublishedReviews()).reviews,
+  ["published-reviews"],
+  { tags: [REVIEWS_TAG] },
+);
 
 /**
  * Người này đã trả tiền cho khóa này chưa.

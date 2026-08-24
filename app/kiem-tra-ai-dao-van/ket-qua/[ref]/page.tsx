@@ -115,7 +115,14 @@ export default async function ServiceOrderResultPage({
               <IconArrow size={16} />
             </a>
           )}
-          {view === "open" && <PaymentPoll />}
+          {view === "open" && (
+            <PaymentPoll
+              statusUrl={`/api/trang-thai-don?dichVu=${ref}`}
+              // Cùng tham số `false` mà endpoint dùng: cờ `huy=1` nằm
+              // trên URL của trình duyệt, không phải trạng thái server.
+              banDau={serviceOrderView(order, new Date(), false)}
+            />
+          )}
           {view === "closed" && (
             <Link
               href="/kiem-tra-ai-dao-van"

@@ -1,6 +1,6 @@
 {
   "framework": "nextjs",
-  "buildCommand": "next build",
+  "buildCommand": "node scripts/check-migrations.mjs && next build",
   "regions": [
     "icn1"
   ],

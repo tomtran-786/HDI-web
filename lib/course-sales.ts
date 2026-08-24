@@ -1,7 +1,12 @@
 import { unstable_cache } from "next/cache";
-import { COURSES_TAG } from "./cache-tags";
+import { COURSES_TAG, REVIEWS_TAG } from "./cache-tags";
 import type { PublicAvailability } from "./course-availability";
 import { prisma } from "./prisma";
+import {
+  readPublishedReviews,
+  type PublicReview,
+  type ReviewSummary,
+} from "./reviews";
 import type { EnrollmentStatus } from "./generated/prisma/enums";
 
 export type { PublicAvailability } from "./course-availability";
@@ -89,8 +94,8 @@ export const COURSE_PUBLIC = {
  * KHÔNG cache. Hàm này nuôi `loadCourseCatalog`, tức con số học viên nhìn thấy
  * trên nút "Thanh toán". `createOrder` đọc `price_vnd` sống dưới FOR UPDATE, nên
  * một bản giá cũ ở đây là một hóa đơn sai chứ không phải một lỗi hiển thị.
- * Trang chủ vẫn không chạm database mỗi request vì `publicAvailability` bọc cả
- * lời gọi này trong cache riêng của nó.
+ * Trang chủ vẫn không chạm database mỗi request vì `landingCourseData` bọc cả
+ * lời gọi này trong cache của nó.
  */
 export async function configuredCourses() {
   return prisma.course.findMany({ orderBy: { createdAt: "asc" }, select: COURSE_PUBLIC });
@@ -102,7 +107,7 @@ export async function configuredCourses() {
  * This may trail seat changes by up to five minutes. `createOrder` locks and
  * recounts the course rows, so it remains the authoritative purchase gate.
  */
-export const publicAvailability = unstable_cache(async () => {
+async function computeAvailability() {
   const courses = await configuredCourses();
   const occupied = await seatsTaken(courses.map((course) => course.id));
   return Object.fromEntries(
@@ -115,4 +120,42 @@ export const publicAvailability = unstable_cache(async () => {
           : "buyable",
     ]),
   ) as Record<string, PublicAvailability>;
-}, ["public-course-availability"], { tags: [COURSES_TAG], revalidate: 300 });
+}
+
+export const publicAvailability = unstable_cache(
+  computeAvailability,
+  ["public-course-availability"],
+  { tags: [COURSES_TAG], revalidate: 300 },
+);
+
+/**
+ * Mọi thứ trang chủ cần từ database, trong MỘT ô cache.
+ *
+ * Trước đây <FeaturedCourse /> gọi ba hàm cache riêng. Ba ô cache nghĩa là ba
+ * lần tra, và mỗi lần trượt là một lượt đi lấy kết nối — thứ đắt nhất trên
+ * serverless (xem khối chú thích đầu lib/prisma.ts). Gộp lại thì cả trang chủ
+ * trượt cùng lúc hoặc trúng cùng lúc, và lần trượt đó tốn đúng một lượt kết nối.
+ *
+ * Mang CẢ HAI tag: sửa khóa học (COURSES_TAG) hay duyệt đánh giá (REVIEWS_TAG)
+ * đều phải làm ô này bay. Các action ở app/quan-tri và app/tai-khoan đã gọi
+ * revalidateTag cho đúng tag của mình, nên không cần đổi gì thêm ở đó.
+ *
+ * `revalidate: 300` giữ nguyên ngưỡng cũ của availability: số ghế hiện trên thẻ
+ * có thể trễ tối đa năm phút, còn `createOrder` mới là cửa chốt — nó khóa dòng
+ * và đếm lại ghế trước khi ghi bất cứ thứ gì.
+ */
+export const landingCourseData = unstable_cache(
+  async (): Promise<{
+    summaries: Record<string, ReviewSummary>;
+    reviews: Record<string, PublicReview[]>;
+    availability: Record<string, PublicAvailability>;
+  }> => {
+    const [published, availability] = await Promise.all([
+      readPublishedReviews(),
+      computeAvailability(),
+    ]);
+    return { ...published, availability };
+  },
+  ["landing-course-data"],
+  { tags: [COURSES_TAG, REVIEWS_TAG], revalidate: 300 },
+);

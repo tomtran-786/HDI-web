@@ -48,7 +48,12 @@ export default async function PaymentResultPage({
         <Link className="inline-flex rounded-full bg-primary px-6 py-3 text-sm font-bold text-primary-fg" href={`/tai-khoan/don-hang/${order.code}`}>
           Xem đơn #{order.code}
         </Link>
-        {!paid && <PaymentPoll />}
+        {!paid && (
+          <PaymentPoll
+            statusUrl={`/api/trang-thai-don?donHang=${order.code}`}
+            banDau={order.status}
+          />
+        )}
       </div>
     </Section>
   );

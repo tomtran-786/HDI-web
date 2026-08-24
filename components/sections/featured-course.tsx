@@ -1,11 +1,6 @@
 import { courses, coursesIntro } from "@/content/course";
-import { publicAvailability } from "@/lib/course-sales";
-import {
-  publishedReviews,
-  publishedSummaries,
-  type PublicReview,
-  type ReviewSummary,
-} from "@/lib/reviews";
+import { landingCourseData, type PublicAvailability } from "@/lib/course-sales";
+import type { PublicReview, ReviewSummary } from "@/lib/reviews";
 import { CourseList } from "../course-list";
 import { Reveal } from "../ui/reveal";
 import { Section, SectionHeading } from "../ui/section";
@@ -22,18 +17,17 @@ import { Section, SectionHeading } from "../ui/section";
  */
 async function loadCourseData() {
   try {
-    const [summaries, reviews, availability] = await Promise.all([
-      publishedSummaries(),
-      publishedReviews(),
-      publicAvailability(),
-    ]);
-    return { summaries, reviews, availability };
+    // Một ô cache duy nhất, nên một lượt lấy kết nối duy nhất khi trượt cache.
+    return await landingCourseData();
   } catch (error) {
     console.error("[khoa-hoc] Không đọc được dữ liệu công khai:", error);
+    // Record rỗng chứ không phải null: mọi lần tra đều ra `undefined`, và
+    // cardPresentation() đọc `undefined` là "không biết" rồi fail-open, thay vì
+    // đóng sạch cửa hàng vì một cú chớp của Supabase.
     return {
       summaries: {} as Record<string, ReviewSummary>,
       reviews: {} as Record<string, PublicReview[]>,
-      availability: null,
+      availability: {} as Record<string, PublicAvailability>,
     };
   }
 }

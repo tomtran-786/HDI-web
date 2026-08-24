@@ -9,12 +9,13 @@ vi.mock("@/lib/prisma", () => ({
   prisma: { $queryRaw: mocks.queryRaw },
 }));
 
-import { publishedReviews } from "@/lib/reviews";
+import { publishedReviews, readPublishedReviews } from "@/lib/reviews";
 
 function review(
   id: string,
   slug: string,
   author: string | null = `Học viên ${id}`,
+  aggregate: { average?: number; total?: bigint } = {},
 ) {
   return {
     id,
@@ -23,6 +24,10 @@ function review(
     comment: `Nhận xét ${id}`,
     createdAt: new Date(Date.UTC(2026, 7, 24)),
     author,
+    // Window function trên nguyên partition — Postgres lặp lại cùng một cặp
+    // giá trị này trên mọi dòng của cùng một khóa.
+    average: aggregate.average ?? 5,
+    total: aggregate.total ?? BigInt(1),
   };
 }
 
@@ -76,5 +81,42 @@ describe("đánh giá công khai trên thẻ khóa học", () => {
 
     expect(result["course-a"][0].createdAt).toBeTypeOf("number");
     expect(result["course-a"][0].createdAt).toBe(Date.UTC(2026, 7, 24));
+  });
+
+  it("lấy cả điểm trung bình lẫn danh sách trong đúng một truy vấn", async () => {
+    mocks.queryRaw.mockResolvedValue([
+      review("a-1", "course-a", null, { average: 4.5, total: BigInt(12) }),
+      review("a-2", "course-a", null, { average: 4.5, total: BigInt(12) }),
+    ]);
+
+    const { summaries, reviews } = await readPublishedReviews();
+
+    expect(mocks.queryRaw).toHaveBeenCalledTimes(1);
+    expect(reviews["course-a"]).toHaveLength(2);
+    expect(summaries["course-a"]).toEqual({ average: 4.5, count: 12 });
+  });
+
+  it("đếm theo window function chứ không theo số dòng đã bị rn <= 5 cắt", async () => {
+    // Một khóa có 30 đánh giá: truy vấn chỉ trả về 5 dòng, nhưng cột `total` do
+    // count() OVER (PARTITION BY ...) tính trước khi cắt, nên vẫn là 30. Nếu
+    // đếm bằng rows.length thì con số trên thẻ khóa học sẽ đứng yên ở 5.
+    mocks.queryRaw.mockResolvedValue(
+      Array.from({ length: 5 }, (_, index) =>
+        review(`r-${index}`, "course-a", null, { average: 4.2, total: BigInt(30) }),
+      ),
+    );
+
+    const { summaries } = await readPublishedReviews();
+
+    expect(summaries["course-a"].count).toBe(30);
+  });
+
+  it("trả về object rỗng khi chưa có đánh giá nào được duyệt", async () => {
+    mocks.queryRaw.mockResolvedValue([]);
+
+    const { summaries, reviews } = await readPublishedReviews();
+
+    expect(summaries).toEqual({});
+    expect(reviews).toEqual({});
   });
 });
