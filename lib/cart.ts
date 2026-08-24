@@ -57,6 +57,10 @@ export async function writeCartIds(ids: string[]) {
  * Build the complete shopping catalog without ever selecting course secrets.
  * Authored content determines which products may appear; the database decides
  * whether they can be bought and at what price.
+ *
+ * `configuredCourses()` cố ý đọc sống mỗi lượt. Đây là giá và sức chứa hiện
+ * ngay trước nút thanh toán, nên không được dùng cache marketing ở giữa con số
+ * học viên đồng ý và con số `createOrder` khóa dòng rồi gửi sang PayOS.
  */
 export async function loadCourseCatalog(userId: string): Promise<CatalogCourse[]> {
   const configured = await configuredCourses();

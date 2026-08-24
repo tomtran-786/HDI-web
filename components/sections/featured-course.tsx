@@ -1,5 +1,5 @@
 import { courses, coursesIntro } from "@/content/course";
-import { publicAvailability, type PublicAvailability } from "@/lib/course-sales";
+import { publicAvailability } from "@/lib/course-sales";
 import {
   publishedReviews,
   publishedSummaries,
@@ -17,7 +17,8 @@ import { Section, SectionHeading } from "../ui/section";
  * bằng fetch từ trình duyệt, còn mọi thứ hiển thị đều đến từ content/. Truy vấn
  * này là lần đầu tiên trang bán hàng phụ thuộc vào Postgres, nên nó phải phụ
  * thuộc theo kiểu hỏng-cũng-không-sao: Supabase trục trặc thì mất dữ liệu xã
- * hội và thẻ chuyển sang trạng thái chưa mở, chứ không làm trắng trang giới thiệu.
+ * hội và availability badge, chứ không làm trắng trang giới thiệu hoặc đóng
+ * nhầm toàn bộ cửa hàng.
  */
 async function loadCourseData() {
   try {
@@ -32,7 +33,7 @@ async function loadCourseData() {
     return {
       summaries: {} as Record<string, ReviewSummary>,
       reviews: {} as Record<string, PublicReview[]>,
-      availability: {} as Record<string, PublicAvailability>,
+      availability: null,
     };
   }
 }

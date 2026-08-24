@@ -6,7 +6,7 @@ import { aiCheck, serviceKindLabel } from "@/content/ai-check";
 import { orderStatusLabel, orderStatusTone } from "@/content/checkout";
 import { links } from "@/content/site";
 import { formatVnd } from "@/lib/format";
-import { findServiceOrder } from "@/lib/service-orders";
+import { findServiceOrder, serviceOrderView } from "@/lib/service-orders";
 import { Badge } from "@/components/ui/badge";
 import { Section, SectionHeading } from "@/components/ui/section";
 import { IconArrow, IconMessage } from "@/components/ui/icons";
@@ -41,31 +41,35 @@ export default async function ServiceOrderResultPage({
   if (!order) notFound();
 
   const kindLabel = serviceKindLabel(order.kind);
-  const paid = order.status === "paid";
-  const open = order.status === "pending" && order.expiresAt > new Date();
+  const view = serviceOrderView(order, new Date(), cancelledCheckout);
+  let title: string;
+  let subtitle: string;
+  switch (view) {
+    case "paid":
+      title = aiCheck.result.paidTitle;
+      subtitle = aiCheck.result.paidBody;
+      break;
+    case "cancelled_checkout":
+      title = aiCheck.result.cancelledTitle;
+      subtitle = aiCheck.result.cancelledBody;
+      break;
+    case "open":
+      title = aiCheck.result.pendingTitle;
+      subtitle = aiCheck.result.pendingBody;
+      break;
+    case "closed":
+      title = aiCheck.result.closedTitle;
+      subtitle = aiCheck.result.closedBody;
+      break;
+  }
+  const checkoutOpen = view === "open" || view === "cancelled_checkout";
 
   return (
     <Section soft>
       <SectionHeading
         eyebrow={aiCheck.result.eyebrow}
-        title={
-          cancelledCheckout && open
-            ? aiCheck.result.cancelledTitle
-            : paid
-            ? aiCheck.result.paidTitle
-            : open
-              ? aiCheck.result.pendingTitle
-              : aiCheck.result.closedTitle
-        }
-        subtitle={
-          cancelledCheckout && open
-            ? aiCheck.result.cancelledBody
-            : paid
-            ? aiCheck.result.paidBody
-            : open
-              ? aiCheck.result.pendingBody
-              : aiCheck.result.closedBody
-        }
+        title={title}
+        subtitle={subtitle}
       />
 
       <div className="grid gap-5 lg:grid-cols-2">
@@ -102,7 +106,7 @@ export default async function ServiceOrderResultPage({
             </div>
           </dl>
 
-          {open && order.checkoutUrl && (
+          {checkoutOpen && order.checkoutUrl && (
             <a
               href={order.checkoutUrl}
               className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-full bg-primary px-5 py-3 text-sm font-bold text-primary-fg transition hover:bg-primary-deep"
@@ -111,8 +115,8 @@ export default async function ServiceOrderResultPage({
               <IconArrow size={16} />
             </a>
           )}
-          {order.status === "pending" && !cancelledCheckout && <PaymentPoll />}
-          {!open && !paid && (
+          {view === "open" && <PaymentPoll />}
+          {view === "closed" && (
             <Link
               href="/kiem-tra-ai-dao-van"
               className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-full border border-line px-5 py-3 text-sm font-bold text-fg transition hover:border-primary hover:text-primary"

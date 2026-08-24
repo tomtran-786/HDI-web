@@ -30,6 +30,30 @@ import { prisma } from "./prisma";
  */
 export const SERVICE_ORDER_TTL_HOURS = 24;
 
+export type ServiceOrderView =
+  | "paid"
+  | "cancelled_checkout"
+  | "open"
+  | "closed";
+
+/**
+ * Trang kết quả nhìn một đơn dịch vụ ở đúng một trong bốn trạng thái.
+ *
+ * Tách khỏi JSX vì trước đây title, subtitle và nút poll mỗi thứ tự suy ra
+ * trạng thái bằng một chuỗi ternary riêng — và chúng đã lệch nhau: một đơn
+ * `pending` đã quá hạn hiện tiêu đề "đã đóng" kèm dòng "đang chờ PayOS xác nhận".
+ */
+export function serviceOrderView(
+  order: { status: string; expiresAt: Date },
+  now: Date,
+  cancelledCheckout: boolean,
+): ServiceOrderView {
+  if (order.status === "paid") return "paid";
+  const open = order.status === "pending" && order.expiresAt > now;
+  if (!open) return "closed";
+  return cancelledCheckout ? "cancelled_checkout" : "open";
+}
+
 export type ServiceOrderResult =
   | { ok: true; ref: string; code: number; amountVnd: number }
   | {

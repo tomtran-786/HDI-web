@@ -58,36 +58,48 @@ export const publishedSummaries = unstable_cache(async (): Promise<Record<string
 
 /** Các đánh giá đã duyệt, khóa theo `slug`, mới nhất trước. */
 export const publishedReviews = unstable_cache(async (): Promise<Record<string, PublicReview[]>> => {
-  const rows = await prisma.courseReview.findMany({
-    where: { status: "published" },
-    orderBy: { createdAt: "desc" },
-    take: 100,
-    // Chỉ `name`. `email` không bao giờ được select ở đây: payload này đi thẳng
-    // ra trang công khai, nơi mọi thứ được select đều nằm trong view-source.
-    select: {
-      id: true,
-      rating: true,
-      comment: true,
-      createdAt: true,
-      user: { select: { name: true } },
-      course: { select: { slug: true } },
-    },
-  });
+  const rows = await prisma.$queryRaw<
+    {
+      id: string;
+      rating: number;
+      comment: string | null;
+      createdAt: Date;
+      author: string | null;
+      slug: string;
+    }[]
+  >`
+    SELECT r.id,
+           r.rating,
+           r.comment,
+           r.created_at AS "createdAt",
+           u.name       AS author,
+           c.slug       AS slug
+      FROM (
+            SELECT id, rating, comment, created_at, user_id, course_id,
+                   row_number() OVER (
+                     PARTITION BY course_id ORDER BY created_at DESC
+                   ) AS rn
+              FROM course_reviews
+             WHERE status = 'published'::review_status
+           ) r
+      JOIN users   u ON u.id = r.user_id
+      JOIN courses c ON c.id = r.course_id
+     WHERE r.rn <= 5
+     ORDER BY c.slug, r.created_at DESC`;
 
   const bySlug: Record<string, PublicReview[]> = {};
   for (const row of rows) {
-    const list = bySlug[row.course.slug] ?? [];
-    // Thẻ khóa học là bằng chứng xã hội, không phải kho lưu trữ đánh giá. Giữ
-    // tối đa năm bản mới nhất mỗi khóa để payload RSC và sáu modal không phình.
-    if (list.length >= 5) continue;
+    const list = bySlug[row.slug] ?? [];
     list.push({
       id: row.id,
       rating: row.rating,
       comment: row.comment,
       createdAt: row.createdAt.getTime(),
-      author: row.user.name?.trim() || ANONYMOUS,
+      // Chỉ `name`. `email` không bao giờ được select ở đây: payload này đi
+      // thẳng ra trang công khai, nơi mọi thứ nằm trong view-source.
+      author: row.author?.trim() || ANONYMOUS,
     });
-    bySlug[row.course.slug] = list;
+    bySlug[row.slug] = list;
   }
   return bySlug;
 }, ["published-reviews"], { tags: [REVIEWS_TAG] });

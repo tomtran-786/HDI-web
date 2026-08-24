@@ -6,9 +6,13 @@ const mocks = vi.hoisted(() => ({
   canReview: vi.fn(),
   upsert: vi.fn(),
   revalidatePath: vi.fn(),
+  revalidateTag: vi.fn(),
 }));
 
-vi.mock("next/cache", () => ({ revalidatePath: mocks.revalidatePath }));
+vi.mock("next/cache", () => ({
+  revalidatePath: mocks.revalidatePath,
+  revalidateTag: mocks.revalidateTag,
+}));
 vi.mock("@/lib/auth", () => ({ auth: mocks.auth }));
 vi.mock("@/lib/auth-throttle", () => ({ allowUserAction: mocks.allowUserAction }));
 vi.mock("@/lib/fulfillment", () => ({ reconcileDriveFolder: vi.fn() }));
@@ -63,6 +67,7 @@ describe("gửi đánh giá khóa học", () => {
       },
     });
     expect(mocks.revalidatePath).toHaveBeenCalledWith("/tai-khoan");
+    expect(mocks.revalidateTag).toHaveBeenCalledWith("reviews", { expire: 0 });
   });
 
   it("từ chối người chưa đăng nhập trước khi chạm tới bất cứ thứ gì", async () => {
@@ -71,6 +76,7 @@ describe("gửi đánh giá khóa học", () => {
     expect(result.error).toBeTruthy();
     expect(mocks.canReview).not.toHaveBeenCalled();
     expect(mocks.upsert).not.toHaveBeenCalled();
+    expect(mocks.revalidateTag).not.toHaveBeenCalled();
   });
 
   it("từ chối người đăng nhập nhưng chưa mua khóa này", async () => {
@@ -78,6 +84,7 @@ describe("gửi đánh giá khóa học", () => {
     const result = await saveReview({}, form({ courseId: COURSE, rating: "5" }));
     expect(result.error).toContain("đã thanh toán");
     expect(mocks.upsert).not.toHaveBeenCalled();
+    expect(mocks.revalidateTag).not.toHaveBeenCalled();
   });
 
   it("từ chối mọi số sao ngoài miền 1–5", async () => {
@@ -105,6 +112,7 @@ describe("gửi đánh giá khóa học", () => {
     expect(result.error).toContain("quá nhiều lần");
     expect(mocks.canReview).not.toHaveBeenCalled();
     expect(mocks.upsert).not.toHaveBeenCalled();
+    expect(mocks.revalidateTag).not.toHaveBeenCalled();
   });
 
   it("lưu bình luận rỗng thành null chứ không phải chuỗi rỗng", async () => {

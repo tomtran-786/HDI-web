@@ -4,7 +4,10 @@ import { useRef, useState } from "react";
 import { cartModal } from "@/content/checkout";
 import type { Course } from "@/content/course";
 import { trackCourseModal, trackCta } from "@/lib/analytics";
-import type { PublicAvailability } from "@/lib/course-sales";
+import {
+  cardPresentation,
+  type PublicAvailability,
+} from "@/lib/course-availability";
 import { formatDate } from "@/lib/format";
 import type { PublicReview, ReviewSummary } from "@/lib/reviews";
 import { useCart } from "./cart-provider";
@@ -41,10 +44,10 @@ export function CourseCard({
   const [open, setOpen] = useState(false);
   const titleId = `${course.slug}-title`;
   const { openCart } = useCart();
-  const publicState = availability ?? "not_open";
-  const buyable = publicState === "buyable";
+  const presentation = cardPresentation(availability);
+  const { badge, buyable } = presentation;
   const availabilityTone =
-    publicState === "buyable" ? "success" : publicState === "full" ? "danger" : "cool";
+    badge === "buyable" ? "success" : badge === "full" ? "danger" : "cool";
 
   return (
     <>
@@ -85,7 +88,9 @@ export function CourseCard({
           <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-fg-subtle">
             Học phí
           </p>
-          <Badge tone={availabilityTone}>{cartModal.availability[publicState]}</Badge>
+          {badge && (
+            <Badge tone={availabilityTone}>{cartModal.availability[badge]}</Badge>
+          )}
         </div>
         <p className="mt-1.5 text-2xl font-bold tracking-tight text-primary sm:text-3xl">
           {course.price.amount}

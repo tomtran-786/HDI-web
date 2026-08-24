@@ -1,9 +1,10 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { parseId } from "@/lib/action-input";
 import { auth } from "@/lib/auth";
 import { allowUserAction } from "@/lib/auth-throttle";
+import { REVIEWS_TAG } from "@/lib/cache-tags";
 import { prisma } from "@/lib/prisma";
 import { reconcileDriveFolder } from "@/lib/fulfillment";
 import { canReview, isValidRating, normalizeComment } from "@/lib/reviews";
@@ -93,5 +94,9 @@ export async function saveReview(
   });
 
   revalidatePath("/tai-khoan");
+  // `upsert` không cho biết nhánh create hay update vừa chạy. Xóa cache sau
+  // mọi lần ghi thật rẻ hơn việc đoán sai rồi để một review đã quay về pending
+  // tiếp tục hiện công khai; action này vốn đã bị throttle 20 lượt/cửa sổ.
+  revalidateTag(REVIEWS_TAG, { expire: 0 });
   return { saved: true };
 }

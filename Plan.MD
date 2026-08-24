@@ -35,10 +35,13 @@ Nonce CSP thay đổi theo từng request, nên full-route cache không tồn t�
 qua cache và RSC payload an toàn:
 
 - `REVIEWS_TAG`: điểm tổng hợp và tối đa năm đánh giá mới nhất mỗi khóa;
-- `COURSES_TAG`: cấu hình khóa và availability công khai. Availability có TTL
-  300 giây; `createOrder` vẫn khóa dòng và đếm ghế thật khi quyết định mua;
-- duyệt đánh giá gọi `revalidateTag(REVIEWS_TAG)`; đổi trạng thái khóa gọi
-  `revalidateTag(COURSES_TAG)`.
+- `COURSES_TAG`: chỉ availability công khai trên trang marketing, TTL 300 giây;
+  `createOrder` vẫn khóa dòng và đếm ghế thật khi quyết định mua;
+- catalog giỏ hàng cố ý đọc sống giá/sức chứa mỗi lượt, vì đây là con số ngay
+  trước nút thanh toán và phải khớp với số tiền server gửi sang PayOS;
+- duyệt đánh giá và học viên sửa đánh giá đều gọi
+  `revalidateTag(REVIEWS_TAG, { expire: 0 })`; đổi trạng thái khóa gọi
+  `revalidateTag(COURSES_TAG, { expire: 0 })`.
 
 Không cache cart, số ghế dùng trong `createOrder`, hay truy vấn của khu vực tài
 khoản/quản trị. Đây là dữ liệu theo người dùng hoặc dữ liệu quyết định giao dịch.
@@ -111,6 +114,10 @@ tạo/reuse hosted link. Cookie chỉ được xóa khi đã có URL PayOS hoặ
   Report-Only sạch vi phạm trên các route công khai và route được bảo vệ;
   `tests/security-headers.test.ts` khẳng định trạng thái này để việc đổi cờ
   không thể đi qua lặng lẽ.
+- Next 16 đã cảnh báo quy ước `middleware.ts` deprecated. Chủ ý HOÃN codemod
+  `middleware → proxy` sang một commit riêng, sau khi CSP enforce đã chạy ổn
+  định trên production ít nhất một chu kỳ; không gộp hai thay đổi có cùng chế
+  độ hỏng trắng trang vào một lần deploy.
 - Mọi Server Action nhận id từ trình duyệt đều `parseId` trước tiên
   (`lib/action-input.ts`). Kiểu `string` chỉ tồn tại lúc biên dịch; payload RSC
   deserialize được object, và một object lọt vào `where` được Prisma đọc như bộ

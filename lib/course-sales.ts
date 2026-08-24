@@ -1,7 +1,10 @@
 import { unstable_cache } from "next/cache";
 import { COURSES_TAG } from "./cache-tags";
+import type { PublicAvailability } from "./course-availability";
 import { prisma } from "./prisma";
 import type { EnrollmentStatus } from "./generated/prisma/enums";
+
+export type { PublicAvailability } from "./course-availability";
 
 /**
  * A seat stays occupied until its reservation closes or paid access has been
@@ -80,12 +83,18 @@ export const COURSE_PUBLIC = {
   status: true,
 } as const;
 
-/** Every configured course, including closed/draft rows for disabled UI states. */
-export const configuredCourses = unstable_cache(async () => {
+/**
+ * Every configured course, including closed/draft rows for disabled UI states.
+ *
+ * KHÔNG cache. Hàm này nuôi `loadCourseCatalog`, tức con số học viên nhìn thấy
+ * trên nút "Thanh toán". `createOrder` đọc `price_vnd` sống dưới FOR UPDATE, nên
+ * một bản giá cũ ở đây là một hóa đơn sai chứ không phải một lỗi hiển thị.
+ * Trang chủ vẫn không chạm database mỗi request vì `publicAvailability` bọc cả
+ * lời gọi này trong cache riêng của nó.
+ */
+export async function configuredCourses() {
   return prisma.course.findMany({ orderBy: { createdAt: "asc" }, select: COURSE_PUBLIC });
-}, ["configured-courses"], { tags: [COURSES_TAG] });
-
-export type PublicAvailability = "buyable" | "not_open" | "full";
+}
 
 /**
  * User-independent catalog state for the landing cards.
