@@ -65,7 +65,7 @@ export const links = {
   // Zalo, so the page has to actually give them a way there.
   zalo: "https://zalo.me/84333443388",
   // Điền URL fanpage tại đây là bubble Facebook trong contact dock tự hiện.
-  fanpage: null,
+  fanpage: "https://www.facebook.com/profile.php?id=61593664414893",
   linktree: "https://linktr.ee/minandkin",
   tiktok: "https://www.tiktok.com/@minandkin.official",
   legacySite: "https://www.congtamtrinh.com/",

@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { isProfileComplete } from "@/lib/profile";
 import { safeNext } from "@/lib/safe-path";
 import { profileIntro } from "@/content/account";
+import { Avatar } from "@/components/ui/avatar";
 import { Section, SectionHeading } from "@/components/ui/section";
 import { ProfileForm } from "./form";
 
@@ -25,7 +26,7 @@ export default async function ProfilePage({
 
   const user = await prisma.user.findUnique({
     where: { id: session.user.id },
-    select: { name: true, email: true, phone: true, stage: true },
+    select: { name: true, email: true, image: true, phone: true, stage: true },
   });
   if (!user) redirect(signIn);
 
@@ -46,6 +47,17 @@ export default async function ProfilePage({
         {/* What Google already gave us, shown read-only so it is obvious why we
             are only asking for two things. */}
         <dl className="mb-5 rounded-card border border-line bg-bg-soft px-5 py-4">
+          <div className="flex items-center justify-between gap-2 py-1">
+            <dt className="text-[13px] text-fg-muted">Ảnh đại diện</dt>
+            <dd>
+              <Avatar
+                src={user.image}
+                name={user.name}
+                email={user.email}
+                size="md"
+              />
+            </dd>
+          </div>
           <div className="flex flex-wrap items-baseline justify-between gap-2 py-1">
             <dt className="text-[13px] text-fg-muted">Họ và tên</dt>
             <dd className="text-[15px] font-semibold text-fg">{user.name ?? "—"}</dd>

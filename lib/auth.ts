@@ -11,6 +11,8 @@ import {
   secureGoogleAccountLink,
 } from "./auth-account-link";
 import { jwtSurvivesSessionCutoff } from "./auth-session";
+import { googleProfilePicture, safeAvatarUrl } from "./avatar";
+import { syncGoogleAvatar } from "./auth-avatar";
 
 /**
  * Fail loudly at module load rather than signing sessions with a default.
@@ -32,7 +34,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           id: profile.sub,
           name: profile.name,
           email: normalizeEmail(profile.email),
-          image: profile.picture,
+          // Lọc trước khi PrismaAdapter ghi vào cột `image` lúc tạo tài khoản:
+          // giá trị vào database phải là thứ CSP cho phép render.
+          image: googleProfilePicture(profile),
         };
       },
     }),
@@ -63,11 +67,28 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (account?.provider !== "google") return true;
       return googleProfileHasVerifiedEmail(profile);
     },
-    async jwt({ token, user }) {
+    async jwt({ token, user, account, profile }) {
       if (user) {
         token.id = user.id;
         token.checkedAt = Math.floor(Date.now() / 1000);
         token.issuedAtMs = Date.now();
+
+        // Ảnh trong `token` mặc định là cột `image` của database, mà cột đó chỉ
+        // được ghi lúc tạo tài khoản. Lần đăng nhập Google nào cũng mang theo
+        // avatar mới nhất, nên lấy từ profile rồi ghi ngược lại database.
+        if (account?.provider === "google") {
+          const picture = googleProfilePicture(profile);
+          if (picture) {
+            token.picture = picture;
+            try {
+              await syncGoogleAvatar(String(user.id), picture);
+            } catch (error) {
+              // Ảnh đại diện không đáng để chặn một lần đăng nhập: phiên này
+              // vẫn có ảnh trong token, chỉ là database còn giá trị cũ.
+              console.error("[auth] Không lưu được ảnh đại diện:", error);
+            }
+          }
+        }
         return token;
       }
 
@@ -96,6 +117,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     },
     session({ session, token }) {
       if (session.user && token?.id) session.user.id = String(token.id);
+      // Chốt chặn cuối trước khi URL ảnh đi vào JSX: một giá trị cũ trong
+      // database, từ trước khi có bộ lọc, không được render nguyên trạng.
+      if (session.user) session.user.image = safeAvatarUrl(session.user.image);
       return session;
     },
   },

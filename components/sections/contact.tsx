@@ -58,6 +58,15 @@ export function Contact() {
             <p className="text-sm text-fg-subtle">
               <a
                 className="hover:text-primary"
+                href={links.fanpage}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Facebook ↗
+              </a>
+              <span className="px-2">·</span>
+              <a
+                className="hover:text-primary"
                 href={links.linktree}
                 target="_blank"
                 rel="noopener noreferrer"

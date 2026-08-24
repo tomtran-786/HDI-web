@@ -6,6 +6,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { nav, site } from "@/content/site";
 import { ThemeToggle } from "./theme-toggle";
+import { Avatar } from "./ui/avatar";
 import { CtaLink } from "./ui/cta-link";
 import { CartButton } from "./cart-button";
 import { IconClose, IconMenu } from "./ui/icons";
@@ -28,9 +29,13 @@ const ADMIN_NAV = { label: "Quản trị", href: "/quan-tri" } as const;
 export function SiteHeader({
   signedIn,
   isAdmin = false,
+  user,
 }: {
   signedIn: boolean;
   isAdmin?: boolean;
+  // Chỉ tên, email và ảnh — vừa đủ để vẽ ô tài khoản. Không truyền cả object
+  // session xuống client: mọi thứ ở đây đều đọc được bằng devtools.
+  user?: { name?: string | null; email?: string | null; image?: string | null };
 }) {
   const pathname = usePathname();
   const [scrolled, setScrolled] = useState(false);
@@ -166,8 +171,15 @@ export function SiteHeader({
           {signedIn ? (
             <Link
               href="/tai-khoan"
-              className="hidden rounded-full border border-primary px-4 py-2 text-[11px] font-bold uppercase tracking-[0.12em] text-primary transition hover:bg-primary hover:text-primary-fg sm:inline-block"
+              className="hidden items-center gap-2 rounded-full border border-primary py-1 pl-1 pr-4 text-[11px] font-bold uppercase tracking-[0.12em] text-primary transition hover:bg-primary hover:text-primary-fg sm:inline-flex"
             >
+              <Avatar
+                src={user?.image}
+                name={user?.name}
+                email={user?.email}
+                size="sm"
+                className="border-transparent"
+              />
               Tài khoản
             </Link>
           ) : (
@@ -250,8 +262,15 @@ export function SiteHeader({
                   <Link
                     href="/tai-khoan"
                     onClick={() => setOpen(false)}
-                    className="rounded-full bg-primary px-5 py-3 text-center text-sm font-bold text-primary-fg"
+                    className="flex items-center justify-center gap-2 rounded-full bg-primary px-5 py-3 text-center text-sm font-bold text-primary-fg"
                   >
+                    <Avatar
+                      src={user?.image}
+                      name={user?.name}
+                      email={user?.email}
+                      size="sm"
+                      className="border-transparent"
+                    />
                     Mở trang tài khoản
                   </Link>
                 ) : (

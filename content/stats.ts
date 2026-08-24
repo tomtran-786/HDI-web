@@ -4,8 +4,8 @@
  */
 
 export const stats = [
-  { value: "13", label: "Công bố quốc tế" },
-  { value: "14", label: "Hội thảo quốc tế" },
+  { value: "25+", label: "Công bố quốc tế" },
+  { value: "15+", label: "Hội thảo quốc tế" },
   { value: "US$37,300", label: "Tài trợ nghiên cứu" },
   { value: "10+", label: "Năm nghiên cứu & giảng dạy" },
 ];

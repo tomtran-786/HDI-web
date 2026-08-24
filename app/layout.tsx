@@ -54,6 +54,17 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
         // Không tốn truy vấn nào: email đã nằm sẵn trong JWT, và
         // isAdminEmail chỉ đọc một biến môi trường.
         isAdmin={isAdminEmail(session?.user?.email)}
+        // Ảnh đại diện Google đã nằm trong JWT — xem lib/auth.ts — nên ô tài
+        // khoản trên navbar vẽ được mà không thêm truy vấn nào.
+        user={
+          session?.user
+            ? {
+                name: session.user.name,
+                email: session.user.email,
+                image: session.user.image,
+              }
+            : undefined
+        }
       />
       <main className="flex-1">{children}</main>
       <SiteFooter />

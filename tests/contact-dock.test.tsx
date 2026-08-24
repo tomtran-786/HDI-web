@@ -7,13 +7,14 @@ vi.mock("@/lib/analytics", () => ({ trackCta: vi.fn() }));
 import { ContactDock } from "@/components/contact-dock";
 
 describe("contact dock", () => {
-  it("render các kênh có href và ẩn fanpage chưa cấu hình", () => {
+  it("render mọi kênh đã cấu hình href", () => {
     const html = renderToStaticMarkup(<ContactDock />);
 
     expect(html).toContain(links.zalo);
     expect(html).toContain(contact.phoneHref);
     expect(html).toContain(composeEmailHref().replaceAll("&", "&amp;"));
-    expect(html).not.toContain("Fanpage HDI");
+    expect(html).toContain("Fanpage HDI");
+    expect(html).toContain(links.fanpage.replaceAll("&", "&amp;"));
     expect(html).toContain('aria-expanded="false"');
   });
 });

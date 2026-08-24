@@ -12,6 +12,7 @@ import {
   orderStatusTone,
 } from "@/content/checkout";
 import { formatVnd } from "@/lib/format";
+import { Avatar } from "@/components/ui/avatar";
 import { Section, SectionHeading } from "@/components/ui/section";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -139,11 +140,20 @@ export default async function AccountPage() {
   return (
     <Section soft>
       <div className="flex flex-wrap items-end justify-between gap-4">
-        <SectionHeading
-          eyebrow="Khu vực học viên"
-          title={`Chào ${session.user.name ?? "bạn"}`}
-          subtitle="Các khóa học, thời hạn truy cập và tài liệu của bạn."
-        />
+        <div className="flex items-start gap-4">
+          <Avatar
+            src={session.user.image}
+            name={session.user.name}
+            email={session.user.email}
+            size="lg"
+            className="mt-1"
+          />
+          <SectionHeading
+            eyebrow="Khu vực học viên"
+            title={`Chào ${session.user.name ?? "bạn"}`}
+            subtitle="Các khóa học, thời hạn truy cập và tài liệu của bạn."
+          />
+        </div>
         <div className="mb-10 flex flex-wrap items-center gap-3 sm:mb-12">
           <Link
             href="/tai-khoan/don-hang"

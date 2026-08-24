@@ -5,6 +5,7 @@ import { CtaLink } from "./ui/cta-link";
 
 const elsewhere = [
   { label: "Trang cũ (Google Sites)", href: links.legacySite },
+  { label: "Facebook", href: links.fanpage },
   { label: "Linktree", href: links.linktree },
   { label: "TikTok", href: links.tiktok },
 ];
