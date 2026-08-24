@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
-import { auth } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
+import { currentProfile } from "@/lib/current-profile";
+import { currentSession } from "@/lib/current-session";
 import { isProfileComplete } from "@/lib/profile";
 
 /**
@@ -13,16 +13,13 @@ import { isProfileComplete } from "@/lib/profile";
 export default async function AccountLayout({
   children,
 }: LayoutProps<"/tai-khoan">) {
-  const session = await auth();
+  const session = await currentSession();
   if (!session?.user?.id) redirect("/dang-nhap");
 
   // Google gives us name and email but never a phone number or what stage of
   // research someone is at — the two things the intake form always asked for.
   // Collect them once, before the dashboard.
-  const user = await prisma.user.findUnique({
-    where: { id: session.user.id },
-    select: { phone: true, stage: true },
-  });
+  const user = await currentProfile(session.user.id);
   if (!user) redirect("/dang-nhap");
   if (!isProfileComplete(user)) redirect("/hoan-tat-ho-so");
 

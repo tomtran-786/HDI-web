@@ -137,6 +137,8 @@ describe("đơn dịch vụ check AI", () => {
         orderCode: 900_000_123,
         amount: 70_000,
         description: "HDI AI 900000123",
+        cancelUrl: `http://localhost:3000/kiem-tra-ai-dao-van/ket-qua/${"b".repeat(32)}?huy=1`,
+        returnUrl: `http://localhost:3000/kiem-tra-ai-dao-van/ket-qua/${"b".repeat(32)}`,
         buyerEmail: "hv@test.vn",
       }),
     );

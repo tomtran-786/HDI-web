@@ -41,6 +41,7 @@ export function About() {
             aria-hidden
             width={560}
             height={560}
+            sizes="(min-width: 1024px) 560px, (min-width: 640px) 384px, calc(100vw - 3rem)"
             className="mx-auto h-auto w-full max-w-sm lg:max-w-none"
           />
         </Reveal>
@@ -73,6 +74,7 @@ export function About() {
                 alt={advisor.portrait.alt}
                 width={620}
                 height={620}
+                sizes="160px"
                 className="h-40 w-40 rounded-card border border-line object-cover"
               />
 

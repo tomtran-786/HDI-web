@@ -2,7 +2,8 @@ import type { Metadata } from "next";
 import { AuthError } from "next-auth";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { auth, signIn } from "@/lib/auth";
+import { signIn } from "@/lib/auth";
+import { currentSession } from "@/lib/current-session";
 import { safeNext } from "@/lib/safe-path";
 import { signInPage } from "@/content/auth";
 import { Section, SectionHeading } from "@/components/ui/section";
@@ -45,7 +46,7 @@ export default async function SignInPage({
         : signInPage.errors.credentials
     : null;
 
-  const session = await auth();
+  const session = await currentSession();
   if (session?.user) redirect(next);
 
   return (

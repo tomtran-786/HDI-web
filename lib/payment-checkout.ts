@@ -1,4 +1,4 @@
-import { appUrl } from "./email";
+import { appUrl } from "./app-url";
 import { findCourse } from "./courses";
 import { prisma } from "./prisma";
 import { isPayosNotFound, payosClient } from "./payos";

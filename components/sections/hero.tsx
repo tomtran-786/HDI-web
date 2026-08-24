@@ -72,6 +72,7 @@ export function Hero() {
                 width={560}
                 height={876}
                 priority
+                sizes="(min-width: 1024px) 256px, (min-width: 640px) 224px, 192px"
                 className="h-auto w-48 sm:w-56 lg:w-64"
               />
             </div>

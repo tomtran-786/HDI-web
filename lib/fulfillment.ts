@@ -1,4 +1,5 @@
 import { prisma } from "./prisma";
+import { liveAccessWhere } from "./enrollment";
 import { acquireExternalLease } from "./external-lease";
 import { grantDrivePermission, revokeDrivePermission } from "./google-drive";
 
@@ -28,11 +29,9 @@ export async function reconcileDriveFolder(
   try {
     const candidates = await prisma.enrollment.findMany({
       where: {
+        ...liveAccessWhere(new Date()),
         id: options.enrollmentIds ? { in: options.enrollmentIds } : undefined,
-        status: "paid",
         drivePermissionId: null,
-        accessRevokedAt: null,
-        OR: [{ accessExpiresAt: null }, { accessExpiresAt: { gt: new Date() } }],
         course: { driveFolderId: folderId },
       },
       select: { id: true, user: { select: { email: true } } },
@@ -117,10 +116,8 @@ export async function reconcileMissingDriveGrants(limit = 50) {
   const budget = Math.max(1, Math.min(limit, 50));
   const candidates = await prisma.enrollment.findMany({
     where: {
-      status: "paid",
+      ...liveAccessWhere(new Date()),
       drivePermissionId: null,
-      accessRevokedAt: null,
-      OR: [{ accessExpiresAt: null }, { accessExpiresAt: { gt: new Date() } }],
       course: { driveFolderId: { not: null } },
     },
     select: { course: { select: { driveFolderId: true } } },
@@ -191,11 +188,9 @@ export async function revokeExpiredDriveAccess(limit = 50, now = new Date()) {
       // deletes that permission, leaving an active enrollment with a stale id.
       const otherActive = await prisma.enrollment.count({
         where: {
+          ...liveAccessWhere(now),
           id: { not: enrollment.id },
           userId: enrollment.userId,
-          status: "paid",
-          accessRevokedAt: null,
-          OR: [{ accessExpiresAt: null }, { accessExpiresAt: { gt: now } }],
           course: { driveFolderId: folderId },
         },
       });

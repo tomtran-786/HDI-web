@@ -22,13 +22,19 @@ import { startServiceCheckout, type QuoteState } from "./actions";
  * theo cách khác thì hai bên sẽ lệch nhau đúng vào lần đổi bảng giá, và cái
  * lệch đó là một hóa đơn sai chứ không phải một lỗi hiển thị.
  */
-export function QuoteForm() {
+export function QuoteForm({
+  defaultWords,
+  defaultKind = aiCheckKinds[0].id,
+}: {
+  defaultWords?: number;
+  defaultKind?: AiCheckKind;
+}) {
   const [state, action, pending] = useActionState<QuoteState, FormData>(
     startServiceCheckout,
     {},
   );
-  const [words, setWords] = useState("");
-  const [kind, setKind] = useState<AiCheckKind>(aiCheckKinds[0].id);
+  const [words, setWords] = useState(defaultWords ? String(defaultWords) : "");
+  const [kind, setKind] = useState<AiCheckKind>(defaultKind);
 
   const typed = words.trim();
   const parsed = Number(typed);

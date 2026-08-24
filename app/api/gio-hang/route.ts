@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { loadCart, readCartIds } from "@/lib/cart";
-import { prisma } from "@/lib/prisma";
+import { currentProfile } from "@/lib/current-profile";
 import { isProfileComplete } from "@/lib/profile";
 
 export const runtime = "nodejs";
@@ -18,10 +18,7 @@ export async function GET() {
     );
   }
 
-  const user = await prisma.user.findUnique({
-    where: { id: session.user.id },
-    select: { phone: true, stage: true },
-  });
+  const user = await currentProfile(session.user.id);
   if (!user) {
     return NextResponse.json(
       { error: "auth_required" },

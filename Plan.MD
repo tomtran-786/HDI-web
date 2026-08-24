@@ -5,10 +5,12 @@ hai trang `/dang-ky/[slug]`, `/gio-hang` đã được loại bỏ.
 
 ## Luồng học viên
 
-1. Landing `/` được prerender tĩnh. Header và modal chi tiết khóa đều mở chung
-   `CartModal`; không điều hướng sang một trang chọn khóa khác.
-2. Catalog bán hàng chỉ được tải khi modal mở qua `GET /api/gio-hang` với
-   `Cache-Control: private, no-store`.
+1. Landing `/` và mọi route đều render động vì root layout đọc nonce CSP theo
+   request. Header nhận session từ Server Component; modal chi tiết khóa vẫn mở
+   chung `CartModal`, không điều hướng sang một trang chọn khóa khác.
+2. Thẻ khóa học nhận availability và đánh giá công khai từ data cache phía
+   server. Catalog cá nhân hóa (đơn/quyền của người đang đăng nhập) chỉ tải khi
+   modal giỏ mở qua `GET /api/gio-hang` với `Cache-Control: private, no-store`.
 3. Chưa đăng nhập nhận `401`; hồ sơ chưa đủ `phone` và `stage` nhận `409`.
    Client đi qua đăng nhập/hoàn tất hồ sơ với return path
    `/?cart=1&course=<slug>`. Luồng tạo tài khoản và xác thực email giữ nguyên
@@ -24,6 +26,22 @@ hai trang `/dang-ky/[slug]`, `/gio-hang` đã được loại bỏ.
    viên được chuyển tới chi tiết đơn hiện có.
 
 Các URL cũ `/dang-ky/*` và `/gio-hang` không có route thay thế và trả 404.
+
+## Render động và data cache
+
+Nonce CSP thay đổi theo từng request, nên full-route cache không tồn tại và
+`revalidatePath("/")` không thể làm mới dữ liệu trang chủ. Tốc độ đến từ
+`unstable_cache`, với dữ liệu trả về là plain `Record`/epoch milliseconds để đi
+qua cache và RSC payload an toàn:
+
+- `REVIEWS_TAG`: điểm tổng hợp và tối đa năm đánh giá mới nhất mỗi khóa;
+- `COURSES_TAG`: cấu hình khóa và availability công khai. Availability có TTL
+  300 giây; `createOrder` vẫn khóa dòng và đếm ghế thật khi quyết định mua;
+- duyệt đánh giá gọi `revalidateTag(REVIEWS_TAG)`; đổi trạng thái khóa gọi
+  `revalidateTag(COURSES_TAG)`.
+
+Không cache cart, số ghế dùng trong `createOrder`, hay truy vấn của khu vực tài
+khoản/quản trị. Đây là dữ liệu theo người dùng hoặc dữ liệu quyết định giao dịch.
 
 ## Mô hình dữ liệu
 
@@ -89,10 +107,10 @@ tạo/reuse hosted link. Cookie chỉ được xóa khi đã có URL PayOS hoặ
 - Header bảo mật: hằng số (HSTS, nosniff, Referrer-Policy, X-Frame-Options,
   Permissions-Policy) phát từ `next.config.ts`; CSP phát từ `middleware.ts` vì
   cần nonce mới mỗi request. Cả hai đọc chung `lib/security-headers.ts`.
-- CSP **đang ở Report-Only**. Đổi `CSP_ENFORCED` trong `lib/security-headers.ts`
-  sang `true` sau khi đã mở preview và xác nhận console không còn vi phạm nào;
-  `tests/security-headers.test.ts` khẳng định cờ này nên việc bật enforce không
-  thể đi qua lặng lẽ.
+- CSP **đang enforce**. Cờ `CSP_ENFORCED` chỉ được bật sau khi preview
+  Report-Only sạch vi phạm trên các route công khai và route được bảo vệ;
+  `tests/security-headers.test.ts` khẳng định trạng thái này để việc đổi cờ
+  không thể đi qua lặng lẽ.
 - Mọi Server Action nhận id từ trình duyệt đều `parseId` trước tiên
   (`lib/action-input.ts`). Kiểu `string` chỉ tồn tại lúc biên dịch; payload RSC
   deserialize được object, và một object lọt vào `where` được Prisma đọc như bộ

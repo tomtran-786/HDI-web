@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { auth } from "@/lib/auth";
+import { currentSession } from "@/lib/current-session";
 import { prisma } from "@/lib/prisma";
 import { findCourse } from "@/lib/courses";
 import { formatDate, formatDateTime, formatVnd } from "@/lib/format";
@@ -15,7 +15,7 @@ export const metadata: Metadata = {
 };
 
 export default async function OrderListPage() {
-  const session = await auth();
+  const session = await currentSession();
   // The layout already redirected; this is for TypeScript.
   if (!session?.user?.id) return null;
 

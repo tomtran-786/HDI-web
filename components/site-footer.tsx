@@ -46,7 +46,11 @@ export function SiteFooter() {
 
         <FooterColumn
           title="Khám phá"
-          items={[...nav.map((n) => ({ ...n })), { label: "Đăng nhập", href: "/dang-nhap" }]}
+          items={[
+            ...nav.map((n) => ({ ...n })),
+            { label: "Check AI & đạo văn", href: "/kiem-tra-ai-dao-van" },
+            { label: "Đăng nhập", href: "/dang-nhap" },
+          ]}
         />
         <FooterColumn title="Tài liệu" items={documents} />
         <FooterColumn title="Kênh khác" items={elsewhere} external />

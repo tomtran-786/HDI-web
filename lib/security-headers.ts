@@ -6,14 +6,8 @@
  * có hai phiên bản chính sách lệch nhau.
  */
 
-/**
- * Đang chạy ở chế độ Report-Only.
- *
- * Đổi sang `true` để enforce — nhưng chỉ sau khi đã mở preview và xác nhận
- * console không còn báo vi phạm nào. Bật enforce mà sót một nguồn script là
- * trắng trang production.
- */
-export const CSP_ENFORCED = false;
+/** Enforced only after the Report-Only preview completed with zero violations. */
+export const CSP_ENFORCED = true;
 
 export const CSP_HEADER = CSP_ENFORCED
   ? "content-security-policy"

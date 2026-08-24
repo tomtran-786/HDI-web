@@ -1,3 +1,5 @@
+import { unstable_cache } from "next/cache";
+import { COURSES_TAG } from "./cache-tags";
 import { prisma } from "./prisma";
 import type { EnrollmentStatus } from "./generated/prisma/enums";
 
@@ -79,6 +81,29 @@ export const COURSE_PUBLIC = {
 } as const;
 
 /** Every configured course, including closed/draft rows for disabled UI states. */
-export async function configuredCourses() {
+export const configuredCourses = unstable_cache(async () => {
   return prisma.course.findMany({ orderBy: { createdAt: "asc" }, select: COURSE_PUBLIC });
-}
+}, ["configured-courses"], { tags: [COURSES_TAG] });
+
+export type PublicAvailability = "buyable" | "not_open" | "full";
+
+/**
+ * User-independent catalog state for the landing cards.
+ *
+ * This may trail seat changes by up to five minutes. `createOrder` locks and
+ * recounts the course rows, so it remains the authoritative purchase gate.
+ */
+export const publicAvailability = unstable_cache(async () => {
+  const courses = await configuredCourses();
+  const occupied = await seatsTaken(courses.map((course) => course.id));
+  return Object.fromEntries(
+    courses.map((course) => [
+      course.slug,
+      course.status !== "open"
+        ? "not_open"
+        : (occupied.get(course.id) ?? 0) >= course.capacity
+          ? "full"
+          : "buyable",
+    ]),
+  ) as Record<string, PublicAvailability>;
+}, ["public-course-availability"], { tags: [COURSES_TAG], revalidate: 300 });

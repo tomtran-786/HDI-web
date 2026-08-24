@@ -1,4 +1,5 @@
 import { courses, coursesIntro } from "@/content/course";
+import { publicAvailability, type PublicAvailability } from "@/lib/course-sales";
 import {
   publishedReviews,
   publishedSummaries,
@@ -15,30 +16,29 @@ import { Section, SectionHeading } from "../ui/section";
  * Trước đây trang chủ không chạm tới database một lần nào — giỏ hàng được nạp
  * bằng fetch từ trình duyệt, còn mọi thứ hiển thị đều đến từ content/. Truy vấn
  * này là lần đầu tiên trang bán hàng phụ thuộc vào Postgres, nên nó phải phụ
- * thuộc theo kiểu hỏng-cũng-không-sao: Supabase trục trặc thì mất mấy ngôi sao,
- * chứ không mất cả trang giới thiệu và toàn bộ nút đăng ký trên đó.
+ * thuộc theo kiểu hỏng-cũng-không-sao: Supabase trục trặc thì mất dữ liệu xã
+ * hội và thẻ chuyển sang trạng thái chưa mở, chứ không làm trắng trang giới thiệu.
  */
-async function loadReviews() {
+async function loadCourseData() {
   try {
-    const [summaries, reviews] = await Promise.all([
+    const [summaries, reviews, availability] = await Promise.all([
       publishedSummaries(),
       publishedReviews(),
+      publicAvailability(),
     ]);
-    return {
-      summaries: Object.fromEntries(summaries) as Record<string, ReviewSummary>,
-      reviews: Object.fromEntries(reviews) as Record<string, PublicReview[]>,
-    };
+    return { summaries, reviews, availability };
   } catch (error) {
-    console.error("[khoa-hoc] Không đọc được đánh giá:", error);
+    console.error("[khoa-hoc] Không đọc được dữ liệu công khai:", error);
     return {
       summaries: {} as Record<string, ReviewSummary>,
       reviews: {} as Record<string, PublicReview[]>,
+      availability: {} as Record<string, PublicAvailability>,
     };
   }
 }
 
 export async function FeaturedCourse() {
-  const { summaries, reviews } = await loadReviews();
+  const { summaries, reviews, availability } = await loadCourseData();
 
   return (
     <Section id="khoa-hoc">
@@ -56,7 +56,12 @@ export async function FeaturedCourse() {
 
       {/* The sort control needs state, so the list is a client component and
           this section stays a server component. */}
-      <CourseList courses={courses} summaries={summaries} reviews={reviews} />
+      <CourseList
+        courses={courses}
+        summaries={summaries}
+        reviews={reviews}
+        availability={availability}
+      />
     </Section>
   );
 }

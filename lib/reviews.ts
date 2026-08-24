@@ -11,6 +11,8 @@
  * import được mà không kéo theo Prisma; re-export bên dưới để mã phía server
  * chỉ cần nhớ một đường dẫn.
  */
+import { unstable_cache } from "next/cache";
+import { REVIEWS_TAG } from "./cache-tags";
 import { prisma } from "./prisma";
 
 export * from "./review-input";
@@ -21,7 +23,8 @@ export type PublicReview = {
   id: string;
   rating: number;
   comment: string | null;
-  createdAt: Date;
+  /** Epoch milliseconds: plain data survives the cache/RSC serialization boundary. */
+  createdAt: number;
   /** Tên hiển thị của người viết. Học viên được báo trước là tên sẽ công khai. */
   author: string;
 };
@@ -36,7 +39,7 @@ const ANONYMOUS = "Học viên";
  * slug — `groupBy` của Prisma trả về `course_id`, và đổi id sang slug ở tầng JS
  * là thêm một truy vấn nữa cho đúng một cột.
  */
-export async function publishedSummaries(): Promise<Map<string, ReviewSummary>> {
+export const publishedSummaries = unstable_cache(async (): Promise<Record<string, ReviewSummary>> => {
   const rows = await prisma.$queryRaw<
     { slug: string; average: number; count: bigint }[]
   >`
@@ -48,19 +51,17 @@ export async function publishedSummaries(): Promise<Map<string, ReviewSummary>> 
      WHERE r.status = 'published'::review_status
      GROUP BY c.slug`;
 
-  return new Map(
-    rows.map((row) => [
-      row.slug,
-      { average: row.average, count: Number(row.count) },
-    ]),
+  return Object.fromEntries(
+    rows.map((row) => [row.slug, { average: row.average, count: Number(row.count) }]),
   );
-}
+}, ["published-review-summaries"], { tags: [REVIEWS_TAG] });
 
 /** Các đánh giá đã duyệt, khóa theo `slug`, mới nhất trước. */
-export async function publishedReviews(): Promise<Map<string, PublicReview[]>> {
+export const publishedReviews = unstable_cache(async (): Promise<Record<string, PublicReview[]>> => {
   const rows = await prisma.courseReview.findMany({
     where: { status: "published" },
     orderBy: { createdAt: "desc" },
+    take: 100,
     // Chỉ `name`. `email` không bao giờ được select ở đây: payload này đi thẳng
     // ra trang công khai, nơi mọi thứ được select đều nằm trong view-source.
     select: {
@@ -73,20 +74,23 @@ export async function publishedReviews(): Promise<Map<string, PublicReview[]>> {
     },
   });
 
-  const bySlug = new Map<string, PublicReview[]>();
+  const bySlug: Record<string, PublicReview[]> = {};
   for (const row of rows) {
-    const list = bySlug.get(row.course.slug) ?? [];
+    const list = bySlug[row.course.slug] ?? [];
+    // Thẻ khóa học là bằng chứng xã hội, không phải kho lưu trữ đánh giá. Giữ
+    // tối đa năm bản mới nhất mỗi khóa để payload RSC và sáu modal không phình.
+    if (list.length >= 5) continue;
     list.push({
       id: row.id,
       rating: row.rating,
       comment: row.comment,
-      createdAt: row.createdAt,
+      createdAt: row.createdAt.getTime(),
       author: row.user.name?.trim() || ANONYMOUS,
     });
-    bySlug.set(row.course.slug, list);
+    bySlug[row.course.slug] = list;
   }
   return bySlug;
-}
+}, ["published-reviews"], { tags: [REVIEWS_TAG] });
 
 /**
  * Người này đã trả tiền cho khóa này chưa.

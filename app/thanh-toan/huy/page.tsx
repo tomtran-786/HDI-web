@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { auth } from "@/lib/auth";
+import { currentSession } from "@/lib/current-session";
 import { prisma } from "@/lib/prisma";
 import { Section, SectionHeading } from "@/components/ui/section";
 import { CancelOrder } from "@/app/tai-khoan/don-hang/[code]/cancel";
@@ -19,7 +19,7 @@ export default async function PaymentCancelPage({
   const returnTo = Number.isInteger(code)
     ? `/thanh-toan/huy?orderCode=${code}`
     : "/tai-khoan/don-hang";
-  const session = await auth();
+  const session = await currentSession();
   if (!session?.user?.id) redirect(`/dang-nhap?tiep=${encodeURIComponent(returnTo)}`);
   if (!Number.isInteger(code)) notFound();
 
@@ -48,4 +48,3 @@ export default async function PaymentCancelPage({
     </Section>
   );
 }
-

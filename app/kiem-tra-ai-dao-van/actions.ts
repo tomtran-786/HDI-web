@@ -3,12 +3,23 @@
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { allowUserAction } from "@/lib/auth-throttle";
+import { isAiCheckKind, isValidWordCount } from "@/lib/ai-check-pricing";
+import { currentProfile } from "@/lib/current-profile";
+import { isProfileComplete } from "@/lib/profile";
 import { createServiceOrder, ensureServiceCheckout } from "@/lib/service-orders";
 
 export type QuoteState = { error?: string };
 
 /** Nơi quay lại sau khi đăng nhập — trang báo giá, không phải trang chủ. */
 const QUOTE_PAGE = "/kiem-tra-ai-dao-van";
+
+function quoteReturnPath(wordCount: unknown, kind: unknown) {
+  const query = new URLSearchParams();
+  if (isValidWordCount(wordCount)) query.set("soTu", String(wordCount));
+  if (isAiCheckKind(kind)) query.set("dichVu", kind);
+  const suffix = query.toString();
+  return suffix ? `${QUOTE_PAGE}?${suffix}` : QUOTE_PAGE;
+}
 
 /**
  * Tạo đơn dịch vụ rồi đưa học viên sang trang thanh toán của PayOS.
@@ -28,9 +39,18 @@ export async function startServiceCheckout(
   _previous: QuoteState,
   formData: FormData,
 ): Promise<QuoteState> {
+  const wordCount = Number(formData.get("wordCount"));
+  const kind = formData.get("kind");
+  const returnPath = quoteReturnPath(wordCount, kind);
   const session = await auth();
   if (!session?.user?.id) {
-    redirect(`/dang-nhap?tiep=${encodeURIComponent(QUOTE_PAGE)}`);
+    redirect(`/dang-nhap?tiep=${encodeURIComponent(returnPath)}`);
+  }
+
+  const profile = await currentProfile(session.user.id);
+  if (!profile) redirect("/dang-nhap");
+  if (!isProfileComplete(profile)) {
+    redirect(`/hoan-tat-ho-so?tiep=${encodeURIComponent(returnPath)}`);
   }
 
   if (!(await allowUserAction("service_quote", session.user.id, 10))) {
@@ -41,9 +61,6 @@ export async function startServiceCheckout(
 
   // `Number("")` là 0 và `Number(null)` cũng là 0; cả hai đều trượt guard số
   // nguyên dương trong createServiceOrder, nên không cần nhánh riêng ở đây.
-  const wordCount = Number(formData.get("wordCount"));
-  const kind = formData.get("kind");
-
   const order = await createServiceOrder({
     userId: session.user.id,
     kind,

@@ -1,12 +1,15 @@
 "use client";
 
-import { useRef } from "react";
+import { useRef, useState } from "react";
+import { cartModal } from "@/content/checkout";
 import type { Course } from "@/content/course";
 import { trackCourseModal, trackCta } from "@/lib/analytics";
+import type { PublicAvailability } from "@/lib/course-sales";
 import { formatDate } from "@/lib/format";
 import type { PublicReview, ReviewSummary } from "@/lib/reviews";
 import { useCart } from "./cart-provider";
 import { CtaLink } from "./ui/cta-link";
+import { Badge } from "./ui/badge";
 import { Stars } from "./ui/stars";
 import { IconArrow, IconCheck, IconClose, IconMessage } from "./ui/icons";
 
@@ -26,21 +29,29 @@ export function CourseCard({
   course,
   summary,
   reviews = [],
+  availability,
 }: {
   course: Course;
   /** Vắng mặt khi khóa chưa có đánh giá nào được duyệt. */
   summary?: ReviewSummary;
   reviews?: PublicReview[];
+  availability?: PublicAvailability;
 }) {
   const dialogRef = useRef<HTMLDialogElement>(null);
+  const [open, setOpen] = useState(false);
   const titleId = `${course.slug}-title`;
   const { openCart } = useCart();
+  const publicState = availability ?? "not_open";
+  const buyable = publicState === "buyable";
+  const availabilityTone =
+    publicState === "buyable" ? "success" : publicState === "full" ? "danger" : "cool";
 
   return (
     <>
       <button
         type="button"
         onClick={() => {
+          setOpen(true);
           dialogRef.current?.showModal();
           // Opening a card is the strongest intent signal the page emits.
           trackCourseModal(course.slug);
@@ -70,9 +81,12 @@ export function CourseCard({
           </span>
         )}
 
-        <p className="mt-6 text-[10px] font-bold uppercase tracking-[0.16em] text-fg-subtle">
-          Học phí
-        </p>
+        <div className="mt-6 flex flex-wrap items-center justify-between gap-2">
+          <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-fg-subtle">
+            Học phí
+          </p>
+          <Badge tone={availabilityTone}>{cartModal.availability[publicState]}</Badge>
+        </div>
         <p className="mt-1.5 text-2xl font-bold tracking-tight text-primary sm:text-3xl">
           {course.price.amount}
         </p>
@@ -107,6 +121,7 @@ export function CourseCard({
       <dialog
         ref={dialogRef}
         aria-labelledby={titleId}
+        onClose={() => setOpen(false)}
         onClick={(e) => {
           // The ::backdrop forwards its clicks to the dialog element itself;
           // the padding lives on the inner wrapper so only backdrop hits match.
@@ -117,7 +132,7 @@ export function CourseCard({
         }}
         className="w-[calc(100vw-2rem)] max-w-2xl"
       >
-        <div>
+        {open && <div>
           <div className="sticky top-0 z-10 flex items-start justify-between gap-4 border-b border-line bg-card px-6 py-5 sm:px-7">
             <div>
               <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-fg-subtle">
@@ -253,7 +268,7 @@ export function CourseCard({
                         <span className="inline-flex items-center gap-2">
                           <Stars value={review.rating} size={14} />
                           <span className="text-xs text-fg-subtle">
-                            {formatDate(review.createdAt)}
+                            {formatDate(new Date(review.createdAt))}
                           </span>
                         </span>
                       </div>
@@ -275,12 +290,14 @@ export function CourseCard({
             <div className="mt-7 flex flex-col gap-3 sm:flex-row">
               <button
                 type="button"
+                disabled={!buyable}
                 onClick={() => {
+                  if (!buyable) return;
                   trackCta("khoa-hoc-modal", "dang-ky", course.slug);
                   dialogRef.current?.close();
                   openCart(course.slug);
                 }}
-                className="inline-flex flex-1 items-center justify-center gap-2 rounded-full bg-primary px-6 py-3 text-sm font-bold text-primary-fg transition hover:bg-primary-deep"
+                className="inline-flex flex-1 items-center justify-center gap-2 rounded-full bg-primary px-6 py-3 text-sm font-bold text-primary-fg transition hover:bg-primary-deep disabled:cursor-not-allowed disabled:opacity-50"
               >
                 Đăng ký học khóa này
                 <IconArrow size={16} />
@@ -301,7 +318,7 @@ export function CourseCard({
               {course.registerNote}
             </p>
           </div>
-        </div>
+        </div>}
       </dialog>
     </>
   );

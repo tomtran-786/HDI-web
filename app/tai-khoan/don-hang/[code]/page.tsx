@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { auth } from "@/lib/auth";
+import { currentSession } from "@/lib/current-session";
 import { prisma } from "@/lib/prisma";
 import { findCourse } from "@/lib/courses";
 import { formatDate, formatVnd } from "@/lib/format";
@@ -22,7 +22,7 @@ export const metadata: Metadata = {
 export default async function OrderDetailPage({
   params,
 }: PageProps<"/tai-khoan/don-hang/[code]">) {
-  const session = await auth();
+  const session = await currentSession();
   if (!session?.user?.id) return null;
 
   const { code } = await params;

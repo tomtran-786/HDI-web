@@ -10,6 +10,31 @@ import type { Prisma } from "./generated/prisma/client";
  */
 export type Db = Prisma.TransactionClient | typeof prisma;
 
+/** The render-layer form of the single live-access predicate. */
+export function hasLiveAccess(
+  enrollment: {
+    status: string;
+    accessRevokedAt: Date | null;
+    accessExpiresAt: Date | null;
+  },
+  now: Date,
+) {
+  return (
+    enrollment.status === "paid" &&
+    enrollment.accessRevokedAt === null &&
+    (!enrollment.accessExpiresAt || enrollment.accessExpiresAt > now)
+  );
+}
+
+/** The Prisma-query form of the same live-access predicate. */
+export function liveAccessWhere(now: Date): Prisma.EnrollmentWhereInput {
+  return {
+    status: "paid",
+    accessRevokedAt: null,
+    OR: [{ accessExpiresAt: null }, { accessExpiresAt: { gt: now } }],
+  };
+}
+
 /**
  * When recorded access ends, given the course's policy. NULL accessDays means
  * no expiry, which is not the same as "expires now".

@@ -1,11 +1,16 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { auth } from "@/lib/auth";
+import { currentSession } from "@/lib/current-session";
 import { prisma } from "@/lib/prisma";
+import { hasLiveAccess } from "@/lib/enrollment";
 import { findCourse } from "@/lib/courses";
 import { links } from "@/content/site";
-import { aiCheckKinds } from "@/content/ai-check";
-import { orderStatusLabel } from "@/content/checkout";
+import { serviceKindLabel } from "@/content/ai-check";
+import {
+  enrollmentStatusLabel,
+  orderStatusLabel,
+  orderStatusTone,
+} from "@/content/checkout";
 import { formatVnd } from "@/lib/format";
 import { Section, SectionHeading } from "@/components/ui/section";
 import { Badge } from "@/components/ui/badge";
@@ -32,44 +37,20 @@ const dateFmt = new Intl.DateTimeFormat("vi-VN", {
   timeZone: "Asia/Ho_Chi_Minh",
 });
 
-/** Nhãn tiếng Việt của một loại dịch vụ, trả lại chính mã nếu bảng giá đã đổi. */
-function serviceKindLabel(kind: string) {
-  return aiCheckKinds.find((item) => item.id === kind)?.label ?? kind;
-}
-
-/** Access is live only while all three conditions hold. */
-function hasLiveAccess(e: {
-  status: string;
-  accessRevokedAt: Date | null;
-  accessExpiresAt: Date | null;
-}) {
-  if (e.status !== "paid") return false;
-  if (e.accessRevokedAt !== null) return false;
-  if (e.accessExpiresAt && e.accessExpiresAt <= new Date()) return false;
-  return true;
-}
-
-const statusLabel: Record<string, string> = {
-  pending: "Chờ xác nhận thanh toán",
-  paid: "Đã thanh toán",
-  cancelled: "Đã hủy",
-  refunded: "Đã hoàn tiền",
-};
-
 function enrollmentLabel(e: {
   status: string;
   accessRevokedAt: Date | null;
   accessExpiresAt: Date | null;
-}) {
+}, now: Date) {
   if (e.status === "paid" && e.accessRevokedAt) return "Đã thu hồi quyền";
-  if (e.status === "paid" && e.accessExpiresAt && e.accessExpiresAt <= new Date()) {
+  if (e.status === "paid" && e.accessExpiresAt && e.accessExpiresAt <= now) {
     return "Đã hết hạn truy cập";
   }
-  return statusLabel[e.status] ?? e.status;
+  return enrollmentStatusLabel[e.status] ?? e.status;
 }
 
 export default async function AccountPage() {
-  const session = await auth();
+  const session = await currentSession();
   // The layout already redirected, so this is only for TypeScript.
   if (!session?.user?.id) return null;
   const userId = session.user.id;
@@ -78,7 +59,8 @@ export default async function AccountPage() {
   // select. `include: { course: true }` would pull both into the rendered
   // payload even though no JSX reads them — which is exactly how a "hidden in
   // the UI" secret ends up in view-source.
-  const enrollments = await prisma.enrollment.findMany({
+  const [enrollments, serviceOrders, reviewRows] = await Promise.all([
+    prisma.enrollment.findMany({
     where: { userId },
     orderBy: { createdAt: "desc" },
     select: {
@@ -96,11 +78,11 @@ export default async function AccountPage() {
         },
       },
     },
-  });
+    }),
 
   // Đơn dịch vụ của chính người này. Sau khi thanh toán, trang kết quả là nơi
   // có mã đơn để gửi bài qua Zalo — đóng tab xong thì đây là đường quay lại.
-  const serviceOrders = await prisma.serviceOrder.findMany({
+    prisma.serviceOrder.findMany({
     where: { userId },
     orderBy: { createdAt: "desc" },
     take: 10,
@@ -114,19 +96,17 @@ export default async function AccountPage() {
       status: true,
       createdAt: true,
     },
-  });
+    }),
 
   // Đánh giá của CHÍNH người này, mọi trạng thái — form phải nạp lại được cả
   // bản đang chờ duyệt lẫn bản bị từ chối, nếu không học viên sẽ tưởng lần gửi
   // trước bị mất và gõ lại từ đầu.
-  const myReviews = new Map(
-    (
-      await prisma.courseReview.findMany({
-        where: { userId },
-        select: { courseId: true, rating: true, comment: true, status: true },
-      })
-    ).map((review) => [review.courseId, review]),
-  );
+    prisma.courseReview.findMany({
+      where: { userId },
+      select: { courseId: true, rating: true, comment: true, status: true },
+    }),
+  ]);
+  const myReviews = new Map(reviewRows.map((review) => [review.courseId, review]));
 
   // Một khóa chỉ có một đánh giá, nhưng một học viên có thể mua lại khóa đó và
   // do đó có nhiều thẻ ghi danh. Form chỉ mọc trên thẻ đầu tiên của mỗi khóa;
@@ -134,8 +114,9 @@ export default async function AccountPage() {
   const reviewFormShown = new Set<string>();
 
   // Second query, only for courses this student currently has access to.
+  const now = new Date();
   const liveCourseIds = enrollments
-    .filter(hasLiveAccess)
+    .filter((enrollment) => hasLiveAccess(enrollment, now))
     .map((e) => e.course.id);
 
   const secrets = new Map<
@@ -207,7 +188,7 @@ export default async function AccountPage() {
         <div className="grid gap-5 md:grid-cols-2">
           {enrollments.map((e) => {
             const course = findCourse(e.course.slug);
-            const live = hasLiveAccess(e);
+            const live = hasLiveAccess(e, now);
             const secret = secrets.get(e.course.id);
             const canRate =
               e.status === "paid" && !reviewFormShown.has(e.course.id);
@@ -231,7 +212,7 @@ export default async function AccountPage() {
                     </h3>
                   </div>
                   <Badge tone={live ? "success" : "cool"}>
-                    {enrollmentLabel(e)}
+                    {enrollmentLabel(e, now)}
                   </Badge>
                 </div>
 
@@ -345,7 +326,7 @@ export default async function AccountPage() {
                     <p className="font-bold tabular-nums tracking-tight">
                       #{order.code}
                     </p>
-                    <Badge tone={order.status === "paid" ? "success" : "cool"}>
+                    <Badge tone={orderStatusTone[order.status] ?? "cool"}>
                       {orderStatusLabel[order.status] ?? order.status}
                     </Badge>
                   </div>

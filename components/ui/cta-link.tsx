@@ -37,6 +37,7 @@ export function CtaLink({
   target,
   course,
   className,
+  onNavigate,
   children,
 }: {
   source: CtaSource;
@@ -44,9 +45,13 @@ export function CtaLink({
   /** Course slug, for the CTAs that sit inside a course modal. */
   course?: string;
   className?: string;
+  onNavigate?: () => void;
   children: ReactNode;
 }) {
-  const onClick = () => trackCta(source, target, course);
+  const onClick = () => {
+    onNavigate?.();
+    trackCta(source, target, course);
+  };
   const href = hrefFor(target);
 
   if (isExternal[target]) {

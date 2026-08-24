@@ -91,8 +91,7 @@ describe("Content-Security-Policy", () => {
     expect(CSP_HEADER).toBe(
       CSP_ENFORCED ? "content-security-policy" : "content-security-policy-report-only",
     );
-    // Đang cố ý ở Report-Only. Khi đổi CSP_ENFORCED, sửa dòng này là bước xác
-    // nhận rằng đã kiểm tra console và không còn vi phạm nào.
-    expect(CSP_ENFORCED).toBe(false);
+    // Enforce chỉ được bật sau khi console Report-Only đã sạch trên preview.
+    expect(CSP_ENFORCED).toBe(true);
   });
 });

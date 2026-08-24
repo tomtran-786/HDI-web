@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { auth } from "@/lib/auth";
+import { currentSession } from "@/lib/current-session";
 import { prisma } from "@/lib/prisma";
 import { isProfileComplete } from "@/lib/profile";
 import { safeNext } from "@/lib/safe-path";
@@ -20,7 +20,7 @@ export default async function ProfilePage({
   const next = safeNext(tiep);
   const signIn = `/dang-nhap?tiep=${encodeURIComponent(next)}`;
 
-  const session = await auth();
+  const session = await currentSession();
   if (!session?.user?.id) redirect(signIn);
 
   const user = await prisma.user.findUnique({

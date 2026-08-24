@@ -9,6 +9,7 @@ class RedirectSignal extends Error {
 const mocks = vi.hoisted(() => ({
   auth: vi.fn(),
   redirect: vi.fn(),
+  currentProfile: vi.fn(),
   allowUserAction: vi.fn(),
   createServiceOrder: vi.fn(),
   ensureServiceCheckout: vi.fn(),
@@ -16,6 +17,7 @@ const mocks = vi.hoisted(() => ({
 
 vi.mock("next/navigation", () => ({ redirect: mocks.redirect }));
 vi.mock("@/lib/auth", () => ({ auth: mocks.auth }));
+vi.mock("@/lib/current-profile", () => ({ currentProfile: mocks.currentProfile }));
 vi.mock("@/lib/auth-throttle", () => ({ allowUserAction: mocks.allowUserAction }));
 vi.mock("@/lib/service-orders", () => ({
   createServiceOrder: mocks.createServiceOrder,
@@ -37,6 +39,10 @@ describe("đặt dịch vụ check AI", () => {
       throw new RedirectSignal(url);
     });
     mocks.auth.mockResolvedValue({ user: { id: "user-1" } });
+    mocks.currentProfile.mockResolvedValue({
+      phone: "0901234567",
+      stage: "journal_article",
+    });
     mocks.allowUserAction.mockResolvedValue(true);
     mocks.createServiceOrder.mockResolvedValue({
       ok: true,
@@ -55,10 +61,21 @@ describe("đặt dịch vụ check AI", () => {
     await expect(
       startServiceCheckout({}, form({ wordCount: "8000", kind: "combo" })),
     ).rejects.toMatchObject({
-      url: "/dang-nhap?tiep=%2Fkiem-tra-ai-dao-van",
+      url: "/dang-nhap?tiep=%2Fkiem-tra-ai-dao-van%3FsoTu%3D8000%26dichVu%3Dcombo",
     });
     expect(mocks.createServiceOrder).not.toHaveBeenCalled();
     expect(mocks.allowUserAction).not.toHaveBeenCalled();
+  });
+
+  it("đưa hồ sơ chưa đủ sang trang hoàn tất và giữ nguyên báo giá", async () => {
+    mocks.currentProfile.mockResolvedValue({ phone: null, stage: null });
+    await expect(
+      startServiceCheckout({}, form({ wordCount: "8000", kind: "combo" })),
+    ).rejects.toMatchObject({
+      url: "/hoan-tat-ho-so?tiep=%2Fkiem-tra-ai-dao-van%3FsoTu%3D8000%26dichVu%3Dcombo",
+    });
+    expect(mocks.createServiceOrder).not.toHaveBeenCalled();
+    expect(mocks.ensureServiceCheckout).not.toHaveBeenCalled();
   });
 
   it("gắn đơn với tài khoản đang đăng nhập và bỏ qua số tiền client gửi lên", async () => {

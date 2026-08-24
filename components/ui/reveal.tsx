@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, type ReactNode } from "react";
+import { observeReveal } from "@/lib/reveal-observer";
 
 /**
  * Fades its children in once they scroll into view. The CSS in globals.css
@@ -20,17 +21,9 @@ export function Reveal({
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
-    const io = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          el.dataset.shown = "true";
-          io.disconnect();
-        }
-      },
-      { rootMargin: "0px 0px -10% 0px", threshold: 0.05 },
-    );
-    io.observe(el);
-    return () => io.disconnect();
+    return observeReveal(el, () => {
+      el.dataset.shown = "true";
+    });
   }, []);
 
   return (

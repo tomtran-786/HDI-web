@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { auth } from "@/lib/auth";
-import { aiCheck, aiCheckKinds } from "@/content/ai-check";
+import { currentSession } from "@/lib/current-session";
+import { aiCheck, serviceKindLabel } from "@/content/ai-check";
 import { orderStatusLabel, orderStatusTone } from "@/content/checkout";
 import { links } from "@/content/site";
 import { formatVnd } from "@/lib/format";
@@ -10,6 +10,7 @@ import { findServiceOrder } from "@/lib/service-orders";
 import { Badge } from "@/components/ui/badge";
 import { Section, SectionHeading } from "@/components/ui/section";
 import { IconArrow, IconMessage } from "@/components/ui/icons";
+import { PaymentPoll } from "@/components/payment-poll";
 import { CopyCode } from "./copy-code";
 
 export const metadata: Metadata = {
@@ -20,9 +21,12 @@ export const metadata: Metadata = {
 
 export default async function ServiceOrderResultPage({
   params,
+  searchParams,
 }: PageProps<"/kiem-tra-ai-dao-van/ket-qua/[ref]">) {
   const { ref } = await params;
-  const session = await auth();
+  const query = await searchParams;
+  const cancelledCheckout = query.huy === "1";
+  const session = await currentSession();
   if (!session?.user?.id) {
     redirect(
       `/dang-nhap?tiep=${encodeURIComponent(`/kiem-tra-ai-dao-van/ket-qua/${ref}`)}`,
@@ -36,8 +40,7 @@ export default async function ServiceOrderResultPage({
   const order = await findServiceOrder(ref, session.user.id);
   if (!order) notFound();
 
-  const kindLabel =
-    aiCheckKinds.find((kind) => kind.id === order.kind)?.label ?? order.kind;
+  const kindLabel = serviceKindLabel(order.kind);
   const paid = order.status === "paid";
   const open = order.status === "pending" && order.expiresAt > new Date();
 
@@ -46,14 +49,18 @@ export default async function ServiceOrderResultPage({
       <SectionHeading
         eyebrow={aiCheck.result.eyebrow}
         title={
-          paid
+          cancelledCheckout && open
+            ? aiCheck.result.cancelledTitle
+            : paid
             ? aiCheck.result.paidTitle
             : open
               ? aiCheck.result.pendingTitle
               : aiCheck.result.closedTitle
         }
         subtitle={
-          paid
+          cancelledCheckout && open
+            ? aiCheck.result.cancelledBody
+            : paid
             ? aiCheck.result.paidBody
             : open
               ? aiCheck.result.pendingBody
@@ -104,6 +111,7 @@ export default async function ServiceOrderResultPage({
               <IconArrow size={16} />
             </a>
           )}
+          {order.status === "pending" && !cancelledCheckout && <PaymentPoll />}
           {!open && !paid && (
             <Link
               href="/kiem-tra-ai-dao-van"

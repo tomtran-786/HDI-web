@@ -3,6 +3,7 @@ import Link from "next/link";
 import { aiCheck, aiCheckKinds, aiCheckTiers } from "@/content/ai-check";
 import { site } from "@/content/site";
 import { formatVnd } from "@/lib/format";
+import { isAiCheckKind, isValidWordCount } from "@/lib/ai-check-pricing";
 import { QuoteForm } from "./quote-form";
 
 export const metadata: Metadata = {
@@ -19,7 +20,14 @@ export const metadata: Metadata = {
  * form nhập liệu là đúng loại nội dung phải nằm ở trang con và được dẫn tới từ
  * khối liên quan (#dich-vu).
  */
-export default function AiCheckPage() {
+export default async function AiCheckPage({
+  searchParams,
+}: PageProps<"/kiem-tra-ai-dao-van">) {
+  const query = await searchParams;
+  const parsedWords = typeof query.soTu === "string" ? Number(query.soTu) : NaN;
+  const defaultWords = isValidWordCount(parsedWords) ? parsedWords : undefined;
+  const defaultKind = isAiCheckKind(query.dichVu) ? query.dichVu : undefined;
+
   return (
     <>
       <section className="border-b border-line bg-bg">
@@ -88,7 +96,7 @@ export default function AiCheckPage() {
               </div>
             </div>
 
-            <QuoteForm />
+            <QuoteForm defaultWords={defaultWords} defaultKind={defaultKind} />
           </div>
         </div>
       </section>

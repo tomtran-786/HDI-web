@@ -8,6 +8,7 @@ import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { themeBootstrap } from "@/lib/theme-script";
 import { appUrl } from "@/lib/app-url";
+import { currentSession } from "@/lib/current-session";
 import "./globals.css";
 
 const sourceSans = Source_Sans_3({
@@ -42,7 +43,15 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
   // Nonce do middleware.ts sinh. Đọc headers() ở đây là lý do mọi route được
   // render động thay vì tĩnh — xem lib/security-headers.ts để biết vì sao CSP
   // của Next không thể dùng hash thay cho nonce.
-  const nonce = (await headers()).get("x-nonce") ?? undefined;
+  const [headerStore, session] = await Promise.all([headers(), currentSession()]);
+  const nonce = headerStore.get("x-nonce") ?? undefined;
+  const appShell = (
+    <CartProvider>
+      <SiteHeader signedIn={Boolean(session?.user)} />
+      <main className="flex-1">{children}</main>
+      <SiteFooter />
+    </CartProvider>
+  );
 
   return (
     // the bootstrap script below adds `dark` before React hydrates
@@ -55,20 +64,18 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
         <script nonce={nonce} dangerouslySetInnerHTML={{ __html: themeBootstrap }} />
       </head>
       <body className="min-h-full flex flex-col font-sans bg-bg text-fg">
-        {/* SessionProvider, not `await auth()` here: reading the session on the
-            server would opt every route — including the marketing page — out of
-            static rendering. The header resolves the session on the client and
-            falls back to the marketing CTA while it loads. */}
-        <SessionProvider>
-          {/* The cart lives in a cookie, so it wraps the header badge and the
-              shared modal. The modal loads its catalog only after opening and
-              gates selection behind authentication/profile completion. */}
-          <CartProvider>
-            <SiteHeader />
-            <main className="flex-1">{children}</main>
-            <SiteFooter />
-          </CartProvider>
-        </SessionProvider>
+        {/* Nonce handling already makes every route dynamic. The header gets
+            its state directly from the server, and authenticated pages seed
+            SessionProvider for client sign-out. Anonymous pages need no auth
+            context, so omitting it also avoids its development StrictMode
+            refresh of /api/auth/session. */}
+        {session ? (
+          <SessionProvider session={session} refetchOnWindowFocus={false}>
+            {appShell}
+          </SessionProvider>
+        ) : (
+          appShell
+        )}
         {/* Page views plus the three funnel events in lib/analytics.ts. */}
         <Analytics />
       </body>

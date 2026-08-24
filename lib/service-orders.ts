@@ -154,7 +154,7 @@ export async function ensureServiceCheckout(
       // PayOS cắt phần mô tả rất ngắn; tiền tố "AI" là thứ phân biệt đơn dịch
       // vụ với đơn khóa học ("HDI <code>") khi đọc sao kê ngân hàng.
       description: `HDI AI ${order.code}`,
-      cancelUrl: back,
+      cancelUrl: `${back}?huy=1`,
       returnUrl: back,
       expiredAt: Math.floor(order.expiresAt.getTime() / 1000),
       buyerName: order.user.name ?? undefined,

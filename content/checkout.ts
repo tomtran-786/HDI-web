@@ -70,6 +70,13 @@ export const orderStatusLabel: Record<string, string> = {
   refunded: "Đã hoàn tiền",
 };
 
+export const enrollmentStatusLabel: Record<string, string> = {
+  pending: "Chờ xác nhận thanh toán",
+  paid: "Đã thanh toán",
+  cancelled: "Đã hủy",
+  refunded: "Đã hoàn tiền",
+};
+
 /** Badge tone per order status, so "hết chỗ"/"đã hủy" reads differently from "đã thanh toán" at a glance. */
 export const orderStatusTone: Record<
   string,

@@ -17,7 +17,7 @@ vi.mock("@/lib/payos", () => ({
   isPayosNotFound: mocks.isNotFound,
 }));
 vi.mock("@/lib/orders", () => ({ cancelOrder: mocks.cancelOrder }));
-vi.mock("@/lib/email", () => ({ appUrl: () => "https://hdi.test" }));
+vi.mock("@/lib/app-url", () => ({ appUrl: () => "https://hdi.test" }));
 
 import { ensurePayosCheckout } from "@/lib/payment-checkout";
 

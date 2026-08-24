@@ -3,8 +3,13 @@ import { prisma } from "@/lib/prisma";
 import { findCourse } from "@/lib/courses";
 import { formatDateTime } from "@/lib/format";
 import { seatsTaken } from "@/lib/course-sales";
-import { orderStatusLabel } from "@/content/checkout";
-import { aiCheckKinds } from "@/content/ai-check";
+import { hasLiveAccess, liveAccessWhere } from "@/lib/enrollment";
+import {
+  enrollmentStatusLabel,
+  orderStatusLabel,
+  orderStatusTone,
+} from "@/content/checkout";
+import { serviceKindLabel } from "@/content/ai-check";
 import { Section, SectionHeading } from "@/components/ui/section";
 import { Badge } from "@/components/ui/badge";
 import { Stars } from "@/components/ui/stars";
@@ -36,20 +41,31 @@ const reviewTone: Record<string, "cool" | "success" | "warning" | "danger"> = {
   rejected: "danger",
 };
 
-/** Nhãn tiếng Việt của một loại dịch vụ, trả lại chính mã nếu bảng giá đã đổi. */
-function kindLabel(kind: string) {
-  return aiCheckKinds.find((item) => item.id === kind)?.label ?? kind;
-}
-
-const statusLabel: Record<string, string> = {
-  pending: "Chờ thanh toán",
-  paid: "Đã thanh toán",
-  cancelled: "Đã hủy",
-  refunded: "Đã hoàn tiền",
-};
-
 export default async function AdminPage() {
-  const [orders, enrollments, courses, reviewPayments, reviews, serviceOrders] =
+  const now = new Date();
+  const coursesPromise = prisma.course.findMany({
+    orderBy: { createdAt: "asc" },
+    select: {
+      id: true,
+      slug: true,
+      capacity: true,
+      priceVnd: true,
+      accessDays: true,
+      status: true,
+      meetingUrl: true,
+      driveFolderId: true,
+    },
+  });
+  const [
+    orders,
+    enrollments,
+    courses,
+    reviewPayments,
+    reviews,
+    serviceOrders,
+    missingDriveCount,
+    occupiedSeats,
+  ] =
     await Promise.all([
     // The reconciliation queue: money expected but not yet confirmed. There is
     // no "mark paid" button beside it, deliberately — confirmation belongs to
@@ -78,6 +94,7 @@ export default async function AdminPage() {
     }),
     prisma.enrollment.findMany({
       orderBy: [{ status: "asc" }, { createdAt: "desc" }],
+      take: 100,
       select: {
         id: true,
         status: true,
@@ -95,19 +112,7 @@ export default async function AdminPage() {
         },
       },
     }),
-    prisma.course.findMany({
-      orderBy: { createdAt: "asc" },
-      select: {
-        id: true,
-        slug: true,
-        capacity: true,
-        priceVnd: true,
-        accessDays: true,
-        status: true,
-        meetingUrl: true,
-        driveFolderId: true,
-      },
-    }),
+    coursesPromise,
     prisma.payment.findMany({
       where: {
         OR: [
@@ -167,18 +172,23 @@ export default async function AdminPage() {
         user: { select: { name: true, email: true, phone: true } },
       },
     }),
+    prisma.enrollment.count({
+      where: {
+        ...liveAccessWhere(now),
+        drivePermissionId: null,
+        course: { driveFolderId: { not: null } },
+      },
+    }),
+    coursesPromise.then((rows) => seatsTaken(rows.map((course) => course.id))),
   ]);
-  const occupiedSeats = await seatsTaken(courses.map((course) => course.id));
 
   const awaitingPayment = orders.filter((o) => o.status === "pending");
   const awaitingReview = reviews.filter((r) => r.status === "pending");
-  const missingDrive = enrollments.filter(
-    (e) =>
-      e.status === "paid" &&
-      !e.accessRevokedAt &&
-      (!e.accessExpiresAt || e.accessExpiresAt > new Date()) &&
-      e.course.driveFolderId &&
-      !e.drivePermissionId,
+  const missingDriveIds = new Set(
+    enrollments
+      .filter((e) => hasLiveAccess(e, now))
+      .filter((e) => e.course.driveFolderId && !e.drivePermissionId)
+      .map((e) => e.id),
   );
 
   return (
@@ -186,7 +196,7 @@ export default async function AdminPage() {
       <SectionHeading
         eyebrow="Quản trị"
         title="Ghi danh & khóa học"
-        subtitle={`${awaitingPayment.length} đơn chờ thanh toán · ${reviewPayments.length} giao dịch cần kiểm tra · ${missingDrive.length} quyền Drive đang thiếu · ${awaitingReview.length} đánh giá chờ duyệt.`}
+        subtitle={`${awaitingPayment.length} đơn chờ thanh toán · ${reviewPayments.length} giao dịch cần kiểm tra · ${missingDriveCount} quyền Drive đang thiếu · ${awaitingReview.length} đánh giá chờ duyệt.`}
       />
 
       {reviewPayments.length > 0 && (
@@ -210,7 +220,7 @@ export default async function AdminPage() {
                   ? {
                       label: `Dịch vụ #${payment.serviceOrder.code}`,
                       expected: payment.serviceOrder.amountVnd,
-                      who: kindLabel(payment.serviceOrder.kind),
+                      who: serviceKindLabel(payment.serviceOrder.kind),
                     }
                   : null;
               return (
@@ -246,7 +256,7 @@ export default async function AdminPage() {
                   <p className="font-bold tabular-nums tracking-tight">
                     #{order.code}
                   </p>
-                  <Badge tone={order.status === "paid" ? "success" : "cool"}>
+                  <Badge tone={orderStatusTone[order.status] ?? "cool"}>
                     {orderStatusLabel[order.status] ?? order.status}
                   </Badge>
                   {order.provider && (
@@ -320,9 +330,9 @@ export default async function AdminPage() {
                       {e.user.name ?? "—"}
                     </p>
                     <Badge tone={e.status === "paid" ? "success" : "cool"}>
-                      {statusLabel[e.status] ?? e.status}
+                      {enrollmentStatusLabel[e.status] ?? e.status}
                     </Badge>
-                    {missingDrive.some((item) => item.id === e.id) && (
+                    {missingDriveIds.has(e.id) && (
                       <Badge tone="cool">Thiếu quyền Drive</Badge>
                     )}
                   </div>
@@ -500,7 +510,7 @@ export default async function AdminPage() {
                   <p className="font-bold tabular-nums tracking-tight">
                     #{order.code}
                   </p>
-                  <Badge tone={order.status === "paid" ? "success" : "cool"}>
+                  <Badge tone={orderStatusTone[order.status] ?? "cool"}>
                     {orderStatusLabel[order.status] ?? order.status}
                   </Badge>
                 </div>
@@ -509,7 +519,7 @@ export default async function AdminPage() {
                   {order.user.phone ? ` · ${order.user.phone}` : ""}
                 </p>
                 <p className="mt-1.5 text-[13px] text-fg-subtle">
-                  {kindLabel(order.kind)} · {vnd.format(order.wordCount)} từ ·{" "}
+                  {serviceKindLabel(order.kind)} · {vnd.format(order.wordCount)} từ ·{" "}
                   {formatDateTime(order.createdAt)}
                 </p>
               </div>

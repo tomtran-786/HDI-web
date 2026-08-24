@@ -1,6 +1,7 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
+import { COURSES_TAG, REVIEWS_TAG } from "@/lib/cache-tags";
 import { parseId } from "@/lib/action-input";
 import { requireAdmin } from "@/lib/admin";
 import { cancelOrder } from "@/lib/orders";
@@ -44,7 +45,7 @@ export async function updateCourseStatus(formData: FormData) {
     data: { status: status as CourseStatus },
   });
   revalidatePath("/quan-tri");
-  revalidatePath("/");
+  revalidateTag(COURSES_TAG, { expire: 0 });
 }
 
 /**
@@ -73,7 +74,7 @@ export async function moderateReview(formData: FormData) {
   });
 
   revalidatePath("/quan-tri");
-  // Điểm trung bình nằm trên thẻ khóa học ở trang chủ, nên duyệt xong phải làm
-  // mới cả trang đó chứ không riêng trang quản trị.
-  revalidatePath("/");
+  // Trang chủ là route động vì nonce CSP; dữ liệu đánh giá mới là phần được
+  // cache, nên phải xóa đúng tag thay vì revalidate full-route cache không có.
+  revalidateTag(REVIEWS_TAG, { expire: 0 });
 }

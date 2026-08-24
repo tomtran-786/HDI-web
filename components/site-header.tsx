@@ -3,23 +3,18 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { useSession } from "next-auth/react";
+import { usePathname } from "next/navigation";
 import { nav, site } from "@/content/site";
 import { ThemeToggle } from "./theme-toggle";
 import { CtaLink } from "./ui/cta-link";
 import { CartButton } from "./cart-button";
-import { useCart } from "./cart-provider";
 import { IconClose, IconMenu } from "./ui/icons";
 
-export function SiteHeader() {
+export function SiteHeader({ signedIn }: { signedIn: boolean }) {
+  const pathname = usePathname();
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
-  // Resolved on the client so the marketing page stays statically rendered.
-  // While it loads we show the marketing CTA — the right default for the
-  // overwhelmingly more common visitor, and no layout shift when it resolves.
-  const { status } = useSession();
-  const signedIn = status === "authenticated";
-  const { openCart } = useCart();
+  const [activeHref, setActiveHref] = useState<string | null>(null);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 8);
@@ -28,6 +23,64 @@ export function SiteHeader() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
+  useEffect(() => {
+    if (!open) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setOpen(false);
+    };
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, [open]);
+
+  useEffect(() => {
+    if (pathname !== "/") return;
+
+    const sectionItems = nav.filter((item) => item.href.startsWith("/#"));
+    const syncHash = () => {
+      const href = `/${window.location.hash}`;
+      if (sectionItems.some((item) => item.href === href)) setActiveHref(href);
+    };
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const visible = entries
+          .filter((entry) => entry.isIntersecting)
+          .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top);
+        const current = visible[0];
+        if (current) setActiveHref(`/#${current.target.id}`);
+      },
+      { rootMargin: "-18% 0px -72% 0px", threshold: 0 },
+    );
+
+    for (const item of sectionItems) {
+      const section = document.getElementById(item.href.slice(2));
+      if (section) observer.observe(section);
+    }
+    window.addEventListener("hashchange", syncHash);
+    return () => {
+      observer.disconnect();
+      window.removeEventListener("hashchange", syncHash);
+    };
+  }, [pathname]);
+
+  const isActive = (href: string) =>
+    href.startsWith("/#")
+      ? pathname === "/" && activeHref === href
+      : pathname === href || pathname.startsWith(`${href}/`);
+
+  const navLinkClass = (active: boolean, mobile = false) =>
+    mobile
+      ? `rounded-card px-4 py-3 text-sm font-semibold transition ${
+          active
+            ? "bg-tint text-primary"
+            : "text-fg-muted hover:bg-bg-soft hover:text-primary"
+        }`
+      : `rounded-full px-3 py-2 text-[13px] font-semibold transition ${
+          active
+            ? "bg-card text-primary shadow-sm"
+            : "text-fg-muted hover:bg-card hover:text-primary"
+        }`;
+
   return (
     <header
       className={`sticky top-0 z-50 border-b bg-bg/85 backdrop-blur transition-colors ${
@@ -35,7 +88,14 @@ export function SiteHeader() {
       }`}
     >
       <div className="shell flex h-16 items-center justify-between gap-4">
-        <Link href="/#top" className="flex items-center gap-2.5 font-bold tracking-tight">
+        <Link
+          href="/#top"
+          onClick={() => {
+            setOpen(false);
+            setActiveHref(null);
+          }}
+          className="flex shrink-0 items-center gap-2.5 font-bold tracking-tight"
+        >
           {/* alt="" — the wordmark right next to it already names the centre,
               so labelling the mark too would read the name twice. */}
           <Image
@@ -51,16 +111,30 @@ export function SiteHeader() {
           </span>
         </Link>
 
-        <nav className="hidden items-center gap-6 lg:flex">
-          {nav.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              className="text-[11px] font-semibold uppercase tracking-[0.14em] text-fg-muted transition hover:text-primary"
-            >
-              {item.label}
-            </Link>
-          ))}
+        <nav
+          aria-label="Điều hướng chính"
+          className="hidden items-center gap-0.5 rounded-full border border-line bg-bg-soft/80 p-1 xl:flex"
+        >
+          {nav.map((item) => {
+            const active = isActive(item.href);
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                aria-current={
+                  active
+                    ? item.href.startsWith("/#")
+                      ? "location"
+                      : "page"
+                    : undefined
+                }
+                onClick={() => setActiveHref(item.href)}
+                className={navLinkClass(active)}
+              >
+                {item.label}
+              </Link>
+            );
+          })}
         </nav>
 
         <div className="flex items-center gap-2">
@@ -73,8 +147,6 @@ export function SiteHeader() {
             </Link>
           ) : (
             <>
-              {/* Until now /dang-nhap existed but nothing linked to it — a
-                  returning student had no way in short of typing the URL. */}
               <Link
                 href="/dang-nhap"
                 className="hidden px-3 py-2 text-[11px] font-bold uppercase tracking-[0.12em] text-fg-muted transition hover:text-primary sm:inline-block"
@@ -86,7 +158,7 @@ export function SiteHeader() {
                 target="tu-van"
                 className="hidden rounded-full border border-primary px-4 py-2 text-[11px] font-bold uppercase tracking-[0.12em] text-primary transition hover:bg-primary hover:text-primary-fg sm:inline-block"
               >
-                Đăng ký tư vấn
+                Tư vấn miễn phí
               </CtaLink>
             </>
           )}
@@ -97,7 +169,8 @@ export function SiteHeader() {
             onClick={() => setOpen((v) => !v)}
             aria-label={open ? "Đóng menu" : "Mở menu"}
             aria-expanded={open}
-            className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-line text-fg-muted lg:hidden"
+            aria-controls="mobile-navigation"
+            className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-line text-fg-muted xl:hidden"
           >
             {open ? <IconClose /> : <IconMenu />}
           </button>
@@ -105,56 +178,85 @@ export function SiteHeader() {
       </div>
 
       {open && (
-        <nav className="border-t border-line bg-bg lg:hidden">
-          <div className="shell flex flex-col py-2">
-            {nav.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                onClick={() => setOpen(false)}
-                className="border-b border-line py-3 text-sm font-semibold text-fg-muted last:border-0"
-              >
-                {item.label}
-              </Link>
-            ))}
-            <button
-              type="button"
-              onClick={() => {
-                setOpen(false);
-                openCart();
-              }}
-              className="border-b border-line py-3 text-sm font-semibold text-fg-muted"
-            >
-              Giỏ hàng
-            </button>
-            {signedIn ? (
-              <Link
-                href="/tai-khoan"
-                onClick={() => setOpen(false)}
-                className="mt-3 mb-2 rounded-full bg-primary px-4 py-2.5 text-center text-sm font-bold text-primary-fg"
-              >
-                Tài khoản
-              </Link>
-            ) : (
-              <>
-                <Link
-                  href="/dang-nhap"
-                  onClick={() => setOpen(false)}
-                  className="mt-3 rounded-full border border-line px-4 py-2.5 text-center text-sm font-bold text-fg"
-                >
-                  Đăng nhập
-                </Link>
-                <CtaLink
-                  source="header-mobile"
-                  target="tu-van"
-                  className="mt-2 mb-2 rounded-full bg-primary px-4 py-2.5 text-center text-sm font-bold text-primary-fg"
-                >
-                  Đăng ký tư vấn
-                </CtaLink>
-              </>
-            )}
-          </div>
-        </nav>
+        <>
+          <button
+            type="button"
+            aria-label="Đóng menu điều hướng"
+            onClick={() => setOpen(false)}
+            className="fixed inset-x-0 bottom-0 top-16 z-10 bg-primary-deep/15 backdrop-blur-[1px] xl:hidden"
+          />
+          <nav
+            id="mobile-navigation"
+            aria-label="Điều hướng di động"
+            className="absolute inset-x-0 top-full z-20 max-h-[calc(100dvh-4rem)] overflow-y-auto border-t border-line bg-bg shadow-[0_24px_48px_-24px_rgba(12,73,143,0.4)] xl:hidden"
+          >
+            <div className="shell py-5">
+              <p className="px-1 text-[10px] font-bold uppercase tracking-[0.16em] text-fg-subtle">
+                Khám phá HDI
+              </p>
+              <div className="mt-3 grid gap-1 sm:grid-cols-2">
+                {nav.map((item) => {
+                  const active = isActive(item.href);
+                  return (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      aria-current={
+                        active
+                          ? item.href.startsWith("/#")
+                            ? "location"
+                            : "page"
+                          : undefined
+                      }
+                      onClick={() => {
+                        setActiveHref(item.href);
+                        setOpen(false);
+                      }}
+                      className={navLinkClass(active, true)}
+                    >
+                      {item.label}
+                    </Link>
+                  );
+                })}
+              </div>
+
+              <div className="mt-5 grid gap-2 border-t border-line pt-5 sm:grid-cols-2">
+                {signedIn ? (
+                  <Link
+                    href="/tai-khoan"
+                    onClick={() => setOpen(false)}
+                    className="rounded-full bg-primary px-5 py-3 text-center text-sm font-bold text-primary-fg"
+                  >
+                    Mở trang tài khoản
+                  </Link>
+                ) : (
+                  <>
+                    <Link
+                      href="/dang-nhap"
+                      onClick={() => setOpen(false)}
+                      className="rounded-full border border-line px-5 py-3 text-center text-sm font-bold text-fg"
+                    >
+                      Đăng nhập
+                    </Link>
+                    <CtaLink
+                      source="header-mobile"
+                      target="tu-van"
+                      onNavigate={() => setOpen(false)}
+                      className="rounded-full bg-primary px-5 py-3 text-center text-sm font-bold text-primary-fg"
+                    >
+                      Tư vấn miễn phí
+                    </CtaLink>
+                  </>
+                )}
+              </div>
+              {!signedIn && (
+                <p className="mt-3 text-center text-xs leading-relaxed text-fg-subtle sm:text-left">
+                  Đăng nhập để xem khóa học, đơn hàng và quyền truy cập của bạn.
+                </p>
+              )}
+            </div>
+          </nav>
+        </>
       )}
     </header>
   );

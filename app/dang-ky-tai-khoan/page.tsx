@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { auth } from "@/lib/auth";
+import { currentSession } from "@/lib/current-session";
 import { safeNext } from "@/lib/safe-path";
 import { registerPage } from "@/content/auth";
 import { registerAccount } from "./actions";
@@ -24,7 +24,7 @@ export default async function RegisterPage({
   const next = safeNext(tiep);
   const nextQuery =
     next === "/tai-khoan" ? "" : `?tiep=${encodeURIComponent(next)}`;
-  if ((await auth())?.user) redirect(next);
+  if ((await currentSession())?.user) redirect(next);
 
   // Mã lỗi đến từ thanh địa chỉ, nên nó chỉ được dùng để tra bảng thông điệp có
   // sẵn — một giá trị lạ rơi về "invalid" thay vì được hiển thị nguyên văn.

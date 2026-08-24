@@ -3,7 +3,7 @@
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { allowUserAction } from "@/lib/auth-throttle";
-import { prisma } from "@/lib/prisma";
+import { currentProfile } from "@/lib/current-profile";
 import { isProfileComplete } from "@/lib/profile";
 import { readCartIds, writeCartIds } from "@/lib/cart";
 import { createOrder } from "@/lib/orders";
@@ -29,10 +29,7 @@ export async function checkout(
     redirect(`/dang-nhap?tiep=${encodeURIComponent(LANDING_CART)}`);
   }
 
-  const user = await prisma.user.findUnique({
-    where: { id: session.user.id },
-    select: { phone: true, stage: true },
-  });
+  const user = await currentProfile(session.user.id);
   if (!user) redirect("/dang-nhap");
   if (!isProfileComplete(user)) {
     redirect(`/hoan-tat-ho-so?tiep=${encodeURIComponent(LANDING_CART)}`);

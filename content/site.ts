@@ -26,12 +26,11 @@ export const site = {
  * and go nowhere.
  */
 export const nav = [
+  { label: "Về HDI", href: "/#ve-chung-toi" },
   { label: "Chương trình", href: "/#chuong-trinh" },
   { label: "Khóa học", href: "/#khoa-hoc" },
   { label: "Dịch vụ", href: "/#dich-vu" },
-  { label: "Check AI", href: "/kiem-tra-ai-dao-van" },
-  { label: "Về chúng tôi", href: "/#ve-chung-toi" },
-  { label: "Công bố", href: "/cong-bo" },
+  { label: "Hồ sơ học thuật", href: "/cong-bo" },
   { label: "Liên hệ", href: "/#lien-he" },
 ] as const;
 

@@ -19,6 +19,11 @@ export const aiCheckKinds = [
 
 export type AiCheckKind = (typeof aiCheckKinds)[number]["id"];
 
+/** Nhãn tiếng Việt của một loại dịch vụ, trả lại chính mã nếu bảng giá đã đổi. */
+export function serviceKindLabel(kind: string) {
+  return aiCheckKinds.find((item) => item.id === kind)?.label ?? kind;
+}
+
 export const aiCheckTiers = [
   {
     id: "duoi-40-trang",
@@ -76,6 +81,9 @@ export const aiCheck = {
     pendingTitle: "Đơn đã tạo, đang chờ thanh toán",
     pendingBody:
       "Nếu bạn đã chuyển khoản, trạng thái sẽ đổi trong ít phút sau khi ngân hàng báo về. Bạn có thể gửi bài trước.",
+    cancelledTitle: "Bạn đã rời trang thanh toán",
+    cancelledBody:
+      "Đơn vẫn được giữ trong thời hạn hiển thị bên dưới. Bạn có thể mở lại PayOS để tiếp tục, hoặc quay lại tạo đơn khác.",
     paidTitle: "Đã nhận thanh toán",
     paidBody: "Gửi bản thảo qua Zalo kèm mã đơn bên dưới để HDI bắt đầu kiểm tra.",
     closedTitle: "Đơn này đã đóng",
