@@ -202,6 +202,34 @@ là thêm captcha hoặc backoff luỹ tiến — KHÔNG phải nâng trần.
 - Analytics giữ sự kiện mở lộ trình, thêm/bỏ giỏ, checkout; số lượng được ghi là
   `so_khoa`, không còn thuộc tính `ky`.
 
+## Triển khai
+
+`vercel.json` chỉ chạy `next build`. Migration KHÔNG nằm trong `buildCommand`, và
+đó là một quyết định chứ không phải thiếu sót.
+
+Khi `prisma migrate deploy && next build` còn là lệnh build, mọi deploy đều phụ
+thuộc vào việc máy build chạm được Postgres ngay tại thời điểm đó — kể cả deploy
+không đụng gì tới schema. Máy build của Vercel chạy ở `iad1` (Washington D.C.)
+trong khi `regions: ["icn1"]` chỉ ghim vị trí của function, nên mỗi lần build là
+một kết nối Postgres vượt Thái Bình Dương. Ngày 2026-08-24 một lần rớt kết nối
+tới pooler làm hỏng nguyên một deploy mà commit đó không mang theo migration nào:
+bước duy nhất có thể hỏng lại là bước không có việc gì để làm.
+
+Rủi ro thứ hai nặng hơn: deploy preview cũng chạy chung `buildCommand`, và biến
+môi trường trỏ vào database production. Một nhánh preview mang migration mới sẽ
+đổi schema thật trước khi có ai kịp review nó.
+
+Nên thứ tự triển khai là: áp migration trước, deploy sau.
+
+```bash
+npm run migrate   # prisma migrate deploy — chỉ khi có migration mới
+git push          # Vercel build và deploy
+```
+
+Prisma CLI đọc `DIRECT_DATABASE_URL` (pooler SESSION mode, cổng 5432) qua
+`prisma.config.ts`; app runtime dùng `DATABASE_URL` (TRANSACTION mode, cổng
+6543). Chạy `npx prisma migrate status` để biết có migration nào đang chờ không.
+
 ## Kiểm chứng
 
 Các lệnh chuẩn:
