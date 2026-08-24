@@ -376,6 +376,16 @@ model Payment {
 
   receivedAt DateTime @default(now()) @map("received_at") @db.Timestamptz(6)
 
+  /// Quản trị viên đã đọc qua giao dịch này và gỡ nó khỏi hàng chờ đối soát.
+  ///
+  /// Một TRỤC RIÊNG, cố ý không nhét vào `status`. `status` là trạng thái tiền
+  /// do PayOS báo về; "đã có người nhìn" là chuyện của HDI. Gộp hai thứ vào một
+  /// enum sẽ xóa mất thông tin tiền để đổi lấy một ghi chú nội bộ.
+  ///
+  /// Đánh dấu ở đây KHÔNG xác nhận thanh toán và không đụng tới đơn hay ghi
+  /// danh — xem ghi chú "deliberately no markPaid" ở app/quan-tri/actions.ts.
+  reconciledAt DateTime? @map("reconciled_at") @db.Timestamptz(6)
+
   order        Order?        @relation(fields: [orderId], references: [id], onDelete: Cascade)
   serviceOrder ServiceOrder? @relation(fields: [serviceOrderId], references: [id], onDelete: Cascade)
 

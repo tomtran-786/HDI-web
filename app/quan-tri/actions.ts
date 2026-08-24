@@ -4,6 +4,7 @@ import { revalidatePath, revalidateTag } from "next/cache";
 import { COURSES_TAG, REVIEWS_TAG } from "@/lib/cache-tags";
 import { parseId } from "@/lib/action-input";
 import { requireAdmin } from "@/lib/admin";
+import { reconcileDriveFolder } from "@/lib/fulfillment";
 import { cancelOrder } from "@/lib/orders";
 import { prisma } from "@/lib/prisma";
 import type { CourseStatus, ReviewStatus } from "@/lib/generated/prisma/enums";
@@ -77,4 +78,74 @@ export async function moderateReview(formData: FormData) {
   // Trang chủ là route động vì nonce CSP; dữ liệu đánh giá mới là phần được
   // cache, nên phải xóa đúng tag thay vì revalidate full-route cache không có.
   revalidateTag(REVIEWS_TAG, { expire: 0 });
+}
+
+/**
+ * Gỡ một giao dịch khỏi hàng chờ đối soát thủ công.
+ *
+ * KHÔNG phải nút "đã thanh toán". Nó chỉ ghi lại rằng một con người đã đọc qua
+ * giao dịch này, để hàng chờ đừng lặp lại mãi cùng một dòng — trạng thái đơn,
+ * ghi danh và quyền truy cập không đổi một chữ nào. Xác nhận thanh toán vẫn chỉ
+ * là việc của webhook, đúng như ghi chú ở đầu file: một cái nút bấm tay cạnh nó
+ * là con đường thứ hai để một ghi danh thành `paid`, và hai con đường thì sớm
+ * muộn cũng lệch nhau.
+ *
+ * Nếu về sau webhook về muộn và tự xử lý đúng, dòng đó rời hàng chờ theo điều
+ * kiện `status` như trước — `reconciledAt` không cản gì.
+ */
+export async function markPaymentReconciled(paymentId: unknown) {
+  await requireAdmin();
+  const id = parseId(paymentId);
+  if (!id) return { ok: false, message: "Mã giao dịch không hợp lệ." };
+
+  // updateMany chứ không update: `where` không khớp thì trả count 0 thay vì ném
+  // P2025, và ở đây "giao dịch đã biến mất" không phải chuyện đáng làm gãy trang.
+  const done = await prisma.payment.updateMany({
+    where: { id, reconciledAt: null },
+    data: { reconciledAt: new Date() },
+  });
+
+  revalidatePath("/quan-tri");
+  return done.count > 0
+    ? { ok: true, message: "Đã đánh dấu giao dịch là đã đối soát." }
+    : { ok: false, message: "Giao dịch này đã được đối soát trước đó." };
+}
+
+/**
+ * Cấp lại quyền Drive cho một ghi danh bất kỳ.
+ *
+ * Bản song song của `retryDriveAccess` ở app/tai-khoan/actions.ts, khác đúng một
+ * điểm: KHÔNG thu hẹp theo `userId`, vì quản trị viên thao tác trên ghi danh của
+ * người khác. Mất lớp đó thì `parseId` là thứ duy nhất còn đứng giữa một object
+ * lọt vào `where` và việc Prisma đọc nó như bộ lọc rồi cấp quyền cho nhầm
+ * người — nên nó không phải thủ tục, nó là cái chốt.
+ */
+export async function retryDriveAccessForEnrollment(enrollmentId: unknown) {
+  await requireAdmin();
+  const id = parseId(enrollmentId);
+  if (!id) return { ok: false, message: "Mã ghi danh không hợp lệ." };
+
+  const enrollment = await prisma.enrollment.findUnique({
+    where: { id },
+    select: { id: true, course: { select: { driveFolderId: true } } },
+  });
+  if (!enrollment) return { ok: false, message: "Không tìm thấy ghi danh." };
+  if (!enrollment.course.driveFolderId) {
+    return { ok: false, message: "Khóa học này chưa gắn thư mục Drive." };
+  }
+
+  try {
+    await reconcileDriveFolder(enrollment.course.driveFolderId, {
+      enrollmentIds: [enrollment.id],
+      limit: 1,
+    });
+  } catch (error) {
+    // Google trả lỗi là chuyện thường gặp ở đây (quota, folder bị đổi quyền).
+    // Nói ra chứ không nuốt: quản trị viên cần biết để đi sửa bên Drive.
+    console.error("[quan-tri] Cấp lại quyền Drive hỏng:", error);
+    return { ok: false, message: "Google Drive từ chối. Xem log để biết lý do." };
+  }
+
+  revalidatePath("/quan-tri");
+  return { ok: true, message: "Đã gửi yêu cầu cấp lại quyền Drive." };
 }

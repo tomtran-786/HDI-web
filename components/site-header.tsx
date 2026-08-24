@@ -10,7 +10,28 @@ import { CtaLink } from "./ui/cta-link";
 import { CartButton } from "./cart-button";
 import { IconClose, IconMenu } from "./ui/icons";
 
-export function SiteHeader({ signedIn }: { signedIn: boolean }) {
+/**
+ * Lối vào trang quản trị, chỉ gắn vào navbar khi người đang đăng nhập nằm trong
+ * allowlist ADMIN_EMAILS.
+ *
+ * Khai báo ở đây chứ KHÔNG thêm vào `nav` của content/site.ts: `nav` được
+ * site-footer.tsx dùng chung, nên thêm vào đó là để lộ mục quản trị xuống chân
+ * mọi trang, cho cả khách vãng lai.
+ */
+const ADMIN_NAV = { label: "Quản trị", href: "/quan-tri" } as const;
+
+/**
+ * `isAdmin` đi xuống client và người dùng đọc được nó — điều đó không sao, vì
+ * nó chỉ quyết định có VẼ một đường link hay không. Cửa thật vẫn là redirect
+ * trong app/quan-tri/layout.tsx và `requireAdmin()` trong từng server action.
+ */
+export function SiteHeader({
+  signedIn,
+  isAdmin = false,
+}: {
+  signedIn: boolean;
+  isAdmin?: boolean;
+}) {
   const pathname = usePathname();
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
@@ -68,6 +89,10 @@ export function SiteHeader({ signedIn }: { signedIn: boolean }) {
       ? pathname === "/" && activeHref === href
       : pathname === href || pathname.startsWith(`${href}/`);
 
+  // Mục quản trị đứng CUỐI, sau các mục nội dung. `nav` là readonly tuple nên
+  // trải ra mảng mới thay vì đẩy vào.
+  const navItems = isAdmin ? [...nav, ADMIN_NAV] : nav;
+
   const navLinkClass = (active: boolean, mobile = false) =>
     mobile
       ? `rounded-card px-4 py-3 text-sm font-semibold transition ${
@@ -115,7 +140,7 @@ export function SiteHeader({ signedIn }: { signedIn: boolean }) {
           aria-label="Điều hướng chính"
           className="hidden items-center gap-0.5 rounded-full border border-line bg-bg-soft/80 p-1 xl:flex"
         >
-          {nav.map((item) => {
+          {navItems.map((item) => {
             const active = isActive(item.href);
             return (
               <Link
@@ -195,7 +220,7 @@ export function SiteHeader({ signedIn }: { signedIn: boolean }) {
                 Khám phá HDI
               </p>
               <div className="mt-3 grid gap-1 sm:grid-cols-2">
-                {nav.map((item) => {
+                {navItems.map((item) => {
                   const active = isActive(item.href);
                   return (
                     <Link

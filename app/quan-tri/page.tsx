@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { prisma } from "@/lib/prisma";
 import { findCourse } from "@/lib/courses";
-import { formatDateTime } from "@/lib/format";
+import { endOfDayVN, formatDate, formatDateTime, startOfDayVN } from "@/lib/format";
 import { seatsTaken } from "@/lib/course-sales";
 import { hasLiveAccess, liveAccessWhere } from "@/lib/enrollment";
 import {
@@ -13,19 +13,20 @@ import { serviceKindLabel } from "@/content/ai-check";
 import { Section, SectionHeading } from "@/components/ui/section";
 import { Badge } from "@/components/ui/badge";
 import { Stars } from "@/components/ui/stars";
-import { cancelPendingOrder, moderateReview, updateCourseStatus } from "./actions";
+import {
+  cancelPendingOrder,
+  markPaymentReconciled,
+  moderateReview,
+  retryDriveAccessForEnrollment,
+  updateCourseStatus,
+} from "./actions";
+import { AdminActionButton } from "./action-button";
+import { DateFilter } from "./date-filter";
 
 export const metadata: Metadata = {
   title: "Quản trị — HDI Research Center",
   robots: { index: false, follow: false },
 };
-
-const dateFmt = new Intl.DateTimeFormat("vi-VN", {
-  day: "2-digit",
-  month: "2-digit",
-  year: "numeric",
-  timeZone: "Asia/Ho_Chi_Minh",
-});
 
 const vnd = new Intl.NumberFormat("vi-VN");
 
@@ -41,8 +42,33 @@ const reviewTone: Record<string, "cool" | "success" | "warning" | "danger"> = {
   rejected: "danger",
 };
 
-export default async function AdminPage() {
+export default async function AdminPage({
+  searchParams,
+}: PageProps<"/quan-tri">) {
   const now = new Date();
+
+  // Khoảng ngày dùng chung cho mọi danh sách bên dưới. `startOfDayVN` trả null
+  // cho chuỗi rỗng/sai hình dạng/ngày không tồn tại, và null ở đây nghĩa là
+  // "không chặn đầu này" — nên một URL bị gõ sai cho ra trang đầy đủ, không phải
+  // trang trống hay trang lỗi.
+  const query = await searchParams;
+  const from = startOfDayVN(query.tu);
+  const to = endOfDayVN(query.den);
+
+  /**
+   * `where` cho một cột thời gian bất kỳ. Trả về object rỗng khi không lọc, để
+   * trải vào `where` mà không đổi truy vấn gốc.
+   */
+  const inRange = (column: string) =>
+    from || to
+      ? {
+          [column]: {
+            ...(from ? { gte: from } : {}),
+            ...(to ? { lte: to } : {}),
+          },
+        }
+      : {};
+
   const coursesPromise = prisma.course.findMany({
     orderBy: { createdAt: "asc" },
     select: {
@@ -72,7 +98,7 @@ export default async function AdminPage() {
     // the payment webhook and nowhere else, so a row leaving this list is
     // evidence that the automated path worked.
     prisma.order.findMany({
-      where: { status: { in: ["pending", "paid"] } },
+      where: { status: { in: ["pending", "paid"] }, ...inRange("createdAt") },
       orderBy: [{ status: "asc" }, { createdAt: "desc" }],
       take: 50,
       select: {
@@ -93,6 +119,7 @@ export default async function AdminPage() {
       },
     }),
     prisma.enrollment.findMany({
+      where: inRange("createdAt"),
       orderBy: [{ status: "asc" }, { createdAt: "desc" }],
       take: 100,
       select: {
@@ -115,11 +142,14 @@ export default async function AdminPage() {
     coursesPromise,
     prisma.payment.findMany({
       where: {
+        // Đã có người đọc qua thì rời hàng chờ — xem markPaymentReconciled.
+        reconciledAt: null,
         OR: [
           { status: "requires_review" },
           { status: "succeeded", order: { status: { not: "paid" } } },
           { status: "succeeded", serviceOrder: { status: { not: "paid" } } },
         ],
+        ...inRange("receivedAt"),
       },
       orderBy: { receivedAt: "desc" },
       take: 25,
@@ -146,6 +176,7 @@ export default async function AdminPage() {
     // Hàng chờ duyệt đánh giá. `pending` lên trước vì đó là thứ cần thao tác;
     // phần còn lại chỉ để đối chiếu những gì đang hiện trên trang khóa học.
     prisma.courseReview.findMany({
+      where: inRange("createdAt"),
       orderBy: [{ status: "asc" }, { createdAt: "desc" }],
       take: 30,
       select: {
@@ -159,6 +190,7 @@ export default async function AdminPage() {
       },
     }),
     prisma.serviceOrder.findMany({
+      where: inRange("createdAt"),
       orderBy: { createdAt: "desc" },
       take: 25,
       select: {
@@ -191,12 +223,26 @@ export default async function AdminPage() {
       .map((e) => e.id),
   );
 
+  const filtering = Boolean(from || to);
+
   return (
     <Section soft>
       <SectionHeading
         eyebrow="Quản trị"
         title="Ghi danh & khóa học"
-        subtitle={`${awaitingPayment.length} đơn chờ thanh toán · ${reviewPayments.length} giao dịch cần kiểm tra · ${missingDriveCount} quyền Drive đang thiếu · ${awaitingReview.length} đánh giá chờ duyệt.`}
+        // `missingDriveCount` là count() TOÀN HỆ THỐNG và cố tình không theo bộ
+        // lọc — nó là tình trạng "ngay lúc này", lọc theo ngày sẽ làm nó vô
+        // nghĩa. Ba con số còn lại đếm trong phạm vi đang lọc, nên câu chữ phải
+        // nói ra, kẻo hai loại số trông như cùng một loại.
+        subtitle={`${awaitingPayment.length} đơn chờ thanh toán · ${reviewPayments.length} giao dịch cần đối soát · ${awaitingReview.length} đánh giá chờ duyệt${
+          filtering ? " (trong khoảng đang lọc)" : ""
+        } · ${missingDriveCount} quyền Drive đang thiếu trên toàn hệ thống.`}
+      />
+
+      <DateFilter
+        from={typeof query.tu === "string" ? query.tu : ""}
+        to={typeof query.den === "string" ? query.den : ""}
+        now={now}
       />
 
       {reviewPayments.length > 0 && (
@@ -224,12 +270,28 @@ export default async function AdminPage() {
                     }
                   : null;
               return (
-                <li key={payment.id} className="text-sm text-fg-muted">
-                  {owner
-                    ? `${owner.label} · nhận ${vnd.format(payment.amountVnd)}đ / chờ ${vnd.format(owner.expected)}đ · ${owner.who}`
-                    : `Giao dịch không gắn với đơn nào · nhận ${vnd.format(payment.amountVnd)}đ`}
-                  {" · ref "}
-                  {payment.providerRef}
+                <li
+                  key={payment.id}
+                  className="flex flex-col gap-2 border-b border-line/50 pb-3 text-sm text-fg-muted last:border-0 last:pb-0 sm:flex-row sm:items-start sm:justify-between sm:gap-4"
+                >
+                  <span className="min-w-0">
+                    {owner
+                      ? `${owner.label} · nhận ${vnd.format(payment.amountVnd)}đ / chờ ${vnd.format(owner.expected)}đ · ${owner.who}`
+                      : `Giao dịch không gắn với đơn nào · nhận ${vnd.format(payment.amountVnd)}đ`}
+                    {" · "}
+                    {formatDateTime(payment.receivedAt)}
+                    {" · ref "}
+                    {payment.providerRef}
+                  </span>
+                  {/* KHÔNG phải nút "đã thanh toán". Nó chỉ ghi lại rằng có
+                      người đã đọc qua giao dịch, để hàng chờ đừng lặp lại mãi
+                      cùng một dòng — trạng thái đơn và ghi danh không đổi. */}
+                  <AdminActionButton
+                    action={markPaymentReconciled}
+                    id={payment.id}
+                    label="Đã đối soát"
+                    confirm="Đánh dấu giao dịch này là đã đối soát? Thao tác này KHÔNG xác nhận thanh toán — đơn và ghi danh giữ nguyên trạng thái."
+                  />
                 </li>
               );
             })}
@@ -288,19 +350,12 @@ export default async function AdminPage() {
                   {vnd.format(order.amountVnd)}đ
                 </p>
                 {order.status === "pending" && (
-                  <form
-                    action={async () => {
-                      "use server";
-                      await cancelPendingOrder(order.id);
-                    }}
-                  >
-                    <button
-                      type="submit"
-                      className="inline-flex items-center rounded-full border border-line px-4 py-2 text-sm font-bold text-fg-muted transition hover:border-primary hover:text-primary"
-                    >
-                      Hủy đơn
-                    </button>
-                  </form>
+                  <AdminActionButton
+                    action={cancelPendingOrder}
+                    id={order.id}
+                    label="Hủy đơn"
+                    confirm={`Hủy đơn #${order.code}? Ghi danh đang giữ chỗ sẽ được thả ra.`}
+                  />
                 )}
               </div>
             </li>
@@ -344,10 +399,23 @@ export default async function AdminPage() {
                   <p className="mt-1.5 text-[13px] text-fg-subtle">
                     {course?.title ?? e.course.slug} ·{" "}
                     {vnd.format(e.course.priceVnd)}đ · ghi danh{" "}
-                    {dateFmt.format(e.createdAt)}
+                    {formatDate(e.createdAt)}
                   </p>
                 </div>
-
+                {/* Cột hành động. `sm:justify-between` ở <li> vốn đã chừa sẵn
+                    chỗ này — dòng trống nằm đây trước đó là dấu vết của nó —
+                    nhưng chưa bao giờ có gì đứng vào: badge "Thiếu quyền Drive"
+                    báo vấn đề mà không có cách nào xử lý, trong khi trang học
+                    viên đã có đúng cái nút này từ lâu. */}
+                {missingDriveIds.has(e.id) && (
+                  <div className="shrink-0">
+                    <AdminActionButton
+                      action={retryDriveAccessForEnrollment}
+                      id={e.id}
+                      label="Cấp lại quyền Drive"
+                    />
+                  </div>
+                )}
               </li>
             );
           })}
@@ -467,9 +535,10 @@ export default async function AdminPage() {
                   </p>
                 )}
               </div>
-              {/* Hai nút luôn có mặt, kể cả trên bản đã duyệt: gỡ một đánh giá
-                  đã đăng là thao tác cần nhất khi có chuyện, và nó không được
-                  đòi thêm một màn hình nào khác. */}
+              {/* Dòng chờ duyệt có cả hai nút; dòng đã xử lý chỉ còn nút đưa nó
+                  sang trạng thái kia. Nhờ vậy gỡ một đánh giá ĐANG HIỆN vẫn là
+                  một cú bấm ngay tại đây — thao tác cần nhất khi có chuyện —
+                  mà không phải mở thêm màn hình nào. */}
               <div className="flex shrink-0 flex-wrap items-center gap-2">
                 {(["published", "rejected"] as const)
                   .filter((next) => next !== review.status)

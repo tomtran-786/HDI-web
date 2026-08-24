@@ -9,6 +9,7 @@ import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { themeBootstrap } from "@/lib/theme-script";
 import { appUrl } from "@/lib/app-url";
+import { isAdminEmail } from "@/lib/auth";
 import { currentSession } from "@/lib/current-session";
 import "./globals.css";
 
@@ -48,7 +49,12 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
   const nonce = headerStore.get("x-nonce") ?? undefined;
   const appShell = (
     <CartProvider>
-      <SiteHeader signedIn={Boolean(session?.user)} />
+      <SiteHeader
+        signedIn={Boolean(session?.user)}
+        // Không tốn truy vấn nào: email đã nằm sẵn trong JWT, và
+        // isAdminEmail chỉ đọc một biến môi trường.
+        isAdmin={isAdminEmail(session?.user?.email)}
+      />
       <main className="flex-1">{children}</main>
       <SiteFooter />
       <ContactDock />
