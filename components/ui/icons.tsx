@@ -77,6 +77,21 @@ export function IconMessage({ className, size = 20 }: IconProps) {
   );
 }
 
+export function IconFacebook({ className, size = 20 }: IconProps) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="currentColor"
+      className={className}
+      aria-hidden
+    >
+      <path d="M13.6 22v-9h3l.5-3.5h-3.5V7.3c0-1 .3-1.7 1.8-1.7h1.9V2.5c-.3 0-1.5-.1-2.8-.1-2.8 0-4.7 1.7-4.7 4.8v2.3H6.7V13h3.1v9h3.8z" />
+    </svg>
+  );
+}
+
 export function IconDownload({ className, size = 20 }: IconProps) {
   return (
     <svg {...base(size)} className={className} aria-hidden>

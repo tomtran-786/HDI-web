@@ -25,9 +25,8 @@
 import { track } from "@vercel/analytics";
 
 /**
- * Every place on the page that sends someone off-site. Kept as a closed union
- * so a typo in one call site cannot silently split a funnel into two buckets.
- * Seven of these point at the Form, two also offer Zalo.
+ * Every source that emits a CTA event. Kept as a closed union so a typo in one
+ * call site cannot silently split a funnel into two buckets.
  */
 export type CtaSource =
   | "header"
@@ -36,6 +35,7 @@ export type CtaSource =
   | "chuong-trinh"
   | "khoa-hoc-modal"
   | "lien-he"
+  | "bubble-lien-he"
   | "footer";
 
 /**
@@ -43,7 +43,13 @@ export type CtaSource =
  * now lands on the page's own contact section (Zalo, email, phone) and buying now
  * starts with an account, so the form is no longer part of either path.
  */
-export type CtaTarget = "tu-van" | "zalo" | "dang-ky";
+export type CtaTarget =
+  | "tu-van"
+  | "zalo"
+  | "dang-ky"
+  | "email"
+  | "phone"
+  | "fanpage";
 
 /** Fired when a visitor presses any call to action. */
 export function trackCta(

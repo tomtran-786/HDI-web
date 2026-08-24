@@ -1,6 +1,8 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it, vi } from "vitest";
 import { courses } from "@/content/course";
+import { enrolledCount } from "@/content/course-hype";
+import { formatCount } from "@/lib/format";
 
 vi.mock("@/lib/analytics", () => ({
   trackCourseModal: vi.fn(),
@@ -19,6 +21,7 @@ describe("badge availability của thẻ khóa học", () => {
     );
 
     expect(html).not.toContain("Chưa mở đăng ký");
+    expect(html).toContain(formatCount(enrolledCount[courses[0].slug]));
   });
 
   it("vẫn hiển thị trạng thái hết chỗ khi database trả về rõ ràng", () => {

@@ -1,18 +1,21 @@
 "use client";
 
 import { useRef, useState } from "react";
+import Link from "next/link";
 import { cartModal } from "@/content/checkout";
 import type { Course } from "@/content/course";
+import { enrolledCount } from "@/content/course-hype";
 import { trackCourseModal, trackCta } from "@/lib/analytics";
 import {
   cardPresentation,
   type PublicAvailability,
 } from "@/lib/course-availability";
-import { formatDate } from "@/lib/format";
+import { formatCount, formatDate } from "@/lib/format";
 import type { PublicReview, ReviewSummary } from "@/lib/reviews";
 import { useCart } from "./cart-provider";
 import { CtaLink } from "./ui/cta-link";
 import { Badge } from "./ui/badge";
+import { EnrolledPill } from "./ui/enrolled-pill";
 import { Stars } from "./ui/stars";
 import { IconArrow, IconCheck, IconClose, IconMessage } from "./ui/icons";
 
@@ -83,6 +86,10 @@ export function CourseCard({
             </span>
           </span>
         )}
+
+        <div className="mt-4">
+          <EnrolledPill slug={course.slug} />
+        </div>
 
         <div className="mt-6 flex flex-wrap items-center justify-between gap-2">
           <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-fg-subtle">
@@ -181,7 +188,7 @@ export function CourseCard({
                     <ol className="mt-2.5">
                       {phase.sessions.map((session, j) => (
                         <li
-                          key={session}
+                          key={typeof session === "string" ? session : session.text}
                           className="flex gap-3.5 border-b border-line py-3 last:border-0"
                         >
                           {/* A module's topics carry a two-part number (1.1, 1.2);
@@ -199,7 +206,16 @@ export function CourseCard({
                                 Buổi {offset + j + 1}:{" "}
                               </span>
                             )}
-                            {session}
+                            {typeof session === "string" ? (
+                              session
+                            ) : (
+                              <Link
+                                href={session.href}
+                                className="font-semibold text-primary underline underline-offset-4"
+                              >
+                                {session.text}
+                              </Link>
+                            )}
                           </span>
                         </li>
                       ))}
@@ -221,6 +237,12 @@ export function CourseCard({
                     <span className="ml-2 text-[13px] font-semibold text-success">
                       {course.price.note}
                     </span>
+                  </dd>
+                </div>
+                <div className="flex flex-wrap items-baseline justify-between gap-2 border-b border-line py-2.5">
+                  <dt className="text-[13px] text-fg-muted">Đã đăng ký</dt>
+                  <dd className="text-[15px] font-semibold tabular-nums text-fg">
+                    {formatCount(enrolledCount[course.slug])} học viên
                   </dd>
                 </div>
                 {course.facts.map((fact) => (

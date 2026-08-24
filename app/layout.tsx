@@ -4,6 +4,7 @@ import { Source_Sans_3 } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
 import { SessionProvider } from "next-auth/react";
 import { CartProvider } from "@/components/cart-provider";
+import { ContactDock } from "@/components/contact-dock";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { themeBootstrap } from "@/lib/theme-script";
@@ -50,6 +51,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
       <SiteHeader signedIn={Boolean(session?.user)} />
       <main className="flex-1">{children}</main>
       <SiteFooter />
+      <ContactDock />
     </CartProvider>
   );
 

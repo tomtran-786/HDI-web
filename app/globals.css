@@ -123,6 +123,10 @@ html:has(dialog[open]) {
   overflow: hidden;
 }
 
+html:has(dialog[open]) [data-contact-dock] {
+  display: none;
+}
+
 dialog[open] {
   animation: dialog-in 0.18s ease both;
 }
@@ -132,6 +136,16 @@ dialog[open] {
   to { opacity: 1; transform: none; }
 }
 
+@keyframes hype-pulse {
+  0%, 100% { opacity: 0.45; transform: scale(0.8); }
+  50% { opacity: 1; transform: scale(1.15); }
+}
+
+.hype-live {
+  animation: hype-pulse 1.8s ease-in-out infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
   dialog[open] { animation: none; }
+  .hype-live { animation: none; }
 }

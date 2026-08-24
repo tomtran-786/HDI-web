@@ -64,9 +64,46 @@ export const links = {
   // code without "+", no spaces. `contact.phoneNote` tells people to prefer
   // Zalo, so the page has to actually give them a way there.
   zalo: "https://zalo.me/84333443388",
+  // Điền URL fanpage tại đây là bubble Facebook trong contact dock tự hiện.
+  fanpage: null,
   linktree: "https://linktr.ee/minandkin",
   tiktok: "https://www.tiktok.com/@minandkin.official",
   legacySite: "https://www.congtamtrinh.com/",
   cv: "/docs/cv.pdf",
   teachingStatement: "/docs/teaching-statement.pdf",
 } as const;
+
+export const contactDock = [
+  {
+    key: "zalo",
+    label: "Nhắn Zalo",
+    value: contact.phone,
+    href: links.zalo,
+    target: "_blank",
+    tone: "primary",
+  },
+  {
+    key: "phone",
+    label: "Gọi điện",
+    value: contact.phone,
+    href: contact.phoneHref,
+    target: null,
+    tone: "success",
+  },
+  {
+    key: "email",
+    label: "Gửi email",
+    value: contact.email,
+    href: composeEmailHref(),
+    target: "_blank",
+    tone: "cool",
+  },
+  {
+    key: "fanpage",
+    label: "Facebook",
+    value: "Fanpage HDI",
+    href: links.fanpage,
+    target: "_blank",
+    tone: "cool",
+  },
+] as const;

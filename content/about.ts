@@ -6,7 +6,7 @@
  * nothing here may present him as its subject again.
  *
  * The centre's own `paragraphs` restate only what other content files already
- * claim: the four coaching programmes in content/programs.ts, the five courses
+ * claim: the four coaching programmes in content/programs.ts, the six courses
  * in content/course.ts, and the two manuscript services in content/services.ts.
  * No fact about the centre is invented here.
  *
@@ -22,7 +22,7 @@ export const about = {
     "Nghiên cứu bài bản, công bố quốc tế — học trực tuyến, đồng hành đến khi bài được gửi đăng",
   illustration: { src: "/images/successful-target.webp" },
   paragraphs: [
-    "HDI Research Center là nơi huấn luyện nghiên cứu và công bố quốc tế cho sinh viên, học viên cao học, nghiên cứu sinh và giảng viên. Trung tâm làm việc trên ba tuyến: bốn chương trình kèm cặp theo từng giai đoạn của một công trình nghiên cứu (Coach Session, Research Class, Publication Class, Revise & Resubmit), năm khóa đào tạo đi từ bài tiểu luận đầu tiên đến kinh tế lượng nâng cao và bài báo tạp chí, cùng hai dịch vụ hỗ trợ bản thảo trước khi gửi đăng là kiểm tra AI & đạo văn và humanizing – proofreading.",
+    "HDI Research Center là nơi huấn luyện nghiên cứu và công bố quốc tế cho sinh viên, học viên cao học, nghiên cứu sinh và giảng viên. Trung tâm làm việc trên ba tuyến: bốn chương trình kèm cặp theo từng giai đoạn của một công trình nghiên cứu (Coach Session, Research Class, Publication Class, Revise & Resubmit), sáu khóa đào tạo đi từ bài tiểu luận đầu tiên đến kinh tế lượng nâng cao, ứng dụng ChatGPT và bài báo tạp chí, cùng hai dịch vụ hỗ trợ bản thảo trước khi gửi đăng là kiểm tra AI & đạo văn và humanizing – proofreading.",
     "Tất cả các lớp đều học trực tuyến qua Zoom và có record xem lại trong 2 – 3 năm kể từ ngày đăng ký, nên người học ở bất cứ đâu cũng theo được. Trung tâm cũng không dừng lại khi lớp kết thúc: mỗi khóa đều có phần tư vấn riêng cho đề tài của từng học viên, và khóa viết báo cáo khoa học có thêm ba tháng đồng hành sau khóa để bản thảo thật sự tới được tòa soạn.",
   ],
   advisor: {

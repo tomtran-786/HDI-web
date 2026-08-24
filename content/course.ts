@@ -16,6 +16,10 @@
  *    from thayphongdang.edubit.vn by reference/scrape_edubit_courses.py.
  *    Syllabus, tuition, duration and class size are that site's own text.
  *
+ * C. `ung-dung-chatgpt-nckh` is authored by HDI. Its curriculum, schedule and
+ *    tuition are a draft pending the owner's final confirmation; unlike the
+ *    five courses above, these details do not come from `reference/`.
+ *
  * ATTRIBUTION — recorded here because the page does not show it. On edubit the
  * four courses are taught by:
  *
@@ -31,9 +35,11 @@
  * Listing all four under HDI was an explicit instruction (2026-08-20), to be
  * refined later. Keep this block accurate so that refinement is possible.
  *
- * Tuition is edubit's current price and will drift if they reprice. Student
- * counts and star ratings are deliberately omitted: they are edubit's social
- * proof, not HDI's.
+ * Tuition for the four edubit courses is that site's current price and will
+ * drift if they reprice. Star ratings come only from approved HDI reviews.
+ * The manually authored student counts are explicitly marketing copy and live
+ * in content/course-hype.ts, separate from both this sourced content and real
+ * enrollment data.
  *
  * WHY `facts` SPLITS "Lớp trực tiếp" FROM "Kho record" — every course here is
  * taught live on a schedule, with recordings as a catch-up benefit. The single
@@ -53,11 +59,26 @@
 
 export type CoursePhase = {
   name: string;
-  sessions: string[];
+  sessions: (string | { text: string; href: string })[];
 };
 
+/**
+ * Nguồn sự thật duy nhất cho tập slug. `as const` ở đây mới là thứ giữ literal
+ * — `satisfies Course[]` bên dưới không giữ, vì kiểu đích đã là `string`.
+ */
+export const COURSE_SLUGS = [
+  "training-tieu-luan-nckh-kltn",
+  "nckh-chuyen-sau-spss",
+  "stata-kinh-te-luong",
+  "viet-bai-tap-chi",
+  "viet-bao-cao-khoa-hoc",
+  "ung-dung-chatgpt-nckh",
+] as const;
+
+export type CourseSlug = (typeof COURSE_SLUGS)[number];
+
 export type Course = {
-  slug: string;
+  slug: CourseSlug;
   eyebrow: string;
   title: string;
   audience: string;
@@ -102,14 +123,13 @@ export const coursesIntro = {
 /**
  * ORDER — the array order is what #khoa-hoc shows by default, and it is the
  * learning path, not a ranking: foundations (tiểu luận/NCKH/KLTN) → SPSS →
- * Stata → viết bài tạp chí → viết luận văn/báo cáo khoa học. Nothing reads a
- * course by index (cart, seed and lookups all go by slug), so this order is
- * free to follow the path a student actually walks.
+ * Stata → viết bài tạp chí → viết luận văn/báo cáo khoa học → công cụ ChatGPT.
+ * Nothing reads a course by index (cart, seed and lookups all go by slug), so
+ * this order is free to follow the path a student actually walks.
  *
- * `satisfies` rather than a `: Course[]` annotation, so TypeScript keeps the
- * literal slug strings instead of widening them to `string`. That is what makes
- * `CourseSlug` below a real union and keeps authored content aligned with the
- * Course records loaded from the database.
+ * `COURSE_SLUGS` above defines the closed slug union. `satisfies Course[]`
+ * checks every authored entry against that union without changing the inferred
+ * shape of the rest of the course content.
  */
 export const courses = [
   {
@@ -499,10 +519,81 @@ export const courses = [
     registerNote:
       "Tạo tài khoản để giữ chỗ khóa Research Class (Advanced). Kỳ khai giảng tiếp theo sẽ được thông báo qua email và Zalo.",
   },
-] satisfies Course[];
 
-/**
- * Every course slug, as a union. The database stores `Course.slug` as a plain
- * string, so this type plus the seed validation keep both sources aligned.
- */
-export type CourseSlug = (typeof courses)[number]["slug"];
+  {
+    slug: "ung-dung-chatgpt-nckh",
+    eyebrow: "Khóa công cụ AI",
+    title: "Ứng dụng ChatGPT trong nghiên cứu khoa học",
+    audience:
+      "Dành cho sinh viên, học viên cao học, nghiên cứu sinh và giảng viên muốn dùng AI có kiểm soát trong quy trình nghiên cứu",
+    intro:
+      "Bốn module thực hành giúp người học dùng ChatGPT và các công cụ AI để tìm tài liệu, viết, xử lý dữ liệu và kiểm chứng đầu ra mà vẫn giữ liêm chính học thuật.",
+    curriculum: "modules",
+    price: {
+      amount: "550.000 đ",
+      note: "Giảm 10% cho nhóm từ 03 người",
+      vnd: 550000,
+    },
+    facts: [
+      { label: "Lớp trực tiếp", value: "04 module qua Zoom" },
+      { label: "Giờ học", value: "19:30 – 21:00 · 02 buổi / tuần" },
+      { label: "Xem lại", value: "02 năm kể từ ngày đăng ký" },
+    ],
+    phases: [
+      {
+        name: "Nền tảng và giới hạn của AI trong nghiên cứu",
+        sessions: [
+          "Hiểu cách ChatGPT tạo câu trả lời và giới hạn khi dùng cho nghiên cứu",
+          "Xây dựng prompt hiệu quả cho công việc học thuật",
+          "Nhận diện hallucination, trích dẫn giả và thông tin thiếu căn cứ",
+          "Kiểm chứng đầu ra AI bằng nguồn học thuật đáng tin cậy",
+          "Nguyên tắc liêm chính, bảo mật dữ liệu và trách nhiệm của người nghiên cứu",
+          "Khai báo việc sử dụng AI theo yêu cầu của trường và tạp chí",
+        ],
+      },
+      {
+        name: "Tìm và tổng quan tài liệu",
+        sessions: [
+          "Tìm bằng chứng nghiên cứu với Consensus và Elicit",
+          "Khám phá mạng lưới trích dẫn bằng Connected Papers",
+          "Đọc và hỏi đáp trên bộ tài liệu với NotebookLM",
+          "Dựng literature review table theo câu hỏi và khoảng trống nghiên cứu",
+          "Tóm tắt, so sánh tài liệu và kiểm chứng lại với bản gốc",
+          "Kết nối quy trình tài liệu với EndNote và Zotero",
+        ],
+      },
+      {
+        name: "Viết và biên tập bản thảo",
+        sessions: [
+          "Dùng AI để phát triển đề cương và lập luận nghiên cứu",
+          "Viết phần Introduction có kiểm soát và có căn cứ",
+          "Hỗ trợ mô tả Method mà không làm sai quy trình đã thực hiện",
+          "Phát triển Discussion từ kết quả và tài liệu đối chiếu",
+          "Nâng văn phong học thuật tiếng Anh mà vẫn giữ đúng ý tác giả",
+          {
+            text: "Kiểm tra tỷ lệ AI và đạo văn trong ngưỡng an toàn",
+            href: "/kiem-tra-ai-dao-van",
+          },
+        ],
+      },
+      {
+        name: "Dữ liệu và thực hành trên đề tài của học viên",
+        sessions: [
+          "Làm sạch, mã hóa và mô tả dữ liệu với sự hỗ trợ của AI",
+          "Sinh và kiểm tra cú pháp phân tích cho SPSS",
+          "Sinh và kiểm tra cú pháp phân tích cho Stata và R",
+          "Đọc output, phát hiện kết luận vượt quá dữ liệu",
+          "Dựng bảng và biểu đồ theo chuẩn trình bày của tạp chí",
+          "Thực hành quy trình hoàn chỉnh trên đề tài của từng học viên",
+        ],
+      },
+    ],
+    outcomes: [
+      "Thiết kế được prompt học thuật rõ ràng và quy trình kiểm chứng để hạn chế hallucination.",
+      "Tìm, sàng lọc và tổng hợp tài liệu bằng hệ công cụ AI mà vẫn truy về được nguồn gốc.",
+      "Dùng AI hỗ trợ viết và biên tập bản thảo có kiểm soát, phù hợp nguyên tắc liêm chính học thuật.",
+      "Ứng dụng AI vào làm sạch dữ liệu, sinh cú pháp, đọc output và trình bày kết quả trên đề tài thực tế.",
+    ],
+    registerNote: REGISTER_NOTE_GENERIC,
+  },
+] satisfies Course[];
