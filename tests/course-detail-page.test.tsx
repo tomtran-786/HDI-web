@@ -55,8 +55,27 @@ beforeEach(() => {
 });
 
 describe("trang chi tiết khóa học", () => {
-  it("tạo sẵn đúng sáu route khóa học", () => {
+  it("tạo sẵn đúng bảy route khóa học", () => {
     expect(generateStaticParams()).toEqual(COURSE_SLUGS.map((slug) => ({ slug })));
+  });
+
+  it("render khóa AI mới với nội dung, ngày khai giảng và giảng viên đã chốt", async () => {
+    const course = courses[0];
+    const html = renderToStaticMarkup(
+      await CourseDetailPage({
+        params: Promise.resolve({ slug: course.slug }),
+      }),
+    );
+
+    expect(course.slug).toBe("nckh-ung-dung-ai-xuat-ban-quoc-te");
+    expect(html).toContain("NGHIÊN CỨU KHOA HỌC ỨNG DỤNG AI &amp; XUẤT BẢN QUỐC TẾ");
+    expect(html).toContain("07/09/2026");
+    expect(html).toContain("Lịch chi tiết sẽ được thông báo");
+    expect(html).not.toContain("Thứ Bảy");
+    expect(html).not.toContain("Chủ Nhật");
+    expect(html).toContain("Tiến sĩ Trịnh Công Tâm");
+    expect(html).toContain("System GMM");
+    expect(html).not.toContain("học viên đã đăng ký");
   });
 
   it("render đủ các block theo đúng thứ tự và chỉ dùng dữ liệu thật", async () => {
@@ -67,7 +86,7 @@ describe("trang chi tiết khóa học", () => {
       }),
     );
 
-    expect(html).toContain(course.title);
+    expect(html).toContain(course.title.replace("&", "&amp;"));
     expect(html).toContain(course.price.amount);
     expect(html).toContain("Lộ trình rõ ràng và áp dụng được ngay.");
     expect(html).not.toContain("←");
@@ -133,7 +152,7 @@ describe("trang chi tiết khóa học", () => {
       }),
     );
 
-    expect(html).toContain(course.title);
+    expect(html).toContain(course.title.replace("&", "&amp;"));
     expect(html).toContain("Đăng ký học khóa này");
     expect(html).not.toContain("Chưa mở đăng ký");
   });

@@ -14,7 +14,7 @@
 //
 // Course marketing copy stays in content/course.ts (Plan.MD §3: every fact must
 // trace back to reference/). Commercial/access configuration lives here because
-// meetingUrl and driveFolderId are secrets and this repo is public.
+// meetingUrl, communityUrl and driveFolderId are secrets and this repo is public.
 
 generator client {
   provider = "prisma-client"
@@ -186,6 +186,7 @@ model Course {
 
   // SECRETS. Never select these unless the caller's enrollment is `paid`.
   meetingUrl    String? @map("meeting_url") @db.VarChar(500)
+  communityUrl  String? @map("community_url") @db.Text
   driveFolderId String? @map("drive_folder_id") @db.VarChar(100)
 
   // How long recordings stay watchable after payment. NULL = no expiry.

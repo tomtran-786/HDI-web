@@ -45,8 +45,11 @@ export default async function PaymentResultPage({
               : "Trang quay lại không tự đánh dấu đã trả tiền. HDI đang chờ webhook có chữ ký hợp lệ."
           }
         />
-        <Link className="inline-flex rounded-full bg-primary px-6 py-3 text-sm font-bold text-primary-fg" href={`/tai-khoan/don-hang/${order.code}`}>
-          Xem đơn #{order.code}
+        <Link
+          className="inline-flex rounded-full bg-primary px-6 py-3 text-sm font-bold text-primary-fg"
+          href={paid ? "/tai-khoan" : `/tai-khoan/don-hang/${order.code}`}
+        >
+          {paid ? "Vào khu vực học viên" : `Xem đơn #${order.code}`}
         </Link>
         {!paid && (
           <PaymentPoll

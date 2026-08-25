@@ -8,7 +8,7 @@ import { Section, SectionHeading } from "../ui/section";
 /** Bản giới thiệu ngắn; toàn bộ mô hình và đội ngũ nằm tại /ve-hdi. */
 export function About() {
   return (
-    <Section id="ve-chung-toi" soft>
+    <Section id="ve-chung-toi">
       <SectionHeading
         eyebrow={about.eyebrow}
         title={about.title}

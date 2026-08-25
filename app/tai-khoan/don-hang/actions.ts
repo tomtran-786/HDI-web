@@ -1,11 +1,12 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { parseId } from "@/lib/action-input";
 import { auth } from "@/lib/auth";
 import { allowUserAction } from "@/lib/auth-throttle";
 import { cancelOrder } from "@/lib/orders";
 import { ensurePayosCheckout } from "@/lib/payment-checkout";
+import { COURSES_TAG } from "@/lib/cache-tags";
 
 const BUSY = "Bạn vừa thao tác quá nhiều lần. Vui lòng thử lại sau ít phút.";
 
@@ -36,6 +37,7 @@ export async function cancelMyOrder(orderId: unknown) {
 
   revalidatePath("/tai-khoan/don-hang");
   revalidatePath("/tai-khoan");
+  if (result.cancelled) revalidateTag(COURSES_TAG, { expire: 0 });
 
   return result.cancelled
     ? { ok: true, message: "Đã hủy đơn và trả lại chỗ." }

@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidateTag } from "next/cache";
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { allowUserAction } from "@/lib/auth-throttle";
@@ -8,6 +9,7 @@ import { isProfileComplete } from "@/lib/profile";
 import { readCartIds, writeCartIds } from "@/lib/cart";
 import { createOrder } from "@/lib/orders";
 import { ensurePayosCheckout } from "@/lib/payment-checkout";
+import { COURSES_TAG } from "@/lib/cache-tags";
 
 export type CheckoutState = { error?: string; refreshCatalog?: boolean };
 
@@ -49,6 +51,7 @@ export async function checkout(
   if (!result.ok) {
     return { error: result.message, refreshCatalog: true };
   }
+  revalidateTag(COURSES_TAG, { expire: 0 });
 
   const payment = await ensurePayosCheckout(result.orderId, session.user.id);
   if (!payment.ok && payment.state !== "pending_gateway") {

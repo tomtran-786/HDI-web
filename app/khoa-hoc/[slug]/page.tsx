@@ -83,8 +83,11 @@ export default async function CourseDetailPage({ params }: CoursePageProps) {
 
   const { summaries, reviews, availability } = await loadCourseData();
   const summary = summaries[course.slug];
+  const marketingEnrollmentCount = enrolledCount[course.slug];
   const publishedReviews = reviews[course.slug] ?? [];
-  const publicAvailability = availability?.[course.slug];
+  const publicAvailability = availability
+    ? (availability[course.slug] ?? "not_open")
+    : undefined;
   const { badge } = cardPresentation(publicAvailability);
   const availabilityTone =
     badge === "buyable" ? "success" : badge === "full" ? "danger" : "cool";
@@ -170,14 +173,52 @@ export default async function CourseDetailPage({ params }: CoursePageProps) {
         </Reveal>
       </Section>
 
-      <Section>
+      {course.instructor && (
+        <Section>
+          <SectionHeading
+            eyebrow="Giảng viên"
+            title={`${course.instructor.credential} ${course.instructor.name}`}
+          />
+          <Reveal>
+            <Card className="max-w-4xl p-6 sm:p-8" hover={false}>
+              <ul className="space-y-4">
+                {course.instructor.highlights.map((highlight) => (
+                  <li
+                    key={highlight}
+                    className="flex gap-3 text-base leading-relaxed text-fg-muted"
+                  >
+                    <IconCheck className="mt-1 shrink-0 text-success" size={17} />
+                    <span>{highlight}</span>
+                  </li>
+                ))}
+              </ul>
+              <div className="mt-6 flex flex-wrap gap-3 border-t border-line pt-6">
+                {course.instructor.links.map((item) => (
+                  <a
+                    key={item.href}
+                    href={item.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 rounded-full border border-line px-5 py-2.5 text-sm font-bold text-fg transition hover:border-primary hover:text-primary"
+                  >
+                    {item.label}
+                    <IconArrow size={15} />
+                  </a>
+                ))}
+              </div>
+            </Card>
+          </Reveal>
+        </Section>
+      )}
+
+      <Section soft={Boolean(course.instructor)}>
         <SectionHeading eyebrow="Nội dung đào tạo" title="Lộ trình học" />
         <Reveal>
           <CourseRoadmap course={course} />
         </Reveal>
       </Section>
 
-      <Section soft>
+      <Section soft={!course.instructor}>
         <SectionHeading eyebrow="Kết quả đạt được" title="Sau khóa học" />
         <Reveal>
           <Card className="max-w-4xl p-6 sm:p-8" hover={false}>
@@ -196,7 +237,7 @@ export default async function CourseDetailPage({ params }: CoursePageProps) {
         </Reveal>
       </Section>
 
-      <Section>
+      <Section soft={Boolean(course.instructor)}>
         <SectionHeading eyebrow="Học phí & hình thức" title="Thông tin khóa học" />
         <Reveal>
           <Card className="max-w-4xl p-6 sm:p-8" hover={false}>
@@ -208,17 +249,21 @@ export default async function CourseDetailPage({ params }: CoursePageProps) {
                 </dd>
               </div>
               <div className="flex flex-wrap items-baseline justify-between gap-2 border-b border-line py-3">
-                <dt className="text-sm text-fg-muted">Ưu đãi</dt>
+                <dt className="text-sm text-fg-muted">
+                  {course.price.noteLabel ?? "Ưu đãi"}
+                </dt>
                 <dd className="text-base font-semibold text-success">
                   {course.price.note}
                 </dd>
               </div>
-              <div className="flex flex-wrap items-baseline justify-between gap-2 border-b border-line py-3">
-                <dt className="text-sm text-fg-muted">Đã đăng ký</dt>
-                <dd className="text-base font-semibold tabular-nums text-fg">
-                  {formatCount(enrolledCount[course.slug])} học viên
-                </dd>
-              </div>
+              {marketingEnrollmentCount !== undefined && (
+                <div className="flex flex-wrap items-baseline justify-between gap-2 border-b border-line py-3">
+                  <dt className="text-sm text-fg-muted">Đã đăng ký</dt>
+                  <dd className="text-base font-semibold tabular-nums text-fg">
+                    {formatCount(marketingEnrollmentCount)} học viên
+                  </dd>
+                </div>
+              )}
               {course.facts.map((fact) => (
                 <div
                   key={fact.label}
@@ -234,7 +279,7 @@ export default async function CourseDetailPage({ params }: CoursePageProps) {
       </Section>
 
       {publishedReviews.length > 0 && (
-        <Section soft>
+        <Section soft={!course.instructor}>
           <SectionHeading eyebrow="Người học chia sẻ" title="Đánh giá học viên" />
           <div className="grid gap-5 md:grid-cols-2">
             {publishedReviews.map((review, index) => (
@@ -261,7 +306,13 @@ export default async function CourseDetailPage({ params }: CoursePageProps) {
         </Section>
       )}
 
-      <Section soft={publishedReviews.length === 0}>
+      <Section
+        soft={
+          publishedReviews.length > 0
+            ? Boolean(course.instructor)
+            : !course.instructor
+        }
+      >
         <SectionHeading eyebrow="Tiếp tục phát triển" title="Khóa học khác" />
         <div className="grid gap-5 md:grid-cols-3">
           {related.map((item, index) => (

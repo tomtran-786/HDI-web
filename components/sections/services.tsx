@@ -8,7 +8,7 @@ import { Section, SectionHeading } from "../ui/section";
 /** Homepage chỉ giới thiệu hai nhóm; sáu dịch vụ đầy đủ nằm ở /dich-vu. */
 export function Services() {
   return (
-    <Section id="dich-vu">
+    <Section id="dich-vu" soft>
       <SectionHeading
         eyebrow={serviceCatalog.eyebrow}
         title={serviceCatalog.title}

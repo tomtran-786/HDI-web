@@ -107,23 +107,30 @@ export async function configuredCourses() {
  * This may trail seat changes by up to five minutes. `createOrder` locks and
  * recounts the course rows, so it remains the authoritative purchase gate.
  */
-async function computeAvailability() {
+async function computeCourseSales() {
   const courses = await configuredCourses();
   const occupied = await seatsTaken(courses.map((course) => course.id));
-  return Object.fromEntries(
+  const seatsLeft = Object.fromEntries(
+    courses.map((course) => [
+      course.slug,
+      Math.max(0, course.capacity - (occupied.get(course.id) ?? 0)),
+    ]),
+  ) as Record<string, number>;
+  const availability = Object.fromEntries(
     courses.map((course) => [
       course.slug,
       course.status !== "open"
         ? "not_open"
-        : (occupied.get(course.id) ?? 0) >= course.capacity
+        : seatsLeft[course.slug] <= 0
           ? "full"
           : "buyable",
     ]),
   ) as Record<string, PublicAvailability>;
+  return { availability, seatsLeft };
 }
 
 export const publicAvailability = unstable_cache(
-  computeAvailability,
+  async () => (await computeCourseSales()).availability,
   ["public-course-availability"],
   { tags: [COURSES_TAG], revalidate: 300 },
 );
@@ -149,13 +156,16 @@ export const landingCourseData = unstable_cache(
     summaries: Record<string, ReviewSummary>;
     reviews: Record<string, PublicReview[]>;
     availability: Record<string, PublicAvailability>;
+    seatsLeft: Record<string, number>;
   }> => {
-    const [published, availability] = await Promise.all([
+    const [published, sales] = await Promise.all([
       readPublishedReviews(),
-      computeAvailability(),
+      computeCourseSales(),
     ]);
-    return { ...published, availability };
+    return { ...published, ...sales };
   },
-  ["landing-course-data"],
+  // v2 adds `seatsLeft`; changing the key prevents a previous deployment's
+  // cached object (which only had availability/reviews) from reaching Home.
+  ["landing-course-data-v2"],
   { tags: [COURSES_TAG, REVIEWS_TAG], revalidate: 300 },
 );

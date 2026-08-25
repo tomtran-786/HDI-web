@@ -87,6 +87,7 @@ export default async function AdminPage({
       accessDays: true,
       status: true,
       meetingUrl: true,
+      communityUrl: true,
       driveFolderId: true,
     },
   });
@@ -541,7 +542,7 @@ export default async function AdminPage({
                   </p>
                 </div>
                 <div className="flex shrink-0 flex-wrap items-center gap-3 text-[13px]">
-                  {/* Whether the two secrets are configured, never their values —
+                  {/* Whether the three secrets are configured, never their values —
                       this page is rendered for an admin, but there is no reason
                       to put a live meeting URL in the HTML of a list view. */}
                   <span
@@ -550,6 +551,13 @@ export default async function AdminPage({
                     }
                   >
                     {c.meetingUrl ? "✓ Link lớp" : "— chưa có link lớp"}
+                  </span>
+                  <span
+                    className={
+                      c.communityUrl ? "text-success" : "text-fg-subtle"
+                    }
+                  >
+                    {c.communityUrl ? "✓ Nhóm học viên" : "— chưa có nhóm"}
                   </span>
                   <span
                     className={

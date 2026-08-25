@@ -101,6 +101,10 @@ export const nav: readonly NavItem[] = [
         label: "Công cụ AI",
         children: [
           {
+            label: "NCKH ứng dụng AI & xuất bản quốc tế",
+            href: "/khoa-hoc/nckh-ung-dung-ai-xuat-ban-quoc-te",
+          },
+          {
             label: "Ứng dụng ChatGPT trong NCKH",
             href: "/khoa-hoc/ung-dung-chatgpt-nckh",
           },

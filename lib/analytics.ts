@@ -32,6 +32,7 @@ export type CtaSource =
   | "header"
   | "header-mobile"
   | "hero"
+  | "home-open-courses"
   | "chuong-trinh"
   | "khoa-hoc-modal"
   | "khoa-hoc-detail"

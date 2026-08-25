@@ -45,7 +45,7 @@ export const orderPage = {
   paid: {
     title: "Đã thanh toán",
     body:
-      "Học phí đã được xác nhận. HDI đang cấp quyền Google Drive; link vào lớp và trạng thái record nằm trong trang tài khoản.",
+      "Học phí đã được xác nhận. Link vào lớp hoặc nhóm học viên và trạng thái cấp quyền Google Drive nằm trong trang tài khoản.",
   },
   closed: {
     cancelled: "Đơn này đã hủy. Chỗ học đã được trả lại.",

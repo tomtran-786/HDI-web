@@ -56,7 +56,7 @@ export default async function AccountPage() {
   if (!session?.user?.id) return null;
   const userId = session.user.id;
 
-  // NOTE: `meetingUrl` and `driveFolderId` are deliberately absent from this
+  // NOTE: `meetingUrl`, `communityUrl` and `driveFolderId` are deliberately absent from this
   // select. `include: { course: true }` would pull both into the rendered
   // payload even though no JSX reads them — which is exactly how a "hidden in
   // the UI" secret ends up in view-source.
@@ -122,16 +122,26 @@ export default async function AccountPage() {
 
   const secrets = new Map<
     string,
-    { meetingUrl: string | null; driveFolderId: string | null }
+    {
+      meetingUrl: string | null;
+      communityUrl: string | null;
+      driveFolderId: string | null;
+    }
   >();
   if (liveCourseIds.length > 0) {
     const rows = await prisma.course.findMany({
       where: { id: { in: liveCourseIds } },
-      select: { id: true, meetingUrl: true, driveFolderId: true },
+      select: {
+        id: true,
+        meetingUrl: true,
+        communityUrl: true,
+        driveFolderId: true,
+      },
     });
     for (const r of rows) {
       secrets.set(r.id, {
         meetingUrl: r.meetingUrl,
+        communityUrl: r.communityUrl,
         driveFolderId: r.driveFolderId,
       });
     }
@@ -250,6 +260,17 @@ export default async function AccountPage() {
                 <div className="mt-auto pt-6">
                   {live ? (
                     <div className="flex flex-col gap-3 sm:flex-row">
+                      {secret?.communityUrl && (
+                        <a
+                          href={secret.communityUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex flex-1 items-center justify-center gap-2 rounded-full bg-primary px-5 py-3 text-sm font-bold text-primary-fg transition hover:bg-primary-deep"
+                        >
+                          <IconMessage size={16} />
+                          Vào nhóm Zalo
+                        </a>
+                      )}
                       {secret?.meetingUrl && (
                         <a
                           href={secret.meetingUrl}
@@ -289,11 +310,13 @@ export default async function AccountPage() {
                           </button>
                         </form>
                       )}
-                      {!secret?.meetingUrl && !secret?.driveFolderId && (
+                      {!secret?.communityUrl &&
+                        !secret?.meetingUrl &&
+                        !secret?.driveFolderId && (
                         <p className="text-sm leading-relaxed text-fg-muted">
                           Link vào lớp sẽ được cập nhật khi khóa học sẵn sàng.
                         </p>
-                      )}
+                        )}
                     </div>
                   ) : (
                     <div className="rounded-card border border-line bg-bg-soft px-4 py-3">

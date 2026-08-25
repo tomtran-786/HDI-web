@@ -6,6 +6,7 @@
     "accessDays": 730,
     "status": "open",
     "meetingUrl": "https://us02web.zoom.us/j/000000000?pwd=xxxx",
+    "communityUrl": "https://zalo.me/g/example",
     "driveFolderId": "1AbCdEfGhIjKlMnOpQrStUvWxYz"
   }
 ]

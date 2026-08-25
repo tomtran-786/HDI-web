@@ -7,7 +7,7 @@ import type { CourseSlug } from "./course";
  * Record chứ không phải mảng: thêm slug mới vào `COURSE_SLUGS` mà quên con số ở
  * đây thì TypeScript hỏng build, thay vì thẻ khóa im lặng không có badge.
  */
-export const enrolledCount: Record<CourseSlug, number> = {
+export const enrolledCount: Partial<Record<CourseSlug, number>> = {
   "training-tieu-luan-nckh-kltn": 1428,
   "nckh-chuyen-sau-spss": 862,
   "stata-kinh-te-luong": 634,

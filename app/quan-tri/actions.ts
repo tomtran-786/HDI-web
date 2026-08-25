@@ -29,6 +29,7 @@ export async function cancelPendingOrder(orderId: unknown) {
   const result = await cancelOrder(id);
 
   revalidatePath("/quan-tri");
+  if (result.cancelled) revalidateTag(COURSES_TAG, { expire: 0 });
   return result.cancelled
     ? { ok: true, message: "Đã hủy đơn PayOS và ghi danh đang chờ." }
     : { ok: false, message: "PayOS chưa cho phép hủy đơn này." };

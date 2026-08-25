@@ -8,10 +8,12 @@ describe("số học viên quảng cáo", () => {
     expect(courses.map((course) => course.slug)).toEqual(COURSE_SLUGS);
   });
 
-  it("có một số nguyên dương cho mọi khóa học", () => {
-    for (const course of courses) {
-      expect(Number.isInteger(enrolledCount[course.slug])).toBe(true);
-      expect(enrolledCount[course.slug]).toBeGreaterThan(0);
+  it("chỉ dùng số marketing khi HDI đã cung cấp", () => {
+    expect(enrolledCount["nckh-ung-dung-ai-xuat-ban-quoc-te"]).toBeUndefined();
+    for (const [slug, count] of Object.entries(enrolledCount)) {
+      expect(COURSE_SLUGS).toContain(slug);
+      expect(Number.isInteger(count)).toBe(true);
+      expect(count).toBeGreaterThan(0);
     }
   });
 

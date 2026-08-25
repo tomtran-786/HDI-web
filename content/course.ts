@@ -20,6 +20,11 @@
  *    tuition are a draft pending the owner's final confirmation; unlike the
  *    five courses above, these details do not come from `reference/`.
  *
+ * D. `nckh-ung-dung-ai-xuat-ban-quoc-te` is transcribed from the owner-supplied
+ *    `HDI class.md` on 2026-08-25. The owner explicitly overrides its original
+ *    opening date with 07/09/2026 and asks us not to publish a weekday schedule
+ *    until the detailed timetable is ready.
+ *
  * ATTRIBUTION — recorded here because the page does not show it. On edubit the
  * four courses are taught by:
  *
@@ -67,6 +72,7 @@ export type CoursePhase = {
  * — `satisfies Course[]` bên dưới không giữ, vì kiểu đích đã là `string`.
  */
 export const COURSE_SLUGS = [
+  "nckh-ung-dung-ai-xuat-ban-quoc-te",
   "training-tieu-luan-nckh-kltn",
   "nckh-chuyen-sau-spss",
   "stata-kinh-te-luong",
@@ -97,10 +103,16 @@ export type Course = {
    * `vnd` is the same figure as `amount`, as a number, so sorting never has to
    * parse the display string. Keep the two in step when a price changes.
    */
-  price: { amount: string; note: string; vnd: number };
+  price: { amount: string; note: string; noteLabel?: string; vnd: number };
   facts: { label: string; value: string }[];
   phases: CoursePhase[];
   outcomes: string[];
+  instructor?: {
+    name: string;
+    credential: string;
+    highlights: string[];
+    links: { label: string; href: string }[];
+  };
   registerNote: string;
 };
 
@@ -123,17 +135,121 @@ export const coursesIntro = {
 };
 
 /**
- * ORDER — the array order is what #khoa-hoc shows by default, and it is the
- * learning path, not a ranking: foundations (tiểu luận/NCKH/KLTN) → SPSS →
- * Stata → viết bài tạp chí → viết luận văn/báo cáo khoa học → công cụ ChatGPT.
- * Nothing reads a course by index (cart, seed and lookups all go by slug), so
- * this order is free to follow the path a student actually walks.
+ * ORDER — the currently promoted intake comes first, followed by the existing
+ * learning path: foundations (tiểu luận/NCKH/KLTN) → SPSS → Stata → viết bài
+ * tạp chí → viết luận văn/báo cáo khoa học → công cụ ChatGPT. Nothing reads a
+ * course by index (cart, seed and lookups all go by slug).
  *
  * `COURSE_SLUGS` above defines the closed slug union. `satisfies Course[]`
  * checks every authored entry against that union without changing the inferred
  * shape of the rest of the course content.
  */
 export const courses = [
+  {
+    slug: "nckh-ung-dung-ai-xuat-ban-quoc-te",
+    eyebrow: "Khóa mới · Khai giảng 07/09/2026",
+    title: "NGHIÊN CỨU KHOA HỌC ỨNG DỤNG AI & XUẤT BẢN QUỐC TẾ",
+    audience:
+      "Dành cho người đang thực hiện nghiên cứu và muốn ứng dụng AI có kiểm soát, chuẩn bị bài báo quốc tế hoặc phân tích dữ liệu bảng",
+    intro:
+      "Khóa học thực hành gồm 06 buổi, kết nối việc sử dụng ChatGPT trong nghiên cứu với quy trình xuất bản quốc tế, kiểm soát đạo văn/AI và các mô hình kinh tế lượng nâng cao thường dùng cho panel data.",
+    curriculum: "modules",
+    price: {
+      amount: "3.000.000 đ",
+      note: "Có recording, bộ prompts, dữ liệu và tài liệu thực hành",
+      noteLabel: "Quyền lợi",
+      vnd: 3000000,
+    },
+    facts: [
+      { label: "Hình thức", value: "06 buổi trực tuyến qua Zoom" },
+      { label: "Khai giảng", value: "07/09/2026" },
+      { label: "Lịch học", value: "Lịch chi tiết sẽ được thông báo" },
+      { label: "Sĩ số", value: "Tối đa 15 học viên/lớp" },
+      { label: "Học liệu", value: "Recording và dữ liệu thực hành" },
+    ],
+    phases: [
+      {
+        name: "Buổi 1–2 | Ứng dụng ChatGPT trong nghiên cứu khoa học",
+        sessions: [
+          "Khai thác tiềm năng của ChatGPT trong nghiên cứu khoa học",
+          "Sử dụng prompt chuẩn để hỗ trợ tìm kiếm và sàng lọc tài liệu",
+          "Ứng dụng ChatGPT trong xây dựng và cải thiện Literature Review",
+          "Xác định research gap và phát triển hướng nghiên cứu",
+          "Hỗ trợ xây dựng lập luận và cấu trúc bài nghiên cứu",
+          "Kiểm tra tính logic, tính nhất quán và cải thiện chất lượng bản thảo",
+          "Sử dụng AI hiệu quả nhưng vẫn bảo đảm research integrity, hạn chế trích dẫn sai hoặc tài liệu không tồn tại",
+          "Thực hành trực tiếp trên các tình huống nghiên cứu thực tế",
+        ],
+      },
+      {
+        name: "Buổi 3 | Kinh nghiệm xuất bản quốc tế",
+        sessions: [
+          "Tìm và đánh giá hội thảo quốc tế uy tín",
+          "Lựa chọn journal phù hợp với đề tài và tránh tạp chí, hội thảo kém chất lượng",
+          "Chuẩn bị manuscript, submission package và Cover Letter",
+          "Thực hành quy trình submit bài trên hệ thống của journal",
+          "Nhận diện những lỗi thường dẫn đến desk rejection",
+          "Đọc, xử lý Reviewer Reports và viết Response to Reviewers chuyên nghiệp, thuyết phục",
+          "Chỉnh sửa bài qua các vòng Major Revision và Minor Revision",
+        ],
+      },
+      {
+        name: "Buổi 4 | Kiểm tra đạo văn và AI",
+        sessions: [
+          "Phân biệt Similarity, Plagiarism và AI-generated content",
+          "Đọc, phân tích Similarity Report và xác định các phần có nguy cơ bị đánh dấu cao",
+          "Paraphrase và chỉnh sửa học thuật để giảm tỷ lệ tương đồng một cách hợp lệ",
+          "Tự viết, kiểm chứng nguồn, chỉnh sửa và bổ sung đóng góp học thuật thực chất để giảm dấu hiệu văn bản do AI tạo ra",
+          "Nhận diện những lỗi cần tránh khi sử dụng ChatGPT và AI trong nghiên cứu",
+          {
+            text: "Thực hành kiểm tra và cải thiện một bản thảo nghiên cứu",
+            href: "/kiem-tra-ai-dao-van",
+          },
+        ],
+      },
+      {
+        name: "Buổi 5–6 | Kinh tế lượng chuyên sâu với Panel Data",
+        sessions: [
+          "FGLS — Feasible Generalized Least Squares",
+          "PMG — Pooled Mean Group",
+          "IV/2SLS — Instrumental Variables/Two-Stage Least Squares",
+          "System GMM — System Generalized Method of Moments",
+          "Xác định và xử lý cross-sectional dependence",
+          "Nhận diện endogeneity và lựa chọn biến công cụ",
+          "Thực hiện các kiểm định cần thiết trước và sau ước lượng",
+          "Đọc, giải thích và trình bày kết quả theo chuẩn bài báo quốc tế",
+          "Thực hành trực tiếp với dữ liệu nghiên cứu được cung cấp trong khóa học",
+        ],
+      },
+    ],
+    outcomes: [
+      "Sử dụng ChatGPT và prompt học thuật có kiểm soát, biết kiểm chứng nguồn và bảo đảm liêm chính nghiên cứu.",
+      "Xây dựng Literature Review, xác định research gap và cải thiện lập luận, cấu trúc bản thảo.",
+      "Chuẩn bị submission package, xử lý phản biện và sửa bài qua các vòng review quốc tế.",
+      "Đọc Similarity Report và cải thiện bản thảo bằng đóng góp học thuật thực chất.",
+      "Lựa chọn, ước lượng và trình bày FGLS, PMG, IV/2SLS hoặc System GMM phù hợp với vấn đề panel data.",
+    ],
+    instructor: {
+      name: "Trịnh Công Tâm",
+      credential: "Tiến sĩ",
+      highlights: [
+        "Thành viên Editorial Board của Eurasian Economic Review (Scopus Q1, ESCI, C- theo ABDC).",
+        "Session Chair tại các hội thảo quốc tế EBES và AGBA.",
+        "Active Reviewer cho các tạp chí quốc tế thuộc hệ thống Scopus và các tạp chí khoa học uy tín trong nước.",
+        "Có công trình công bố trên các tạp chí SSCI Q1 và tạp chí xếp hạng A*, A theo ABDC Journal Quality List.",
+        "Có kinh nghiệm nghiên cứu, phản biện và hỗ trợ phát triển nghiên cứu thực nghiệm trong kinh tế, kinh doanh và các lĩnh vực liên quan.",
+      ],
+      links: [
+        { label: "Website", href: "https://congtamtrinh.com" },
+        {
+          label: "Google Scholar",
+          href: "https://scholar.google.com.au/citations?user=-XIR3uYAAAAJ&hl=en&oi=ao",
+        },
+      ],
+    },
+    registerNote: REGISTER_NOTE_GENERIC,
+  },
+
   {
     slug: "training-tieu-luan-nckh-kltn",
     eyebrow: "Khóa nền tảng",

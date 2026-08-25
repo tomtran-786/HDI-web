@@ -15,9 +15,11 @@ const mocks = vi.hoisted(() => ({
   createOrder: vi.fn(),
   ensurePayosCheckout: vi.fn(),
   allowUserAction: vi.fn(),
+  revalidateTag: vi.fn(),
 }));
 
 vi.mock("next/navigation", () => ({ redirect: mocks.redirect }));
+vi.mock("next/cache", () => ({ revalidateTag: mocks.revalidateTag }));
 vi.mock("@/lib/auth", () => ({ auth: mocks.auth }));
 vi.mock("@/lib/prisma", () => ({
   prisma: { user: { findUnique: mocks.findUnique } },

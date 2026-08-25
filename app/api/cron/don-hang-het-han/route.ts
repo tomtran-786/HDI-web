@@ -1,4 +1,5 @@
 import { timingSafeEqual } from "node:crypto";
+import { revalidateTag } from "next/cache";
 import { NextResponse } from "next/server";
 import { expireStaleOrders } from "@/lib/orders";
 import { expireStaleServiceOrders } from "@/lib/service-orders";
@@ -9,6 +10,7 @@ import {
   reconcileMissingDriveGrants,
   revokeExpiredDriveAccess,
 } from "@/lib/fulfillment";
+import { COURSES_TAG } from "@/lib/cache-tags";
 
 // Prisma, PayOS and Google SDKs need Node, not the edge runtime.
 export const runtime = "nodejs";
@@ -56,6 +58,9 @@ export async function GET(request: Request) {
     pruneExpiredAuthTokens(),
     pruneExpiredLeases(),
   ]);
+  if (result.released > 0 || driveRevokes.revoked > 0 || driveRevokes.kept > 0) {
+    revalidateTag(COURSES_TAG, { expire: 0 });
+  }
   if (result.expired > 0) {
     console.log(
       `[cron] Đóng ${result.expired} đơn quá hạn, trả lại ${result.released} chỗ.`,

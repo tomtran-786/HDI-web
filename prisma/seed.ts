@@ -22,6 +22,7 @@ type SeedCourse = {
   accessDays?: number | null;
   status?: "draft" | "open" | "running" | "closed";
   meetingUrl?: string | null;
+  communityUrl?: string | null;
   driveFolderId?: string | null;
 };
 
@@ -80,6 +81,7 @@ async function main() {
       accessDays: r.accessDays ?? null,
       status: r.status ?? "draft",
       meetingUrl: r.meetingUrl ?? null,
+      communityUrl: r.communityUrl ?? null,
       driveFolderId: r.driveFolderId ?? null,
     };
     await prisma.course.upsert({
