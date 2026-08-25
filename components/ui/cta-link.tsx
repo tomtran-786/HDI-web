@@ -42,7 +42,7 @@ export function CtaLink({
 }: {
   source: CtaSource;
   target: LinkTarget;
-  /** Course slug, for the CTAs that sit inside a course modal. */
+  /** Course slug, for the CTAs that sit on a course detail page. */
   course?: string;
   className?: string;
   onNavigate?: () => void;

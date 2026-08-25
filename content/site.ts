@@ -21,20 +21,6 @@ export const site = {
   },
 } as const;
 
-/**
- * Absolute (`/#...`), not bare (`#...`): the header now renders on /tai-khoan
- * and /quan-tri too, where a bare hash would resolve against the current route
- * and go nowhere.
- */
-export const nav = [
-  { label: "Về HDI", href: "/#ve-chung-toi" },
-  { label: "Đồng hành nghiên cứu", href: "/#chuong-trinh" },
-  { label: "Khóa học", href: "/#khoa-hoc" },
-  { label: "Dịch vụ", href: "/#dich-vu" },
-  { label: "Hồ sơ học thuật", href: "/cong-bo" },
-  { label: "Liên hệ", href: "/#lien-he" },
-] as const;
-
 export const contact = {
   email: "hdiresearchgroup@gmail.com",
   phone: "0333443388",

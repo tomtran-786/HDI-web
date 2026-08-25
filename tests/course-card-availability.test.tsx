@@ -6,10 +6,6 @@ import { formatCount } from "@/lib/format";
 
 vi.mock("@/lib/analytics", () => ({
   trackCourseModal: vi.fn(),
-  trackCta: vi.fn(),
-}));
-vi.mock("@/components/cart-provider", () => ({
-  useCart: () => ({ openCart: vi.fn() }),
 }));
 
 import { CourseCard } from "@/components/course-card";

@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { aiCheck, aiCheckKinds, aiCheckTiers } from "@/content/ai-check";
 import { site } from "@/content/site";
 import { formatVnd } from "@/lib/format";
@@ -32,16 +31,7 @@ export default async function AiCheckPage({
     <>
       <section className="border-b border-line bg-bg">
         <div className="shell py-14 sm:py-16 lg:py-20">
-          <Link
-            href="/#dich-vu"
-            className="inline-flex items-center gap-2 text-sm font-semibold text-fg-muted transition hover:text-primary"
-          >
-            {/* IconArrow chỉ lên-phải; link quay lại cần đúng một mũi tên trái,
-                theo cùng quy ước glyph mà /cong-bo đang dùng. */}
-            <span aria-hidden>←</span>
-            Về trang chủ
-          </Link>
-          <p className="mt-8 text-xs font-semibold uppercase tracking-[0.18em] text-fg-muted">
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-fg-muted">
             {aiCheck.eyebrow}
           </p>
           <h1 className="mt-3 text-3xl font-bold tracking-tight text-primary sm:text-4xl lg:text-[2.75rem] lg:leading-[1.1]">

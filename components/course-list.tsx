@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import type { Course } from "@/content/course";
 import { trackCourseSort } from "@/lib/analytics";
 import type { PublicAvailability } from "@/lib/course-availability";
-import type { PublicReview, ReviewSummary } from "@/lib/reviews";
+import type { ReviewSummary } from "@/lib/reviews";
 import { CourseCard } from "./course-card";
 import { Reveal } from "./ui/reveal";
 
@@ -30,13 +30,11 @@ type SortKey = keyof typeof sorts;
 export function CourseList({
   courses,
   summaries = {},
-  reviews = {},
   availability,
 }: {
   courses: Course[];
   /** Điểm trung bình đã duyệt, khóa theo slug. Rỗng khi chưa ai đánh giá. */
   summaries?: Record<string, ReviewSummary>;
-  reviews?: Record<string, PublicReview[]>;
   availability: Record<string, PublicAvailability> | null;
 }) {
   const [sort, setSort] = useState<SortKey>("default");
@@ -87,7 +85,6 @@ export function CourseList({
             <CourseCard
               course={course}
               summary={summaries[course.slug]}
-              reviews={reviews[course.slug]}
               availability={
                 availability
                   ? (availability[course.slug] ?? "not_open")

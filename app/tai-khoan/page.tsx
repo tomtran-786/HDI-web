@@ -177,7 +177,7 @@ export default async function AccountPage() {
           </p>
           <div className="mt-6 flex flex-wrap justify-center gap-3">
             <Link
-              href="/#khoa-hoc"
+              href="/khoa-hoc"
               className="inline-flex items-center gap-2 rounded-full bg-primary px-6 py-3 text-sm font-bold text-primary-fg transition hover:bg-primary-deep"
             >
               Xem các khóa học

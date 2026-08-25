@@ -1,7 +1,9 @@
 import { renderToStaticMarkup } from "react-dom/server";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
-vi.mock("next/navigation", () => ({ usePathname: () => "/" }));
+const mocks = vi.hoisted(() => ({ pathname: "/" }));
+
+vi.mock("next/navigation", () => ({ usePathname: () => mocks.pathname }));
 vi.mock("@/lib/analytics", () => ({
   trackCta: vi.fn(),
   trackCartAdd: vi.fn(),
@@ -18,10 +20,15 @@ vi.mock("@/app/actions/checkout", () => ({ checkout: vi.fn() }));
 vi.mock("@/components/cart-button", () => ({ CartButton: () => null }));
 
 import { SiteHeader } from "@/components/site-header";
-import { nav } from "@/content/site";
+import { SiteFooter } from "@/components/site-footer";
+import { footerNav, nav } from "@/content/navigation";
 
 const render = (props: { signedIn: boolean; isAdmin?: boolean }) =>
   renderToStaticMarkup(<SiteHeader {...props} />);
+
+beforeEach(() => {
+  mocks.pathname = "/";
+});
 
 describe("lối vào trang quản trị trên navbar", () => {
   it("hiện với tài khoản admin", () => {
@@ -65,12 +72,40 @@ describe("lối vào trang quản trị trên navbar", () => {
   });
 
   it("không rò xuống footer", () => {
-    // `nav` dùng chung với site-footer.tsx, nên mục quản trị phải sống trong
-    // site-header chứ không phải trong content/site.ts. Ép về string[] để so
-    // sánh chạy được: `nav` là `as const`, và TypeScript vốn đã biết "/quan-tri"
-    // không nằm trong đó — bản thân điều đó đã là một nửa lời bảo đảm.
     const hrefs: readonly string[] = nav.map((item) => item.href);
 
     expect(hrefs).not.toContain("/quan-tri");
+  });
+
+  it("render đủ hai dropdown và toàn bộ href con", () => {
+    const html = render({ signedIn: false });
+    const children = nav.flatMap((item) =>
+      item.groups?.flatMap((group) => group.children) ?? [],
+    );
+
+    expect(html).toContain('id="desktop-dich-vu-menu"');
+    expect(html).toContain('id="desktop-khoa-hoc-menu"');
+    expect(html).not.toContain('aria-label="Mở menu Dịch vụ"');
+    expect(html).not.toContain('aria-label="Mở menu Khóa học"');
+    for (const child of children) expect(html).toContain(`href="${child.href}"`);
+  });
+
+  it("đánh dấu Dịch vụ active trên route AI chuyên biệt", () => {
+    mocks.pathname = "/kiem-tra-ai-dao-van";
+    const html = render({ signedIn: false });
+
+    expect(html).toMatch(/aria-current="page"[^>]*href="\/dich-vu"/);
+  });
+
+  it("footer chỉ dùng link cha và không bung item dropdown", () => {
+    const html = renderToStaticMarkup(<SiteFooter />);
+    const children = nav.flatMap((item) =>
+      item.groups?.flatMap((group) => group.children) ?? [],
+    );
+
+    for (const item of footerNav) expect(html).toContain(`href="${item.href}"`);
+    for (const child of children) expect(html).not.toContain(`href="${child.href}"`);
+    expect(html).not.toContain("Tư vấn miễn phí<span");
+    expect(html).toContain('href="/docs/cv.pdf" download=""');
   });
 });

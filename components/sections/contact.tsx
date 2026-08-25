@@ -6,7 +6,7 @@ import { IconMail, IconMessage, IconPhone } from "../ui/icons";
 
 export function Contact() {
   return (
-    <Section id="lien-he">
+    <Section id="lien-he" soft>
       <SectionHeading
         eyebrow="Liên hệ"
         title="Đặt lịch tư vấn"

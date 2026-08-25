@@ -1,52 +1,44 @@
 import Link from "next/link";
-import { services } from "@/content/services";
-import { composeEmailHref, contact } from "@/content/site";
-import { IconArrow } from "../ui/icons";
+import { serviceCatalog } from "@/content/services";
 import { Card } from "../ui/card";
+import { IconArrow } from "../ui/icons";
 import { Reveal } from "../ui/reveal";
 import { Section, SectionHeading } from "../ui/section";
 
+/** Homepage chỉ giới thiệu hai nhóm; sáu dịch vụ đầy đủ nằm ở /dich-vu. */
 export function Services() {
   return (
-    <Section id="dich-vu" soft>
+    <Section id="dich-vu">
       <SectionHeading
-        eyebrow={services.eyebrow}
-        title={services.title}
-        subtitle={services.subtitle}
+        eyebrow={serviceCatalog.eyebrow}
+        title={serviceCatalog.title}
+        subtitle={serviceCatalog.subtitle}
       />
 
-      <div className="grid gap-5 sm:grid-cols-2">
-        {services.items.map((item, i) => (
-          <Reveal key={item.title} delay={i * 80}>
-            <Card className="h-full p-6 sm:p-7">
-              <h3 className="text-lg font-bold text-fg">{item.title}</h3>
-              {item.titleEn !== item.title && (
-                <p className="mt-1 text-sm italic text-fg-subtle">{item.titleEn}</p>
-              )}
-              <p className="mt-4 text-sm leading-relaxed text-fg-muted">
-                {item.note}
-              </p>
-              {/* Dịch vụ đã niêm yết giá thì đưa thẳng người đọc tới chỗ đặt
-                  được; dịch vụ chưa có giá vẫn phải hỏi qua email. */}
-              {item.link ? (
+      <div className="grid gap-5 md:grid-cols-2">
+        {serviceCatalog.groups.map((group, index) => (
+          <Reveal key={group.id} delay={index * 80} className="h-full">
+            <div
+              id={group.id === "dong-hanh-nghien-cuu" ? "chuong-trinh" : undefined}
+              className="h-full scroll-mt-24"
+            >
+              <Card className="h-full p-6 sm:p-8">
+                <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-fg-subtle">
+                  {group.eyebrow}
+                </p>
+                <h3 className="mt-2 text-xl font-bold text-fg">{group.title}</h3>
+                <p className="mt-4 text-sm leading-relaxed text-fg-muted sm:text-base">
+                  {group.subtitle}
+                </p>
                 <Link
-                  href={item.link.href}
-                  className="mt-4 inline-flex items-center gap-2 text-sm font-bold text-primary hover:underline"
+                  href={`/dich-vu#${group.id}`}
+                  className="mt-6 inline-flex items-center gap-2 text-sm font-bold text-primary hover:underline"
                 >
-                  {item.link.label}
+                  Xem nhóm dịch vụ
                   <IconArrow size={15} />
                 </Link>
-              ) : (
-                <a
-                  href={composeEmailHref(`Hỏi về dịch vụ: ${item.title}`)}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="mt-4 inline-block text-sm font-bold text-primary hover:underline"
-                >
-                  {contact.email}
-                </a>
-              )}
-            </Card>
+              </Card>
+            </div>
           </Reveal>
         ))}
       </div>

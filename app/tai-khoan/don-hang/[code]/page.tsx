@@ -175,15 +175,11 @@ export default async function OrderDetailPage({
           </p>
         )}
 
-        <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
-          <Link
-            href="/tai-khoan/don-hang"
-            className="text-sm font-semibold text-fg-muted transition hover:text-primary"
-          >
-            ← Tất cả đơn hàng
-          </Link>
-          {pending && <CancelOrder orderId={order.id} />}
-        </div>
+        {pending && (
+          <div className="mt-6 flex justify-end">
+            <CancelOrder orderId={order.id} />
+          </div>
+        )}
       </div>
     </Section>
   );

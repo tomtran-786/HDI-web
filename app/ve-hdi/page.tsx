@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { about } from "@/content/about";
 import { site } from "@/content/site";
+import { TeamProfiles } from "@/components/team-profiles";
 import { Card } from "@/components/ui/card";
 import { CtaLink } from "@/components/ui/cta-link";
 import { IconArrow, IconCheck } from "@/components/ui/icons";
@@ -25,14 +26,7 @@ export default function AboutHdiPage() {
     <>
       <section className="border-b border-line bg-bg">
         <div className="shell py-14 sm:py-16 lg:py-20">
-          <Link
-            href="/#ve-chung-toi"
-            className="inline-flex items-center gap-2 text-sm font-semibold text-fg-muted transition hover:text-primary"
-          >
-            <span aria-hidden>←</span>
-            Về trang chủ
-          </Link>
-          <p className="mt-8 text-xs font-semibold uppercase tracking-[0.18em] text-fg-muted">
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-fg-muted">
             {about.eyebrow}
           </p>
           <h1 className="mt-3 max-w-3xl text-3xl font-bold tracking-tight text-primary sm:text-4xl lg:text-[2.75rem] lg:leading-[1.1]">
@@ -131,15 +125,6 @@ export default function AboutHdiPage() {
           ))}
         </div>
 
-        <Reveal delay={140}>
-          <Link
-            href="/#ve-chung-toi"
-            className="mt-7 inline-flex items-center gap-2 text-sm font-bold text-primary hover:underline"
-          >
-            Xem đội ngũ HDI
-            <IconArrow size={15} />
-          </Link>
-        </Reveal>
       </Section>
 
       <Section>
@@ -158,7 +143,9 @@ export default function AboutHdiPage() {
         </div>
       </Section>
 
-      <Section soft>
+      <TeamProfiles />
+
+      <Section>
         <SectionHeading
           eyebrow="Nền tảng chuyên môn"
           title={about.record.title}
@@ -183,7 +170,7 @@ export default function AboutHdiPage() {
         </Reveal>
       </Section>
 
-      <Section>
+      <Section soft>
         <Reveal>
           <div className="rounded-card border border-line bg-card p-7 sm:p-9">
             <h2 className="text-2xl font-bold text-fg sm:text-3xl">
@@ -202,16 +189,10 @@ export default function AboutHdiPage() {
                 <IconArrow size={15} />
               </CtaLink>
               <Link
-                href="/#khoa-hoc"
+                href="/khoa-hoc"
                 className="inline-flex items-center rounded-full border border-line px-5 py-2.5 text-sm font-bold text-fg transition hover:border-primary hover:text-primary"
               >
                 Xem chương trình đào tạo
-              </Link>
-              <Link
-                href="/#lien-he"
-                className="inline-flex items-center rounded-full border border-line px-5 py-2.5 text-sm font-bold text-fg transition hover:border-primary hover:text-primary"
-              >
-                Liên hệ đội ngũ HDI
               </Link>
             </div>
           </div>

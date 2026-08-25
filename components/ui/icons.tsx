@@ -174,6 +174,14 @@ export function IconClose({ className, size = 22 }: IconProps) {
   );
 }
 
+export function IconChevronDown({ className, size = 18 }: IconProps) {
+  return (
+    <svg {...base(size)} className={className} aria-hidden>
+      <path d="m6 9 6 6 6-6" />
+    </svg>
+  );
+}
+
 export const programIcons = {
   user: IconUser,
   users: IconUsers,
