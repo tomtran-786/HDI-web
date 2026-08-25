@@ -20,6 +20,9 @@ const sourceSans = Source_Sans_3({
   display: "swap",
 });
 
+const DESCRIPTION =
+  "HDI Research Center là cộng đồng huấn luyện và hỗ trợ nghiên cứu dành cho sinh viên, học viên cao học, nghiên cứu sinh, giảng viên và nhà nghiên cứu trẻ, dưới sự định hướng chuyên môn của Dr. Tam Trinh – Lead Academic Advisor.";
+
 export const metadata: Metadata = {
   // Without a base, Next resolves canonical and Open Graph URLs relative to
   // localhost, so a shared link would preview against the wrong host. The
@@ -27,8 +30,7 @@ export const metadata: Metadata = {
   // use — so a domain move never leaves the two disagreeing.
   metadataBase: new URL(appUrl()),
   title: "HDI Research Center — Huấn luyện nghiên cứu & công bố quốc tế",
-  description:
-    "Chương trình kèm cặp, khóa đào tạo nghiên cứu và công bố quốc tế của HDI Research Center — cố vấn học thuật: Dr. Tam Trinh (PhD in Economics, Deakin University).",
+  description: DESCRIPTION,
   alternates: { canonical: "/" },
   openGraph: {
     type: "website",
@@ -36,8 +38,7 @@ export const metadata: Metadata = {
     url: "/",
     siteName: "HDI Research Center",
     title: "HDI Research Center — Huấn luyện nghiên cứu & công bố quốc tế",
-    description:
-      "Chương trình kèm cặp, khóa đào tạo nghiên cứu và công bố quốc tế của HDI Research Center — cố vấn học thuật: Dr. Tam Trinh (PhD in Economics, Deakin University).",
+    description: DESCRIPTION,
   },
 };
 

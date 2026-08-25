@@ -44,8 +44,11 @@ export async function FeaturedCourse() {
       />
 
       <Reveal>
-        <p className="mb-8 max-w-xl text-base leading-relaxed text-fg-muted sm:text-lg">
+        <p className="max-w-3xl text-base leading-relaxed text-fg-muted sm:text-lg">
           {coursesIntro.intro}
+        </p>
+        <p className="mb-8 mt-3 max-w-3xl text-sm leading-relaxed text-fg-subtle">
+          {coursesIntro.guide}
         </p>
       </Reveal>
 

@@ -113,11 +113,13 @@ const REGISTER_NOTE_GENERIC =
 
 export const coursesIntro = {
   eyebrow: "Khóa học",
-  title: "Các khóa đào tạo",
+  title: "Phát triển năng lực nghiên cứu theo lộ trình",
   subtitle:
-    "Từ bài tiểu luận đầu tiên đến kinh tế lượng nâng cao và công bố quốc tế",
+    "Từ kỹ năng viết học thuật nền tảng đến phương pháp nghiên cứu, phân tích dữ liệu, ứng dụng AI và công bố khoa học.",
   intro:
-    "Mỗi khóa học ứng với một chặng khác nhau của hành trình nghiên cứu. Bấm vào từng khóa để xem lộ trình chi tiết.",
+    "Các khóa học tại HDI được thiết kế theo lộ trình rõ ràng, kết hợp kiến thức cốt lõi với bài tập thực hành và các tình huống nghiên cứu thực tế. Người học có thể lựa chọn khóa học phù hợp với trình độ, mục tiêu và nhu cầu phát triển chuyên môn của mình.",
+  guide:
+    "Chọn một khóa học để xem nội dung, hình thức học và thông tin chi tiết.",
 };
 
 /**

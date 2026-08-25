@@ -33,7 +33,7 @@ export function Hero() {
           <p className="mt-5 max-w-xl text-base leading-relaxed text-fg-muted sm:text-lg">
             {site.name} đồng hành cùng bạn từ khâu xác định câu hỏi nghiên cứu đến
             lúc gửi bài và trả lời phản biện tại các tạp chí quốc tế — qua các
-            chương trình kèm cặp, khóa đào tạo và dịch vụ hỗ trợ bản thảo.{" "}
+            lộ trình đồng hành nghiên cứu, khóa đào tạo và dịch vụ hỗ trợ bản thảo.{" "}
             {site.lead.role}:{" "}
             <strong className="font-semibold text-fg">{site.lead.name}</strong> —{" "}
             {site.lead.credential}.
@@ -52,7 +52,7 @@ export function Hero() {
               href="#chuong-trinh"
               className="inline-flex items-center gap-2 rounded-full border border-line px-6 py-3 text-sm font-bold text-fg transition hover:border-primary hover:text-primary"
             >
-              Xem chương trình
+              Xem lộ trình đồng hành
             </a>
           </div>
         </Reveal>

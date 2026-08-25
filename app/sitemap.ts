@@ -2,12 +2,11 @@ import type { MetadataRoute } from "next";
 import { appUrl } from "@/lib/app-url";
 
 /**
- * The public site is one landing page whose sections are hash anchors, plus two
- * standalone pages — the adviser's academic record at /cong-bo and the AI/
- * plagiarism check service at /kiem-tra-ai-dao-van — and the two doors into an
- * account. Hash fragments are not separate URLs, so listing "/" once is the
- * whole map; adding #chuong-trinh and friends would just be duplicate entries
- * pointing at the same document.
+ * The public site is one landing page whose sections are hash anchors, plus the
+ * HDI introduction at /ve-hdi, the adviser's academic record at /cong-bo, the
+ * AI/plagiarism check service at /kiem-tra-ai-dao-van, and the two doors into
+ * an account. Hash fragments are not separate URLs, so listing "/" once is the
+ * whole map; adding #chuong-trinh and friends would just be duplicate entries.
  *
  * /kiem-tra-ai-dao-van/ket-qua/<ref> is deliberately absent: it is one person's
  * order, not a page to be found.
@@ -17,6 +16,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
   const lastModified = new Date();
   return [
     { url: base, lastModified, changeFrequency: "weekly", priority: 1 },
+    {
+      url: `${base}/ve-hdi`,
+      lastModified,
+      changeFrequency: "monthly",
+      priority: 0.6,
+    },
     {
       url: `${base}/cong-bo`,
       lastModified,

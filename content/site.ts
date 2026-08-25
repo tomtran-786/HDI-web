@@ -14,7 +14,8 @@ export const site = {
   // role next to the name everywhere it renders, so no surface can imply that
   // HDI is one person again.
   lead: {
-    role: "Cố vấn học thuật",
+    role: "Cố vấn Học thuật Trưởng",
+    roleEn: "Lead Academic Advisor",
     name: "Dr. Tam Trinh",
     credential: "PhD in Economics, Deakin University",
   },
@@ -27,7 +28,7 @@ export const site = {
  */
 export const nav = [
   { label: "Về HDI", href: "/#ve-chung-toi" },
-  { label: "Chương trình", href: "/#chuong-trinh" },
+  { label: "Đồng hành nghiên cứu", href: "/#chuong-trinh" },
   { label: "Khóa học", href: "/#khoa-hoc" },
   { label: "Dịch vụ", href: "/#dich-vu" },
   { label: "Hồ sơ học thuật", href: "/cong-bo" },
