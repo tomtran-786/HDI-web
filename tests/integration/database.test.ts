@@ -8,6 +8,7 @@ import {
 } from "@/lib/auth-tokens";
 import { createOrder, processPayosPayment } from "@/lib/orders";
 import { prisma } from "@/lib/prisma";
+import { courses } from "@/content/course";
 
 const userIds: string[] = [];
 const courseIds: string[] = [];
@@ -137,7 +138,8 @@ describe.sequential("disposable Postgres integration", () => {
     ]);
     const course = await prisma.course.create({
       data: {
-        slug: `integration-${randomUUID()}`,
+        code: courses[0].code,
+        slug: courses[0].slug,
         capacity: 1,
         priceVnd: 1_000_000,
         status: "open",
@@ -192,7 +194,8 @@ describe.sequential("disposable Postgres integration", () => {
     const [openCourse, closedCourse] = await Promise.all([
       prisma.course.create({
         data: {
-          slug: `integration-open-${randomUUID()}`,
+          code: courses[1].code,
+          slug: courses[1].slug,
           capacity: 5,
           priceVnd: 400_000,
           status: "open",
@@ -200,7 +203,8 @@ describe.sequential("disposable Postgres integration", () => {
       }),
       prisma.course.create({
         data: {
-          slug: `integration-closed-${randomUUID()}`,
+          code: courses[2].code,
+          slug: courses[2].slug,
           capacity: 5,
           priceVnd: 600_000,
           status: "closed",
@@ -224,7 +228,8 @@ describe.sequential("disposable Postgres integration", () => {
     const user = await createUser("repurchase");
     const course = await prisma.course.create({
       data: {
-        slug: `integration-repurchase-${randomUUID()}`,
+        code: courses[3].code,
+        slug: courses[3].slug,
         capacity: 2,
         priceVnd: 500_000,
         status: "open",

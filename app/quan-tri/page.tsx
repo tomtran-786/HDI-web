@@ -81,6 +81,7 @@ export default async function AdminPage({
     orderBy: { createdAt: "asc" },
     select: {
       id: true,
+      code: true,
       slug: true,
       capacity: true,
       priceVnd: true,
@@ -123,7 +124,7 @@ export default async function AdminPage({
         items: {
           select: {
             id: true,
-            course: { select: { slug: true } },
+            course: { select: { code: true, slug: true } },
           },
         },
       },
@@ -142,6 +143,7 @@ export default async function AdminPage({
         user: { select: { name: true, email: true } },
         course: {
           select: {
+            code: true,
             slug: true,
             priceVnd: true,
             driveFolderId: true,
@@ -361,7 +363,7 @@ export default async function AdminPage({
                   {order.items
                     .map(
                       (item) =>
-                        findCourse(item.course.slug)?.title ?? item.course.slug,
+                        `${item.course.code} · ${findCourse(item.course.slug)?.title ?? item.course.slug}`,
                     )
                     .join(" — ")}
                 </p>
@@ -485,7 +487,7 @@ export default async function AdminPage({
                     {e.user.email}
                   </p>
                   <p className="mt-1.5 text-[13px] text-fg-subtle">
-                    {course?.title ?? e.course.slug} ·{" "}
+                    {e.course.code} · {course?.title ?? e.course.slug} ·{" "}
                     {vnd.format(e.course.priceVnd)}đ · ghi danh{" "}
                     {formatDate(e.createdAt)}
                   </p>
@@ -529,6 +531,7 @@ export default async function AdminPage({
               >
                 <div className="min-w-0">
                   <div className="flex flex-wrap items-center gap-2">
+                    <Badge>{c.code}</Badge>
                     <p className="font-bold tracking-tight">
                       {course?.title ?? c.slug}
                     </p>

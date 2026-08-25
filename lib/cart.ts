@@ -17,6 +17,7 @@ export type CourseAvailability =
 
 export type CatalogCourse = {
   id: string | null;
+  code: string;
   slug: string;
   title: string;
   priceVnd: number;
@@ -82,6 +83,7 @@ export async function loadCourseCatalog(userId: string): Promise<CatalogCourse[]
     if (!row) {
       return {
         id: null,
+        code: authored.code,
         slug: authored.slug,
         title: authored.title,
         priceVnd: authored.price.vnd,
@@ -106,6 +108,7 @@ export async function loadCourseCatalog(userId: string): Promise<CatalogCourse[]
 
     return {
       id: row.id,
+      code: row.code,
       slug: row.slug,
       title: authored.title,
       priceVnd: row.priceVnd,

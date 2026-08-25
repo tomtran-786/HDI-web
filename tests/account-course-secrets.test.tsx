@@ -40,6 +40,7 @@ function enrollment(status: "pending" | "paid", drivePermissionId: string | null
     drivePermissionId,
     course: {
       id: "course-1",
+      code: "AIQT",
       slug: "nckh-ung-dung-ai-xuat-ban-quoc-te",
     },
   };

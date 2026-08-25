@@ -8,6 +8,20 @@ describe("số học viên quảng cáo", () => {
     expect(courses.map((course) => course.slug)).toEqual(COURSE_SLUGS);
   });
 
+  it("giữ mã khóa ổn định, dễ đọc và không trùng", () => {
+    expect(courses.map((course) => course.code)).toEqual([
+      "AIQT",
+      "TIEULUAN",
+      "SPSS",
+      "STATA",
+      "TAPCHI",
+      "BAOCAO",
+      "CHATGPT",
+    ]);
+    expect(new Set(courses.map((course) => course.code)).size).toBe(courses.length);
+    for (const course of courses) expect(course.code).toMatch(/^[A-Z0-9]{2,12}$/);
+  });
+
   it("chỉ dùng số marketing khi HDI đã cung cấp", () => {
     expect(enrolledCount["nckh-ung-dung-ai-xuat-ban-quoc-te"]).toBeUndefined();
     for (const [slug, count] of Object.entries(enrolledCount)) {

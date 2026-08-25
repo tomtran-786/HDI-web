@@ -31,6 +31,7 @@ describe("dữ liệu bán khóa học công khai", () => {
     mocks.findMany.mockResolvedValue([
       {
         id: "course-1",
+        code: "AIQT",
         slug: "nckh-ung-dung-ai-xuat-ban-quoc-te",
         capacity: 15,
         priceVnd: 3_000_000,
@@ -57,6 +58,7 @@ describe("dữ liệu bán khóa học công khai", () => {
     mocks.findMany.mockResolvedValue([
       {
         id: "course-1",
+        code: "AIQT",
         slug: "nckh-ung-dung-ai-xuat-ban-quoc-te",
         capacity: 15,
         priceVnd: 3_000_000,

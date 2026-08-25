@@ -32,7 +32,7 @@ export default async function OrderListPage() {
       items: {
         // No `course: true`: that would drag meetingUrl and driveFolderId into
         // the payload of a page anyone with a pending order can load.
-        select: { id: true, course: { select: { slug: true } } },
+        select: { id: true, course: { select: { code: true, slug: true } } },
       },
     },
   });
@@ -79,7 +79,7 @@ export default async function OrderListPage() {
                     {order.items
                       .map(
                         (item) =>
-                          findCourse(item.course.slug)?.title ?? item.course.slug,
+                          `${item.course.code} · ${findCourse(item.course.slug)?.title ?? item.course.slug}`,
                       )
                       .join(" — ")}
                   </p>

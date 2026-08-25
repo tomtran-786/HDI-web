@@ -75,6 +75,7 @@ export default async function AccountPage() {
       course: {
         select: {
           id: true,
+          code: true,
           slug: true,
         },
       },
@@ -223,7 +224,7 @@ export default async function AccountPage() {
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-fg-subtle">
-                      Khóa học
+                      Mã khóa {e.course.code}
                     </p>
                     <h3 className="mt-1.5 text-lg font-bold leading-snug tracking-tight">
                       {/* An orphan slug must not blank the card — show the raw

@@ -28,6 +28,7 @@ describe("course cart catalog", () => {
     mocks.configuredCourses.mockResolvedValue([
       {
         id: "course-open",
+        code: first.code,
         slug: first.slug,
         capacity: 2,
         priceVnd: 450_000,
@@ -35,6 +36,7 @@ describe("course cart catalog", () => {
       },
       {
         id: "course-full",
+        code: second.code,
         slug: second.slug,
         capacity: 1,
         priceVnd: 650_000,
@@ -42,6 +44,7 @@ describe("course cart catalog", () => {
       },
       {
         id: "course-owned",
+        code: third.code,
         slug: third.slug,
         capacity: 20,
         priceVnd: 750_000,
@@ -49,6 +52,7 @@ describe("course cart catalog", () => {
       },
       {
         id: "course-draft",
+        code: fourth.code,
         slug: fourth.slug,
         capacity: 20,
         priceVnd: 850_000,

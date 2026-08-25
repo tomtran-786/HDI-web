@@ -38,7 +38,7 @@ export function CourseCard({
       className="flex h-full w-full flex-col rounded-card border border-line bg-card p-6 text-left text-fg transition duration-200 hover:-translate-y-0.5 hover:border-primary hover:shadow-[0_10px_30px_-14px_rgba(12,73,143,0.25)] sm:p-7"
     >
       <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-fg-subtle">
-        {course.eyebrow}
+        Mã khóa {course.code} · {course.eyebrow}
       </p>
       <h3 className="mt-1.5 text-lg font-bold leading-snug tracking-tight">
         {course.title}

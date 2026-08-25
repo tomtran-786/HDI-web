@@ -82,6 +82,7 @@ export async function heldByUser(userId: string, courseIds: string[]) {
 /** Fields safe to expose on shopping surfaces. Secrets are absent by design. */
 export const COURSE_PUBLIC = {
   id: true,
+  code: true,
   slug: true,
   capacity: true,
   priceVnd: true,

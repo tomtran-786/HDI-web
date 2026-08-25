@@ -65,7 +65,7 @@ describe("PayOS checkout creation", () => {
       expect.objectContaining({
         orderCode: 100001,
         amount: 1_000_000,
-        description: "HDI 100001",
+        description: "100001 0900000000",
         items: [{ name: "course", quantity: 1, price: 1_000_000 }],
       }),
     );
@@ -74,6 +74,40 @@ describe("PayOS checkout creation", () => {
         data: expect.objectContaining({ providerRef: "payos-link-id" }),
       }),
     );
+  });
+
+  it("normalizes a +84 phone before building the transfer description", async () => {
+    mocks.findFirst.mockResolvedValue({
+      ...order,
+      user: { ...order.user, phone: "+84912345678" },
+    });
+    mocks.create.mockResolvedValue({
+      paymentLinkId: "payos-link-id",
+      checkoutUrl: "https://payos.test/link",
+    });
+    mocks.updateMany.mockResolvedValue({ count: 1 });
+
+    await ensurePayosCheckout("order-1", "user-1");
+
+    expect(mocks.create).toHaveBeenCalledWith(
+      expect.objectContaining({ description: "100001 0912345678" }),
+    );
+  });
+
+  it("does not contact PayOS when a new link has no valid phone", async () => {
+    mocks.findFirst.mockResolvedValue({
+      ...order,
+      user: { ...order.user, phone: null },
+    });
+
+    await expect(ensurePayosCheckout("order-1", "user-1")).resolves.toEqual({
+      ok: false,
+      state: "invalid_profile",
+      message:
+        "Số điện thoại trong hồ sơ chưa hợp lệ. Vui lòng cập nhật hồ sơ trước khi thanh toán.",
+    });
+    expect(mocks.create).not.toHaveBeenCalled();
+    expect(mocks.get).not.toHaveBeenCalled();
   });
 
   it("recovers evidence of an existing link after an uncertain create error", async () => {

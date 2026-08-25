@@ -134,7 +134,7 @@ export const about = {
     paragraphs: [
       "Dr. Tam Trinh có hơn 10 năm kinh nghiệm nghiên cứu, giảng dạy và hướng dẫn học thuật. Tại HDI Research Center, ông phụ trách định hướng chuyên môn, thiết kế chương trình, cố vấn phương pháp và giám sát chất lượng học thuật.",
       "Ông đã công bố hơn 25 công trình quốc tế, trong đó có các nghiên cứu trên Energy Economics (ABDC A*), Economic Modelling, International Review of Financial Analysis và Applied Economics (ABDC A), cùng nhiều tạp chí quốc tế uy tín khác. Các nghiên cứu của ông tập trung vào kinh tế học ứng dụng, bất bình đẳng, năng lượng xanh, tài chính bền vững, bảo hiểm, thương mại quốc tế và phát triển kinh tế.",
-      "Dr. Trinh hiện là thành viên Ban Biên tập của Eurasian Economic Review. Ông cũng thường xuyên tham gia phản biện cho các tạp chí khoa học quốc tế và trong nước.",
+      "Dr. Trinh hiện là thành viên Ban Biên tập của Eurasian Economic Review (xếp hạng C theo ABDC; ESCI Q1). Ông cũng thường xuyên tham gia phản biện cho các tạp chí khoa học quốc tế và trong nước.",
       "Với vai trò học thuật nòng cốt tại HDI, Dr. Trinh đồng hành cùng đội ngũ trợ lý nghiên cứu trong việc hỗ trợ người học phát triển đề tài, nâng cao năng lực nghiên cứu và từng bước hướng tới công bố khoa học.",
     ],
     rolesAtHdi: [

@@ -84,6 +84,8 @@ export const COURSE_SLUGS = [
 export type CourseSlug = (typeof COURSE_SLUGS)[number];
 
 export type Course = {
+  /** Stable, human-readable identifier. Never renumber when display order changes. */
+  code: string;
   slug: CourseSlug;
   eyebrow: string;
   title: string;
@@ -146,6 +148,7 @@ export const coursesIntro = {
  */
 export const courses = [
   {
+    code: "AIQT",
     slug: "nckh-ung-dung-ai-xuat-ban-quoc-te",
     eyebrow: "Khóa mới · Khai giảng 07/09/2026",
     title: "NGHIÊN CỨU KHOA HỌC ỨNG DỤNG AI & XUẤT BẢN QUỐC TẾ",
@@ -233,7 +236,7 @@ export const courses = [
       name: "Trịnh Công Tâm",
       credential: "Tiến sĩ",
       highlights: [
-        "Thành viên Editorial Board của Eurasian Economic Review (Scopus Q1, ESCI, C- theo ABDC).",
+        "Thành viên Ban Biên tập của Eurasian Economic Review (xếp hạng C theo ABDC; ESCI Q1).",
         "Session Chair tại các hội thảo quốc tế EBES và AGBA.",
         "Active Reviewer cho các tạp chí quốc tế thuộc hệ thống Scopus và các tạp chí khoa học uy tín trong nước.",
         "Có công trình công bố trên các tạp chí SSCI Q1 và tạp chí xếp hạng A*, A theo ABDC Journal Quality List.",
@@ -251,6 +254,7 @@ export const courses = [
   },
 
   {
+    code: "TIEULUAN",
     slug: "training-tieu-luan-nckh-kltn",
     eyebrow: "Khóa nền tảng",
     title: "Training viết tiểu luận, NCKH, khóa luận tốt nghiệp",
@@ -315,6 +319,7 @@ export const courses = [
   },
 
   {
+    code: "SPSS",
     slug: "nckh-chuyen-sau-spss",
     eyebrow: "Khóa chuyên sâu",
     title: "Phương pháp NCKH chuyên sâu với SPSS — thực chiến",
@@ -409,6 +414,7 @@ export const courses = [
   },
 
   {
+    code: "STATA",
     slug: "stata-kinh-te-luong",
     eyebrow: "Khóa chuyên sâu",
     title: "Nghiên cứu khoa học chuyên sâu với phần mềm Stata",
@@ -485,6 +491,7 @@ export const courses = [
   },
 
   {
+    code: "TAPCHI",
     slug: "viet-bai-tap-chi",
     eyebrow: "Khóa chuyên sâu",
     title: "Viết bài tạp chí khoa học trong nước và quốc tế",
@@ -583,6 +590,7 @@ export const courses = [
   },
 
   {
+    code: "BAOCAO",
     slug: "viet-bao-cao-khoa-hoc",
     eyebrow: "Khóa đào tạo",
     title: "Viết báo cáo khoa học, luận văn chuẩn quốc tế",
@@ -639,6 +647,7 @@ export const courses = [
   },
 
   {
+    code: "CHATGPT",
     slug: "ung-dung-chatgpt-nckh",
     eyebrow: "Khóa công cụ AI",
     title: "Ứng dụng ChatGPT trong nghiên cứu khoa học",

@@ -48,6 +48,7 @@ describe("GET /api/gio-hang", () => {
       catalog: [
         {
           id: "course-1",
+          code: "AIQT",
           slug: "course",
           title: "Course",
           priceVnd: 500_000,
@@ -69,6 +70,7 @@ describe("GET /api/gio-hang", () => {
       catalog: [
         {
           id: "course-1",
+          code: "AIQT",
           slug: "course",
           title: "Course",
           priceVnd: 500_000,

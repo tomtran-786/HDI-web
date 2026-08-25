@@ -178,6 +178,9 @@ enum EnrollmentStatus {
 /// keep the database and authored marketing content aligned.
 model Course {
   id       String @id @default(cuid())
+  /// Stable public code used for display and exact database lookups. Unlike
+  /// list position, it must not change when the course catalogue is reordered.
+  code     String @unique @db.Text
   slug     String @unique @db.VarChar(80)
   capacity Int
   // The real price. content/course.ts carries the advertised price; once HDI
@@ -274,8 +277,8 @@ enum PaymentStatus {
 model Order {
   id String @id @default(cuid())
 
-  /// The number a student writes in the bank transfer memo, and the number the
-  /// payment provider knows this order by.
+  /// The number at the start of the bank transfer memo (followed by the
+  /// student's phone), and the number the payment provider knows this order by.
   ///
   /// A sequence, not a random string and not the cuid `id`: PayOS's `orderCode`
   /// must be an integer, unique per merchant forever, and a transfer memo field

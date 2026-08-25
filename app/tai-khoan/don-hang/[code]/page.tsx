@@ -47,7 +47,7 @@ export default async function OrderDetailPage({
         select: {
           id: true,
           priceVnd: true,
-          course: { select: { slug: true } },
+          course: { select: { code: true, slug: true } },
         },
       },
     },
@@ -81,6 +81,9 @@ export default async function OrderDetailPage({
                 className="flex flex-wrap items-baseline justify-between gap-3 border-b border-line py-3.5 last:border-0"
               >
                 <div className="min-w-0">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-fg-subtle">
+                    Mã khóa {item.course.code}
+                  </p>
                   <p className="font-semibold leading-snug text-fg">
                     {findCourse(item.course.slug)?.title ?? item.course.slug}
                   </p>

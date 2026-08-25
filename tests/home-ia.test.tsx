@@ -100,6 +100,7 @@ describe("kiến trúc nội dung homepage và Về HDI", () => {
 
     expect(html).toContain('id="doi-ngu"');
     expect(html).toContain("Dr. Tam Trinh");
+    expect(html).toContain("xếp hạng C theo ABDC; ESCI Q1");
     expect(html).toContain("Tuan Tran");
     expect(html).toContain('href="/docs/cv.pdf"');
     expect(html).toContain('href="/docs/teaching-statement.pdf"');

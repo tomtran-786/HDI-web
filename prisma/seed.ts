@@ -38,6 +38,7 @@ async function main() {
 
   const rows: SeedCourse[] = JSON.parse(readFileSync(file, "utf8"));
   const known = new Set(courses.map((c) => c.slug));
+  const authoredBySlug = new Map(courses.map((course) => [course.slug, course]));
 
   // Validate everything before writing anything: a half-applied seed is worse
   // than a rejected one.
@@ -75,7 +76,10 @@ async function main() {
   }
 
   for (const r of rows) {
+    const authored = authoredBySlug.get(r.slug as (typeof courses)[number]["slug"]);
+    if (!authored) throw new Error(`Không tìm thấy mã cho khóa ${r.slug}.`);
     const data = {
+      code: authored.code,
       capacity: r.capacity,
       priceVnd: r.priceVnd,
       accessDays: r.accessDays ?? null,
@@ -86,7 +90,7 @@ async function main() {
     };
     await prisma.course.upsert({
       where: { slug: r.slug },
-      create: { slug: r.slug, ...data },
+      create: { slug: authored.slug, ...data },
       update: data,
     });
     console.log(`✓ ${r.slug}`);

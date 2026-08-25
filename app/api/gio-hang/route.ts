@@ -39,6 +39,7 @@ export async function GET() {
       // catalog object later must not silently make it part of the public API.
       catalog: cart.catalog.map((course) => ({
         id: course.id,
+        code: course.code,
         slug: course.slug,
         title: course.title,
         priceVnd: course.priceVnd,

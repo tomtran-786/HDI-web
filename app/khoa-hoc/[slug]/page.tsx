@@ -102,7 +102,7 @@ export default async function CourseDetailPage({ params }: CoursePageProps) {
           <div className="grid gap-9 lg:grid-cols-[minmax(0,1fr)_23rem] lg:items-start">
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-fg-muted">
-                {course.eyebrow}
+                Mã khóa {course.code} · {course.eyebrow}
               </p>
               <h1 className="mt-3 max-w-4xl text-3xl font-bold tracking-tight text-primary sm:text-4xl lg:text-[2.75rem] lg:leading-[1.1]">
                 {course.title}
@@ -323,7 +323,7 @@ export default async function CourseDetailPage({ params }: CoursePageProps) {
               >
                 <Card className="flex h-full flex-col p-6">
                   <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-fg-subtle">
-                    {item.eyebrow}
+                    Mã khóa {item.code} · {item.eyebrow}
                   </p>
                   <h3 className="mt-2 text-lg font-bold leading-snug text-fg">
                     {item.title}

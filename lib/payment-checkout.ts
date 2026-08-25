@@ -3,10 +3,12 @@ import { findCourse } from "./courses";
 import { prisma } from "./prisma";
 import { isPayosNotFound, payosClient } from "./payos";
 import { cancelOrder } from "./orders";
+import { phoneForTransfer } from "./profile";
 
 export type CheckoutLinkResult =
   | { ok: true; state: "ready"; checkoutUrl: string }
   | { ok: false; state: "closed" | "not_found"; message: string }
+  | { ok: false; state: "invalid_profile"; message: string }
   | { ok: false; state: "pending_gateway"; message: string };
 
 /** Create the external link only after the local, server-priced order exists. */
@@ -46,12 +48,21 @@ export async function ensurePayosCheckout(
     return { ok: true, state: "ready", checkoutUrl: order.checkoutUrl };
   }
 
+  const transferPhone = phoneForTransfer(order.user.phone);
+  if (!transferPhone) {
+    return {
+      ok: false,
+      state: "invalid_profile",
+      message: "Số điện thoại trong hồ sơ chưa hợp lệ. Vui lòng cập nhật hồ sơ trước khi thanh toán.",
+    };
+  }
+
   const base = appUrl();
   try {
     const link = await payosClient().paymentRequests.create({
       orderCode: order.code,
       amount: order.amountVnd,
-      description: `HDI ${order.code}`,
+      description: `${order.code} ${transferPhone}`,
       cancelUrl: `${base}/thanh-toan/huy?orderCode=${order.code}`,
       returnUrl: `${base}/thanh-toan/ket-qua?orderCode=${order.code}`,
       expiredAt: Math.floor(order.expiresAt.getTime() / 1000),

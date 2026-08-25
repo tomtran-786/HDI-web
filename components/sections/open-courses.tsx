@@ -47,7 +47,7 @@ export async function OpenCourses() {
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div className="min-w-0">
                     <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-fg-subtle">
-                      {course.eyebrow}
+                      Mã khóa {course.code} · {course.eyebrow}
                     </p>
                     <h3 className="mt-2 text-xl font-bold leading-snug text-fg sm:text-2xl">
                       {course.title}

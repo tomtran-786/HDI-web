@@ -29,7 +29,7 @@ const slug = courses[0].slug;
 const id = "course-1";
 
 function row(priceVnd: number, capacity = 20) {
-  return { id, slug, capacity, priceVnd, status: "open" as const };
+  return { id, code: courses[0].code, slug, capacity, priceVnd, status: "open" as const };
 }
 
 describe("catalog giỏ hàng luôn đọc cấu hình giao dịch mới nhất", () => {
