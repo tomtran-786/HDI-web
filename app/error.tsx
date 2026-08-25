@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect } from "react";
-import Link from "next/link";
 import { Section } from "@/components/ui/section";
 
 export default function ErrorPage({
@@ -25,8 +24,7 @@ export default function ErrorPage({
           Chưa tải được nội dung
         </h2>
         <p className="mt-3 text-base leading-relaxed text-fg-muted">
-          Kết nối có thể đang gián đoạn. Bạn có thể thử tải lại phần này hoặc về
-          trang chủ.
+          Kết nối có thể đang gián đoạn. Hãy thử tải lại phần nội dung này.
         </p>
         <div className="mt-7 flex flex-wrap justify-center gap-3">
           <button
@@ -36,12 +34,6 @@ export default function ErrorPage({
           >
             Thử lại
           </button>
-          <Link
-            href="/"
-            className="rounded-full border border-line px-6 py-3 text-sm font-bold text-fg transition hover:border-primary hover:text-primary"
-          >
-            Về trang chủ
-          </Link>
         </div>
       </div>
     </Section>

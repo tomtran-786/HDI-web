@@ -23,6 +23,9 @@
   --success: #1c7a4d;
   --warning: #9a6400;
   --danger: #b3261e;
+  --progress-start: #003865;
+  --progress-mid: #0c498f;
+  --progress-end: #35cbbd;
 }
 
 .dark {
@@ -40,6 +43,9 @@
   --success: #4fbe8b;
   --warning: #e0aa3e;
   --danger: #f28b82;
+  --progress-start: #6aabee;
+  --progress-mid: #9cc9f7;
+  --progress-end: #57e1cf;
 }
 
 @theme inline {
@@ -72,6 +78,28 @@ html {
 body {
   background: var(--bg);
   color: var(--fg);
+}
+
+/* Mượn nhịp chuyển động từ Tom's Portfolio: một vạch cố định mở dần từ trái
+   sang phải theo chiều dài tài liệu. Gradient dùng token riêng để vẫn rõ trên
+   cả nền sáng lẫn tối, còn transform không có transition nên bám sát thao tác
+   cuộn và không tạo thêm chuyển động quán tính. */
+.scroll-progress {
+  position: fixed;
+  z-index: 80;
+  inset: 0 0 auto;
+  height: 3px;
+  pointer-events: none;
+  transform: scaleX(0);
+  transform-origin: left center;
+  background: linear-gradient(
+    90deg,
+    var(--progress-start) 0%,
+    var(--progress-mid) 52%,
+    var(--progress-end) 100%
+  );
+  box-shadow: 0 0 10px color-mix(in srgb, var(--progress-end) 60%, transparent);
+  will-change: transform;
 }
 
 @media (prefers-reduced-motion: reduce) {

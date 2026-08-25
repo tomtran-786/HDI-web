@@ -4,8 +4,8 @@
  * Three events, chosen because they are the only intent signals the page
  * currently throws away:
  *
- *   `mo-lo-trinh`  opening a course modal — the strongest purchase intent on
- *                  the page, and until now completely invisible
+ *   `mo-lo-trinh`  following a course card to its full roadmap — the strongest
+ *                  purchase intent on the page
  *   `bam-cta`      pressing any call to action — consultation, Zalo, or the
  *                  start of a sign-up. Two of the three leave the site, so
  *                  Vercel Analytics cannot attribute the exit on its own.
@@ -34,6 +34,9 @@ export type CtaSource =
   | "hero"
   | "chuong-trinh"
   | "khoa-hoc-modal"
+  | "khoa-hoc-detail"
+  | "dich-vu-hub"
+  | "dich-vu-detail"
   | "lien-he"
   | "bubble-lien-he"
   | "bubble-gop-y"
@@ -57,7 +60,7 @@ export type CtaTarget =
 export function trackCta(
   source: CtaSource,
   target: CtaTarget,
-  /** Slug of the course being viewed, for the two CTAs inside a course modal. */
+  /** Slug of the course being viewed, for CTAs on a course detail page. */
   course?: string,
 ) {
   // `khoa` is omitted rather than sent empty: an "" value would show up in the
@@ -69,7 +72,7 @@ export function trackCta(
   });
 }
 
-/** Fired when a course card is opened. */
+/** Fired when a course card opens its full roadmap page. */
 export function trackCourseModal(course: string) {
   track("mo-lo-trinh", { khoa: course });
 }

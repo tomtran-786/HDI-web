@@ -1,65 +1,57 @@
+import Link from "next/link";
+import { CourseTeaserCard } from "../course-teaser-card";
 import { courses, coursesIntro } from "@/content/course";
-import { landingCourseData, type PublicAvailability } from "@/lib/course-sales";
-import type { PublicReview, ReviewSummary } from "@/lib/reviews";
-import { CourseList } from "../course-list";
 import { Reveal } from "../ui/reveal";
 import { Section, SectionHeading } from "../ui/section";
+import { IconArrow } from "../ui/icons";
 
-/**
- * Đánh giá là thứ trang trí cho phần khóa học, không phải phần thân của nó.
- *
- * Trước đây trang chủ không chạm tới database một lần nào — giỏ hàng được nạp
- * bằng fetch từ trình duyệt, còn mọi thứ hiển thị đều đến từ content/. Truy vấn
- * này là lần đầu tiên trang bán hàng phụ thuộc vào Postgres, nên nó phải phụ
- * thuộc theo kiểu hỏng-cũng-không-sao: Supabase trục trặc thì mất dữ liệu xã
- * hội và availability badge, chứ không làm trắng trang giới thiệu hoặc đóng
- * nhầm toàn bộ cửa hàng.
- */
-async function loadCourseData() {
-  try {
-    // Một ô cache duy nhất, nên một lượt lấy kết nối duy nhất khi trượt cache.
-    return await landingCourseData();
-  } catch (error) {
-    console.error("[khoa-hoc] Không đọc được dữ liệu công khai:", error);
-    // Record rỗng chứ không phải null: mọi lần tra đều ra `undefined`, và
-    // cardPresentation() đọc `undefined` là "không biết" rồi fail-open, thay vì
-    // đóng sạch cửa hàng vì một cú chớp của Supabase.
-    return {
-      summaries: {} as Record<string, ReviewSummary>,
-      reviews: {} as Record<string, PublicReview[]>,
-      availability: {} as Record<string, PublicAvailability>,
-    };
-  }
-}
+const featuredSlugs = [
+  "training-tieu-luan-nckh-kltn",
+  "nckh-chuyen-sau-spss",
+  "ung-dung-chatgpt-nckh",
+] as const;
 
-export async function FeaturedCourse() {
-  const { summaries, reviews, availability } = await loadCourseData();
+const featuredCourses = featuredSlugs.map((slug) => {
+  const course = courses.find((item) => item.slug === slug);
+  if (!course) throw new Error(`Thiếu dữ liệu teaser khóa học: ${slug}`);
+  // Chỉ truyền bốn trường này qua ranh giới server → client. Nếu đưa nguyên
+  // object khóa học vào CourseTeaserCard, curriculum, giá và facts vẫn bị
+  // serialize vào RSC payload dù component không render chúng.
+  return {
+    slug: course.slug,
+    eyebrow: course.eyebrow,
+    title: course.title,
+    audience: course.audience,
+  };
+});
 
+/** Ba teaser tĩnh; dữ liệu bán hàng/review chỉ được tải tại hub và detail. */
+export function FeaturedCourse() {
   return (
-    <Section id="khoa-hoc">
+    <Section id="khoa-hoc" soft>
       <SectionHeading
         eyebrow={coursesIntro.eyebrow}
         title={coursesIntro.title}
         subtitle={coursesIntro.subtitle}
       />
 
-      <Reveal>
-        <p className="max-w-3xl text-base leading-relaxed text-fg-muted sm:text-lg">
-          {coursesIntro.intro}
-        </p>
-        <p className="mb-8 mt-3 max-w-3xl text-sm leading-relaxed text-fg-subtle">
-          {coursesIntro.guide}
-        </p>
-      </Reveal>
+      <div className="grid gap-5 md:grid-cols-3">
+        {featuredCourses.map((course, index) => (
+          <Reveal key={course.slug} delay={index * 60} className="h-full">
+            <CourseTeaserCard course={course} />
+          </Reveal>
+        ))}
+      </div>
 
-      {/* The sort control needs state, so the list is a client component and
-          this section stays a server component. */}
-      <CourseList
-        courses={courses}
-        summaries={summaries}
-        reviews={reviews}
-        availability={availability}
-      />
+      <Reveal>
+        <Link
+          href="/khoa-hoc"
+          className="mt-8 inline-flex items-center gap-2 text-sm font-bold text-primary hover:underline"
+        >
+          Xem tất cả khóa học
+          <IconArrow size={15} />
+        </Link>
+      </Reveal>
     </Section>
   );
 }

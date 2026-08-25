@@ -1,12 +1,13 @@
 import type { MetadataRoute } from "next";
+import { COURSE_SLUGS } from "@/content/course";
+import { SERVICE_SLUGS } from "@/content/services";
 import { appUrl } from "@/lib/app-url";
 
 /**
- * The public site is one landing page whose sections are hash anchors, plus the
- * HDI introduction at /ve-hdi, the adviser's academic record at /cong-bo, the
- * AI/plagiarism check service at /kiem-tra-ai-dao-van, and the two doors into
- * an account. Hash fragments are not separate URLs, so listing "/" once is the
- * whole map; adding #chuong-trinh and friends would just be duplicate entries.
+ * Public marketing pages include the landing page, the HDI and academic-record
+ * pages, the course hub and every authored course detail URL, plus the AI/
+ * plagiarism service and the two doors into an account. Hash fragments remain
+ * absent because they are not separate URLs.
  *
  * /kiem-tra-ai-dao-van/ket-qua/<ref> is deliberately absent: it is one person's
  * order, not a page to be found.
@@ -14,6 +15,18 @@ import { appUrl } from "@/lib/app-url";
 export default function sitemap(): MetadataRoute.Sitemap {
   const base = appUrl();
   const lastModified = new Date();
+  const coursePages: MetadataRoute.Sitemap = COURSE_SLUGS.map((slug) => ({
+    url: `${base}/khoa-hoc/${slug}`,
+    lastModified,
+    changeFrequency: "monthly",
+    priority: 0.7,
+  }));
+  const servicePages: MetadataRoute.Sitemap = SERVICE_SLUGS.map((slug) => ({
+    url: `${base}/dich-vu/${slug}`,
+    lastModified,
+    changeFrequency: "monthly",
+    priority: 0.6,
+  }));
   return [
     { url: base, lastModified, changeFrequency: "weekly", priority: 1 },
     {
@@ -28,6 +41,20 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: "monthly",
       priority: 0.6,
     },
+    {
+      url: `${base}/khoa-hoc`,
+      lastModified,
+      changeFrequency: "weekly",
+      priority: 0.8,
+    },
+    ...coursePages,
+    {
+      url: `${base}/dich-vu`,
+      lastModified,
+      changeFrequency: "weekly",
+      priority: 0.8,
+    },
+    ...servicePages,
     {
       url: `${base}/kiem-tra-ai-dao-van`,
       lastModified,

@@ -1,4 +1,5 @@
 import Image from "next/image";
+import Link from "next/link";
 import { site } from "@/content/site";
 import { CtaLink } from "../ui/cta-link";
 import { Reveal } from "../ui/reveal";
@@ -48,12 +49,12 @@ export function Hero() {
               Đăng ký tư vấn miễn phí
               <IconArrow size={16} />
             </CtaLink>
-            <a
-              href="#chuong-trinh"
+            <Link
+              href="/dich-vu#dong-hanh-nghien-cuu"
               className="inline-flex items-center gap-2 rounded-full border border-line px-6 py-3 text-sm font-bold text-fg transition hover:border-primary hover:text-primary"
             >
               Xem lộ trình đồng hành
-            </a>
+            </Link>
           </div>
         </Reveal>
 

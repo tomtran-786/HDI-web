@@ -1,31 +1,24 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, type FocusEvent } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { nav, site } from "@/content/site";
+import { nav, type NavItem } from "@/content/navigation";
+import { site } from "@/content/site";
 import { ThemeToggle } from "./theme-toggle";
 import { Avatar } from "./ui/avatar";
 import { CtaLink } from "./ui/cta-link";
 import { CartButton } from "./cart-button";
-import { IconClose, IconMenu } from "./ui/icons";
+import {
+  IconChevronDown,
+  IconClose,
+  IconMenu,
+} from "./ui/icons";
 
-/**
- * Lối vào trang quản trị, chỉ gắn vào navbar khi người đang đăng nhập nằm trong
- * allowlist ADMIN_EMAILS.
- *
- * Khai báo ở đây chứ KHÔNG thêm vào `nav` của content/site.ts: `nav` được
- * site-footer.tsx dùng chung, nên thêm vào đó là để lộ mục quản trị xuống chân
- * mọi trang, cho cả khách vãng lai.
- */
-const ADMIN_NAV = { label: "Quản trị", href: "/quan-tri" } as const;
+/** Chỉ thêm vào header cho admin; footer luôn lấy `footerNav` công khai. */
+const ADMIN_NAV: NavItem = { label: "Quản trị", href: "/quan-tri" };
 
-/**
- * `isAdmin` đi xuống client và người dùng đọc được nó — điều đó không sao, vì
- * nó chỉ quyết định có VẼ một đường link hay không. Cửa thật vẫn là redirect
- * trong app/quan-tri/layout.tsx và `requireAdmin()` trong từng server action.
- */
 export function SiteHeader({
   signedIn,
   isAdmin = false,
@@ -33,14 +26,21 @@ export function SiteHeader({
 }: {
   signedIn: boolean;
   isAdmin?: boolean;
-  // Chỉ tên, email và ảnh — vừa đủ để vẽ ô tài khoản. Không truyền cả object
-  // session xuống client: mọi thứ ở đây đều đọc được bằng devtools.
   user?: { name?: string | null; email?: string | null; image?: string | null };
 }) {
   const pathname = usePathname();
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
+  const [desktopOpen, setDesktopOpen] = useState<string | null>(null);
+  const [mobileOpenGroups, setMobileOpenGroups] = useState<string[]>([]);
   const [activeHref, setActiveHref] = useState<string | null>(null);
+
+  const navItems: readonly NavItem[] = isAdmin ? [...nav, ADMIN_NAV] : nav;
+
+  const closeMobile = () => {
+    setOpen(false);
+    setMobileOpenGroups([]);
+  };
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 8);
@@ -50,13 +50,14 @@ export function SiteHeader({
   }, []);
 
   useEffect(() => {
-    if (!open) return;
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setOpen(false);
+      if (event.key !== "Escape") return;
+      setDesktopOpen(null);
+      closeMobile();
     };
     document.addEventListener("keydown", onKeyDown);
     return () => document.removeEventListener("keydown", onKeyDown);
-  }, [open]);
+  }, []);
 
   useEffect(() => {
     if (pathname !== "/") return;
@@ -66,6 +67,7 @@ export function SiteHeader({
       const href = `/${window.location.hash}`;
       if (sectionItems.some((item) => item.href === href)) setActiveHref(href);
     };
+    syncHash();
 
     const observer = new IntersectionObserver(
       (entries) => {
@@ -89,14 +91,20 @@ export function SiteHeader({
     };
   }, [pathname]);
 
-  const isActive = (href: string) =>
-    href.startsWith("/#")
-      ? pathname === "/" && activeHref === href
-      : pathname === href || pathname.startsWith(`${href}/`);
-
-  // Mục quản trị đứng CUỐI, sau các mục nội dung. `nav` là readonly tuple nên
-  // trải ra mảng mới thay vì đẩy vào.
-  const navItems = isAdmin ? [...nav, ADMIN_NAV] : nav;
+  const isActive = (item: NavItem) => {
+    if (item.href.startsWith("/#")) {
+      return pathname === "/" && activeHref === item.href;
+    }
+    if (item.href === "/dich-vu") {
+      return (
+        pathname === "/dich-vu" ||
+        pathname.startsWith("/dich-vu/") ||
+        pathname === "/kiem-tra-ai-dao-van" ||
+        pathname.startsWith("/kiem-tra-ai-dao-van/")
+      );
+    }
+    return pathname === item.href || pathname.startsWith(`${item.href}/`);
+  };
 
   const navLinkClass = (active: boolean, mobile = false) =>
     mobile
@@ -111,6 +119,10 @@ export function SiteHeader({
             : "text-fg-muted hover:bg-card hover:text-primary"
         }`;
 
+  const onDesktopBlur = (event: FocusEvent<HTMLDivElement>) => {
+    if (!event.currentTarget.contains(event.relatedTarget)) setDesktopOpen(null);
+  };
+
   return (
     <header
       className={`sticky top-0 z-50 border-b bg-bg/85 backdrop-blur transition-colors ${
@@ -121,13 +133,11 @@ export function SiteHeader({
         <Link
           href="/#top"
           onClick={() => {
-            setOpen(false);
+            closeMobile();
             setActiveHref(null);
           }}
           className="flex shrink-0 items-center gap-2.5 font-bold tracking-tight"
         >
-          {/* alt="" — the wordmark right next to it already names the centre,
-              so labelling the mark too would read the name twice. */}
           <Image
             src="/images/logo-mark.png"
             alt=""
@@ -146,23 +156,100 @@ export function SiteHeader({
           className="hidden items-center gap-0.5 rounded-full border border-line bg-bg-soft/80 p-1 xl:flex"
         >
           {navItems.map((item) => {
-            const active = isActive(item.href);
+            const active = isActive(item);
+            if (!item.groups?.length) {
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  aria-current={active ? "page" : undefined}
+                  onClick={() => {
+                    setActiveHref(item.href);
+                    setDesktopOpen(null);
+                  }}
+                  className={navLinkClass(active)}
+                >
+                  {item.label}
+                </Link>
+              );
+            }
+
+            const menuId = `desktop-${item.href.slice(1)}-menu`;
+            const expanded = desktopOpen === item.href;
             return (
-              <Link
+              <div
                 key={item.href}
-                href={item.href}
-                aria-current={
-                  active
-                    ? item.href.startsWith("/#")
-                      ? "location"
-                      : "page"
-                    : undefined
-                }
-                onClick={() => setActiveHref(item.href)}
-                className={navLinkClass(active)}
+                className="relative"
+                onMouseEnter={() => setDesktopOpen(item.href)}
+                onMouseLeave={() => setDesktopOpen(null)}
+                onFocus={() => setDesktopOpen(item.href)}
+                onBlur={onDesktopBlur}
               >
-                {item.label}
-              </Link>
+                <Link
+                  href={item.href}
+                  aria-current={active ? "page" : undefined}
+                  onClick={() => setDesktopOpen(null)}
+                  className={`flex items-center gap-1.5 rounded-full px-3 py-2 text-[13px] font-semibold transition hover:text-primary ${
+                    active
+                      ? "bg-card text-primary shadow-sm"
+                      : "text-fg-muted"
+                  }`}
+                >
+                  {item.label}
+                  <IconChevronDown
+                    aria-hidden
+                    size={14}
+                    className={`transition-transform ${expanded ? "rotate-180" : ""}`}
+                  />
+                </Link>
+
+                <div
+                  id={menuId}
+                  className={`absolute left-1/2 top-full z-30 -translate-x-1/2 pt-3 transition ${
+                    expanded
+                      ? "visible translate-y-0 opacity-100"
+                      : "pointer-events-none invisible -translate-y-1 opacity-0"
+                  }`}
+                >
+                  <div
+                    className={`grid max-w-[calc(100vw-3rem)] gap-7 rounded-card border border-line bg-bg p-6 shadow-[0_24px_56px_-20px_rgba(12,73,143,0.45)] ${
+                      item.href === "/dich-vu"
+                        ? "w-[42rem] grid-cols-2"
+                        : "w-[56rem] grid-cols-4"
+                    }`}
+                  >
+                    {item.groups.map((group) => (
+                      <div key={group.label}>
+                        <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-fg-subtle">
+                          {group.label}
+                        </p>
+                        <ul className="mt-3 space-y-1.5">
+                          {group.children.map((child) => (
+                            <li key={child.href}>
+                              <Link
+                                href={child.href}
+                                onClick={() => setDesktopOpen(null)}
+                                className="block rounded-lg px-2 py-2 text-sm font-semibold leading-snug text-fg-muted transition hover:bg-bg-soft hover:text-primary"
+                              >
+                                {child.label}
+                              </Link>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    ))}
+                    <Link
+                      href={item.href}
+                      onClick={() => setDesktopOpen(null)}
+                      className="col-span-full inline-flex items-center justify-center rounded-full border border-line px-4 py-2.5 text-sm font-bold text-primary transition hover:border-primary"
+                    >
+                      {item.href === "/dich-vu"
+                        ? "Tất cả dịch vụ"
+                        : "Tất cả khóa học"}
+                    </Link>
+                  </div>
+                </div>
+              </div>
             );
           })}
         </nav>
@@ -203,7 +290,10 @@ export function SiteHeader({
           <ThemeToggle />
           <button
             type="button"
-            onClick={() => setOpen((v) => !v)}
+            onClick={() => {
+              setOpen((value) => !value);
+              setMobileOpenGroups([]);
+            }}
             aria-label={open ? "Đóng menu" : "Mở menu"}
             aria-expanded={open}
             aria-controls="mobile-navigation"
@@ -219,7 +309,7 @@ export function SiteHeader({
           <button
             type="button"
             aria-label="Đóng menu điều hướng"
-            onClick={() => setOpen(false)}
+            onClick={closeMobile}
             className="fixed inset-x-0 bottom-0 top-16 z-10 bg-primary-deep/15 backdrop-blur-[1px] xl:hidden"
           />
           <nav
@@ -231,28 +321,79 @@ export function SiteHeader({
               <p className="px-1 text-[10px] font-bold uppercase tracking-[0.16em] text-fg-subtle">
                 Khám phá HDI
               </p>
-              <div className="mt-3 grid gap-1 sm:grid-cols-2">
+              <div className="mt-3 grid gap-1">
                 {navItems.map((item) => {
-                  const active = isActive(item.href);
+                  const active = isActive(item);
+                  if (!item.groups?.length) {
+                    return (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        aria-current={active ? "page" : undefined}
+                        onClick={() => {
+                          setActiveHref(item.href);
+                          closeMobile();
+                        }}
+                        className={navLinkClass(active, true)}
+                      >
+                        {item.label}
+                      </Link>
+                    );
+                  }
+
+                  const expanded = mobileOpenGroups.includes(item.href);
+                  const menuId = `mobile-${item.href.slice(1)}-menu`;
                   return (
-                    <Link
-                      key={item.href}
-                      href={item.href}
-                      aria-current={
-                        active
-                          ? item.href.startsWith("/#")
-                            ? "location"
-                            : "page"
-                          : undefined
-                      }
-                      onClick={() => {
-                        setActiveHref(item.href);
-                        setOpen(false);
-                      }}
-                      className={navLinkClass(active, true)}
-                    >
-                      {item.label}
-                    </Link>
+                    <div key={item.href} className="rounded-card border border-transparent">
+                      <button
+                        type="button"
+                        aria-expanded={expanded}
+                        aria-controls={menuId}
+                        onClick={() =>
+                          setMobileOpenGroups((current) =>
+                            current.includes(item.href)
+                              ? current.filter((href) => href !== item.href)
+                              : [...current, item.href],
+                          )
+                        }
+                        className={`${navLinkClass(active, true)} flex w-full items-center justify-between text-left`}
+                      >
+                        {item.label}
+                        <IconChevronDown
+                          size={16}
+                          className={`transition-transform ${expanded ? "rotate-180" : ""}`}
+                        />
+                      </button>
+                      <div id={menuId} hidden={!expanded} className="px-3 pb-3">
+                        <Link
+                          href={item.href}
+                          onClick={closeMobile}
+                          className="mt-1 block rounded-lg bg-bg-soft px-3 py-2.5 text-sm font-bold text-primary"
+                        >
+                          Xem tất cả
+                        </Link>
+                        {item.groups.map((group) => (
+                          <div key={group.label} className="mt-4">
+                            <p className="px-3 text-[10px] font-bold uppercase tracking-[0.16em] text-fg-subtle">
+                              {group.label}
+                            </p>
+                            <ul className="mt-1.5 space-y-0.5">
+                              {group.children.map((child) => (
+                                <li key={child.href}>
+                                  <Link
+                                    href={child.href}
+                                    onClick={closeMobile}
+                                    className="block rounded-lg px-3 py-2.5 text-sm font-semibold leading-snug text-fg-muted transition hover:bg-bg-soft hover:text-primary"
+                                  >
+                                    {child.label}
+                                  </Link>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
                   );
                 })}
               </div>
@@ -261,7 +402,7 @@ export function SiteHeader({
                 {signedIn ? (
                   <Link
                     href="/tai-khoan"
-                    onClick={() => setOpen(false)}
+                    onClick={closeMobile}
                     className="flex items-center justify-center gap-2 rounded-full bg-primary px-5 py-3 text-center text-sm font-bold text-primary-fg"
                   >
                     <Avatar
@@ -277,7 +418,7 @@ export function SiteHeader({
                   <>
                     <Link
                       href="/dang-nhap"
-                      onClick={() => setOpen(false)}
+                      onClick={closeMobile}
                       className="rounded-full border border-line px-5 py-3 text-center text-sm font-bold text-fg"
                     >
                       Đăng nhập
@@ -285,7 +426,7 @@ export function SiteHeader({
                     <CtaLink
                       source="header-mobile"
                       target="tu-van"
-                      onNavigate={() => setOpen(false)}
+                      onNavigate={closeMobile}
                       className="rounded-full bg-primary px-5 py-3 text-center text-sm font-bold text-primary-fg"
                     >
                       Tư vấn miễn phí

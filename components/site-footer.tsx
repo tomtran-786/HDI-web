@@ -1,5 +1,6 @@
 import Image from "next/image";
-import { composeEmailHref, contact, links, nav, site } from "@/content/site";
+import { footerNav } from "@/content/navigation";
+import { composeEmailHref, contact, links, site } from "@/content/site";
 import type { CtaSource } from "@/lib/analytics";
 import { CtaLink } from "./ui/cta-link";
 
@@ -11,7 +12,7 @@ const elsewhere = [
 ];
 
 const documents = [
-  { label: "Tải CV", href: links.cv },
+  { label: "Tải CV", href: links.cv, download: true },
   { label: "Teaching statement", href: links.teachingStatement },
   // `cta` instead of `href`: CtaLink resolves the URL and reports the click.
   { label: "Tư vấn miễn phí", cta: "footer" as CtaSource },
@@ -48,8 +49,7 @@ export function SiteFooter() {
         <FooterColumn
           title="Khám phá"
           items={[
-            ...nav.map((n) => ({ ...n })),
-            { label: "Check AI & đạo văn", href: "/kiem-tra-ai-dao-van" },
+            ...footerNav,
             { label: "Đăng nhập", href: "/dang-nhap" },
           ]}
         />
@@ -98,7 +98,7 @@ function FooterColumn({
       </p>
       <ul className="space-y-2.5">
         {items.map((item) => {
-          const offsite = item.cta !== undefined || external ||
+          const offsite = external ||
             (item.href?.startsWith("http") ?? false);
           const style = "text-sm text-fg-muted transition hover:text-primary";
           const label = (
@@ -116,6 +116,7 @@ function FooterColumn({
               ) : (
                 <a
                   href={item.href}
+                  download={"download" in item && item.download ? true : undefined}
                   {...(offsite
                     ? { target: "_blank", rel: "noopener noreferrer" }
                     : {})}

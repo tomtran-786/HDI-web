@@ -5,7 +5,9 @@ import { Analytics } from "@vercel/analytics/next";
 import { SessionProvider } from "next-auth/react";
 import { CartProvider } from "@/components/cart-provider";
 import { ContactDock } from "@/components/contact-dock";
+import { ScrollProgress } from "@/components/scroll-progress";
 import { SiteHeader } from "@/components/site-header";
+import { SiteBreadcrumbs } from "@/components/site-breadcrumbs";
 import { SiteFooter } from "@/components/site-footer";
 import { themeBootstrap } from "@/lib/theme-script";
 import { appUrl } from "@/lib/app-url";
@@ -50,6 +52,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
   const nonce = headerStore.get("x-nonce") ?? undefined;
   const appShell = (
     <CartProvider>
+      <ScrollProgress />
       <SiteHeader
         signedIn={Boolean(session?.user)}
         // Không tốn truy vấn nào: email đã nằm sẵn trong JWT, và
@@ -67,6 +70,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
             : undefined
         }
       />
+      <SiteBreadcrumbs />
       <main className="flex-1">{children}</main>
       <SiteFooter />
       <ContactDock signedIn={Boolean(session?.user?.id)} />
@@ -78,6 +82,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
     <html
       lang="vi"
       className={`${sourceSans.variable} h-full antialiased`}
+      data-scroll-behavior="smooth"
       suppressHydrationWarning
     >
       <head>

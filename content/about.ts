@@ -6,16 +6,18 @@
  * PHAM-VI-CAP-NHAT-NOI-DUNG.md. Education, honours and referee journals retain
  * the sourced records that were already published on the site.
  *
- * The landing page deliberately renders only the summary, operating model and
- * team. The longer identity, principles and academic-foundation copy lives at
- * /ve-hdi so the home page remains scannable.
+ * The landing page deliberately renders only the two-paragraph summary. The
+ * operating model, team, principles and academic foundation live at /ve-hdi so
+ * the home page remains scannable.
  */
 
 export const about = {
   eyebrow: "Về chúng tôi",
   title: "Về HDI Research Center",
   subtitle: "Nghiên cứu bài bản – Đồng hành thực chất – Hướng tới công bố",
-  illustration: { src: "/images/successful-target.webp" },
+  // Giữ SVG gốc thay vì bản WebP raster: asset có SMIL animation cho nhân vật,
+  // lá cây và các chi tiết minh họa.
+  illustration: { src: "/images/successful-target.svg" },
   paragraphs: [
     "HDI Research Center là cộng đồng huấn luyện và hỗ trợ nghiên cứu dành cho sinh viên, học viên cao học, nghiên cứu sinh, giảng viên và các nhà nghiên cứu trẻ. HDI đồng hành cùng người học từ bước hình thành ý tưởng, xây dựng câu hỏi nghiên cứu và lựa chọn phương pháp đến hoàn thiện bản thảo, gửi bài và phản hồi nhận xét của phản biện.",
     "Các chương trình của HDI được đội ngũ trợ lý nghiên cứu và điều phối viên triển khai dưới sự định hướng chuyên môn của Dr. Tam Trinh – Lead Academic Advisor.",
@@ -188,9 +190,20 @@ export const about = {
     label: "Research Assistant",
     labelVi: "Trợ lý Nghiên cứu",
     name: "Tuan Tran",
+    portrait: {
+      src: "/images/tuan-tran.jpg",
+      alt: "Chân dung Tuan Tran",
+    },
     paragraphs: [
       "Tuan Tran hỗ trợ công tác chuẩn bị tài liệu, tổ chức dữ liệu, điều phối lớp học và theo dõi tiến độ nghiên cứu của học viên. Tuan cũng là cầu nối giữa học viên, các chương trình đào tạo và cố vấn học thuật của HDI.",
     ],
+    // Hồ sơ riêng của trợ lý nghiên cứu. Không gộp vào `links` trong
+    // content/site.ts: hai tệp ở đó (cv.pdf, teaching-statement.pdf) là của cố
+    // vấn học thuật, nên để chung sẽ không còn biết tài liệu nào của ai.
+    profile: {
+      portfolio: "https://tomtran-portfolio.vercel.app/",
+      resume: "/docs/resume-tuan-tran.pdf",
+    },
     rolesAtHdi: [
       "Hỗ trợ tìm kiếm và sắp xếp tài liệu",
       "Hỗ trợ tổ chức và quản lý dữ liệu",
