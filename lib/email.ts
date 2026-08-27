@@ -19,12 +19,55 @@ function escapeHtml(value: string) {
   );
 }
 
+function senderDomain(from: string) {
+  const address = (/<([^>]+)>/.exec(from)?.[1] ?? from).trim();
+  return address.slice(address.lastIndexOf("@") + 1).toLowerCase();
+}
+
+/** Site đang chạy trên máy dev, không phải trên một tên miền thật. */
+function isLocalSite() {
+  const origin = process.env.APP_URL || process.env.AUTH_URL;
+  if (!origin) return process.env.NODE_ENV !== "production";
+  return /^(https?:\/\/)?(localhost|127\.0\.0\.1)([:/]|$)/i.test(origin);
+}
+
+/**
+ * Một lần gửi hỏng phải để lại dấu vết đọc được, không phải im lặng.
+ *
+ * Ở dev thì in thêm cả liên kết trong thư: khi Resend từ chối, đó là cách duy
+ * nhất để chạy nốt luồng đăng ký hay đặt lại mật khẩu trên máy local. Chỉ ở
+ * dev — liên kết này là bearer token, không được nằm trong log production.
+ */
+function failed(input: SendEmailInput, error: string) {
+  console.error(
+    `[email] Không gửi được "${input.subject}" tới ${input.to}: ${error}`,
+  );
+  if (process.env.NODE_ENV !== "production") {
+    const href = /href="([^"]+)"/.exec(input.html)?.[1];
+    if (href) console.error(`[email] Liên kết của thư vừa hỏng (chỉ in ở dev): ${href}`);
+  }
+  return { sent: false as const, error };
+}
+
 export async function sendEmail(input: SendEmailInput) {
   const key = process.env.RESEND_API_KEY;
   const from = process.env.EMAIL_FROM;
   if (!key || !from) {
-    console.error("[email] Thiếu RESEND_API_KEY hoặc EMAIL_FROM.");
-    return { sent: false as const, error: "missing_configuration" };
+    return failed(input, "missing_configuration");
+  }
+
+  /**
+   * `@resend.dev` là sender sandbox dùng chung của Resend, và nó chỉ gửi được
+   * tới đúng địa chỉ email của chủ tài khoản Resend — mọi người nhận khác bị
+   * trả 403, dù tài khoản đã có domain riêng verified.
+   *
+   * Đây là lỗi đã xảy ra thật: `EMAIL_FROM` bị đổi sang `onboarding@resend.dev`,
+   * nên mọi thư xác thực gửi tới học viên bị chặn trong khi trang đăng ký vẫn
+   * báo "Kiểm tra hộp thư của bạn". Chặn ngay tại đây để cấu hình sai thành một
+   * lỗi hiện trên màn hình thay vì một cú 403 nằm im trong log.
+   */
+  if (senderDomain(from) === "resend.dev" && !isLocalSite()) {
+    return failed(input, "sandbox_sender");
   }
 
   const { data, error } = await new Resend(key).emails.send({
@@ -34,8 +77,7 @@ export async function sendEmail(input: SendEmailInput) {
     html: input.html,
   });
   if (error) {
-    console.error("[email] Resend từ chối email:", error.message);
-    return { sent: false as const, error: error.message };
+    return failed(input, error.message);
   }
   return { sent: true as const, id: data?.id };
 }

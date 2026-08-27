@@ -97,14 +97,34 @@ export async function registerAccount(formData: FormData) {
     redirect(`${REGISTER}?error=failed${nextSuffix}`);
   }
 
+  /**
+   * Kết quả gửi thư phải được đọc, không được vứt đi.
+   *
+   * `sendEmail` báo Resend từ chối bằng `{ sent: false }` chứ không throw, nên
+   * một `.catch()` đơn thuần không bao giờ chạy — đúng cách mà một `EMAIL_FROM`
+   * sai từng làm mọi thư xác thực biến mất trong khi trang vẫn hiện "Kiểm tra
+   * hộp thư của bạn". Vẫn bọc try/catch vì `sendVerificationEmail` gọi `appUrl()`
+   * và hàm đó ném lỗi khi thiếu `APP_URL` ở production.
+   */
+  let delivered = false;
   if (recipient && token) {
-    await sendVerificationEmail({
-      to: recipient.email,
-      name: recipient.name,
-      token,
-      ...(next !== "/tai-khoan" ? { next } : {}),
-    }).catch((error) => console.error("[register] Không gửi được email:", error));
+    try {
+      const result = await sendVerificationEmail({
+        to: recipient.email,
+        name: recipient.name,
+        token,
+        ...(next !== "/tai-khoan" ? { next } : {}),
+      });
+      delivered = result.sent;
+    } catch (error) {
+      console.error("[register] Không gửi được email:", error);
+    }
   }
+
+  // Tài khoản và token đã tồn tại rồi, nên đây không phải "đăng ký hỏng" — nó
+  // chỉ thiếu lá thư. Thông điệp đi kèm chỉ sang đường gửi lại liên kết, vì
+  // đăng ký lại còn tiêu thêm một trong ba lượt mỗi giờ của `allowAuthEmail`.
+  if (!delivered) redirect(`${REGISTER}?error=email_failed${nextSuffix}`);
 
   redirect(`${REGISTER}?sent=1${nextSuffix}`);
 }

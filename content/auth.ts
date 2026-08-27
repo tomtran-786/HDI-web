@@ -181,11 +181,16 @@ export const registerPage = {
       "Đã có quá nhiều lượt đăng ký cho email này. Vui lòng đợi ít phút rồi thử lại.",
     failed:
       "Chưa tạo được tài khoản do lỗi tạm thời ở hệ thống. Vui lòng thử lại sau ít phút.",
+    // Tài khoản đã tạo xong, chỉ lá thư là chưa đi. Nói rõ điều đó để người
+    // dùng đi gửi lại liên kết thay vì đăng ký lại từ đầu.
+    email_failed:
+      "Đã tạo tài khoản nhưng chưa gửi được thư xác thực do lỗi hệ thống email. Hãy yêu cầu gửi lại liên kết sau ít phút.",
   },
 
   errorLinks: {
     signIn: "Đăng nhập",
     reset: "Quên mật khẩu",
+    resend: "Gửi lại liên kết xác thực",
   },
 
   fields: {

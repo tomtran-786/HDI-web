@@ -110,6 +110,24 @@ describe("/dang-ky-tai-khoan", () => {
     expect(errorHtml).toContain('name="password"');
   });
 
+  /**
+   * Màn hình "đã gửi thư" từng hiện ngay cả khi Resend từ chối lá thư, nên học
+   * viên ngồi chờ một email không tồn tại. Nhánh này phải nói thật, và phải chỉ
+   * sang đường gửi lại chứ không mời đăng ký lại.
+   */
+  it("says the letter failed instead of showing the check-your-inbox screen", async () => {
+    mocks.auth.mockResolvedValue(null);
+    const errorHtml = renderToStaticMarkup(
+      await RegisterPage({
+        searchParams: Promise.resolve({ error: "email_failed" }),
+      } as never),
+    );
+    expect(errorHtml).toContain("chưa gửi được thư xác thực");
+    expect(errorHtml).not.toContain("Kiểm tra hộp thư của bạn");
+    expect(errorHtml).toContain("/xac-thuc-email");
+    expect(errorHtml).toContain("Gửi lại liên kết xác thực");
+  });
+
   it("preserves the landing cart return through registration and verification", async () => {
     const next = "/?cart=1&course=viet-bao-cao-khoa-hoc";
     const html = renderToStaticMarkup(

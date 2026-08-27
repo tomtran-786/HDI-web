@@ -155,6 +155,31 @@ describe("credential registration action", () => {
     expect(mocks.sendVerification).not.toHaveBeenCalled();
   });
 
+  /**
+   * Lỗi thật đã gặp: `EMAIL_FROM` trỏ vào sender sandbox của Resend, Resend trả
+   * 403, `sendEmail` trả `{ sent: false }` — và action cũ vứt kết quả đó đi rồi
+   * vẫn redirect sang màn hình "đã gửi thư".
+   */
+  it("reports the missing letter instead of claiming the inbox has one", async () => {
+    mocks.findUnique.mockResolvedValue(null);
+    mocks.sendVerification.mockResolvedValue({ sent: false, error: "sandbox_sender" });
+
+    await expect(registerAccount(registrationForm())).rejects.toMatchObject({
+      url: "/dang-ky-tai-khoan?error=email_failed",
+    });
+    // Tài khoản vẫn được tạo, nên người dùng chỉ cần xin lại liên kết.
+    expect(mocks.createToken).toHaveBeenCalled();
+  });
+
+  it("reports the missing letter when the send throws outright", async () => {
+    mocks.findUnique.mockResolvedValue(null);
+    mocks.sendVerification.mockRejectedValue(new Error("Thiếu APP_URL"));
+
+    await expect(registerAccount(registrationForm())).rejects.toMatchObject({
+      url: "/dang-ky-tai-khoan?error=email_failed",
+    });
+  });
+
   it("says so without a lookup when throttled", async () => {
     mocks.allow.mockResolvedValue(false);
 
