@@ -39,25 +39,50 @@ export function CourseRoadmap({ course }: { course: Course }) {
                     >
                       {number}
                     </span>
-                    <span className="text-[15px] leading-relaxed text-fg">
+                    <div className="text-[15px] leading-relaxed text-fg">
                       {!byModule && (
                         <span className="font-semibold">Buổi {number}: </span>
                       )}
                       {typeof session === "string" ? (
                         session
-                      ) : (
+                      ) : session.href ? (
                         <Link
                           href={session.href}
                           className="font-semibold text-primary underline underline-offset-4"
                         >
                           {session.text}
                         </Link>
+                      ) : (
+                        <span className={session.points ? "font-semibold" : ""}>
+                          {session.text}
+                        </span>
                       )}
-                    </span>
+                      {typeof session !== "string" && session.points && (
+                        <ul className="mt-2 space-y-1.5">
+                          {session.points.map((point) => (
+                            <li
+                              key={point}
+                              className="flex gap-2.5 text-[14px] leading-relaxed text-fg-muted"
+                            >
+                              <span
+                                aria-hidden
+                                className="mt-[0.6em] h-1 w-1 shrink-0 rounded-full bg-fg-subtle"
+                              />
+                              <span>{point}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
                   </li>
                 );
               })}
             </ol>
+            {phase.summary && (
+              <p className="mt-3 text-[15px] font-semibold leading-relaxed text-success">
+                {phase.summary}
+              </p>
+            )}
           </div>
         );
       })}

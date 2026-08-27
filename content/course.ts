@@ -12,9 +12,10 @@
  *    flyer's exact wording and order, so "Buổi 1" … "Buổi 8" still map
  *    one-to-one onto the poster.
  *
- * B. The other four are transcribed from reference/edubit/courses/*.md, crawled
- *    from thayphongdang.edubit.vn by reference/scrape_edubit_courses.py.
+ * B. Three of the others are transcribed from reference/edubit/courses/*.md,
+ *    crawled from thayphongdang.edubit.vn by reference/scrape_edubit_courses.py.
  *    Syllabus, tuition, duration and class size are that site's own text.
+ *    `training-tieu-luan-nckh-kltn` USED to belong here; see E.
  *
  * C. `ung-dung-chatgpt-nckh` is authored by HDI. Its curriculum, schedule and
  *    tuition are a draft pending the owner's final confirmation; unlike the
@@ -24,6 +25,19 @@
  *    `HDI class.md` on 2026-08-25. The owner explicitly overrides its original
  *    opening date with 07/09/2026 and asks us not to publish a weekday schedule
  *    until the detailed timetable is ready.
+ *
+ * E. `training-tieu-luan-nckh-kltn` was re-authored on 2026-08-27 from an
+ *    owner-supplied outline ("Viet tieu luan, Luan van va NCKH.md"). It is no
+ *    longer the edubit course of the same name: the syllabus, the audience
+ *    groups and the three-module structure are HDI's own, and the tuition
+ *    (300.000 đ list, 250.000 đ each for groups of three or more) is HDI's own
+ *    pricing rather than edubit's.
+ *
+ *    Two figures from the edubit version were DROPPED rather than carried over,
+ *    because they describe the old course and nothing in the new outline
+ *    supports them: a record library of "35 giờ 34 phút — 40 bài học", and a
+ *    bundle of "19 tài liệu" of graded sample work. Re-add them only if the
+ *    owner confirms they still hold.
  *
  * ATTRIBUTION — recorded here because the page does not show it. On edubit the
  * four courses are taught by:
@@ -62,9 +76,26 @@
  * surfaces the record library as the benefit it is instead of burying it.
  */
 
+/**
+ * Một mục trong lộ trình. Chuỗi trần là dạng gọn nhất và vẫn là dạng phổ biến
+ * nhất; dạng object thêm được đúng hai thứ mà chuỗi không mang nổi:
+ *
+ *   `href`   — mục này trỏ sang một trang khác (khóa `viet-bao-cao-khoa-hoc`).
+ *   `points` — mục này có danh sách ý con, khi giáo trình gốc chia hai tầng.
+ */
+export type CourseSession =
+  | string
+  | { text: string; href?: string; points?: string[] };
+
 export type CoursePhase = {
   name: string;
-  sessions: (string | { text: string; href: string })[];
+  /**
+   * Câu chốt của cả module, in dưới danh sách. Chỉ có khi giáo trình gốc viết
+   * ra nó ("Sau Module 1: học viên có thể…") — đây là kết quả học tập tác giả
+   * cam kết, không phải câu tóm tắt do trang tự nghĩ ra.
+   */
+  summary?: string;
+  sessions: CourseSession[];
 };
 
 /**
@@ -90,6 +121,12 @@ export type Course = {
   eyebrow: string;
   title: string;
   audience: string;
+  /**
+   * Cùng một câu `audience` nhưng tách theo từng nhóm người học, khi khóa phục
+   * vụ nhiều nhóm khác nhau đủ để một dòng gộp trở nên vô nghĩa. Trang chi tiết
+   * vẫn in `audience` khi trường này vắng mặt.
+   */
+  audienceProfiles?: { name: string; detail: string }[];
   intro: string;
   /**
    * How the curriculum is numbered, because the two shapes are not the same
@@ -104,8 +141,21 @@ export type Course = {
   /**
    * `vnd` is the same figure as `amount`, as a number, so sorting never has to
    * parse the display string. Keep the two in step when a price changes.
+   *
+   * `deal` KHÔNG được thay `amount`/`vnd`, dù nó là con số hiển thị to hơn.
+   * Đó là một mức giá CÓ ĐIỀU KIỆN, còn `vnd` là giá thật sẽ bị trừ tiền — nó
+   * đi vào `offers.price` của schema.org (lib/structured-data.ts), vào việc sắp
+   * xếp danh sách khóa (components/course-list.tsx) và vào giá dự phòng của giỏ
+   * hàng (lib/cart.ts). Đặt giá ưu đãi vào đó là quảng cáo một mức giá mà người
+   * mua lẻ không được hưởng.
    */
-  price: { amount: string; note: string; noteLabel?: string; vnd: number };
+  price: {
+    amount: string;
+    note: string;
+    noteLabel?: string;
+    vnd: number;
+    deal?: { amount: string; vnd: number; condition: string };
+  };
   facts: { label: string; value: string }[];
   phases: CoursePhase[];
   outcomes: string[];
@@ -256,64 +306,268 @@ export const courses = [
   {
     code: "TIEULUAN",
     slug: "training-tieu-luan-nckh-kltn",
-    eyebrow: "Khóa nền tảng",
-    title: "Training viết tiểu luận, NCKH, khóa luận tốt nghiệp",
+    eyebrow: "Khóa nền tảng · Khai giảng 01/10/2026",
+    title: "Viết tiểu luận, Nghiên cứu khoa học & Khóa luận tốt nghiệp",
     audience:
-      "Dành cho sinh viên từ năm nhất đến năm tư và học viên cao học chưa được hướng dẫn bài bản",
+      "Dành cho sinh viên năm 1–4 và người mới bắt đầu nghiên cứu",
+    audienceProfiles: [
+      {
+        name: "Năm 1–2 · Xây nền tảng",
+        detail:
+          "Bạn đang làm assignment, essay hoặc report và chưa biết cách tìm tài liệu, trích dẫn và viết một bài học thuật đúng chuẩn.",
+      },
+      {
+        name: "Năm 2–3 · Bắt đầu nghiên cứu",
+        detail:
+          "Bạn muốn tham gia NCKH sinh viên, xây dựng đề tài, Literature Review, bảng hỏi hoặc bắt đầu làm việc với dữ liệu.",
+      },
+      {
+        name: "Năm 3–4 · Chuẩn bị khóa luận",
+        detail:
+          "Bạn cần hệ thống lại toàn bộ quy trình nghiên cứu, từ câu hỏi nghiên cứu, phương pháp, dữ liệu đến viết và hoàn thiện khóa luận.",
+      },
+      {
+        name: "Người muốn đi xa hơn",
+        detail:
+          "Bạn muốn xây dựng nền tảng để tiếp tục học SPSS/Stata, thực hiện dự án nghiên cứu hoặc từng bước phát triển nghiên cứu thành bài báo khoa học.",
+      },
+    ],
     intro:
-      "Ba buổi Zoom cùng học liệu online, đi từ cách đặt tên đề tài và tìm nguồn tài liệu uy tín đến văn phong khoa học, trích dẫn, định dạng Word và cách viết không bị đạo văn.",
+      "Khóa học 3 buổi đi qua toàn bộ quy trình từ chọn chủ đề, tìm và đọc tài liệu, xây dựng lập luận, viết học thuật, làm việc với dữ liệu đến trích dẫn và hoàn thiện bài. AI được tích hợp xuyên suốt như một trợ lý nghiên cứu, giúp học viên làm việc hiệu quả hơn nhưng vẫn đảm bảo tư duy độc lập và liêm chính học thuật.",
     curriculum: "modules",
     price: {
-      amount: "220.000 đ",
-      note: "Giảm 10% cho nhóm từ 03 người",
-      vnd: 220000,
+      amount: "300.000 đ",
+      note: "Đăng ký nhóm từ 03 người: 250.000 đ mỗi người",
+      vnd: 300000,
+      // Giá nhóm chưa được hệ thống tự áp — luồng đăng ký nhiều người còn phải
+      // làm. Đến lúc đó `vnd` của đơn nhóm mới đọc con số này.
+      deal: {
+        amount: "250.000 đ",
+        vnd: 250000,
+        condition: "mỗi người · nhóm từ 03 bạn",
+      },
     },
     facts: [
+      { label: "Khai giảng", value: "01/10/2026" },
       { label: "Lớp trực tiếp", value: "03 buổi Zoom + học liệu online" },
-      { label: "Kho record", value: "35 giờ 34 phút — 40 bài học" },
+      { label: "Sĩ số", value: "Tối đa 15 học viên/lớp" },
       { label: "Xem lại", value: "03 năm kể từ ngày đăng ký" },
     ],
     phases: [
       {
-        name: "Đề tài, tài liệu và bố cục bài",
+        name: "Từ đề bài đến ý tưởng nghiên cứu",
+        summary:
+          "Sau Module 1: học viên đi được từ một đề bài hoặc chủ đề ban đầu đến đề tài, câu hỏi nghiên cứu, tài liệu nền và outline hoàn chỉnh.",
         sessions: [
-          "Tìm kiếm, đặt tên đề tài và phân tích đề tài",
-          "Tìm kiếm các nguồn tài liệu uy tín",
-          "Cách đọc tài liệu và dùng công cụ hỗ trợ (ChatGPT, NotebookLM, EndNote 21, Literature review table)",
-          "Tư duy xây dựng bố cục bài",
-          "Cách viết phần đặt vấn đề / phần mở đầu",
-          "Nhận xét bài thực tế và chữa bài tập về nhà",
+          {
+            text: "Hiểu đúng yêu cầu của một bài học thuật",
+            points: [
+              "Phân biệt essay, report, research proposal, NCKH và khóa luận tốt nghiệp",
+              "Đọc đề bài, rubric và xác định yêu cầu trọng tâm",
+              "Những lỗi khiến sinh viên mất điểm ngay từ khi chọn hướng viết",
+            ],
+          },
+          {
+            text: "Từ chủ đề đến câu hỏi nghiên cứu",
+            points: [
+              "Cách tìm và thu hẹp chủ đề",
+              "Đặt tên đề tài phù hợp",
+              "Xác định vấn đề và khoảng trống nghiên cứu ở mức cơ bản",
+              "Xây dựng research question, objectives và hướng nghiên cứu",
+            ],
+          },
+          {
+            text: "Tìm tài liệu học thuật đáng tin cậy",
+            points: [
+              "Google Scholar, Scopus và các nguồn học thuật",
+              "Phân biệt paper học thuật với nguồn Internet thông thường",
+              "Cách chọn tài liệu phù hợp thay vì tải thật nhiều tài liệu",
+            ],
+          },
+          {
+            text: "Đọc paper nhanh và có mục đích",
+            points: [
+              "Cấu trúc một bài báo khoa học",
+              "Đọc Abstract – Introduction – Literature – Method – Results – Conclusion",
+              "Cách lấy đúng thông tin cần thiết từ paper",
+            ],
+          },
+          {
+            text: "AI hỗ trợ tìm và đọc tài liệu",
+            points: [
+              "ChatGPT, Consensus, NotebookLM, Connected Papers",
+              "Dùng AI để giải thích paper và hệ thống hóa tài liệu",
+              "Cách kiểm tra nguồn để tránh citation và reference không có thật",
+            ],
+          },
+          {
+            text: "Xây dựng “bộ khung” bài trước khi viết",
+            points: [
+              "Từ research question đến outline",
+              "Logic giữa các section",
+              "Thực hành xây dựng outline cho một đề tài thực tế",
+            ],
+          },
         ],
       },
       {
-        name: "Viết nội dung và trình bày dữ liệu",
+        name: "Từ tài liệu đến bài viết học thuật",
+        summary:
+          "Sau Module 2: học viên hiểu toàn bộ logic của một nghiên cứu và viết được các phần chính của tiểu luận, NCKH hoặc khóa luận, thay vì chỉ biết định dạng bài.",
         sessions: [
-          "Thiết kế bảng hỏi đơn giản, thực hành trên Google Form",
-          "Trình bày nội dung theo logic, văn phong khoa học và có tính phản biện",
-          "Cách trích dẫn tài liệu tham khảo trong bài",
-          "Trình bày và phân tích thông tin từ bảng dữ liệu, biểu đồ",
-          "Cách viết tiểu kết và kết luận cho bài",
-          "Nhận xét bài thực tế và chữa bài tập về nhà",
+          {
+            text: "Công thức viết một đoạn văn học thuật",
+            points: [
+              "Topic sentence – Evidence – Analysis – Link",
+              "Viết có lập luận thay vì mô tả",
+              "Cách kết nối các đoạn thành một câu chuyện thống nhất",
+            ],
+          },
+          {
+            text: "Viết Introduction / Đặt vấn đề",
+            points: [
+              "Background",
+              "Research problem",
+              "Research gap",
+              "Objectives và contribution",
+              "Khác biệt giữa phần mở đầu của tiểu luận và nghiên cứu khoa học",
+            ],
+          },
+          {
+            text: "Literature Review từ cơ bản đến NCKH",
+            points: [
+              "Literature Review không phải là “kể lại từng paper”",
+              "Nhóm nghiên cứu theo chủ đề",
+              "So sánh, tổng hợp và phản biện tài liệu",
+              "Literature Review Table",
+              "Từ literature đến framework/hypotheses ở mức nhập môn",
+            ],
+          },
+          {
+            text: "Dữ liệu và phương pháp nghiên cứu dành cho người mới",
+            points: [
+              "Khi nào cần dữ liệu?",
+              "Primary vs. secondary data",
+              "Định tính vs. định lượng",
+              "Thiết kế bảng hỏi cơ bản",
+              "Biến số, thang đo và mẫu nghiên cứu",
+              "Hiểu đơn giản về descriptive statistics, correlation và regression",
+            ],
+          },
+          {
+            text: "Đọc bảng, biểu đồ và kết quả định lượng",
+            points: [
+              "Không chỉ “đọc lại con số”",
+              "Xác định kết quả quan trọng",
+              "Diễn giải ý nghĩa kinh tế/quản trị",
+              "Từ kết quả đến Discussion",
+            ],
+          },
+          {
+            text: "Viết Discussion & Conclusion",
+            points: [
+              "Trả lời research question bằng kết quả",
+              "So sánh với nghiên cứu trước",
+              "Implications",
+              "Limitations và future research",
+              "Cách kết thúc bài ngắn gọn nhưng có giá trị",
+            ],
+          },
+          {
+            text: "AI như một Research Assistant",
+            points: [
+              "Brainstorm nhưng không để AI quyết định nội dung nghiên cứu",
+              "Hỗ trợ outline và kiểm tra logic",
+              "Hỗ trợ đọc, so sánh và tổng hợp paper",
+              "Hỗ trợ giải thích kết quả thống kê",
+              "Kiểm tra và cải thiện academic writing",
+              "Nguyên tắc Human → AI → Verify → Rewrite",
+            ],
+          },
         ],
       },
       {
-        name: "Định dạng, trích dẫn và chống đạo văn",
+        name: "Hoàn thiện bài & bước vào con đường nghiên cứu",
+        summary:
+          "Sau Module 3: học viên không chỉ hoàn thành được bài hiện tại mà còn biết mình đang ở đâu trên hành trình nghiên cứu và bước tiếp theo cần học gì.",
         sessions: [
-          "Cài đặt Microsoft Word chuẩn trước khi viết bài",
-          "Cách làm mục lục tự động",
-          "Trích dẫn nguồn cho hình ảnh, bảng biểu, sơ đồ",
-          "Tạo và edit danh mục tài liệu tham khảo trên EndNote 20, 21",
-          "Một số định dạng cơ bản khác (đánh số trang nhiều kiểu trong bài)",
-          "Cách viết bài không bị đạo văn và cách sửa khi bị đạo văn (Turnitin, Kiemtratailieu), tỷ lệ AI",
-          "Ứng dụng công cụ AI để tìm tài liệu, tổng quan nghiên cứu và giảm tỷ lệ đạo văn",
+          {
+            text: "Citation & Reference",
+            points: [
+              "Khi nào bắt buộc phải trích dẫn?",
+              "In-text citation và reference list",
+              "APA/Harvard ở mức thực hành",
+              "Trích dẫn bảng, hình và dữ liệu",
+            ],
+          },
+          {
+            text: "EndNote và quản lý tài liệu",
+            points: [
+              "Import tài liệu",
+              "Cite While You Write",
+              "Tạo reference list tự động",
+              "Kiểm tra reference thiếu/thừa",
+            ],
+          },
+          {
+            text: "Word dành cho bài học thuật",
+            points: [
+              "Heading",
+              "Table of Contents tự động",
+              "Section Break",
+              "Page numbering",
+              "Tables/Figures",
+              "Những thao tác cần thiết cho tiểu luận và khóa luận tốt nghiệp",
+            ],
+          },
+          {
+            text: "Đạo văn, similarity và sử dụng AI có trách nhiệm",
+            points: [
+              "Similarity ≠ plagiarism",
+              "Vì sao Turnitin đánh dấu similarity",
+              "Paraphrase đúng cách",
+              "Citation đúng nhưng vẫn có thể similarity cao",
+              "AI-generated text và các rủi ro học thuật",
+              "Không sử dụng AI để tạo nguồn hoặc dữ liệu giả",
+            ],
+          },
+          {
+            text: "Quy trình kiểm tra bài trước khi nộp",
+            points: [
+              "Topic → Structure → Evidence → Analysis → Citation → Format → Language → Final check",
+              "Thực hành audit một bài thực tế để nhận diện lỗi cấu trúc và lỗi lập luận",
+              "Nhận diện lỗi citation và lỗi reference",
+              "Nhận diện lỗi trình bày và lỗi sử dụng AI",
+            ],
+          },
+          {
+            text: "Từ bài tiểu luận đến nghiên cứu khoa học",
+            points: [
+              "Một bài assignment tốt có thể phát triển thành NCKH như thế nào?",
+              "Từ NCKH sinh viên đến khóa luận",
+              "Từ khóa luận đến working paper hoặc bài báo",
+              "Khi nào nên học SPSS/Stata?",
+              "Khi nào cần Research Coaching/Mentoring?",
+            ],
+          },
+          {
+            text: "Xây dựng Research Roadmap cá nhân",
+            points: [
+              "Năm 1: Tiểu luận → Academic Writing → Citation → AI literacy",
+              "Năm 2: Tiểu luận nâng cao → Literature Review → Data basics",
+              "Năm 3: NCKH → SPSS/Stata → Research Project",
+              "Năm 4: Khóa luận → Research Mentoring → Publication pathway",
+            ],
+          },
         ],
       },
     ],
     outcomes: [
-      "Nắm được quy trình từ A–Z để hoàn thành tiểu luận, nghiên cứu khoa học, báo cáo thực tập và khóa luận tốt nghiệp.",
-      "Sử dụng được các công cụ AI hỗ trợ nghiên cứu như ChatGPT, Consensus, NotebookLM, Connected Papers và EndNote 21.",
-      "Nhận bộ tài liệu gồm 19 tài liệu khác nhau: các bài tiểu luận, NCKH, khóa luận và thuyết minh đề tài đạt điểm 9 – 9.9 (A+).",
-      "Được nhận xét và góp ý bài viết thực tế ngay trong khóa học.",
+      "Đi từ một đề bài ban đầu đến đề tài, câu hỏi nghiên cứu, tài liệu nền và outline hoàn chỉnh.",
+      "Viết được các phần chính của tiểu luận, NCKH và khóa luận: Introduction, Literature Review, phương pháp, kết quả, Discussion và Conclusion.",
+      "Trích dẫn đúng chuẩn APA/Harvard, quản lý tài liệu bằng EndNote và định dạng bài trên Word đúng yêu cầu.",
+      "Phân biệt similarity với đạo văn, paraphrase đúng cách và sử dụng AI theo nguyên tắc Human → AI → Verify → Rewrite.",
+      "Có một Research Roadmap cá nhân theo từng năm học, biết bước tiếp theo cần học gì.",
     ],
     registerNote: REGISTER_NOTE_GENERIC,
   },

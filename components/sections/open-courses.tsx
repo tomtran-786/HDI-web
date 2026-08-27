@@ -4,6 +4,7 @@ import { landingCourseData } from "@/lib/course-sales";
 import { OpenCourseEnrollButton } from "../open-course-enroll-button";
 import { Card } from "../ui/card";
 import { IconArrow } from "../ui/icons";
+import { PriceTag } from "../ui/price-tag";
 import { Reveal } from "../ui/reveal";
 import { Section, SectionHeading } from "../ui/section";
 
@@ -85,9 +86,9 @@ export async function OpenCourses() {
                   <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-fg-subtle">
                     Học phí
                   </p>
-                  <p className="mt-1 text-3xl font-bold tracking-tight text-primary">
-                    {course.price.amount}
-                  </p>
+                  <div className="mt-1">
+                    <PriceTag price={course.price} />
+                  </div>
                   <p className="mt-1 text-sm font-semibold text-success">
                     {course.price.note}
                   </p>

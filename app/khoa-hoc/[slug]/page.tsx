@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { EnrolledPill } from "@/components/ui/enrolled-pill";
 import { IconArrow, IconCheck } from "@/components/ui/icons";
+import { PriceTag } from "@/components/ui/price-tag";
 import { Reveal } from "@/components/ui/reveal";
 import { Section, SectionHeading } from "@/components/ui/section";
 import { Stars } from "@/components/ui/stars";
@@ -134,9 +135,9 @@ export default async function CourseDetailPage({ params }: CoursePageProps) {
                   </Badge>
                 )}
               </div>
-              <p className="mt-2 text-3xl font-bold tracking-tight text-primary">
-                {course.price.amount}
-              </p>
+              <div className="mt-2">
+                <PriceTag price={course.price} />
+              </div>
               <p className="mt-2 text-sm font-semibold text-success">
                 {course.price.note}
               </p>
@@ -165,11 +166,24 @@ export default async function CourseDetailPage({ params }: CoursePageProps) {
       <Section soft>
         <SectionHeading eyebrow="Đối tượng học viên" title="Dành cho ai" />
         <Reveal>
-          <Card className="max-w-3xl p-6 sm:p-8" hover={false}>
-            <p className="text-base leading-relaxed text-fg-muted sm:text-lg">
-              {course.audience}
-            </p>
-          </Card>
+          {course.audienceProfiles ? (
+            <div className="grid gap-4 sm:grid-cols-2">
+              {course.audienceProfiles.map((profile) => (
+                <Card key={profile.name} className="p-6" hover={false}>
+                  <h3 className="text-base font-bold text-fg">{profile.name}</h3>
+                  <p className="mt-2 text-[15px] leading-relaxed text-fg-muted">
+                    {profile.detail}
+                  </p>
+                </Card>
+              ))}
+            </div>
+          ) : (
+            <Card className="max-w-3xl p-6 sm:p-8" hover={false}>
+              <p className="text-base leading-relaxed text-fg-muted sm:text-lg">
+                {course.audience}
+              </p>
+            </Card>
+          )}
         </Reveal>
       </Section>
 
@@ -244,8 +258,8 @@ export default async function CourseDetailPage({ params }: CoursePageProps) {
             <dl>
               <div className="flex flex-wrap items-baseline justify-between gap-2 border-b border-line py-3 first:pt-0">
                 <dt className="text-sm text-fg-muted">Học phí</dt>
-                <dd className="text-lg font-bold text-primary">
-                  {course.price.amount}
+                <dd>
+                  <PriceTag price={course.price} size="sm" />
                 </dd>
               </div>
               <div className="flex flex-wrap items-baseline justify-between gap-2 border-b border-line py-3">

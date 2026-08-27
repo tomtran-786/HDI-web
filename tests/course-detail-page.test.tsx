@@ -143,6 +143,59 @@ describe("trang chi tiết khóa học", () => {
     expect(html).not.toContain("Đánh giá học viên");
   });
 
+  /**
+   * Cách trình bày giá ưu đãi là một quyết định marketing đã chốt: con số sau
+   * giảm phải to hơn giá gốc, giá gốc phải gạch ngang và điều kiện phải đứng
+   * cạnh con số lớn — nếu không, người mua lẻ tới bước thanh toán mới biết mình
+   * trả một mức giá khác.
+   */
+  it("đưa giá ưu đãi lên trước giá gốc gạch ngang, kèm điều kiện", async () => {
+    const course = courses.find(
+      (item) => item.slug === "training-tieu-luan-nckh-kltn",
+    )!;
+    const deal = course.price.deal!;
+    const html = renderToStaticMarkup(
+      await CourseDetailPage({
+        params: Promise.resolve({ slug: course.slug }),
+      }),
+    );
+
+    expect(html).toContain(deal.amount);
+    expect(html).toContain(course.price.amount);
+    expect(html).toContain(deal.condition);
+    // Giá gốc nằm trong <s>, giá ưu đãi thì không. `<s\b` chứ không phải `<s[^>]*`
+    // vì cái sau khớp luôn cả <section>, và test khi đó luôn xanh.
+    const struck = html.match(/<s\b[^>]*>.*?<\/s>/g) ?? [];
+    expect(struck.some((tag) => tag.includes(course.price.amount))).toBe(true);
+    expect(struck.some((tag) => tag.includes(deal.amount))).toBe(false);
+    expect(struck.every((tag) => tag.includes("line-through"))).toBe(true);
+    // Con số ưu đãi xuất hiện trước con số gốc trong khối học phí.
+    expect(html.indexOf(deal.amount)).toBeLessThan(html.indexOf(course.price.amount));
+    // Nhưng schema.org vẫn quảng cáo đúng giá sẽ bị trừ tiền.
+    expect(structuredDataForCourse(course)[0]).toMatchObject({
+      offers: { price: course.price.vnd },
+    });
+  });
+
+  it("render nhóm đối tượng và hai tầng lộ trình của khóa nền tảng", async () => {
+    const course = courses.find(
+      (item) => item.slug === "training-tieu-luan-nckh-kltn",
+    )!;
+    const html = renderToStaticMarkup(
+      await CourseDetailPage({
+        params: Promise.resolve({ slug: course.slug }),
+      }),
+    );
+
+    for (const profile of course.audienceProfiles!) {
+      expect(html).toContain(profile.name);
+    }
+    // Ý con của mục 1.1 và câu chốt của module đều phải ra tới HTML.
+    expect(html).toContain("Đọc đề bài, rubric và xác định yêu cầu trọng tâm");
+    expect(html).toContain("Sau Module 1:");
+    expect(html).toContain("Nguyên tắc Human → AI → Verify → Rewrite");
+  });
+
   it("fail-open khi dữ liệu công khai tạm thời không đọc được", async () => {
     mocks.landingCourseData.mockRejectedValueOnce(new Error("database offline"));
     const course = courses[0];

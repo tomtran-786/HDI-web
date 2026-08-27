@@ -11,6 +11,7 @@ import {
 import type { ReviewSummary } from "@/lib/reviews";
 import { Badge } from "./ui/badge";
 import { EnrolledPill } from "./ui/enrolled-pill";
+import { PriceTag } from "./ui/price-tag";
 import { Stars } from "./ui/stars";
 import { IconArrow } from "./ui/icons";
 
@@ -66,9 +67,9 @@ export function CourseCard({
           <Badge tone={availabilityTone}>{cartModal.availability[badge]}</Badge>
         )}
       </div>
-      <p className="mt-1.5 text-2xl font-bold tracking-tight text-primary sm:text-3xl">
-        {course.price.amount}
-      </p>
+      <div className="mt-1.5">
+        <PriceTag price={course.price} />
+      </div>
       <p className="mt-1.5 text-sm text-fg-muted">{course.price.note}</p>
 
       <dl className="mt-6">
