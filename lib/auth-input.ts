@@ -1,6 +1,9 @@
 import { z } from "zod";
 
-export const normalizeEmail = (value: string) => value.trim().toLowerCase();
+// Định nghĩa nằm ở ./normalize-email vì client component cũng cần nó và không
+// được kéo zod theo. Re-export để mọi nơi đang import từ đây không phải đổi.
+export { normalizeEmail } from "./normalize-email";
+import { normalizeEmail } from "./normalize-email";
 
 /**
  * `nguyenvana@gmail.com` → `ngu•••@gmail.com`.

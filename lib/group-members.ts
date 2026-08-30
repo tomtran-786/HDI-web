@@ -1,6 +1,6 @@
 import { z } from "zod";
-import { normalizeEmail } from "./auth-input";
-import { GROUP_MAX_SIZE } from "./group-pricing";
+import { MAX_MEMBERS } from "./group-invite";
+import { normalizeEmail } from "./normalize-email";
 import { prisma } from "./prisma";
 
 /**
@@ -46,10 +46,10 @@ export function normalizeMemberEmails(
     emails.push(email);
   }
 
-  if (emails.length > GROUP_MAX_SIZE - 1) {
+  if (emails.length > MAX_MEMBERS) {
     return {
       ok: false,
-      message: `Một nhóm tối đa ${GROUP_MAX_SIZE} người, tức nhiều nhất ${GROUP_MAX_SIZE - 1} bạn ngoài bạn.`,
+      message: `Một nhóm tối đa ${MAX_MEMBERS + 1} người, tức nhiều nhất ${MAX_MEMBERS} bạn ngoài bạn.`,
     };
   }
 

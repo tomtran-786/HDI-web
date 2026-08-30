@@ -50,6 +50,14 @@ export const groupPanel = {
   unregistered: "Chưa có tài khoản đã xác thực",
   conflict: "Đã có quyền hoặc đơn chờ cho khóa trong giỏ",
   close: "Bỏ thanh toán nhóm",
+  /**
+   * Giỏ không còn khóa nào hưởng ưu đãi nhóm nên danh sách thành viên bị bỏ.
+   *
+   * Phải nói ra chứ không im lặng: bảng nhập biến mất cùng lúc, nên nếu không
+   * có dòng này thì người mua chỉ thấy tổng tiền đột nhiên đổi.
+   */
+  dropped:
+    "Giỏ hàng không còn khóa nào áp dụng ưu đãi nhóm, nên danh sách thành viên đã được bỏ. Chọn lại khóa có ưu đãi để mời nhóm.",
   listPrice: "Giá lẻ",
   perPerson: "mỗi người",
   /** `n` là số người còn thiếu để chạm bậc ưu đãi. */

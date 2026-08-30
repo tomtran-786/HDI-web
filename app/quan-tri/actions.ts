@@ -141,14 +141,19 @@ async function setFeedbackStatus(
       },
     });
     if (feedback) {
-      await sendFeedbackResolvedEmail({
-        to: feedback.user.email,
-        name: feedback.user.name,
-        kind: feedback.kind,
-        title: feedback.title,
-      }).catch((error) =>
-        console.error("[feedback] Không gửi được thư đã xử lý:", error),
-      );
+      try {
+        const result = await sendFeedbackResolvedEmail({
+          to: feedback.user.email,
+          name: feedback.user.name,
+          kind: feedback.kind,
+          title: feedback.title,
+        });
+        if (!result.sent) {
+          console.error("[feedback] Thư báo đã xử lý bị từ chối:", result.error);
+        }
+      } catch (error) {
+        console.error("[feedback] Không gửi được thư đã xử lý:", error);
+      }
     }
   }
 

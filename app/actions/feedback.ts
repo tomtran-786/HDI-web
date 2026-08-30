@@ -46,14 +46,19 @@ export async function submitFeedback(
     select: { user: { select: { name: true, email: true } } },
   });
 
-  await sendFeedbackReceivedEmail({
-    to: created.user.email,
-    name: created.user.name,
-    kind,
-    title,
-  }).catch((error) =>
-    console.error("[feedback] Không gửi được thư cảm ơn:", error),
-  );
+  try {
+    const result = await sendFeedbackReceivedEmail({
+      to: created.user.email,
+      name: created.user.name,
+      kind,
+      title,
+    });
+    if (!result.sent) {
+      console.error("[feedback] Thư cảm ơn bị từ chối:", result.error);
+    }
+  } catch (error) {
+    console.error("[feedback] Không gửi được thư cảm ơn:", error);
+  }
 
   revalidatePath("/quan-tri");
   return { saved: true };

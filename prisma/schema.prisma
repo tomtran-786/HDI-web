@@ -362,6 +362,18 @@ model OrderItem {
   /// immutable instead of being reset in place.
   enrollmentId String? @map("enrollment_id")
 
+  /// Thời điểm thành viên trên dòng này đã nhận được thư báo "có người thanh
+  /// toán ghi danh giúp bạn". NULL = chưa gửi hoặc gửi hỏng.
+  ///
+  /// Cần một cột thật vì webhook PayOS có thể được giao lại: lượt đầu commit
+  /// thanh toán xong rồi chết trước khi gửi thư (lambda hết giờ là đủ), nên lượt
+  /// giao lại PHẢI chạy lại phần giao hàng — và chạy lại mà không có dấu vết này
+  /// thì thành viên nhận thư trùng mỗi lần PayOS gửi lại.
+  ///
+  /// Trên dòng của chính người trả tiền cột này luôn NULL: nhóm trưởng vừa tự
+  /// bấm thanh toán nên không có thư nào được gửi cho họ.
+  notifiedAt DateTime? @map("notified_at") @db.Timestamptz(6)
+
   /// NGƯỜI ĐƯỢC HỌC trên dòng này, không nhất thiết là người trả tiền.
   ///
   /// Với đơn lẻ nó bằng `order.userId`. Với đơn nhóm, nhóm trưởng ở `order`

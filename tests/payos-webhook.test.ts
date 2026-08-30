@@ -80,6 +80,28 @@ describe("PayOS webhook route", () => {
     expect(mocks.fulfill).toHaveBeenCalledWith("order-1");
   });
 
+  /**
+   * Giao hàng nằm sau transaction thanh toán, nên một lambda hết giờ để lại đơn
+   * `paid` chưa cấp quyền và chưa gửi thư. Lượt giao lại của PayOS là cơ hội duy
+   * nhất còn lại để chạy nốt.
+   */
+  it("chạy lại giao hàng cho một lượt gửi lại của giao dịch đã thu tiền", async () => {
+    mocks.verify.mockResolvedValue(verified);
+    mocks.process.mockResolvedValue({
+      handled: true,
+      outcome: "duplicate",
+      orderId: "order-1",
+      fulfill: true,
+    });
+    mocks.fulfill.mockResolvedValue({ folders: 1, granted: 0 });
+    mocks.notifyGroup.mockResolvedValue({ notified: 1 });
+
+    const response = await POST(request({ signed: true }));
+    expect(response.status).toBe(200);
+    expect(mocks.fulfill).toHaveBeenCalledWith("order-1");
+    expect(mocks.notifyGroup).toHaveBeenCalledWith("order-1");
+  });
+
   it("falls through to the service ledger when the code is not a course order", async () => {
     // Đơn dịch vụ và đơn khóa học đi chung một cổng PayOS. Rẽ nhánh phải dựa
     // vào KẾT QUẢ TRA CỨU, không vào dải số — dải số là quy ước của migration.

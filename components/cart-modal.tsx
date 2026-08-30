@@ -7,10 +7,15 @@ import type { CatalogCourse, CourseAvailability } from "@/lib/cart";
 import { formatVnd } from "@/lib/format";
 import { trackCartAdd, trackCartRemove, trackCheckout } from "@/lib/analytics";
 import { cartModal, groupPanel } from "@/content/checkout";
-import { GROUP_MIN_SIZE, GROUP_MAX_SIZE, seatPriceVnd } from "@/lib/group-pricing";
+import { GROUP_MIN_SIZE, seatPriceVnd } from "@/lib/group-pricing";
+import { addMemberEmails, groupApplies, MAX_MEMBERS } from "@/lib/group-invite";
 import { IconCart, IconClose } from "./ui/icons";
 
-type CatalogResponse = { catalog: CatalogCourse[]; staleIds: string[] };
+type CatalogResponse = {
+  email: string;
+  catalog: CatalogCourse[];
+  staleIds: string[];
+};
 
 type GroupPreview = {
   groupSize: number;
@@ -58,7 +63,14 @@ export function CartModal({
     {},
   );
   const [groupOpen, setGroupOpen] = useState(false);
+  // Email của chính người đang đăng nhập, về cùng catalog. Ô mời nhóm phải bỏ
+  // qua nó đúng như server làm; xem lib/group-invite.ts.
+  const [leaderEmail, setLeaderEmail] = useState("");
   const [memberEmails, setMemberEmails] = useState<string[]>([]);
+  const [droppedGroup, setDroppedGroup] = useState(false);
+  // Giá trị `anyGroupEligible` của lượt render trước, để phát hiện đúng khoảnh
+  // khắc giỏ thôi hưởng ưu đãi nhóm. Xem khối chỉnh state bên dưới.
+  const [groupWasEligible, setGroupWasEligible] = useState(false);
   const [draft, setDraft] = useState("");
   const [preview, setPreview] = useState<GroupPreview | null>(null);
   const [previewLoading, setPreviewLoading] = useState(false);
@@ -66,23 +78,19 @@ export function CartModal({
   // không có nó thì một phản hồi cũ về muộn sẽ ghi đè lên báo giá mới nhất.
   const previewSeq = useRef(0);
 
-  const addMember = useCallback((raw: string) => {
-    const parts = raw.split(/[,;\s]+/).map((part) => part.trim().toLowerCase());
-    setMemberEmails((current) => {
-      const next = [...current];
-      for (const part of parts) {
-        if (!part || next.includes(part) || next.length >= GROUP_MAX_SIZE - 1) continue;
-        next.push(part);
-      }
-      return next;
-    });
-    setDraft("");
-  }, []);
+  const addMember = useCallback(
+    (raw: string) => {
+      setMemberEmails((current) => addMemberEmails(current, raw, leaderEmail));
+      setDraft("");
+    },
+    [leaderEmail],
+  );
 
   const loadCatalog = useCallback(async () => {
     setLoading(true);
     setLoadError(null);
     setPruned(false);
+    setDroppedGroup(false);
     try {
       const response = await fetch("/api/gio-hang", { cache: "no-store" });
       if (response.status === 401 || response.status === 409) {
@@ -94,6 +102,7 @@ export function CartModal({
       }
       if (!response.ok) throw new Error(`catalog_${response.status}`);
       const data = (await response.json()) as CatalogResponse;
+      setLeaderEmail(data.email ?? "");
       setCatalog(data.catalog);
       if (data.staleIds.length > 0) {
         for (const id of data.staleIds) remove(id);
@@ -159,6 +168,31 @@ export function CartModal({
   const discounted = listTotalVnd > totalVnd;
   const anyGroupEligible = selected.some((course) => course.groupEligible);
   const blocked = Boolean(preview && preview.groupSize === groupSize && preview.blocked);
+
+  /**
+   * Bỏ nhóm ngay khi giỏ không còn khóa nào hưởng ưu đãi.
+   *
+   * Bảng nhập thành viên nằm sau `anyGroupEligible`, nhưng các input ẩn ở footer
+   * thì LUÔN được render từ `memberEmails`. Không dọn, một nhóm còn treo trong
+   * state sau khi khóa có ưu đãi rời giỏ vẫn đi theo form — người mua không còn
+   * thấy danh sách, không còn nút gỡ, và đơn ra là N ghế giá lẻ với tổng tiền
+   * server tính khớp y hệt nên không chốt chặn nào bắt được.
+   *
+   * Chỉnh state ngay trong thân render, KHÔNG bằng useEffect. Effect chạy sau
+   * khi đã commit, nên sẽ có đúng một lượt render mà các input ẩn còn mang nhóm
+   * cũ — và đó chính là lượt render form có thể bị submit. React dựng lại ngay
+   * component khi gặp setState ở đây, trước khi có bất cứ thứ gì ra tới DOM.
+   */
+  if (groupWasEligible !== anyGroupEligible) {
+    setGroupWasEligible(anyGroupEligible);
+    if (!groupApplies(memberEmails.length, anyGroupEligible)) {
+      setMemberEmails([]);
+      setGroupOpen(false);
+      setPreview(null);
+      setDraft("");
+      setDroppedGroup(true);
+    }
+  }
 
   useEffect(() => {
     if (!open) return;
@@ -239,6 +273,11 @@ export function CartModal({
             {pruned && (
               <p role="status" className="mb-4 rounded-card border border-line bg-bg-soft px-4 py-3 text-sm text-fg-muted">
                 {cartModal.pruned}
+              </p>
+            )}
+            {droppedGroup && (
+              <p role="status" className="mb-4 rounded-card border border-line bg-bg-soft px-4 py-3 text-sm text-fg-muted">
+                {groupPanel.dropped}
               </p>
             )}
             {(loadError || state.error) && (
@@ -345,7 +384,10 @@ export function CartModal({
                 {!groupOpen ? (
                   <button
                     type="button"
-                    onClick={() => setGroupOpen(true)}
+                    onClick={() => {
+                      setDroppedGroup(false);
+                      setGroupOpen(true);
+                    }}
                     className="w-full rounded-card border border-primary/40 bg-tint px-3 py-2.5 text-left text-sm font-semibold text-primary transition hover:border-primary"
                   >
                     👥 {groupPanel.invite}
@@ -386,7 +428,7 @@ export function CartModal({
                               addMember(draft);
                             }
                           }}
-                          disabled={memberEmails.length >= GROUP_MAX_SIZE - 1}
+                          disabled={memberEmails.length >= MAX_MEMBERS}
                           className="min-w-0 flex-1 rounded-full border border-line bg-card px-3 py-2 text-sm text-fg outline-none transition focus:border-primary disabled:opacity-60"
                         />
                         <button

@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { prisma } from "@/lib/prisma";
-import { findCourse } from "@/lib/courses";
+import { courseSummaryLine, findCourse } from "@/lib/courses";
 import { endOfDayVN, formatDate, formatDateTime, startOfDayVN } from "@/lib/format";
 import { seatsTaken } from "@/lib/course-sales";
 import { hasLiveAccess, liveAccessWhere } from "@/lib/enrollment";
@@ -364,12 +364,7 @@ export default async function AdminPage({
                   {order.user.phone ? ` · ${order.user.phone}` : ""}
                 </p>
                 <p className="mt-1.5 text-[13px] text-fg-subtle">
-                  {order.items
-                    .map(
-                      (item) =>
-                        `${item.course.code} · ${findCourse(item.course.slug)?.title ?? item.course.slug}`,
-                    )
-                    .join(" — ")}
+                  {courseSummaryLine(order.items)}
                 </p>
                 {order.status === "pending" && (
                   <p className="mt-1 text-[13px] text-fg-subtle">

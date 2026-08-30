@@ -144,6 +144,28 @@ describe("action trang quản trị", () => {
       expect(mocks.sendFeedbackResolved).toHaveBeenCalledTimes(1);
     });
 
+    it("ghi log khi Resend từ chối thư đã xử lý nhưng vẫn đổi trạng thái", async () => {
+      mocks.feedbackUpdateMany.mockResolvedValue({ count: 1 });
+      mocks.feedbackFindUnique.mockResolvedValue({
+        kind: "idea",
+        title: "Thêm bộ lọc",
+        user: { name: "Lan", email: "lan@example.com" },
+      });
+      mocks.sendFeedbackResolved.mockResolvedValue({
+        sent: false,
+        error: "sandbox_sender",
+      });
+      const quiet = vi.spyOn(console, "error").mockImplementation(() => {});
+
+      await expect(markFeedbackResolved(ID)).resolves.toMatchObject({ ok: true });
+      expect(quiet).toHaveBeenCalledWith(
+        "[feedback] Thư báo đã xử lý bị từ chối:",
+        "sandbox_sender",
+      );
+
+      quiet.mockRestore();
+    });
+
     it("bỏ qua feedback mà không đọc người gửi hoặc gửi mail", async () => {
       mocks.feedbackUpdateMany.mockResolvedValue({ count: 1 });
 

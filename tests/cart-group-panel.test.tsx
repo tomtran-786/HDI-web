@@ -1,9 +1,15 @@
-import { renderToStaticMarkup } from "react-dom/server";
-import { describe, expect, it, vi } from "vitest";
+// @vitest-environment jsdom
 
-// Server action, router và analytics không chạy được trong Node trần của
-// Vitest — mock đúng những thứ đó, phần còn lại là component thật.
-vi.mock("next/navigation", () => ({ useRouter: () => ({ push: vi.fn() }) }));
+import { act, useState } from "react";
+import { createRoot, type Root } from "react-dom/client";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+
+const mocks = vi.hoisted(() => ({
+  fetch: vi.fn(),
+  push: vi.fn(),
+}));
+
+vi.mock("next/navigation", () => ({ useRouter: () => ({ push: mocks.push }) }));
 vi.mock("@/app/actions/checkout", () => ({ checkout: vi.fn() }));
 vi.mock("@/lib/analytics", () => ({
   trackCartAdd: vi.fn(),
@@ -14,40 +20,139 @@ vi.mock("@/lib/analytics", () => ({
 import { CartModal } from "@/components/cart-modal";
 import { groupPanel } from "@/content/checkout";
 
-const noop = () => {};
+const groupCourse = {
+  id: "course-group",
+  code: "TIEULUAN",
+  slug: "training-tieu-luan-nckh-kltn",
+  title: "Tiểu luận nghiên cứu khoa học",
+  priceVnd: 300_000,
+  groupEligible: true,
+  groupPriceVnd: 250_000,
+  availability: "buyable" as const,
+  seatsLeft: 10,
+};
 
-function render() {
-  return renderToStaticMarkup(
+let host: HTMLDivElement;
+let root: Root;
+
+function CartHarness() {
+  const [ids, setIds] = useState([groupCourse.id]);
+  return (
     <CartModal
       open
       focusSlug={null}
-      ids={["course-1"]}
+      ids={ids}
       full={false}
-      add={noop}
-      remove={noop}
-      onClose={noop}
-    />,
+      add={(id) => setIds((current) => [...current, id])}
+      remove={(id) => setIds((current) => current.filter((value) => value !== id))}
+      onClose={() => undefined}
+    />
   );
 }
 
-describe("giỏ hàng — khối thanh toán nhóm", () => {
-  const html = render();
+function button(text: string) {
+  const found = [...host.querySelectorAll("button")].find((item) => item.textContent?.includes(text));
+  if (!found) throw new Error(`Không tìm thấy nút: ${text}`);
+  return found;
+}
 
-  /**
-   * Trước khi catalog về, giỏ chưa có khóa nào nên chưa biết khóa có ưu đãi
-   * nhóm hay không — lời mời chỉ được hiện sau khi biết, chứ không hứa suông.
-   */
-  it("chưa mời vào nhóm khi giỏ còn trống", () => {
-    expect(html).not.toContain(groupPanel.invite);
+function emailInput() {
+  const input = host.querySelector<HTMLInputElement>('input[type="email"]');
+  if (!input) throw new Error("Không tìm thấy ô email nhóm.");
+  return input;
+}
+
+function setNativeValue(input: HTMLInputElement, value: string) {
+  const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")?.set;
+  if (!setter) throw new Error("jsdom không có HTMLInputElement.value setter.");
+  setter.call(input, value);
+  input.dispatchEvent(new Event("input", { bubbles: true }));
+}
+
+async function flush() {
+  await act(async () => {
+    await Promise.resolve();
+    await Promise.resolve();
+  });
+}
+
+async function openGroup() {
+  await act(async () => button(groupPanel.invite).click());
+}
+
+async function enterMember(email: string) {
+  await act(async () => setNativeValue(emailInput(), email));
+  await act(async () => {
+    emailInput().dispatchEvent(
+      new KeyboardEvent("keydown", { key: "Enter", bubbles: true, cancelable: true }),
+    );
+  });
+}
+
+beforeEach(async () => {
+  (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+  Object.defineProperty(HTMLDialogElement.prototype, "showModal", {
+    configurable: true,
+    value() {
+      this.open = true;
+    },
+  });
+  Object.defineProperty(HTMLDialogElement.prototype, "close", {
+    configurable: true,
+    value() {
+      this.open = false;
+    },
+  });
+  mocks.fetch.mockReset();
+  mocks.push.mockReset();
+  mocks.fetch.mockResolvedValue({
+    ok: true,
+    status: 200,
+    json: async () => ({
+      email: "nhomtruong@example.com",
+      catalog: [groupCourse],
+      staleIds: [],
+    }),
+  });
+  vi.stubGlobal("fetch", mocks.fetch);
+  host = document.createElement("div");
+  document.body.append(host);
+  root = createRoot(host);
+  await act(async () => root.render(<CartHarness />));
+  await flush();
+});
+
+afterEach(async () => {
+  await act(async () => root.unmount());
+  host.remove();
+  vi.unstubAllGlobals();
+});
+
+describe("giỏ hàng — thanh toán nhóm", () => {
+  it("bỏ toàn bộ thành viên và input ẩn khi khóa ưu đãi rời giỏ", async () => {
+    await openGroup();
+    await enterMember("thanhvien@example.com");
+    expect(host.querySelectorAll('input[name="thanhVien"]')).toHaveLength(1);
+
+    const courseCheckbox = host.querySelector<HTMLInputElement>('input[type="checkbox"]');
+    if (!courseCheckbox) throw new Error("Không tìm thấy checkbox khóa học.");
+    await act(async () => courseCheckbox.click());
+
+    expect(host.querySelectorAll('input[name="thanhVien"]')).toHaveLength(0);
+    expect([...host.querySelectorAll('[role="status"]')].some((item) =>
+      item.textContent?.includes(groupPanel.dropped),
+    )).toBe(true);
   });
 
-  it("gửi tổng tiền đang hiển thị kèm form để server đối chiếu", () => {
-    expect(html).toContain('name="tongTienDuKien"');
-  });
+  it("bỏ email của nhóm trưởng mà không đổi số người hoặc tổng tiền", async () => {
+    const total = () => host.querySelector<HTMLInputElement>('input[name="tongTienDuKien"]')?.value;
+    expect(total()).toBe("300000");
 
-  it("không gửi số người hay số tiền nào khác lên server", () => {
-    // Server tự phân giải nhóm từ email; mọi con số khác đều không đáng tin.
-    expect(html).not.toContain('name="groupSize"');
-    expect(html).not.toContain('name="amountVnd"');
+    await openGroup();
+    await enterMember(" NhomTruong@Example.com ");
+
+    expect(host.textContent).not.toContain("NhomTruong@Example.com");
+    expect(host.querySelectorAll('input[name="thanhVien"]')).toHaveLength(0);
+    expect(total()).toBe("300000");
   });
 });

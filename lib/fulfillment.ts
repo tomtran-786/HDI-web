@@ -122,6 +122,14 @@ export async function fulfillOrderDrive(orderId: string) {
  *
  * Gửi thư không bao giờ được làm hỏng một đơn đã thu tiền: mỗi lần gửi tự nuốt
  * lỗi của mình, để một hộp thư từ chối không chặn thư của những người còn lại.
+ *
+ * Chạy lại được nhiều lần. Webhook PayOS có thể được giao lại, và lượt giao lại
+ * PHẢI chạy lại phần này (xem `processPayosPayment`) vì lượt đầu có thể đã chết
+ * sau khi commit thanh toán. `order_items.notified_at` là thứ giữ cho việc chạy
+ * lại đó không thành một thư trùng: chỉ dòng nào chưa gửi được mới vào hàng, và
+ * dấu chỉ được đóng sau khi Resend thật sự nhận thư. Một lease theo từng thành
+ * viên còn chặn hai webhook giao lại cùng lúc cùng đọc được các dòng pending rồi
+ * cùng gửi trước khi bất kỳ lượt nào kịp đóng dấu.
  */
 export async function notifyGroupMembers(orderId: string) {
   const order = await prisma.order.findFirst({
@@ -131,7 +139,9 @@ export async function notifyGroupMembers(orderId: string) {
       userId: true,
       user: { select: { name: true, email: true } },
       items: {
+        where: { notifiedAt: null },
         select: {
+          id: true,
           memberUserId: true,
           member: { select: { name: true, email: true } },
           course: { select: { slug: true } },
@@ -143,23 +153,54 @@ export async function notifyGroupMembers(orderId: string) {
 
   // Gom theo người: một thành viên mua ba khóa nhận MỘT thư liệt kê cả ba, chứ
   // không phải ba thư gần giống nhau.
-  const byMember = new Map<string, { name: string; email: string; titles: string[] }>();
+  const byMember = new Map<
+    string,
+    { name: string; email: string; titles: string[]; itemIds: string[] }
+  >();
   for (const item of order.items) {
     if (item.memberUserId === order.userId) continue;
     const entry = byMember.get(item.memberUserId) ?? {
       name: item.member.name ?? "",
       email: item.member.email,
       titles: [],
+      itemIds: [],
     };
     const title = findCourse(item.course.slug)?.title ?? item.course.slug;
     if (!entry.titles.includes(title)) entry.titles.push(title);
+    entry.itemIds.push(item.id);
     byMember.set(item.memberUserId, entry);
   }
 
   let notified = 0;
-  for (const member of byMember.values()) {
+  for (const [memberUserId, member] of byMember) {
+    const leaseKey = `group-email:${orderId}:${memberUserId}`;
+    let lease: Awaited<ReturnType<typeof acquireExternalLease>> = null;
+
     try {
-      await sendGroupMemberEnrolledEmail({
+      lease = await acquireExternalLease(leaseKey);
+      // Một webhook khác đang gửi cho đúng thành viên này. Không đợi: webhook
+      // kia sẽ đóng notifiedAt nếu thành công; nếu nó chết, lease hết hạn thì một
+      // redelivery sau lại có thể thử, đúng ngữ nghĩa at-least-once.
+      if (!lease) continue;
+
+      // Dữ liệu nhóm được đọc trước khi lấy lease. Nếu worker giữ lease ngay
+      // trước đã gửi và đóng dấu, lượt này phải thấy trạng thái mới rồi dừng,
+      // thay vì gửi lại từ snapshot cũ của `order.items`.
+      if (!(await lease.renew())) {
+        console.warn(`[group] Mất lease gửi thư ${leaseKey} trước khi gửi.`);
+        continue;
+      }
+      const pending = await prisma.orderItem.count({
+        where: { id: { in: member.itemIds }, notifiedAt: null },
+      });
+      if (pending === 0) continue;
+
+      // ĐỌC kết quả, không chỉ `await`. `sendEmail` báo Resend từ chối bằng
+      // `{ sent: false }` chứ không throw, nên `catch` bên dưới không bao giờ
+      // chạy cho trường hợp đó — đúng cái bẫy đã làm mọi thư xác thực biến mất
+      // trong khi trang đăng ký vẫn báo thành công. `try/catch` vẫn cần vì
+      // `appUrl()` ném lỗi khi thiếu APP_URL ở production.
+      const result = await sendGroupMemberEnrolledEmail({
         to: member.email,
         name: member.name,
         payerName: order.user.name ?? "",
@@ -167,12 +208,30 @@ export async function notifyGroupMembers(orderId: string) {
         courseTitles: member.titles,
         orderCode: order.code,
       });
-      notified += 1;
+      if (result.sent) {
+        // Đóng dấu SAU khi Resend nhận thư, không phải trước: một lá thư bị từ
+        // chối phải còn cơ hội được gửi lại ở lượt webhook sau.
+        await prisma.orderItem.updateMany({
+          where: { id: { in: member.itemIds }, notifiedAt: null },
+          data: { notifiedAt: new Date() },
+        });
+        notified += 1;
+      } else {
+        console.error(
+          `[group] Thư ghi danh nhóm tới ${member.email} bị từ chối: ${result.error}`,
+        );
+      }
     } catch (error) {
       console.error(
         `[group] Không gửi được thư ghi danh nhóm cho ${member.email}:`,
         error,
       );
+    } finally {
+      if (lease) {
+        await lease.release().catch((error) =>
+          console.error(`[group] Không nhả được lease gửi thư ${leaseKey}:`, error),
+        );
+      }
     }
   }
   return { notified };

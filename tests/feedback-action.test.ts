@@ -94,4 +94,18 @@ describe("gửi feedback", () => {
 
     quiet.mockRestore();
   });
+
+  it("ghi log khi Resend từ chối thư cảm ơn nhưng vẫn lưu feedback", async () => {
+    mocks.sendReceived.mockResolvedValue({ sent: false, error: "sandbox_sender" });
+    const quiet = vi.spyOn(console, "error").mockImplementation(() => {});
+
+    await expect(submitFeedback({}, form(valid))).resolves.toEqual({ saved: true });
+    expect(quiet).toHaveBeenCalledWith(
+      "[feedback] Thư cảm ơn bị từ chối:",
+      "sandbox_sender",
+    );
+    expect(mocks.revalidatePath).toHaveBeenCalledWith("/quan-tri");
+
+    quiet.mockRestore();
+  });
 });

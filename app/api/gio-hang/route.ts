@@ -35,6 +35,11 @@ export async function GET() {
   const cart = await loadCart(await readCartIds(), session.user.id);
   return NextResponse.json(
     {
+      // Địa chỉ của chính người đang đăng nhập. Giỏ hàng cần nó để ô mời nhóm
+      // bỏ qua email của nhóm trưởng đúng như `normalizeMemberEmails` làm ở
+      // server — hai quy tắc khác nhau là hai số người khác nhau, và số người
+      // là thừa số của tổng tiền hiện trên nút thanh toán.
+      email: session.user.email ?? "",
       // Keep this projection explicit. Adding a secret field to an internal
       // catalog object later must not silently make it part of the public API.
       catalog: cart.catalog.map((course) => ({

@@ -41,7 +41,9 @@ describe("GET /api/gio-hang", () => {
   });
 
   it("returns no-store public fields and strips course secrets", async () => {
-    mocks.auth.mockResolvedValue({ user: { id: "user-1" } });
+    mocks.auth.mockResolvedValue({
+      user: { id: "user-1", email: "nhomtruong@example.com" },
+    });
     mocks.findUnique.mockResolvedValue({ phone: "0900000000", stage: "other" });
     mocks.readCartIds.mockResolvedValue(["course-1"]);
     mocks.loadCart.mockResolvedValue({
@@ -67,6 +69,10 @@ describe("GET /api/gio-hang", () => {
     expect(response.status).toBe(200);
     expect(response.headers.get("cache-control")).toContain("no-store");
     expect(body).toEqual({
+      // Giỏ hàng dùng địa chỉ này để bỏ qua email của chính nhóm trưởng, đúng
+      // như `normalizeMemberEmails` làm ở server. Thiếu nó thì client đếm số
+      // người nhiều hơn server một, và tổng tiền hai bên lệch nhau.
+      email: "nhomtruong@example.com",
       catalog: [
         {
           id: "course-1",

@@ -23,12 +23,34 @@ vi.mock("@/lib/payos", () => ({
 
 import { createOrder } from "@/lib/orders";
 
-const TIEULUAN = {
+/** Hình dạng một hàng `courses` mà truy vấn FOR UPDATE của createOrder trả về. */
+type LockedRow = {
+  id: string;
+  slug: string;
+  priceVnd: number;
+  groupEligible: boolean;
+  groupPriceVnd: number | null;
+  capacity: number;
+  status: string;
+};
+
+const TIEULUAN: LockedRow = {
   id: "course-1",
   slug: "training-tieu-luan-nckh-kltn",
   priceVnd: 300000,
   groupEligible: true,
   groupPriceVnd: 250000,
+  capacity: 15,
+  status: "open",
+};
+
+/** Khóa KHÔNG tham gia ưu đãi nhóm, để kiểm chốt chặn đơn nhóm không hợp lệ. */
+const AIQT: LockedRow = {
+  id: "course-2",
+  slug: "nckh-ung-dung-ai-xuat-ban-quoc-te",
+  priceVnd: 3000000,
+  groupEligible: false,
+  groupPriceVnd: null,
   capacity: 15,
   status: "open",
 };
@@ -39,9 +61,9 @@ const members = [
 ];
 
 /** Số ghế đang bị chiếm, do truy vấn đếm raw thứ hai trả về. */
-function seats(held: number) {
+function seats(held: number, courses: LockedRow[] = [TIEULUAN]) {
   mocks.queryRaw
-    .mockResolvedValueOnce([TIEULUAN])
+    .mockResolvedValueOnce(courses)
     .mockResolvedValueOnce(held > 0 ? [{ courseId: "course-1", held: BigInt(held) }] : []);
 }
 
@@ -133,5 +155,34 @@ describe("tạo đơn nhóm", () => {
     });
     expect(result).toMatchObject({ ok: true, groupSize: 3, amountVnd: 750000 });
     expect(mocks.enrollmentCreate).toHaveBeenCalledTimes(3);
+  });
+
+  /**
+   * Giỏ hàng chỉ hiện ô mời nhóm khi còn khóa hưởng ưu đãi, nhưng các input ẩn
+   * mang danh sách thành viên nằm ngoài điều kiện đó — một lỗi ở client là đủ
+   * để ba email đi kèm một giỏ không có ưu đãi nào, và đơn ra là ba ghế giá lẻ.
+   * `tongTienDuKien` không bắt được vì hai bên tính ra cùng một con số.
+   */
+  it("từ chối đơn nhóm khi không khóa nào trong giỏ có ưu đãi nhóm", async () => {
+    seats(0, [AIQT]);
+    const result = await createOrder("user-1", ["course-2"], { members });
+    expect(result).toMatchObject({ ok: false, reason: "group_not_eligible" });
+    expect(mocks.enrollmentCreate).not.toHaveBeenCalled();
+    expect(mocks.orderCreate).not.toHaveBeenCalled();
+  });
+
+  /** Mua lẻ khóa không có ưu đãi vẫn phải đi qua bình thường. */
+  it("không đụng tới đơn một người của khóa không có ưu đãi nhóm", async () => {
+    seats(0, [AIQT]);
+    const result = await createOrder("user-1", ["course-2"]);
+    expect(result).toMatchObject({ ok: true, groupSize: 1, amountVnd: 3000000 });
+  });
+
+  /** Giỏ trộn: một khóa có ưu đãi là đủ, mỗi khóa vẫn tính theo cấu hình riêng. */
+  it("cho phép nhóm khi chỉ MỘT khóa trong giỏ có ưu đãi", async () => {
+    seats(0, [TIEULUAN, AIQT]);
+    const result = await createOrder("user-1", ["course-1", "course-2"], { members });
+    // 250.000 × 3 (có ưu đãi) + 3.000.000 × 3 (giá lẻ).
+    expect(result).toMatchObject({ ok: true, groupSize: 3, amountVnd: 9750000 });
   });
 });

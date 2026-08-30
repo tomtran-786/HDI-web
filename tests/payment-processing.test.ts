@@ -66,11 +66,80 @@ describe("append-only PayOS event processing", () => {
       handled: true,
       outcome: "requires_review",
       orderId: "order-1",
+      // Lượt giao lại của một giao dịch ĐÃ thu tiền được phép chạy lại phần giao
+      // hàng, nhưng một tham chiếu đang chờ đối soát thì không: chưa có gì được
+      // cấp thì cũng không có gì để cấp lại.
+      fulfill: false,
     });
     expect(mocks.paymentCreate).not.toHaveBeenCalled();
     expect(mocks.itemFindMany).not.toHaveBeenCalled();
     expect(mocks.orderUpdateMany).not.toHaveBeenCalled();
     expect(mocks.confirmEnrollment).not.toHaveBeenCalled();
+  });
+
+  /**
+   * Cấp quyền Drive và gửi thư nằm NGOÀI transaction, sau khi nó commit — nên
+   * một lambda hết giờ để lại một đơn `paid` chưa được giao. Nếu lượt giao lại
+   * cũng bỏ qua phần giao hàng thì không còn lượt nào nữa.
+   */
+  it("chạy lại phần giao hàng khi PayOS gửi lại một giao dịch đã thu tiền", async () => {
+    mocks.queryRaw.mockResolvedValue([
+      {
+        id: "order-1",
+        userId: "user-1",
+        status: "paid",
+        amountVnd: 1_000_000,
+        expiresAt: new Date(Date.now() + 3_600_000),
+        providerRef: "link-1",
+      },
+    ]);
+    mocks.paymentFindUnique.mockResolvedValue({
+      orderId: "order-1",
+      status: "succeeded",
+    });
+
+    await expect(
+      processPayosPayment({
+        orderCode: 100001,
+        amount: 1_000_000,
+        currency: "VND",
+        reference: "BANK-REF",
+        paymentLinkId: "link-1",
+        transactionDateTime: new Date().toISOString(),
+        code: "00",
+        payload: {},
+      }),
+    ).resolves.toEqual({
+      handled: true,
+      outcome: "duplicate",
+      orderId: "order-1",
+      fulfill: true,
+    });
+    // Không ghi thêm sự kiện nào và không xác nhận lại ghi danh: chỉ giao hàng.
+    expect(mocks.paymentCreate).not.toHaveBeenCalled();
+    expect(mocks.orderUpdateMany).not.toHaveBeenCalled();
+    expect(mocks.confirmEnrollment).not.toHaveBeenCalled();
+  });
+
+  /** Đơn chưa `paid` thì không có gì để giao, dù tham chiếu đã tồn tại. */
+  it("không giao hàng cho một tham chiếu trùng của đơn chưa thanh toán", async () => {
+    mocks.paymentFindUnique.mockResolvedValue({
+      orderId: "order-1",
+      status: "succeeded",
+    });
+
+    await expect(
+      processPayosPayment({
+        orderCode: 100001,
+        amount: 1_000_000,
+        currency: "VND",
+        reference: "BANK-REF",
+        paymentLinkId: "link-1",
+        transactionDateTime: new Date().toISOString(),
+        code: "00",
+        payload: {},
+      }),
+    ).resolves.toMatchObject({ outcome: "duplicate", fulfill: false });
   });
 
   it("recovers a signed payment-link id while confirming the aggregate atomically", async () => {

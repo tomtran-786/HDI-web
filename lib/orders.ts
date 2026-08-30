@@ -3,6 +3,7 @@ import { confirmEnrollment } from "./enrollment";
 import { findCourse } from "./courses";
 import { isPayosNotFound, payosClient } from "./payos";
 import { seatPriceVnd, type GroupPricedCourse } from "./group-pricing";
+import { groupApplies } from "./group-invite";
 
 /**
  * How long a pending order holds its seats.
@@ -16,7 +17,12 @@ export const ORDER_TTL_HOURS = 2;
 
 export type OrderFailure = {
   ok: false;
-  reason: "empty" | "not_open" | "already_enrolled" | "no_seats";
+  reason:
+    | "empty"
+    | "not_open"
+    | "already_enrolled"
+    | "no_seats"
+    | "group_not_eligible";
   message: string;
 };
 
@@ -192,6 +198,26 @@ export async function createOrder(
       }
     }
 
+    /**
+     * Một đơn nhiều người chỉ hợp lệ khi giỏ thật sự có mời nhóm.
+     *
+     * Trình duyệt chỉ hiện ô mời khi giỏ còn khóa hưởng ưu đãi, nhưng các input
+     * ẩn mang danh sách thành viên nằm ngoài điều kiện đó — nên một lỗi ở client
+     * đủ để gửi lên ba email cho một giỏ chỉ còn khóa KHÔNG có ưu đãi, và đơn ra
+     * là ba ghế giá lẻ. Tổng tiền server tính khớp với con số client hiển thị,
+     * nên `tongTienDuKien` không bắt được; đây là chốt duy nhất bắt được.
+     *
+     * Đọc từ chính các hàng vừa khóa FOR UPDATE, không từ đầu vào của người gọi.
+     */
+    if (!groupApplies(groupSize - 1, locked.some((course) => course.groupEligible))) {
+      return {
+        ok: false as const,
+        reason: "group_not_eligible" as const,
+        message:
+          "Không khóa nào trong giỏ áp dụng ưu đãi nhóm. Vui lòng bỏ danh sách thành viên hoặc chọn một khóa có ưu đãi nhóm.",
+      };
+    }
+
     const now = new Date();
     const expiresAt = new Date(now.getTime() + ORDER_TTL_HOURS * 3600 * 1000);
 
@@ -354,6 +380,17 @@ export async function processPayosPayment(input: PayosPaymentEvent) {
           ? "requires_review" as const
           : "duplicate" as const,
         orderId: order.id,
+        // Nhưng VẪN chạy lại phần giao hàng khi lượt trước đã thu tiền thành
+        // công. Cấp quyền Drive và gửi thư nằm NGOÀI transaction này, sau khi
+        // nó đã commit — nên một lambda hết giờ để lại một đơn `paid` chưa được
+        // giao. Trước đây lượt giao lại dừng ở đây, và khi đó không còn lượt nào
+        // nữa: cron ngày vá được quyền Drive (chậm tối đa 24 giờ trên Vercel
+        // Hobby), còn thư báo thành viên thì không có gì vá.
+        //
+        // An toàn để chạy lại: `reconcileDriveFolder` bỏ qua ghi danh đã có
+        // `drivePermissionId`, và `notifyGroupMembers` bỏ qua dòng đơn đã có
+        // `notifiedAt`.
+        fulfill: existing.status === "succeeded" && order.status === "paid",
       };
     }
 

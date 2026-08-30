@@ -6,6 +6,14 @@ import { fulfillOrderDrive, notifyGroupMembers } from "@/lib/fulfillment";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+/**
+ * Sau khi commit thanh toán, handler còn cấp quyền Google Drive cho từng ghế rồi
+ * gửi thư cho từng thành viên. Một nhóm mười người mua nhiều khóa là hàng chục
+ * lượt gọi ra ngoài mạng, và mặc định của Vercel không đủ cho chúng. Hết giờ ở
+ * đây không mất tiền — lượt giao lại của PayOS chạy lại phần giao hàng — nhưng
+ * nó biến một lần thanh toán thành một lần chờ, nên cứ cho đủ giờ ngay từ đầu.
+ */
+export const maxDuration = 60;
 
 export async function POST(request: Request) {
   let payload: unknown;

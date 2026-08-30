@@ -2,9 +2,14 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { currentSession } from "@/lib/current-session";
 import { prisma } from "@/lib/prisma";
-import { findCourse } from "@/lib/courses";
+import { courseSummaryLine } from "@/lib/courses";
 import { formatDate, formatDateTime, formatVnd } from "@/lib/format";
-import { orderPage, orderStatusLabel, orderStatusTone } from "@/content/checkout";
+import {
+  groupPanel,
+  orderPage,
+  orderStatusLabel,
+  orderStatusTone,
+} from "@/content/checkout";
 import { Section, SectionHeading } from "@/components/ui/section";
 import { Badge } from "@/components/ui/badge";
 import { IconArrow } from "@/components/ui/icons";
@@ -29,6 +34,7 @@ export default async function OrderListPage() {
       amountVnd: true,
       createdAt: true,
       expiresAt: true,
+      groupSize: true,
       items: {
         // No `course: true`: that would drag meetingUrl and driveFolderId into
         // the payload of a page anyone with a pending order can load.
@@ -74,14 +80,15 @@ export default async function OrderListPage() {
                     <Badge tone={orderStatusTone[order.status] ?? "cool"}>
                       {orderStatusLabel[order.status] ?? order.status}
                     </Badge>
+                    {/* Đơn nhóm có một dòng item cho mỗi người, nên nếu không
+                        nói ra số người thì tổng tiền trông như gấp mấy lần giá
+                        khóa mà không có gì giải thích. */}
+                    {order.groupSize > 1 && (
+                      <Badge tone="cool">{groupPanel.size(order.groupSize)}</Badge>
+                    )}
                   </div>
                   <p className="mt-1.5 text-[13px] text-fg-muted">
-                    {order.items
-                      .map(
-                        (item) =>
-                          `${item.course.code} · ${findCourse(item.course.slug)?.title ?? item.course.slug}`,
-                      )
-                      .join(" — ")}
+                    {courseSummaryLine(order.items)}
                   </p>
                   <p className="mt-1 text-[13px] text-fg-subtle">
                     Đặt ngày {formatDate(order.createdAt)}
