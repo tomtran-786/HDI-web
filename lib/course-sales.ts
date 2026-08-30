@@ -86,6 +86,10 @@ export const COURSE_PUBLIC = {
   slug: true,
   capacity: true,
   priceVnd: true,
+  // Cấu hình ưu đãi nhóm là dữ liệu marketing, không phải secret: nó quyết định
+  // con số hiện ngay trên giỏ hàng trước khi ai bấm thanh toán.
+  groupEligible: true,
+  groupPriceVnd: true,
   status: true,
 } as const;
 

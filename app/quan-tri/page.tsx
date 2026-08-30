@@ -120,6 +120,7 @@ export default async function AdminPage({
         createdAt: true,
         expiresAt: true,
         provider: true,
+        groupSize: true,
         user: { select: { name: true, email: true, phone: true } },
         items: {
           select: {
@@ -349,6 +350,9 @@ export default async function AdminPage({
                   <Badge tone={orderStatusTone[order.status] ?? "cool"}>
                     {orderStatusLabel[order.status] ?? order.status}
                   </Badge>
+                  {order.groupSize > 1 && (
+                    <Badge tone="cool">Nhóm {order.groupSize} người</Badge>
+                  )}
                   {order.provider && (
                     <span className="text-[11px] text-fg-subtle">
                       {order.provider}

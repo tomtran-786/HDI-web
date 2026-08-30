@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { processPayosPayment, type PayosPaymentEvent } from "@/lib/orders";
 import { PayosConfigurationError, verifyPayosWebhook } from "@/lib/payos";
 import { processServicePayment } from "@/lib/service-orders";
-import { fulfillOrderDrive } from "@/lib/fulfillment";
+import { fulfillOrderDrive, notifyGroupMembers } from "@/lib/fulfillment";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -71,8 +71,15 @@ export async function POST(request: Request) {
       console.error("[payos-webhook] Thanh toán cần kiểm tra thủ công:", result);
     }
     if ("fulfill" in result && result.fulfill && result.orderId) {
-      await fulfillOrderDrive(result.orderId).catch((error) =>
-        console.error(`[payos-webhook] Đơn ${result.orderId} đã paid nhưng Drive lỗi:`, error),
+      const orderId = result.orderId;
+      await fulfillOrderDrive(orderId).catch((error) =>
+        console.error(`[payos-webhook] Đơn ${orderId} đã paid nhưng Drive lỗi:`, error),
+      );
+      // Sau khi cấp quyền, vì thư báo với thành viên rằng quyền đã sẵn sàng.
+      // `await` chứ không bắn-rồi-quên: trên serverless, lambda bị đóng băng
+      // ngay khi handler trả về và thư chưa gửi xong sẽ biến mất.
+      await notifyGroupMembers(orderId).catch((error) =>
+        console.error(`[payos-webhook] Đơn ${orderId} không báo được cho thành viên:`, error),
       );
     }
 

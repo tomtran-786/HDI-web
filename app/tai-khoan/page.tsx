@@ -7,6 +7,7 @@ import { findCourse } from "@/lib/courses";
 import { links } from "@/content/site";
 import { serviceKindLabel } from "@/content/ai-check";
 import {
+  groupOrderLabel,
   enrollmentStatusLabel,
   orderStatusLabel,
   orderStatusTone,
@@ -72,6 +73,12 @@ export default async function AccountPage() {
       accessExpiresAt: true,
       accessRevokedAt: true,
       drivePermissionId: true,
+      // Ai đã trả tiền cho ghi danh này. Cần để nói rõ "người khác mua giúp
+      // bạn" — nếu không, một khóa tự xuất hiện trong tài khoản trông như lỗi.
+      orderItems: {
+        select: { order: { select: { userId: true, user: { select: { email: true } } } } },
+        take: 1,
+      },
       course: {
         select: {
           id: true,
@@ -215,6 +222,10 @@ export default async function AccountPage() {
               e.status === "paid" && !reviewFormShown.has(e.course.id);
             if (canRate) reviewFormShown.add(e.course.id);
             const myReview = myReviews.get(e.course.id);
+            // Chỉ có giá trị khi người trả tiền KHÔNG phải chính chủ ghi danh.
+            const order = e.orderItems[0]?.order;
+            const payer =
+              order && order.userId !== userId ? order.user.email : null;
 
             return (
               <div
@@ -232,10 +243,18 @@ export default async function AccountPage() {
                       {course?.title ?? e.course.slug}
                     </h3>
                   </div>
-                  <Badge tone={live ? "success" : "cool"}>
-                    {enrollmentLabel(e, now)}
-                  </Badge>
+                  <div className="flex shrink-0 flex-wrap justify-end gap-1.5">
+                    {payer && <Badge tone="cool">{groupOrderLabel.badge}</Badge>}
+                    <Badge tone={live ? "success" : "cool"}>
+                      {enrollmentLabel(e, now)}
+                    </Badge>
+                  </div>
                 </div>
+                {payer && (
+                  <p className="mt-2 text-[13px] text-fg-muted">
+                    {groupOrderLabel.paidForYou}: {payer}
+                  </p>
+                )}
 
                 <dl className="mt-6">
                   <div className="flex flex-wrap items-baseline justify-between gap-2 border-b border-line py-2.5">

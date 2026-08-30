@@ -55,6 +55,8 @@ model User {
   sessions      Session[]
   enrollments   Enrollment[]
   orders        Order[]
+  /// Các dòng đơn ghi danh cho người này, kể cả đơn do người khác trả tiền.
+  orderSeats    OrderItem[]
   reviews       CourseReview[]
   serviceOrders ServiceOrder[]
   feedbacks     Feedback[]
@@ -195,6 +197,18 @@ model Course {
   // How long recordings stay watchable after payment. NULL = no expiry.
   accessDays Int? @map("access_days")
 
+  /// Khóa này có tham gia ưu đãi nhóm không. Mặc định `false`: một khóa chỉ
+  /// giảm giá khi trang khóa học thực sự quảng cáo ưu đãi đó.
+  groupEligible Boolean @default(false) @map("group_eligible")
+
+  /// Giá MỘT ghế khi bậc nhóm áp, tính bằng đồng. NULL = dùng phần trăm của bậc
+  /// chung trong lib/group-pricing.ts.
+  ///
+  /// Tồn tại vì có ưu đãi không biểu diễn được bằng phần trăm: 300.000đ →
+  /// 250.000đ là −16,667%, làm tròn hai chữ số ra 249.990đ, lệch với con số in
+  /// trên trang. Cột này giữ giá quảng cáo và giá bị trừ là một.
+  groupPriceVnd Int? @map("group_price_vnd")
+
   status    CourseStatus @default(draft)
   createdAt DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt DateTime     @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
@@ -307,6 +321,13 @@ model Order {
 
   /// Which gateway this order was handed to, once one exists. Null means the
   /// order was created before any provider was wired up.
+  /// Số người đã dùng để tính giá, đóng băng lúc đặt đơn. 1 = mua lẻ.
+  ///
+  /// Suy ra được từ số ghế, nhưng lưu thẳng vì đây là ĐẦU VÀO của phép tính giá
+  /// chứ không phải hệ quả của nó: `amountVnd` đã gửi sang PayOS và không được
+  /// đổi, nên căn cứ tính ra nó phải đọc lại được y nguyên.
+  groupSize Int @default(1) @map("group_size")
+
   provider    String? @db.VarChar(20)
   providerRef String? @map("provider_ref") @db.VarChar(120)
   checkoutUrl String? @map("checkout_url") @db.Text
@@ -341,14 +362,25 @@ model OrderItem {
   /// immutable instead of being reset in place.
   enrollmentId String? @map("enrollment_id")
 
+  /// NGƯỜI ĐƯỢC HỌC trên dòng này, không nhất thiết là người trả tiền.
+  ///
+  /// Với đơn lẻ nó bằng `order.userId`. Với đơn nhóm, nhóm trưởng ở `order`
+  /// còn mỗi ghế mang một thành viên khác nhau — đó là toàn bộ khác biệt giữa
+  /// hai loại đơn. Cột này cũng là thứ `processPayosPayment` đối chiếu để chắc
+  /// rằng ghi danh gắn vào dòng đơn thuộc đúng người được khai.
+  memberUserId String @map("member_user_id")
+
   order      Order       @relation(fields: [orderId], references: [id], onDelete: Cascade)
   course     Course      @relation(fields: [courseId], references: [id], onDelete: Restrict)
   enrollment Enrollment? @relation(fields: [enrollmentId], references: [id], onDelete: SetNull)
+  member     User        @relation(fields: [memberUserId], references: [id], onDelete: Restrict)
 
-  // One line per course per order: the cart is a set.
-  @@unique([orderId, courseId])
+  // One line per course PER PERSON: the cart is a set, but a group order holds
+  // one seat of the same course for each member.
+  @@unique([orderId, courseId, memberUserId])
   @@index([courseId])
   @@index([enrollmentId])
+  @@index([memberUserId])
   @@map("order_items")
 }
 

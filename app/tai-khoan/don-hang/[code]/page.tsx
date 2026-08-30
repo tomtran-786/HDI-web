@@ -5,7 +5,12 @@ import { currentSession } from "@/lib/current-session";
 import { prisma } from "@/lib/prisma";
 import { findCourse } from "@/lib/courses";
 import { formatDate, formatVnd } from "@/lib/format";
-import { orderPage, orderStatusLabel, orderStatusTone } from "@/content/checkout";
+import {
+  groupOrderLabel,
+  orderPage,
+  orderStatusLabel,
+  orderStatusTone,
+} from "@/content/checkout";
 import { composeEmailHref, links } from "@/content/site";
 import { HoldCountdown } from "@/components/hold-countdown";
 import { Section, SectionHeading } from "@/components/ui/section";
@@ -43,10 +48,13 @@ export default async function OrderDetailPage({
       expiresAt: true,
       paidAt: true,
       checkoutUrl: true,
+      groupSize: true,
       items: {
         select: {
           id: true,
           priceVnd: true,
+          memberUserId: true,
+          member: { select: { email: true } },
           course: { select: { code: true, slug: true } },
         },
       },
@@ -55,6 +63,7 @@ export default async function OrderDetailPage({
   if (!order) notFound();
 
   const pending = order.status === "pending";
+  const isGroup = order.groupSize > 1;
 
   return (
     <Section soft>
@@ -69,6 +78,7 @@ export default async function OrderDetailPage({
             <Badge tone={orderStatusTone[order.status] ?? "cool"}>
               {orderStatusLabel[order.status] ?? order.status}
             </Badge>
+            {isGroup && <Badge tone="cool">Nhóm {order.groupSize} người</Badge>}
             {pending && (
               <HoldCountdown expiresAtIso={order.expiresAt.toISOString()} />
             )}
@@ -87,6 +97,14 @@ export default async function OrderDetailPage({
                   <p className="font-semibold leading-snug text-fg">
                     {findCourse(item.course.slug)?.title ?? item.course.slug}
                   </p>
+                  {/* Với đơn nhóm, mỗi dòng là một GHẾ của một người cụ thể.
+                      Không in email ở đơn lẻ: người mua đã biết đó là mình. */}
+                  {isGroup && (
+                    <p className="mt-0.5 text-xs text-fg-muted">
+                      {groupOrderLabel.learner}:{" "}
+                      {item.memberUserId === session.user.id ? "bạn" : item.member.email}
+                    </p>
+                  )}
                 </div>
                 {/* The snapshot on the line, not the course's current price —
                     what someone owes must not move after they agreed to it. */}

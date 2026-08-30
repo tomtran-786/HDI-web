@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { courses } from "@/content/course";
+import { GROUP_MIN_SIZE, seatPriceVnd } from "@/lib/group-pricing";
 
 /**
  * `amount` là chuỗi để hiển thị, `vnd` là con số để tính tiền — và không có gì
@@ -41,5 +42,57 @@ describe("giá khóa học", () => {
     )!;
     expect(course.price.vnd).toBe(300000);
     expect(course.price.deal?.vnd).toBe(250000);
+  });
+
+  /**
+   * BẤT BIẾN QUAN TRỌNG NHẤT của tính năng thanh toán nhóm.
+   *
+   * Giá in trên trang khóa học và giá `createOrder` gửi sang PayOS đi qua hai
+   * đường khác nhau: một bên là `content/course.ts`, bên kia là các cột
+   * `group_eligible`/`group_price_vnd` do `prisma/seed.ts` nạp. Test này ghép
+   * hai đường lại — sửa con số ở một bên mà quên bên kia sẽ đỏ ngay tại đây chứ
+   * không phải ở màn hình thanh toán của học viên.
+   */
+  it("giữ giá nhóm được quảng cáo đúng bằng giá nhóm sẽ bị trừ", () => {
+    for (const course of courses) {
+      const configured = {
+        priceVnd: course.price.vnd,
+        groupEligible: course.price.group === true,
+        groupPriceVnd:
+          course.price.group === true ? (course.price.deal?.vnd ?? null) : null,
+      };
+      const charged = seatPriceVnd(configured, GROUP_MIN_SIZE);
+
+      if (!course.price.group) {
+        // Khóa không quảng cáo ưu đãi nhóm thì nhóm vẫn trả giá lẻ.
+        expect(charged, course.slug).toBe(course.price.vnd);
+        continue;
+      }
+
+      if (course.price.deal) {
+        // Có con số cụ thể trên trang → phải bị trừ đúng con số đó.
+        expect(charged, course.slug).toBe(course.price.deal.vnd);
+      } else {
+        // Chỉ hứa phần trăm → bậc chung phải khớp phần trăm đã hứa.
+        const promised = course.price.note.match(/Giảm (\d+)%/);
+        expect(promised, `${course.slug}: note phải nêu mức giảm`).not.toBeNull();
+        const pct = Number(promised![1]);
+        expect(charged, course.slug).toBe(
+          Math.round((course.price.vnd * (100 - pct)) / 100),
+        );
+      }
+    }
+  });
+
+  it("chỉ bật ưu đãi nhóm cho khóa thật sự quảng cáo ưu đãi đó", () => {
+    for (const course of courses) {
+      if (course.price.group !== true) continue;
+      const advertises =
+        Boolean(course.price.deal) || /nhóm/i.test(course.price.note);
+      expect(advertises, `${course.slug}: bật group nhưng không quảng cáo`).toBe(true);
+    }
+    // AIQT không hứa gì về nhóm, nên không được âm thầm giảm giá.
+    const aiqt = courses.find((item) => item.code === "AIQT")!;
+    expect(aiqt.price.group).toBeUndefined();
   });
 });

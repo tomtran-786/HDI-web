@@ -1,5 +1,6 @@
 import { cookies } from "next/headers";
 import { courses as authoredCourses } from "@/content/course";
+import { seatPriceVnd } from "./group-pricing";
 import { configuredCourses, heldByUser, seatsTaken } from "./course-sales";
 import {
   CART_COOKIE,
@@ -21,6 +22,8 @@ export type CatalogCourse = {
   slug: string;
   title: string;
   priceVnd: number;
+  groupEligible: boolean;
+  groupPriceVnd: number | null;
   capacity: number | null;
   seatsLeft: number | null;
   availability: CourseAvailability;
@@ -87,6 +90,8 @@ export async function loadCourseCatalog(userId: string): Promise<CatalogCourse[]
         slug: authored.slug,
         title: authored.title,
         priceVnd: authored.price.vnd,
+        groupEligible: false,
+        groupPriceVnd: null,
         capacity: null,
         seatsLeft: null,
         availability: "not_open" as const,
@@ -112,6 +117,8 @@ export async function loadCourseCatalog(userId: string): Promise<CatalogCourse[]
       slug: row.slug,
       title: authored.title,
       priceVnd: row.priceVnd,
+      groupEligible: row.groupEligible,
+      groupPriceVnd: row.groupPriceVnd,
       capacity: row.capacity,
       seatsLeft,
       availability,
@@ -119,7 +126,11 @@ export async function loadCourseCatalog(userId: string): Promise<CatalogCourse[]
   });
 }
 
-export async function loadCart(ids: string[], userId: string): Promise<CartView> {
+export async function loadCart(
+  ids: string[],
+  userId: string,
+  groupSize = 1,
+): Promise<CartView> {
   const catalog = await loadCourseCatalog(userId);
   const byId = new Map(
     catalog.flatMap((course) => (course.id ? [[course.id, course] as const] : [])),
@@ -133,8 +144,10 @@ export async function loadCart(ids: string[], userId: string): Promise<CartView>
     catalog,
     selected,
     staleIds,
+    // Giá ghế × số người. `seatPriceVnd` là nơi duy nhất làm tròn, nên tổng ở
+    // đây khớp từng đồng với tổng `createOrder` cộng từ các dòng đơn.
     totalVnd: selected
       .filter((course) => course.availability === "buyable")
-      .reduce((sum, course) => sum + course.priceVnd, 0),
+      .reduce((sum, course) => sum + seatPriceVnd(course, groupSize) * groupSize, 0),
   };
 }

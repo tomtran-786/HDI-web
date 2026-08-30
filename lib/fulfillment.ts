@@ -1,6 +1,8 @@
 import { prisma } from "./prisma";
 import { liveAccessWhere } from "./enrollment";
 import { acquireExternalLease } from "./external-lease";
+import { findCourse } from "./courses";
+import { sendGroupMemberEnrolledEmail } from "./email";
 import { grantDrivePermission, revokeDrivePermission } from "./google-drive";
 
 function externalErrorSummary(error: unknown) {
@@ -110,6 +112,70 @@ export async function fulfillOrderDrive(orderId: string) {
     granted += result.granted;
   }
   return { folders: folders.size, granted };
+}
+
+/**
+ * Báo cho từng thành viên rằng nhóm trưởng đã trả tiền ghi danh giúp họ.
+ *
+ * Chạy SAU khi cấp quyền Drive, vì thư nói "quyền đã được cấp vào email này".
+ * Chỉ gửi cho người khác người trả tiền — với đơn lẻ, hàm này không gửi gì.
+ *
+ * Gửi thư không bao giờ được làm hỏng một đơn đã thu tiền: mỗi lần gửi tự nuốt
+ * lỗi của mình, để một hộp thư từ chối không chặn thư của những người còn lại.
+ */
+export async function notifyGroupMembers(orderId: string) {
+  const order = await prisma.order.findFirst({
+    where: { id: orderId, status: "paid" },
+    select: {
+      code: true,
+      userId: true,
+      user: { select: { name: true, email: true } },
+      items: {
+        select: {
+          memberUserId: true,
+          member: { select: { name: true, email: true } },
+          course: { select: { slug: true } },
+        },
+      },
+    },
+  });
+  if (!order) return { notified: 0 };
+
+  // Gom theo người: một thành viên mua ba khóa nhận MỘT thư liệt kê cả ba, chứ
+  // không phải ba thư gần giống nhau.
+  const byMember = new Map<string, { name: string; email: string; titles: string[] }>();
+  for (const item of order.items) {
+    if (item.memberUserId === order.userId) continue;
+    const entry = byMember.get(item.memberUserId) ?? {
+      name: item.member.name ?? "",
+      email: item.member.email,
+      titles: [],
+    };
+    const title = findCourse(item.course.slug)?.title ?? item.course.slug;
+    if (!entry.titles.includes(title)) entry.titles.push(title);
+    byMember.set(item.memberUserId, entry);
+  }
+
+  let notified = 0;
+  for (const member of byMember.values()) {
+    try {
+      await sendGroupMemberEnrolledEmail({
+        to: member.email,
+        name: member.name,
+        payerName: order.user.name ?? "",
+        payerEmail: order.user.email,
+        courseTitles: member.titles,
+        orderCode: order.code,
+      });
+      notified += 1;
+    } catch (error) {
+      console.error(
+        `[group] Không gửi được thư ghi danh nhóm cho ${member.email}:`,
+        error,
+      );
+    }
+  }
+  return { notified };
 }
 
 export async function reconcileMissingDriveGrants(limit = 50) {

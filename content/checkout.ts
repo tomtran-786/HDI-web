@@ -29,6 +29,35 @@ export const cartModal = {
   },
 } as const;
 
+/**
+ * Ô mời và bảng nhập thành viên cho thanh toán nhóm.
+ *
+ * Dòng mời (`invite`) luôn hiển thị chứ không nằm sau một nút "xem thêm": ưu đãi
+ * mà người mua không nhìn thấy trước khi bấm thanh toán thì không phải ưu đãi.
+ */
+export const groupPanel = {
+  invite: "Học cùng nhóm từ 03 bạn — tiết kiệm tới 10%",
+  title: "Thanh toán theo nhóm",
+  intro:
+    "Bạn thanh toán một lần cho cả nhóm. Mỗi bạn nhận quyền học liệu vào email của chính mình.",
+  requirement:
+    "Các bạn trong nhóm cần đã có tài khoản HDI và đã xác thực email.",
+  inputLabel: "Email của bạn trong nhóm",
+  placeholder: "ban@example.com",
+  add: "Thêm",
+  remove: "Bỏ khỏi nhóm",
+  checking: "Đang kiểm tra…",
+  unregistered: "Chưa có tài khoản đã xác thực",
+  conflict: "Đã có quyền hoặc đơn chờ cho khóa trong giỏ",
+  close: "Bỏ thanh toán nhóm",
+  listPrice: "Giá lẻ",
+  perPerson: "mỗi người",
+  /** `n` là số người còn thiếu để chạm bậc ưu đãi. */
+  needMore: (n: number) => `Thêm ${n} bạn nữa để nhóm được giảm giá.`,
+  size: (n: number) => `Nhóm ${n} người`,
+  checkout: (n: number) => `Thanh toán cho ${n} người`,
+} as const;
+
 export const orderPage = {
   eyebrow: "Đơn hàng",
   listTitle: "Đơn hàng của bạn",
@@ -60,6 +89,13 @@ export const paymentResultPage = {
   pollingExhausted:
     "Vẫn chưa nhận được xác nhận. PayOS đôi khi mất vài phút để gửi webhook — bấm kiểm tra lại, hoặc liên hệ Zalo/email nếu bạn chắc đã thanh toán.",
   retryLabel: "Kiểm tra lại",
+} as const;
+
+/** Nhãn trên trang đơn hàng và trang tài khoản cho ghi danh mua theo nhóm. */
+export const groupOrderLabel = {
+  badge: "Thanh toán theo nhóm",
+  paidForYou: "Được thanh toán giúp",
+  learner: "Người học",
 } as const;
 
 export const orderStatusLabel: Record<string, string> = {

@@ -13,6 +13,8 @@ const mocks = vi.hoisted(() => ({
   readCartIds: vi.fn(),
   writeCartIds: vi.fn(),
   createOrder: vi.fn(),
+  cancelOrder: vi.fn(),
+  resolveGroupMembers: vi.fn(),
   ensurePayosCheckout: vi.fn(),
   allowUserAction: vi.fn(),
   revalidateTag: vi.fn(),
@@ -28,7 +30,15 @@ vi.mock("@/lib/cart", () => ({
   readCartIds: mocks.readCartIds,
   writeCartIds: mocks.writeCartIds,
 }));
-vi.mock("@/lib/orders", () => ({ createOrder: mocks.createOrder }));
+vi.mock("@/lib/orders", () => ({
+  createOrder: mocks.createOrder,
+  cancelOrder: mocks.cancelOrder,
+}));
+vi.mock("@/lib/group-members", async (importOriginal) => ({
+  // `normalizeMemberEmails` là hàm thuần, để chạy thật; chỉ chặn phần tra database.
+  ...(await importOriginal<typeof import("@/lib/group-members")>()),
+  resolveGroupMembers: mocks.resolveGroupMembers,
+}));
 vi.mock("@/lib/auth-throttle", () => ({ allowUserAction: mocks.allowUserAction }));
 vi.mock("@/lib/payment-checkout", () => ({
   ensurePayosCheckout: mocks.ensurePayosCheckout,
@@ -42,7 +52,10 @@ describe("one-step cart checkout action", () => {
     mocks.redirect.mockImplementation((url: string) => {
       throw new RedirectSignal(url);
     });
-    mocks.auth.mockResolvedValue({ user: { id: "user-1" } });
+    mocks.auth.mockResolvedValue({
+      user: { id: "user-1", email: "leader@hdi.test" },
+    });
+    mocks.resolveGroupMembers.mockResolvedValue({ members: [], unregistered: [] });
     mocks.findUnique.mockResolvedValue({ phone: "0900000000", stage: "other" });
     mocks.readCartIds.mockResolvedValue(["course-b", "course-a"]);
     mocks.allowUserAction.mockResolvedValue(true);
@@ -68,10 +81,11 @@ describe("one-step cart checkout action", () => {
     await expect(checkout({}, forged)).rejects.toMatchObject({
       url: "https://payos.test/checkout",
     });
-    expect(mocks.createOrder).toHaveBeenCalledWith("user-1", [
-      "course-b",
-      "course-a",
-    ]);
+    expect(mocks.createOrder).toHaveBeenCalledWith(
+      "user-1",
+      ["course-b", "course-a"],
+      { members: [] },
+    );
     expect(mocks.writeCartIds).toHaveBeenCalledWith([]);
   });
 
@@ -120,5 +134,88 @@ describe("one-step cart checkout action", () => {
     // lần bấm vẫn khóa hàng courses và tạo enrolment rồi mới bị chặn.
     expect(mocks.createOrder).not.toHaveBeenCalled();
     expect(mocks.ensurePayosCheckout).not.toHaveBeenCalled();
+  });
+
+  it("phân giải email thành viên rồi truyền xuống server pricing", async () => {
+    mocks.resolveGroupMembers.mockResolvedValue({
+      members: [
+        { id: "user-2", email: "b@hdi.test" },
+        { id: "user-3", email: "c@hdi.test" },
+      ],
+      unregistered: [],
+    });
+    mocks.createOrder.mockResolvedValue({
+      ok: true,
+      orderId: "order-1",
+      code: 100001,
+      amountVnd: 750_000,
+      groupSize: 3,
+      expiresAt: new Date(),
+    });
+    mocks.ensurePayosCheckout.mockResolvedValue({
+      ok: true,
+      state: "ready",
+      checkoutUrl: "https://payos.test/checkout",
+    });
+
+    const form = new FormData();
+    form.append("thanhVien", "b@hdi.test");
+    form.append("thanhVien", "c@hdi.test");
+    form.set("tongTienDuKien", "750000");
+
+    await expect(checkout({}, form)).rejects.toMatchObject({
+      url: "https://payos.test/checkout",
+    });
+    expect(mocks.createOrder).toHaveBeenCalledWith(
+      "user-1",
+      ["course-b", "course-a"],
+      {
+        members: [
+          { id: "user-2", email: "b@hdi.test" },
+          { id: "user-3", email: "c@hdi.test" },
+        ],
+      },
+    );
+  });
+
+  it("từ chối trước khi giữ chỗ khi có email chưa có tài khoản", async () => {
+    mocks.resolveGroupMembers.mockResolvedValue({
+      members: [],
+      unregistered: ["chua-co@hdi.test"],
+    });
+
+    const form = new FormData();
+    form.append("thanhVien", "chua-co@hdi.test");
+
+    const result = await checkout({}, form);
+    expect(result.error).toContain("chua-co@hdi.test");
+    // Không được tạo ghi danh giữ chỗ cho một nhóm chắc chắn sẽ bị từ chối.
+    expect(mocks.createOrder).not.toHaveBeenCalled();
+  });
+
+  /**
+   * Bảng giá hoặc số người có thể đổi giữa lúc giỏ hàng báo giá và lúc ghi đơn.
+   * Đơn đã tạo phải bị hủy chứ không để lại: nó đang giữ ghế và sắp có một link
+   * PayOS mang con số học viên chưa từng đồng ý.
+   */
+  it("hủy đơn vừa tạo khi số tiền lệch với con số học viên đã thấy", async () => {
+    mocks.createOrder.mockResolvedValue({
+      ok: true,
+      orderId: "order-1",
+      code: 100001,
+      amountVnd: 900_000,
+      groupSize: 1,
+      expiresAt: new Date(),
+    });
+
+    const form = new FormData();
+    form.set("tongTienDuKien", "750000");
+
+    const result = await checkout({}, form);
+    expect(result.refreshCatalog).toBe(true);
+    expect(result.error).toContain("thay đổi");
+    expect(mocks.cancelOrder).toHaveBeenCalledWith("order-1", { userId: "user-1" });
+    expect(mocks.ensurePayosCheckout).not.toHaveBeenCalled();
+    expect(mocks.writeCartIds).not.toHaveBeenCalled();
   });
 });

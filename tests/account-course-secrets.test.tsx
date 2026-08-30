@@ -38,6 +38,8 @@ function enrollment(status: "pending" | "paid", drivePermissionId: string | null
       status === "paid" ? new Date("2028-08-24T05:00:00Z") : null,
     accessRevokedAt: null,
     drivePermissionId,
+    // Đơn lẻ: người trả tiền chính là chủ ghi danh, nên không có nhãn mua nhóm.
+    orderItems: [{ order: { userId: "user-1", user: { email: "hoc-vien@hdi.test" } } }],
     course: {
       id: "course-1",
       code: "AIQT",

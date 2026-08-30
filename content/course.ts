@@ -155,6 +155,17 @@ export type Course = {
     noteLabel?: string;
     vnd: number;
     deal?: { amount: string; vnd: number; condition: string };
+    /**
+     * Khóa này có tham gia ưu đãi thanh toán nhóm không.
+     *
+     * Đánh dấu ở đây chứ không ở prisma/courses.json vì đây là một LỜI HỨA đã
+     * in trên trang khóa học. `prisma/seed.ts` đọc trường này (và `deal.vnd`
+     * nếu có) để nạp xuống database, nên giá được quảng cáo và giá thật sự bị
+     * trừ chỉ có một nguồn duy nhất. Khóa không đặt trường này thì nhóm vẫn trả
+     * giá lẻ — im lặng giảm giá một khóa không quảng cáo ưu đãi là cho đi tiền
+     * mà không ai yêu cầu.
+     */
+    group?: true;
   };
   facts: { label: string; value: string }[];
   phases: CoursePhase[];
@@ -339,8 +350,10 @@ export const courses = [
       amount: "300.000 đ",
       note: "Đăng ký nhóm từ 03 người: 250.000 đ mỗi người",
       vnd: 300000,
-      // Giá nhóm chưa được hệ thống tự áp — luồng đăng ký nhiều người còn phải
-      // làm. Đến lúc đó `vnd` của đơn nhóm mới đọc con số này.
+      group: true,
+      // Đây là giá thật sự bị trừ khi nhóm đủ 3 người: prisma/seed.ts nạp
+      // `deal.vnd` xuống cột courses.group_price_vnd, và lib/group-pricing.ts
+      // đọc cột đó. Sửa con số ở đây thì phải chạy lại seed.
       deal: {
         amount: "250.000 đ",
         vnd: 250000,
@@ -585,6 +598,7 @@ export const courses = [
     price: {
       amount: "1.100.000 đ",
       note: "Giảm 10% cho nhóm từ 03 người",
+      group: true,
       vnd: 1100000,
     },
     // No class-size figure on the SPSS page, unlike Stata and tap-chi — so none
@@ -680,6 +694,7 @@ export const courses = [
     price: {
       amount: "1.100.000 đ",
       note: "Giảm 10% cho nhóm từ 03 người",
+      group: true,
       vnd: 1100000,
     },
     facts: [
@@ -757,6 +772,7 @@ export const courses = [
     price: {
       amount: "2.000.000 đ",
       note: "Giảm 10% cho nhóm từ 03 người",
+      group: true,
       vnd: 2000000,
     },
     facts: [
@@ -855,6 +871,7 @@ export const courses = [
     price: {
       amount: "1.000.000 đ",
       note: "Giảm 10% cho nhóm từ 03 người",
+      group: true,
       vnd: 1000000,
     },
     facts: [
@@ -913,6 +930,7 @@ export const courses = [
     price: {
       amount: "550.000 đ",
       note: "Giảm 10% cho nhóm từ 03 người",
+      group: true,
       vnd: 550000,
     },
     facts: [

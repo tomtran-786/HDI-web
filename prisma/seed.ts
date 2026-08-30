@@ -60,6 +60,20 @@ async function main() {
     process.exit(1);
   }
 
+  // Giá ưu đãi phải rẻ hơn giá lẻ sắp ghi xuống. Ràng buộc CHECK trong database
+  // cũng bắt điều này, nhưng chặn ở đây thì lỗi nói được tên khóa.
+  const badDeals = rows.filter((r) => {
+    const authored = authoredBySlug.get(r.slug as (typeof courses)[number]["slug"]);
+    const deal = authored?.price.group === true ? authored.price.deal?.vnd : undefined;
+    return deal != null && deal >= r.priceVnd;
+  });
+  if (badDeals.length > 0) {
+    console.error(
+      `Giá ưu đãi nhóm phải nhỏ hơn priceVnd: ${badDeals.map((r) => r.slug).join(", ")}`,
+    );
+    process.exit(1);
+  }
+
   const invalidNumbers = rows.filter(
     (r) =>
       !Number.isInteger(r.capacity) ||
@@ -83,6 +97,12 @@ async function main() {
       capacity: r.capacity,
       priceVnd: r.priceVnd,
       accessDays: r.accessDays ?? null,
+      // Ưu đãi nhóm đến TỪ nội dung đã quảng cáo, không từ courses.json: giá in
+      // trên trang khóa học và giá bị trừ ở PayOS phải là cùng một con số.
+      groupEligible: authored.price.group === true,
+      groupPriceVnd: authored.price.group === true
+        ? (authored.price.deal?.vnd ?? null)
+        : null,
       status: r.status ?? "draft",
       meetingUrl: r.meetingUrl ?? null,
       communityUrl: r.communityUrl ?? null,

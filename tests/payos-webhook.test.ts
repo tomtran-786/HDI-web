@@ -5,6 +5,7 @@ const mocks = vi.hoisted(() => ({
   process: vi.fn(),
   processService: vi.fn(),
   fulfill: vi.fn(),
+  notifyGroup: vi.fn(),
 }));
 
 vi.mock("@/lib/payos", () => ({
@@ -15,7 +16,10 @@ vi.mock("@/lib/orders", () => ({ processPayosPayment: mocks.process }));
 vi.mock("@/lib/service-orders", () => ({
   processServicePayment: mocks.processService,
 }));
-vi.mock("@/lib/fulfillment", () => ({ fulfillOrderDrive: mocks.fulfill }));
+vi.mock("@/lib/fulfillment", () => ({
+  fulfillOrderDrive: mocks.fulfill,
+  notifyGroupMembers: mocks.notifyGroup,
+}));
 
 import { POST } from "@/app/api/webhooks/payos/route";
 
@@ -70,6 +74,7 @@ describe("PayOS webhook route", () => {
       fulfill: true,
     });
     mocks.fulfill.mockResolvedValue({ folders: 1, granted: 1 });
+    mocks.notifyGroup.mockResolvedValue({ notified: 0 });
     const response = await POST(request({ signed: true }));
     expect(response.status).toBe(200);
     expect(mocks.fulfill).toHaveBeenCalledWith("order-1");

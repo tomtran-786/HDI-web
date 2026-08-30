@@ -6,10 +6,19 @@ import { useRouter } from "next/navigation";
 import type { CatalogCourse, CourseAvailability } from "@/lib/cart";
 import { formatVnd } from "@/lib/format";
 import { trackCartAdd, trackCartRemove, trackCheckout } from "@/lib/analytics";
-import { cartModal } from "@/content/checkout";
+import { cartModal, groupPanel } from "@/content/checkout";
+import { GROUP_MIN_SIZE, GROUP_MAX_SIZE, seatPriceVnd } from "@/lib/group-pricing";
 import { IconCart, IconClose } from "./ui/icons";
 
 type CatalogResponse = { catalog: CatalogCourse[]; staleIds: string[] };
+
+type GroupPreview = {
+  groupSize: number;
+  discountApplies: boolean;
+  members: { email: string; registered: boolean; conflict: boolean }[];
+  totalVnd: number;
+  blocked: boolean;
+};
 
 const availabilityLabel: Record<CourseAvailability, string> = {
   ...cartModal.availability,
@@ -48,6 +57,27 @@ export function CartModal({
     checkout,
     {},
   );
+  const [groupOpen, setGroupOpen] = useState(false);
+  const [memberEmails, setMemberEmails] = useState<string[]>([]);
+  const [draft, setDraft] = useState("");
+  const [preview, setPreview] = useState<GroupPreview | null>(null);
+  const [previewLoading, setPreviewLoading] = useState(false);
+  // Mỗi lượt gọi mang một số thứ tự. Người dùng gõ nhanh hơn mạng trả lời, nên
+  // không có nó thì một phản hồi cũ về muộn sẽ ghi đè lên báo giá mới nhất.
+  const previewSeq = useRef(0);
+
+  const addMember = useCallback((raw: string) => {
+    const parts = raw.split(/[,;\s]+/).map((part) => part.trim().toLowerCase());
+    setMemberEmails((current) => {
+      const next = [...current];
+      for (const part of parts) {
+        if (!part || next.includes(part) || next.length >= GROUP_MAX_SIZE - 1) continue;
+        next.push(part);
+      }
+      return next;
+    });
+    setDraft("");
+  }, []);
 
   const loadCatalog = useCallback(async () => {
     setLoading(true);
@@ -110,7 +140,63 @@ export function CartModal({
     const course = byId.get(id);
     return course?.availability === "buyable" ? [course] : [];
   });
-  const totalVnd = selected.reduce((sum, course) => sum + course.priceVnd, 0);
+
+  // Số người tính ngay ở client để giá không nhấp nháy trong lúc chờ preview.
+  // Server vẫn phân giải lại từ đầu — đây chỉ là con số để nhìn.
+  const groupSize = memberEmails.length + 1;
+  const listTotalVnd = selected.reduce(
+    (sum, course) => sum + course.priceVnd * groupSize,
+    0,
+  );
+  const localTotalVnd = selected.reduce(
+    (sum, course) => sum + seatPriceVnd(course, groupSize) * groupSize,
+    0,
+  );
+  // Ưu tiên con số server vừa trả, nhưng chỉ khi nó còn ứng với đúng nhóm hiện
+  // tại — nếu không, một preview cũ sẽ hiện giá của nhóm ít người hơn.
+  const totalVnd =
+    preview && preview.groupSize === groupSize ? preview.totalVnd : localTotalVnd;
+  const discounted = listTotalVnd > totalVnd;
+  const anyGroupEligible = selected.some((course) => course.groupEligible);
+  const blocked = Boolean(preview && preview.groupSize === groupSize && preview.blocked);
+
+  useEffect(() => {
+    if (!open) return;
+    const seq = ++previewSeq.current;
+    const emails = memberEmails;
+    // Mọi setState nằm trong callback của timeout, không nằm thẳng trong thân
+    // effect: gọi đồng bộ ở đây là một vòng render thừa cho mỗi phím gõ.
+    const timer = window.setTimeout(async () => {
+      if (seq !== previewSeq.current) return;
+      if (emails.length === 0) {
+        setPreview(null);
+        setPreviewLoading(false);
+        return;
+      }
+      setPreviewLoading(true);
+      try {
+        const response = await fetch("/api/gio-hang/nhom", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ emails }),
+          cache: "no-store",
+        });
+        if (seq !== previewSeq.current) return;
+        if (!response.ok) {
+          setPreview(null);
+          return;
+        }
+        setPreview((await response.json()) as GroupPreview);
+      } catch (error) {
+        if (seq !== previewSeq.current) return;
+        console.error("[cart] Không báo giá được cho nhóm:", error);
+        setPreview(null);
+      } finally {
+        if (seq === previewSeq.current) setPreviewLoading(false);
+      }
+    }, 350);
+    return () => window.clearTimeout(timer);
+  }, [open, memberEmails, ids]);
 
   return (
     <dialog
@@ -232,15 +318,141 @@ export function CartModal({
               </p>
             ) : (
               <ul className="mt-3 space-y-3">
-                {selected.map((course) => (
-                  <li key={course.id} className="flex items-start justify-between gap-3 text-sm">
-                    <span className="leading-snug text-fg-muted">
-                      <span className="font-bold text-fg">{course.code}</span> · {course.title}
-                    </span>
-                    <span className="shrink-0 font-semibold text-fg">{formatVnd(course.priceVnd)}</span>
-                  </li>
-                ))}
+                {selected.map((course) => {
+                  const unit = seatPriceVnd(course, groupSize);
+                  return (
+                    <li key={course.id} className="flex items-start justify-between gap-3 text-sm">
+                      <span className="leading-snug text-fg-muted">
+                        <span className="font-bold text-fg">{course.code}</span> · {course.title}
+                      </span>
+                      <span className="shrink-0 text-right">
+                        <span className="block font-semibold text-fg">{formatVnd(unit)}</span>
+                        {unit < course.priceVnd && (
+                          <s className="block text-xs font-medium text-fg-subtle">
+                            <span className="sr-only">{groupPanel.listPrice} </span>
+                            {formatVnd(course.priceVnd)}
+                          </s>
+                        )}
+                      </span>
+                    </li>
+                  );
+                })}
               </ul>
+            )}
+
+            {selected.length > 0 && anyGroupEligible && (
+              <div className="mt-5 border-t border-line pt-4">
+                {!groupOpen ? (
+                  <button
+                    type="button"
+                    onClick={() => setGroupOpen(true)}
+                    className="w-full rounded-card border border-primary/40 bg-tint px-3 py-2.5 text-left text-sm font-semibold text-primary transition hover:border-primary"
+                  >
+                    👥 {groupPanel.invite}
+                  </button>
+                ) : (
+                  <div>
+                    <div className="flex items-start justify-between gap-2">
+                      <p className="text-sm font-bold text-fg">{groupPanel.title}</p>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setGroupOpen(false);
+                          setMemberEmails([]);
+                          setDraft("");
+                          setPreview(null);
+                        }}
+                        className="shrink-0 text-xs font-semibold text-fg-subtle underline transition hover:text-primary"
+                      >
+                        {groupPanel.close}
+                      </button>
+                    </div>
+                    <p className="mt-1 text-xs leading-relaxed text-fg-muted">
+                      {groupPanel.intro} {groupPanel.requirement}
+                    </p>
+
+                    <label className="mt-3 block">
+                      <span className="sr-only">{groupPanel.inputLabel}</span>
+                      <span className="flex gap-2">
+                        <input
+                          type="email"
+                          value={draft}
+                          placeholder={groupPanel.placeholder}
+                          onChange={(event) => setDraft(event.target.value)}
+                          onBlur={() => draft.trim() && addMember(draft)}
+                          onKeyDown={(event) => {
+                            if (event.key === "Enter" || event.key === ",") {
+                              event.preventDefault();
+                              addMember(draft);
+                            }
+                          }}
+                          disabled={memberEmails.length >= GROUP_MAX_SIZE - 1}
+                          className="min-w-0 flex-1 rounded-full border border-line bg-card px-3 py-2 text-sm text-fg outline-none transition focus:border-primary disabled:opacity-60"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => addMember(draft)}
+                          disabled={!draft.trim()}
+                          className="shrink-0 rounded-full border border-line px-3 py-2 text-xs font-bold text-fg-muted transition hover:border-primary hover:text-primary disabled:opacity-50"
+                        >
+                          {groupPanel.add}
+                        </button>
+                      </span>
+                    </label>
+
+                    {memberEmails.length > 0 && (
+                      <ul className="mt-3 space-y-1.5">
+                        {memberEmails.map((email) => {
+                          const row = preview?.members.find((m) => m.email === email);
+                          const bad = row && (!row.registered || row.conflict);
+                          const note = !row
+                            ? null
+                            : !row.registered
+                              ? groupPanel.unregistered
+                              : row.conflict
+                                ? groupPanel.conflict
+                                : null;
+                          return (
+                            <li
+                              key={email}
+                              className={`flex items-start justify-between gap-2 rounded-card border px-2.5 py-1.5 text-xs ${
+                                bad ? "border-danger/40 bg-danger/5" : "border-line bg-card"
+                              }`}
+                            >
+                              <span className="min-w-0 flex-1 leading-snug">
+                                <span className="block truncate font-semibold text-fg">
+                                  {bad ? "⚠" : row ? "✓" : "•"} {email}
+                                </span>
+                                {note && <span className="block text-danger">{note}</span>}
+                              </span>
+                              <button
+                                type="button"
+                                aria-label={`${groupPanel.remove}: ${email}`}
+                                onClick={() =>
+                                  setMemberEmails((current) =>
+                                    current.filter((value) => value !== email),
+                                  )
+                                }
+                                className="shrink-0 text-fg-subtle transition hover:text-danger"
+                              >
+                                ✕
+                              </button>
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    )}
+
+                    <p className="mt-2 text-xs font-semibold text-fg-muted" role="status">
+                      {previewLoading
+                        ? groupPanel.checking
+                        : groupSize < GROUP_MIN_SIZE
+                          ? groupPanel.needMore(GROUP_MIN_SIZE - groupSize)
+                          : groupPanel.size(groupSize)}
+                    </p>
+                  </div>
+                )}
+              </div>
             )}
           </aside>
         </div>
@@ -248,18 +460,49 @@ export function CartModal({
         <div className="sticky bottom-0 z-20 border-t border-line bg-card px-5 py-4 sm:px-7">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-fg-subtle">{cartModal.total}</p>
-              <p className="text-2xl font-bold tracking-tight text-primary">{formatVnd(totalVnd)}</p>
+              <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-fg-subtle">
+                {cartModal.total}
+                {groupSize > 1 ? ` · ${groupPanel.size(groupSize)}` : ""}
+              </p>
+              {/* Giá sau giảm là con số to nhất và giá gốc đứng ngay cạnh nó —
+                  cùng cách trình bày với components/ui/price-tag.tsx. */}
+              <p className="flex flex-wrap items-baseline gap-x-2">
+                <span className="text-2xl font-bold tracking-tight text-primary">
+                  {formatVnd(totalVnd)}
+                </span>
+                {discounted && (
+                  <s className="text-sm font-semibold text-fg-subtle">
+                    <span className="sr-only">{groupPanel.listPrice} </span>
+                    {formatVnd(listTotalVnd)}
+                  </s>
+                )}
+              </p>
             </div>
             <form action={action}>
+              {/* Chỉ gửi email và con số đang hiển thị. Server phân giải lại nhóm
+                  và tính lại giá; `tongTienDuKien` chỉ dùng để phát hiện lệch. */}
+              {memberEmails.map((email) => (
+                <input key={email} type="hidden" name="thanhVien" value={email} />
+              ))}
+              <input type="hidden" name="tongTienDuKien" value={String(totalVnd)} />
               <button
                 type="submit"
-                disabled={selected.length === 0 || loading || checkoutPending}
+                disabled={
+                  selected.length === 0 ||
+                  loading ||
+                  checkoutPending ||
+                  previewLoading ||
+                  blocked
+                }
                 onClick={() => trackCheckout(selected.length, totalVnd)}
                 className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-primary px-7 py-3.5 text-sm font-bold text-primary-fg transition hover:bg-primary-deep disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
               >
                 <IconCart size={16} />
-                {checkoutPending ? cartModal.paying : `${cartModal.checkout} · ${formatVnd(totalVnd)}`}
+                {checkoutPending
+                  ? cartModal.paying
+                  : groupSize > 1
+                    ? `${groupPanel.checkout(groupSize)} · ${formatVnd(totalVnd)}`
+                    : `${cartModal.checkout} · ${formatVnd(totalVnd)}`}
               </button>
             </form>
           </div>

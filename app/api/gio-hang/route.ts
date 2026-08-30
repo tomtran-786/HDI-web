@@ -43,6 +43,8 @@ export async function GET() {
         slug: course.slug,
         title: course.title,
         priceVnd: course.priceVnd,
+        groupEligible: course.groupEligible,
+        groupPriceVnd: course.groupPriceVnd,
         capacity: course.capacity,
         seatsLeft: course.seatsLeft,
         availability: course.availability,

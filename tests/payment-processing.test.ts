@@ -89,6 +89,7 @@ describe("append-only PayOS event processing", () => {
     mocks.itemFindMany.mockResolvedValue([
       {
         enrollmentId: "enrollment-1",
+        memberUserId: "user-1",
         enrollment: { userId: "user-1", status: "pending" },
       },
     ]);
@@ -117,5 +118,79 @@ describe("append-only PayOS event processing", () => {
       expect.anything(),
       expect.any(Date),
     );
+  });
+
+  /**
+   * Đơn nhóm: người trả tiền là `order.userId`, còn ghi danh thuộc về từng
+   * thành viên. So ghi danh với người TRẢ TIỀN sẽ đẩy mọi thanh toán nhóm vào
+   * `requires_review` — tiền đã vào tài khoản mà không ai được cấp quyền.
+   */
+  it("xác nhận đơn nhóm có ghi danh thuộc nhiều người khác nhau", async () => {
+    mocks.paymentFindUnique.mockResolvedValue(null);
+    mocks.paymentCreate.mockResolvedValue({ id: "payment-1" });
+    mocks.itemFindMany.mockResolvedValue([
+      {
+        enrollmentId: "enrollment-1",
+        memberUserId: "user-1",
+        enrollment: { userId: "user-1", status: "pending" },
+      },
+      {
+        enrollmentId: "enrollment-2",
+        memberUserId: "user-2",
+        enrollment: { userId: "user-2", status: "pending" },
+      },
+      {
+        enrollmentId: "enrollment-3",
+        memberUserId: "user-3",
+        enrollment: { userId: "user-3", status: "pending" },
+      },
+    ]);
+    mocks.orderUpdateMany.mockResolvedValue({ count: 1 });
+    mocks.confirmEnrollment.mockResolvedValue({ confirmed: true });
+
+    await expect(
+      processPayosPayment({
+        orderCode: 100001,
+        amount: 1_000_000,
+        currency: "VND",
+        reference: "BANK-GROUP",
+        paymentLinkId: "link-1",
+        transactionDateTime: new Date().toISOString(),
+        code: "00",
+        payload: { signed: true },
+      }),
+    ).resolves.toMatchObject({ outcome: "succeeded", enrolled: 3, fulfill: true });
+    expect(mocks.confirmEnrollment).toHaveBeenCalledTimes(3);
+  });
+
+  /**
+   * Ràng buộc chặt hơn bản cũ: một dòng đơn bị gắn nhầm sang ghi danh của người
+   * khác trong cùng nhóm phải bị giữ lại để người thật xem, chứ không được tự
+   * cấp quyền cho nhầm người.
+   */
+  it("giữ lại để kiểm tra khi ghi danh không thuộc người được khai trên dòng đơn", async () => {
+    mocks.paymentFindUnique.mockResolvedValue(null);
+    mocks.paymentCreate.mockResolvedValue({ id: "payment-1" });
+    mocks.itemFindMany.mockResolvedValue([
+      {
+        enrollmentId: "enrollment-1",
+        memberUserId: "user-2",
+        enrollment: { userId: "user-3", status: "pending" },
+      },
+    ]);
+
+    await expect(
+      processPayosPayment({
+        orderCode: 100001,
+        amount: 1_000_000,
+        currency: "VND",
+        reference: "BANK-MISMATCH",
+        paymentLinkId: "link-1",
+        transactionDateTime: new Date().toISOString(),
+        code: "00",
+        payload: { signed: true },
+      }),
+    ).resolves.toMatchObject({ outcome: "requires_review" });
+    expect(mocks.confirmEnrollment).not.toHaveBeenCalled();
   });
 });

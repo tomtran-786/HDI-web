@@ -2,6 +2,7 @@ import { prisma } from "./prisma";
 import { confirmEnrollment } from "./enrollment";
 import { findCourse } from "./courses";
 import { isPayosNotFound, payosClient } from "./payos";
+import { seatPriceVnd, type GroupPricedCourse } from "./group-pricing";
 
 /**
  * How long a pending order holds its seats.
@@ -19,20 +20,23 @@ export type OrderFailure = {
   message: string;
 };
 
+/** Người trả tiền, rồi tới các thành viên, theo đúng thứ tự nhóm trưởng gõ. */
+export type OrderBuyer = { id: string; email: string };
+
 export type OrderSuccess = {
   ok: true;
   orderId: string;
   code: number;
   amountVnd: number;
+  groupSize: number;
   expiresAt: Date;
 };
 
 export type OrderResult = OrderSuccess | OrderFailure;
 
-type LockedCourse = {
+type LockedCourse = GroupPricedCourse & {
   id: string;
   slug: string;
-  priceVnd: number;
   capacity: number;
   status: string;
 };
@@ -47,14 +51,33 @@ type LockedCourse = {
  * two overlapping baskets from deadlocking against each other.
  *
  * Prices are read here, from the database, and never taken from the caller.
+ *
+ * Đơn nhóm KHÔNG có nhánh riêng. `members` là danh sách người học, phần tử đầu
+ * là người trả tiền; mua lẻ chỉ là nhóm một người. Một nhánh riêng cho nhóm sẽ
+ * là một chỗ nữa để quên khóa dòng hoặc quên đếm ghế.
  */
 export async function createOrder(
-  userId: string,
+  payerUserId: string,
   courseIds: string[],
+  options: { members?: OrderBuyer[] } = {},
 ): Promise<OrderResult> {
   if (courseIds.length === 0) {
     return { ok: false, reason: "empty", message: "Giỏ hàng đang trống." };
   }
+
+  // Khử trùng theo user id, không theo email. `normalizeMemberEmails` đã bỏ
+  // email của nhóm trưởng, nhưng session thiếu email hoặc hai địa chỉ cùng trỏ
+  // về một tài khoản vẫn lọt tới đây — và hai ghế cùng một người sẽ đâm vào
+  // partial unique index của enrollments, tức một lỗi 500 giữa luồng thanh toán.
+  const seen = new Set<string>();
+  const buyers: OrderBuyer[] = [];
+  for (const buyer of [{ id: payerUserId, email: "" }, ...(options.members ?? [])]) {
+    if (seen.has(buyer.id)) continue;
+    seen.add(buyer.id);
+    buyers.push(buyer);
+  }
+  const groupSize = buyers.length;
+  const buyerIds = buyers.map((buyer) => buyer.id);
 
   const sorted = [...new Set(courseIds)].sort();
 
@@ -66,7 +89,9 @@ export async function createOrder(
     const locked = await tx.$queryRaw<LockedCourse[]>`
       SELECT id,
              slug,
-             price_vnd   AS "priceVnd",
+             price_vnd       AS "priceVnd",
+             group_eligible  AS "groupEligible",
+             group_price_vnd AS "groupPriceVnd",
              capacity,
              status::text AS status
         FROM courses
@@ -105,21 +130,25 @@ export async function createOrder(
              )
            )
          GROUP BY course_id`,
+      // Mọi người trong nhóm, không riêng người trả tiền: một thành viên đã có
+      // quyền cho khóa này thì partial unique index sẽ chặn ở lệnh ghi, và một
+      // lỗi ràng buộc thô không nói được cho nhóm trưởng biết vướng ở ai.
       tx.enrollment.findMany({
         where: {
-          userId,
+          userId: { in: buyerIds },
           courseId: { in: sorted },
           OR: [
             { status: "pending" },
             { status: "paid", accessRevokedAt: null },
           ],
         },
-        select: { courseId: true },
+        select: { courseId: true, userId: true },
       }),
     ]);
 
     const taken = new Map(counts.map((row) => [row.courseId, Number(row.held)]));
-    const existing = new Set(mine.map((row) => row.courseId));
+    const existing = new Set(mine.map((row) => `${row.userId}:${row.courseId}`));
+    const emailById = new Map(buyers.map((buyer) => [buyer.id, buyer.email]));
 
     // Validate the whole basket before writing anything. A half-placed order is
     // worse than a refused one, and refusing costs the student one message
@@ -134,19 +163,31 @@ export async function createOrder(
         };
       }
 
-      if (existing.has(id)) {
+      const title = findCourse(course.slug)?.title ?? course.slug;
+
+      const clash = buyerIds.find((buyerId) => existing.has(`${buyerId}:${id}`));
+      if (clash) {
+        const email = emailById.get(clash);
         return {
           ok: false as const,
           reason: "already_enrolled" as const,
-          message: `Bạn đang có quyền hoặc đơn chờ thanh toán cho khóa ${findCourse(course.slug)?.title ?? course.slug}.`,
+          message: email
+            ? `Bạn ${email} đang có quyền hoặc đơn chờ thanh toán cho khóa ${title}.`
+            : `Bạn đang có quyền hoặc đơn chờ thanh toán cho khóa ${title}.`,
         };
       }
 
-      if ((taken.get(id) ?? 0) >= course.capacity) {
+      // Nhóm chiếm đúng `groupSize` ghế, nên phép so là "còn đủ chỗ cho cả
+      // nhóm" chứ không phải "còn ít nhất một chỗ".
+      if ((taken.get(id) ?? 0) + groupSize > course.capacity) {
+        const seatsLeft = Math.max(0, course.capacity - (taken.get(id) ?? 0));
         return {
           ok: false as const,
           reason: "no_seats" as const,
-          message: `Khóa ${findCourse(course.slug)?.title ?? course.slug} đã hết chỗ.`,
+          message:
+            groupSize > 1
+              ? `Khóa ${title} chỉ còn ${seatsLeft} chỗ, không đủ cho nhóm ${groupSize} người.`
+              : `Khóa ${title} đã hết chỗ.`,
         };
       }
     }
@@ -156,30 +197,38 @@ export async function createOrder(
 
     const items: {
       courseId: string;
+      memberUserId: string;
       priceVnd: number;
       enrollmentId: string;
     }[] = [];
 
     for (const id of sorted) {
       const course = byId.get(id)!;
-      // Every purchase gets a new access window. Old paid/cancelled rows remain
-      // immutable history and are never reset in place.
-      const enrollment = await tx.enrollment.create({
-        data: { userId, courseId: id },
-        select: { id: true },
-      });
+      // Giá một ghế tính MỘT lần cho cả nhóm: mọi thành viên trả như nhau, và
+      // làm tròn đã xảy ra trong seatPriceVnd.
+      const priceVnd = seatPriceVnd(course, groupSize);
+      for (const buyer of buyers) {
+        // Every purchase gets a new access window. Old paid/cancelled rows remain
+        // immutable history and are never reset in place.
+        const enrollment = await tx.enrollment.create({
+          data: { userId: buyer.id, courseId: id },
+          select: { id: true },
+        });
 
-      items.push({
-        courseId: id,
-        priceVnd: course.priceVnd,
-        enrollmentId: enrollment.id,
-      });
+        items.push({
+          courseId: id,
+          memberUserId: buyer.id,
+          priceVnd,
+          enrollmentId: enrollment.id,
+        });
+      }
     }
 
     const order = await tx.order.create({
       data: {
-        userId,
+        userId: payerUserId,
         amountVnd: items.reduce((sum, i) => sum + i.priceVnd, 0),
+        groupSize,
         expiresAt,
         provider: "payos",
         items: { create: items },
@@ -192,6 +241,7 @@ export async function createOrder(
       orderId: order.id,
       code: order.code,
       amountVnd: order.amountVnd,
+      groupSize,
       expiresAt,
     };
   });
@@ -316,16 +366,22 @@ export async function processPayosPayment(input: PayosPaymentEvent) {
       where: { orderId: order.id },
       select: {
         enrollmentId: true,
+        memberUserId: true,
         enrollment: { select: { userId: true, status: true } },
       },
       orderBy: { id: "asc" },
     });
+    // Ghi danh phải thuộc đúng người được khai trên CHÍNH dòng đơn đó, không
+    // phải thuộc người trả tiền. Với đơn lẻ hai vế bằng nhau nên không đổi gì;
+    // với đơn nhóm, so theo người trả tiền sẽ đẩy mọi thanh toán nhóm vào
+    // `requires_review`. Bản này còn chặt hơn bản cũ: nó bắt được cả trường hợp
+    // một dòng đơn bị gắn nhầm sang ghi danh của người khác trong nhóm.
     const consistentEnrollments =
       items.length > 0 &&
       items.every(
         (item) =>
           item.enrollmentId &&
-          item.enrollment?.userId === order.userId &&
+          item.enrollment?.userId === item.memberUserId &&
           item.enrollment.status === "pending",
       );
 

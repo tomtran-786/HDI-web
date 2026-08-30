@@ -180,6 +180,50 @@ export function sendFeedbackReceivedEmail(input: FeedbackEmailInput) {
   });
 }
 
+/**
+ * Báo cho một thành viên rằng người khác vừa trả tiền ghi danh giúp họ.
+ *
+ * KHÔNG phải thư xã giao. Ngay sau webhook, người này nhận được lời mời chia sẻ
+ * một thư mục Google Drive từ một tài khoản HDI cho khóa học họ chưa từng mua —
+ * nếu không có thư này, thứ duy nhất họ thấy là một lời mời lạ trông hệt như
+ * lừa đảo. Vì vậy thư nêu đích danh người đã trả tiền và một đường kiểm chứng.
+ *
+ * Nhóm trưởng KHÔNG nhận thư này: họ vừa tự bấm thanh toán và đã thấy trang kết
+ * quả.
+ */
+export function sendGroupMemberEnrolledEmail(input: {
+  to: string;
+  name: string;
+  payerName: string;
+  payerEmail: string;
+  courseTitles: string[];
+  orderCode: number;
+}) {
+  const courses = input.courseTitles
+    .map((title) => `<li>${escapeHtml(title)}</li>`)
+    .join("");
+  // Tên hiển thị do người dùng tự đặt nên có thể trống hoặc là một chuỗi bất
+  // kỳ; email thì đã xác thực, nên nó mới là thứ nhận diện được người trả tiền.
+  const payer = input.payerName.trim()
+    ? `${escapeHtml(input.payerName.trim())} (${escapeHtml(input.payerEmail)})`
+    : escapeHtml(input.payerEmail);
+
+  return sendEmail({
+    to: input.to,
+    subject: "Bạn đã được ghi danh theo nhóm — HDI Research Center",
+    html: emailShell(
+      input.name?.trim() || "bạn",
+      `<p><strong>${payer}</strong> đã đăng ký theo nhóm và thanh toán học phí giúp bạn các khóa sau:</p>` +
+        `<ul>${courses}</ul>` +
+        `<p>Mã đơn: <strong>${input.orderCode}</strong>. Quyền truy cập học liệu được cấp vào chính địa chỉ email này, ` +
+        "bạn không cần thanh toán thêm. Link vào lớp và trạng thái cấp quyền nằm trong trang tài khoản.</p>" +
+        "<p style=\"font-size:13px;color:#6b7785\">Nếu bạn không quen người nêu trên hoặc cho rằng đây là nhầm lẫn, " +
+        "vui lòng liên hệ HDI để chúng tôi kiểm tra lại đơn này.</p>",
+      { action: "Xem khóa học của bạn", href: `${appUrl()}/tai-khoan` },
+    ),
+  });
+}
+
 export function sendFeedbackResolvedEmail(input: FeedbackEmailInput) {
   return sendEmail({
     to: input.to,
