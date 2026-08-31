@@ -85,7 +85,16 @@ export async function checkout(
   const raw = formData.get("tongTienDuKien");
   const expected = typeof raw === "string" && raw.trim() !== "" ? Number(raw) : null;
   if (expected !== null && Number.isInteger(expected) && expected !== result.amountVnd) {
-    await cancelOrder(result.orderId, { userId: session.user.id });
+    const rolledBack = await cancelOrder(result.orderId, { userId: session.user.id });
+    // ĐỌC kết quả, không chỉ `await`. Khi hủy không thành — PayOS chập, hoặc
+    // link đã nhận tiền — đơn vừa tạo vẫn đang giữ ghế, giữ credits và giữ suất
+    // giảm giá "đơn đầu tiên" của chính người này. Bảo họ "kiểm tra lại giỏ
+    // hàng" khi đó là chỉ sai đường: quay lại giỏ sẽ ra một con số khác nữa, vì
+    // số dư credits đang bị chính đơn treo kia trừ mất. Trang đơn hàng mới là
+    // nơi có nút hủy và nút thanh toán lại.
+    // Giỏ hàng KHÔNG bị dọn ở nhánh này. Đơn treo có thể được hủy từ trang kia,
+    // và khi đó người mua cần giỏ của mình còn nguyên để thử lại.
+    if (!rolledBack.cancelled) redirect(`/tai-khoan/don-hang/${result.code}`);
     return {
       error:
         "Số tiền vừa thay đổi so với lúc bạn xem giỏ hàng. Vui lòng kiểm tra lại rồi thanh toán.",

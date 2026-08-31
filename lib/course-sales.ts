@@ -53,7 +53,18 @@ export async function seatsTaken(courseIds: string[]) {
   return taken;
 }
 
-/** The active course reservations/access windows owned by one student. */
+/**
+ * The active course reservations/access windows owned by one student.
+ *
+ * CỐ Ý bất đối xứng với `seatsTaken` ở trên: chỗ kia bỏ qua ghi danh `pending`
+ * thuộc đơn đã quá hạn, chỗ này thì không. Nới điều kiện ở đây sẽ nói với học
+ * viên rằng khóa còn mua được, rồi `enrollments_user_id_course_id_active_key`
+ * — một partial unique index không biết gì về `orders.expires_at` — sẽ chặn
+ * lệnh ghi bằng một lỗi P2002 giữa luồng thanh toán. Đường đúng là ĐÓNG đơn
+ * chết, và `app/api/gio-hang/route.ts` gọi `reconcileStaleOrdersForPayer`
+ * ngay trước khi dùng hàm này. Nhãn "Đang chờ thanh toán" vì vậy chỉ còn xuất
+ * hiện khi PayOS không liên lạc được — lúc đó nó đang nói đúng sự thật.
+ */
 export async function heldByUser(userId: string, courseIds: string[]) {
   const held = new Map<string, EnrollmentStatus>();
   if (courseIds.length === 0) return held;

@@ -5,7 +5,7 @@ const mocks = vi.hoisted(() => ({
   transaction: vi.fn(),
   queryRaw: vi.fn(),
   enrollmentFindMany: vi.fn(),
-  enrollmentCreate: vi.fn(),
+  enrollmentCreateMany: vi.fn(),
   orderCreate: vi.fn(),
   orderFindFirst: vi.fn(),
   orderFindMany: vi.fn(),
@@ -19,7 +19,7 @@ vi.mock("@/lib/prisma", () => ({
     order: { findMany: mocks.orderFindMany },
   },
 }));
-vi.mock("@/lib/enrollment", () => ({ confirmEnrollment: vi.fn() }));
+vi.mock("@/lib/enrollment", () => ({ confirmEnrollments: vi.fn() }));
 vi.mock("@/lib/payos", () => ({
   payosClient: vi.fn(),
   isPayosNotFound: vi.fn(() => true),
@@ -59,7 +59,10 @@ beforeEach(() => {
   mocks.orderFindFirst.mockResolvedValue(null);
   mocks.enrollmentFindMany.mockResolvedValue([]);
   mocks.ledgerAggregate.mockResolvedValue({ _sum: { amountVnd: null } });
-  mocks.enrollmentCreate.mockResolvedValue({ id: "enrollment-1" });
+  mocks.enrollmentCreateMany.mockImplementation(
+    async ({ data }: { data: { userId: string; courseId: string }[] }) =>
+      data.map((row, index) => ({ id: `enrollment-${index + 1}`, ...row })),
+  );
   mocks.orderCreate.mockImplementation(
     async ({ data }: { data: { amountVnd: number } }) => ({
       id: "order-1",
@@ -72,7 +75,7 @@ beforeEach(() => {
       $queryRaw: mocks.queryRaw,
       enrollment: {
         findMany: mocks.enrollmentFindMany,
-        create: mocks.enrollmentCreate,
+        createManyAndReturn: mocks.enrollmentCreateMany,
       },
       order: { create: mocks.orderCreate, findFirst: mocks.orderFindFirst },
       referralLedger: {
@@ -232,5 +235,42 @@ describe("thứ tự khóa dòng", () => {
     expect(sql[0]).toContain("FOR UPDATE");
     expect(sql[1]).toContain("FROM courses");
     expect(sql[1]).toContain("FOR UPDATE");
+  });
+});
+/**
+ * Credits và ưu đãi "đơn đầu tiên" thuộc về NGƯỜI, không thuộc về khóa học.
+ *
+ * `reconcileStaleOrdersForCourses` chỉ nhìn các khóa trong giỏ, nên bỏ dở một
+ * lần checkout rồi quay lại với một khóa khác là đơn cũ không được đụng tới —
+ * và chừng nào nó chưa đóng, `claimed` vẫn đọc nó là "đã dùng ưu đãi" còn dòng
+ * `reserved` trong sổ vẫn trừ vào số dư. Trước đây chỉ cron hằng ngày mới gỡ,
+ * tức học viên mất tiền thưởng của mình tới 24 giờ trên một tài khoản Hobby.
+ */
+describe("dọn đơn quá hạn trước khi định giá", () => {
+  it("quét cả theo khóa trong giỏ lẫn theo chính người trả tiền", async () => {
+    lockRows(null);
+
+    await createOrder("user-1", ["course-1"]);
+
+    const scopes = mocks.orderFindMany.mock.calls.map((call) => call[0].where);
+    expect(scopes).toEqual([
+      expect.objectContaining({
+        status: "pending",
+        items: { some: { courseId: { in: ["course-1"] } } },
+      }),
+      expect.objectContaining({ status: "pending", userId: "user-1" }),
+    ]);
+  });
+
+  /** Cả hai lượt quét đều có trần, để một chồng đơn bị bỏ dở không làm treo
+   * chính request đang cố dọn chúng: mỗi đơn có thể là hai lượt gọi PayOS. */
+  it("giới hạn số đơn mỗi lượt quét", async () => {
+    lockRows(null);
+
+    await createOrder("user-1", ["course-1"]);
+
+    for (const call of mocks.orderFindMany.mock.calls) {
+      expect(call[0].take).toBeLessThanOrEqual(5);
+    }
   });
 });

@@ -11,11 +11,11 @@ const mocks = vi.hoisted(() => ({
   userFindUnique: vi.fn(),
   ledgerUpdateMany: vi.fn(),
   ledgerCreateMany: vi.fn(),
-  confirmEnrollment: vi.fn(),
+  confirmEnrollments: vi.fn(),
 }));
 
 vi.mock("@/lib/prisma", () => ({ prisma: { $transaction: mocks.transaction } }));
-vi.mock("@/lib/enrollment", () => ({ confirmEnrollment: mocks.confirmEnrollment }));
+vi.mock("@/lib/enrollment", () => ({ confirmEnrollments: mocks.confirmEnrollments }));
 
 import { processPayosPayment } from "@/lib/orders";
 
@@ -69,7 +69,7 @@ beforeEach(() => {
     },
   ]);
   mocks.orderUpdateMany.mockResolvedValue({ count: 1 });
-  mocks.confirmEnrollment.mockResolvedValue({ confirmed: true });
+  mocks.confirmEnrollments.mockResolvedValue({ confirmed: 1 });
   mocks.userFindUnique.mockResolvedValue({ referredById: "user-referrer" });
   mocks.transaction.mockImplementation(async (callback: (tx: unknown) => unknown) =>
     callback({

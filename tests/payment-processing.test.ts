@@ -10,14 +10,14 @@ const mocks = vi.hoisted(() => ({
   userFindUnique: vi.fn(),
   ledgerUpdateMany: vi.fn(),
   ledgerCreateMany: vi.fn(),
-  confirmEnrollment: vi.fn(),
+  confirmEnrollments: vi.fn(),
 }));
 
 vi.mock("@/lib/prisma", () => ({
   prisma: { $transaction: mocks.transaction },
 }));
 vi.mock("@/lib/enrollment", () => ({
-  confirmEnrollment: mocks.confirmEnrollment,
+  confirmEnrollments: mocks.confirmEnrollments,
 }));
 
 import { processPayosPayment } from "@/lib/orders";
@@ -85,7 +85,7 @@ describe("append-only PayOS event processing", () => {
     expect(mocks.paymentCreate).not.toHaveBeenCalled();
     expect(mocks.itemFindMany).not.toHaveBeenCalled();
     expect(mocks.orderUpdateMany).not.toHaveBeenCalled();
-    expect(mocks.confirmEnrollment).not.toHaveBeenCalled();
+    expect(mocks.confirmEnrollments).not.toHaveBeenCalled();
   });
 
   /**
@@ -129,7 +129,7 @@ describe("append-only PayOS event processing", () => {
     // Không ghi thêm sự kiện nào và không xác nhận lại ghi danh: chỉ giao hàng.
     expect(mocks.paymentCreate).not.toHaveBeenCalled();
     expect(mocks.orderUpdateMany).not.toHaveBeenCalled();
-    expect(mocks.confirmEnrollment).not.toHaveBeenCalled();
+    expect(mocks.confirmEnrollments).not.toHaveBeenCalled();
   });
 
   /** Đơn chưa `paid` thì không có gì để giao, dù tham chiếu đã tồn tại. */
@@ -174,7 +174,7 @@ describe("append-only PayOS event processing", () => {
       },
     ]);
     mocks.orderUpdateMany.mockResolvedValue({ count: 1 });
-    mocks.confirmEnrollment.mockResolvedValue({ confirmed: true });
+    mocks.confirmEnrollments.mockResolvedValue({ confirmed: 1 });
 
     await expect(
       processPayosPayment({
@@ -193,8 +193,8 @@ describe("append-only PayOS event processing", () => {
         data: expect.objectContaining({ providerRef: "signed-link-id" }),
       }),
     );
-    expect(mocks.confirmEnrollment).toHaveBeenCalledWith(
-      "enrollment-1",
+    expect(mocks.confirmEnrollments).toHaveBeenCalledWith(
+      ["enrollment-1"],
       expect.anything(),
       expect.any(Date),
     );
@@ -226,7 +226,7 @@ describe("append-only PayOS event processing", () => {
       },
     ]);
     mocks.orderUpdateMany.mockResolvedValue({ count: 1 });
-    mocks.confirmEnrollment.mockResolvedValue({ confirmed: true });
+    mocks.confirmEnrollments.mockResolvedValue({ confirmed: 3 });
 
     await expect(
       processPayosPayment({
@@ -240,7 +240,16 @@ describe("append-only PayOS event processing", () => {
         payload: { signed: true },
       }),
     ).resolves.toMatchObject({ outcome: "succeeded", enrolled: 3, fulfill: true });
-    expect(mocks.confirmEnrollment).toHaveBeenCalledTimes(3);
+    // MỘT lời gọi mang cả ba ghi danh, không phải ba lời gọi. Một truy vấn cho
+    // mỗi ghế là thứ đã đẩy transaction này vượt hạn ở những đơn nhóm lớn — và
+    // khi nó vượt hạn thì hàng `payments` vừa ghi cũng rollback theo, nên khoản
+    // tiền đã vào tài khoản không để lại dấu vết nào để đối soát.
+    expect(mocks.confirmEnrollments).toHaveBeenCalledTimes(1);
+    expect(mocks.confirmEnrollments.mock.calls[0][0]).toEqual([
+      "enrollment-1",
+      "enrollment-2",
+      "enrollment-3",
+    ]);
   });
 
   /**
@@ -271,6 +280,6 @@ describe("append-only PayOS event processing", () => {
         payload: { signed: true },
       }),
     ).resolves.toMatchObject({ outcome: "requires_review" });
-    expect(mocks.confirmEnrollment).not.toHaveBeenCalled();
+    expect(mocks.confirmEnrollments).not.toHaveBeenCalled();
   });
 });

@@ -84,3 +84,57 @@ export async function confirmEnrollment(
     ? { confirmed: false, reason: "already_handled" as const }
     : { confirmed: true, reason: "ok" as const };
 }
+
+/**
+ * The batched form of `confirmEnrollment`, for one order's worth of seats.
+ *
+ * Semantics are identical — the same conditional `updateMany` on `pending` is
+ * what makes a redelivered webhook a no-op — but the number of round trips no
+ * longer scales with the number of seats. That matters because this runs INSIDE
+ * the webhook's transaction: a group of ten buying several courses is dozens of
+ * order lines, and one query per line per seat pushed the transaction past
+ * Prisma's timeout. When that happened the whole transaction rolled back, so
+ * the `payments` row recording the money vanished with it and the transfer left
+ * no trace anywhere — not even in the reconciliation queue.
+ *
+ * Enrolments are grouped by their course's `accessDays` because that is the
+ * only per-row input to the write; every row in a group gets the same
+ * `accessExpiresAt`, so each group is exactly one UPDATE.
+ */
+export async function confirmEnrollments(
+  enrollmentIds: string[],
+  db: Db = prisma,
+  paidAt = new Date(),
+) {
+  if (enrollmentIds.length === 0) return { confirmed: 0 };
+
+  const rows = await db.enrollment.findMany({
+    where: { id: { in: enrollmentIds } },
+    select: { id: true, course: { select: { accessDays: true } } },
+  });
+
+  // `null` accessDays means "no expiry", which is a distinct key from any
+  // number — hence a Map keyed by the raw value rather than a coerced one.
+  const byAccessDays = new Map<number | null, string[]>();
+  for (const row of rows) {
+    const key = row.course.accessDays;
+    const group = byAccessDays.get(key) ?? [];
+    group.push(row.id);
+    byAccessDays.set(key, group);
+  }
+
+  let confirmed = 0;
+  for (const [accessDays, ids] of byAccessDays) {
+    const flipped = await db.enrollment.updateMany({
+      where: { id: { in: ids }, status: "pending" },
+      data: {
+        status: "paid",
+        paidAt,
+        accessExpiresAt: accessExpiry(accessDays, paidAt),
+      },
+    });
+    confirmed += flipped.count;
+  }
+
+  return { confirmed };
+}

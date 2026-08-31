@@ -1,5 +1,6 @@
+import { CHECKOUT_TX, PAYMENT_TX } from "./db-budget";
 import { prisma } from "./prisma";
-import { confirmEnrollment } from "./enrollment";
+import { confirmEnrollments } from "./enrollment";
 import { findCourse } from "./courses";
 import { isPayosNotFound, payosClient } from "./payos";
 import { seatPriceVnd, type GroupPricedCourse } from "./group-pricing";
@@ -102,7 +103,14 @@ export async function createOrder(
 
   // Never hold row locks while calling PayOS. Reconcile candidates first; the
   // transaction below still performs the authoritative seat count.
+  //
+  // Hai phạm vi, không phải một: theo KHÓA để trả lại ghế đang bị đơn chết giữ,
+  // và theo NGƯỜI để trả lại credits cùng suất giảm giá "đơn đầu tiên" của
+  // chính người sắp trả tiền. Tuần tự chứ không `Promise.all`: hai lượt có thể
+  // cùng nhắm vào một đơn, và chạy song song là hai lượt gọi PayOS cho cùng một
+  // link.
   await reconcileStaleOrdersForCourses(sorted);
+  await reconcileStaleOrdersForPayer(payerUserId);
 
   return prisma.$transaction(async (tx) => {
     /**
@@ -169,6 +177,12 @@ export async function createOrder(
       // Mọi người trong nhóm, không riêng người trả tiền: một thành viên đã có
       // quyền cho khóa này thì partial unique index sẽ chặn ở lệnh ghi, và một
       // lỗi ràng buộc thô không nói được cho nhóm trưởng biết vướng ở ai.
+      //
+      // KHÔNG xét `orders.expires_at` ở đây, dù truy vấn đếm ghế ngay bên trên
+      // thì có. Đó chính là index vừa nói: nó chỉ nhìn `enrollments.status`, nên
+      // nới điều kiện ở đây là đổi một thông báo đọc được lấy một lỗi P2002.
+      // Đơn quá hạn đã được `reconcileStaleOrdersForCourses` và
+      // `reconcileStaleOrdersForPayer` đóng trước khi vào transaction này.
       tx.enrollment.findMany({
         where: {
           userId: { in: buyerIds },
@@ -251,34 +265,36 @@ export async function createOrder(
     const now = new Date();
     const expiresAt = new Date(now.getTime() + ORDER_TTL_HOURS * 3600 * 1000);
 
-    const items: {
-      courseId: string;
-      memberUserId: string;
-      priceVnd: number;
-      enrollmentId: string;
-    }[] = [];
+    // Giá một ghế tính MỘT lần cho mỗi khóa: mọi thành viên trả như nhau, và
+    // làm tròn đã xảy ra trong seatPriceVnd.
+    const seatPrice = new Map(
+      sorted.map((id) => [id, seatPriceVnd(byId.get(id)!, groupSize)] as const),
+    );
 
-    for (const id of sorted) {
-      const course = byId.get(id)!;
-      // Giá một ghế tính MỘT lần cho cả nhóm: mọi thành viên trả như nhau, và
-      // làm tròn đã xảy ra trong seatPriceVnd.
-      const priceVnd = seatPriceVnd(course, groupSize);
-      for (const buyer of buyers) {
-        // Every purchase gets a new access window. Old paid/cancelled rows remain
-        // immutable history and are never reset in place.
-        const enrollment = await tx.enrollment.create({
-          data: { userId: buyer.id, courseId: id },
-          select: { id: true },
-        });
+    /**
+     * Every purchase gets a new access window. Old paid/cancelled rows remain
+     * immutable history and are never reset in place.
+     *
+     * MỘT lệnh ghi cho cả đơn, không phải một lệnh cho mỗi ghế. Nhóm mười người
+     * mua vài khóa là hàng chục ghế, và mỗi ghế một round-trip đẩy transaction
+     * này vượt hạn của Prisma — khi đó cả đơn lẫn ghi danh cùng rollback ngay
+     * giữa luồng thanh toán, và học viên chỉ thấy một lỗi 500 không giải thích
+     * được. `(userId, courseId)` là duy nhất trong lô vì `buyers` đã khử trùng
+     * theo id và `sorted` là một tập hợp, nên ánh xạ ngược bên dưới không mơ hồ.
+     */
+    const created = await tx.enrollment.createManyAndReturn({
+      data: sorted.flatMap((id) =>
+        buyers.map((buyer) => ({ userId: buyer.id, courseId: id })),
+      ),
+      select: { id: true, userId: true, courseId: true },
+    });
 
-        items.push({
-          courseId: id,
-          memberUserId: buyer.id,
-          priceVnd,
-          enrollmentId: enrollment.id,
-        });
-      }
-    }
+    const items = created.map((enrollment) => ({
+      courseId: enrollment.courseId,
+      memberUserId: enrollment.userId,
+      priceVnd: seatPrice.get(enrollment.courseId)!,
+      enrollmentId: enrollment.id,
+    }));
 
     const subtotalVnd = items.reduce((sum, i) => sum + i.priceVnd, 0);
 
@@ -347,7 +363,7 @@ export async function createOrder(
       groupSize,
       expiresAt,
     };
-  });
+  }, CHECKOUT_TX);
 }
 
 export type PayosPaymentEvent = {
@@ -417,6 +433,52 @@ export function classifyPayosPayment(input: {
 }
 
 /**
+ * Mô tả đọc được của việc một giao dịch phải vào hàng chờ đối soát.
+ *
+ * `classifyPayosPayment` cố ý chỉ trả về một phán quyết — nó là cửa quyết định
+ * có cấp quyền hay không, và một cửa như vậy càng ít nhánh càng tốt. Nhưng
+ * người phải xử lý hàng chờ thì cần biết vướng ở đâu, và "sai số tiền" với
+ * "đơn đã đóng" là hai việc phải làm hoàn toàn khác nhau.
+ *
+ * Thứ tự các mệnh đề khớp đúng thứ tự trong `classifyPayosPayment`, nên câu trả
+ * lời luôn là điều kiện ĐẦU TIÊN không thỏa.
+ */
+export function payosReviewReason(
+  input: Parameters<typeof classifyPayosPayment>[0],
+): string {
+  if (input.providerCode !== "00") {
+    return `PayOS trả mã lỗi ${input.providerCode}`;
+  }
+  if (input.orderStatus !== "pending") {
+    return `Đơn không còn chờ thanh toán (đang ở "${input.orderStatus}")`;
+  }
+  if (input.receivedAmount !== input.expectedAmount) return "Số tiền không khớp";
+  if (input.currency !== "VND") return `Đơn vị tiền tệ lạ (${input.currency})`;
+  if (!input.transactionAt) return "Không đọc được thời điểm giao dịch";
+  if (input.transactionAt > input.expiresAt) return "Giao dịch xảy ra sau hạn đơn";
+  if (!input.paymentLinkMatches) return "Payment link không khớp với đơn";
+  if (!input.consistentEnrollments) return "Ghi danh của đơn không nhất quán";
+  return "Không xác định";
+}
+
+/**
+ * Những gì một quản trị viên cần biết để bắt đầu xử lý một khoản tiền treo.
+ *
+ * Trả về từ transaction thay vì gửi thư ngay tại chỗ: gửi thư là một lượt gọi
+ * mạng ra ngoài, và giữ một hàng đơn bị khóa suốt lượt gọi đó là đúng cái điều
+ * mà `notifyGroupMembers` đã được đẩy ra ngoài transaction để tránh.
+ */
+export type PaymentReview = {
+  label: string;
+  reason: string;
+  /** Số tiền đơn đang chờ. `null` chỉ để lá thư còn dựng được nếu về sau có một
+   *  nguồn sự kiện không gắn với đơn nào. */
+  expectedVnd: number | null;
+  receivedVnd: number;
+  providerRef: string;
+};
+
+/**
  * Record a signed PayOS event and update the order aggregate in one short
  * transaction. A crash can therefore leave neither half committed.
  */
@@ -446,7 +508,19 @@ export async function processPayosPayment(input: PayosPaymentEvent) {
       select: { orderId: true, status: true },
     });
     if (existing && existing.orderId !== order.id) {
-      return { handled: true as const, outcome: "reference_conflict" as const };
+      return {
+        handled: true as const,
+        outcome: "reference_conflict" as const,
+        // Cùng một mã giao dịch ngân hàng gắn với hai đơn khác nhau. Không có
+        // đường tự xử lý nào đúng ở đây, nên nó luôn phải tới tay một con người.
+        review: {
+          label: `Đơn #${input.orderCode}`,
+          reason: "Mã giao dịch đã thuộc về một đơn khác",
+          expectedVnd: order.amountVnd,
+          receivedVnd: input.amount,
+          providerRef,
+        } satisfies PaymentReview,
+      };
     }
     if (existing) {
       // A bank reference identifies one immutable provider event. Never let a
@@ -502,7 +576,10 @@ export async function processPayosPayment(input: PayosPaymentEvent) {
           item.enrollment.status === "pending",
       );
 
-    const paymentStatus = classifyPayosPayment({
+    // Một object, dùng cho cả phán quyết lẫn lời giải thích. Dựng lại lần thứ
+    // hai cho `payosReviewReason` là mở đường cho hai bên nói khác nhau về cùng
+    // một sự kiện.
+    const classifierInput = {
       providerCode: input.code,
       orderStatus: order.status,
       expectedAmount: order.amountVnd,
@@ -512,7 +589,8 @@ export async function processPayosPayment(input: PayosPaymentEvent) {
       expiresAt: order.expiresAt,
       paymentLinkMatches,
       consistentEnrollments,
-    });
+    };
+    const paymentStatus = classifyPayosPayment(classifierInput);
 
     await tx.payment.create({
       data: {
@@ -530,6 +608,22 @@ export async function processPayosPayment(input: PayosPaymentEvent) {
         handled: true as const,
         outcome: paymentStatus,
         orderId: order.id,
+        // CHỈ báo động khi vừa ghi một hàng `payments` mới, và chỉ với
+        // `requires_review`. `failed` là một lần chuyển khoản không thành của
+        // khách — không có tiền nào vào, không có gì để xử lý. Nhánh `existing`
+        // phía trên cũng cố ý không mang cờ này: lượt đầu đã báo rồi, và một
+        // lá thư cho mỗi lần PayOS giao lại là cách nhanh nhất dạy người nhận
+        // bỏ qua loại thư này.
+        review:
+          paymentStatus === "requires_review"
+            ? ({
+                label: `Đơn #${input.orderCode}`,
+                reason: payosReviewReason(classifierInput),
+                expectedVnd: order.amountVnd,
+                receivedVnd: input.amount,
+                providerRef,
+              } satisfies PaymentReview)
+            : undefined,
       };
     }
 
@@ -548,11 +642,15 @@ export async function processPayosPayment(input: PayosPaymentEvent) {
       throw new Error(`Không thể xác nhận nguyên tử đơn ${order.id}.`);
     }
 
-    let enrolled = 0;
-    for (const item of items) {
-      const result = await confirmEnrollment(item.enrollmentId!, tx, moment);
-      if (result.confirmed) enrolled += 1;
-    }
+    // Cả lô trong vài lệnh ghi, không phải hai truy vấn cho mỗi ghế. Xem khối
+    // chú thích ở `confirmEnrollments`: transaction này chạy bên trong webhook,
+    // và vượt hạn ở đây làm bay luôn hàng `payments` vừa ghi — tiền vào tài
+    // khoản mà không để lại dấu vết nào, kể cả trong hàng chờ đối soát.
+    const { confirmed: enrolled } = await confirmEnrollments(
+      items.map((item) => item.enrollmentId!),
+      tx,
+      moment,
+    );
 
     // Đóng sổ khoản credits đã giữ chỗ. Về số học là no-op — `reserved` và
     // `applied` đều được tính vào số dư — nhưng đối soát cần phân biệt "đang
@@ -589,7 +687,7 @@ export async function processPayosPayment(input: PayosPaymentEvent) {
       enrolled,
       fulfill: true as const,
     };
-  });
+  }, PAYMENT_TX);
 }
 
 /**
@@ -640,7 +738,7 @@ async function cancelOrderLocally(
     await voidCreditReservation(tx, orderId, now);
 
     return { cancelled: true as const, released: released.count };
-  });
+  }, PAYMENT_TX);
 }
 
 const PAYOS_MONEY_STATES = new Set(["PAID", "PROCESSING", "UNDERPAID"]);
@@ -656,13 +754,35 @@ export async function cancelOrder(
       status: "pending",
       ...(options.userId ? { userId: options.userId } : {}),
     },
-    select: { id: true, code: true, provider: true },
+    select: {
+      id: true,
+      code: true,
+      provider: true,
+      providerRef: true,
+      checkoutUrl: true,
+    },
   });
   if (!order) {
     return { cancelled: false as const, released: 0, reason: "not_pending" as const };
   }
 
-  if (order.provider === "payos") {
+  /**
+   * Chưa có link thì không có gì ngoài kia đang giữ tiền.
+   *
+   * `createOrder` gán `provider: "payos"` NGAY lúc tạo đơn, trước khi
+   * `ensurePayosCheckout` gọi sang PayOS, nên chỉ đọc `provider` là mọi đường
+   * hủy đều trả giá cho một lượt gọi mạng chắc chắn trả về 404 — kể cả đường
+   * rollback chốt giá, chạy ngay giữa lúc học viên đang chờ. Tệ hơn: PayOS chập
+   * lúc đó thành `gateway_unavailable`, và một đơn chưa từng có link bị giữ
+   * nguyên cùng với ghế, credits và suất giảm giá của chính người mua.
+   *
+   * Hai cột này chỉ được ghi sau khi PayOS đã nhận đơn (`ensurePayosCheckout`
+   * lưu `providerRef` cả ở nhánh khôi phục khi response bị mất), nên cả hai còn
+   * null là bằng chứng đủ mạnh rằng không có link nào tồn tại.
+   */
+  const hasRemoteLink = order.providerRef !== null || order.checkoutUrl !== null;
+
+  if (order.provider === "payos" && hasRemoteLink) {
     try {
       let remote = await payosClient().paymentRequests.get(order.code);
       if (PAYOS_MONEY_STATES.has(remote.status)) {
@@ -702,6 +822,36 @@ export async function cancelOrder(
   return cancelOrderLocally(order.id, options);
 }
 
+/**
+ * Đóng một danh sách đơn quá hạn, dừng lại khi hết ngân sách thời gian.
+ *
+ * Mỗi lượt `cancelOrder` có thể là hai lượt gọi PayOS, và client được cấu hình
+ * `timeout: 10_000, maxRetries: 1` — tức tối đa ~20 giây cho MỘT đơn. Không có
+ * trần thì một chồng đơn bị bỏ dở đủ để làm treo chính cái request đang cố dọn
+ * chúng. Phần chưa dọn hết không mất đi đâu: lượt sau, hoặc cron, sẽ nhặt tiếp
+ * theo đúng thứ tự `expiresAt`.
+ */
+async function closeStaleOrders(
+  orderIds: string[],
+  budgetMs: number,
+) {
+  const deadline = Date.now() + budgetMs;
+  let expired = 0;
+  let released = 0;
+  let scanned = 0;
+  for (const id of orderIds) {
+    if (Date.now() >= deadline) break;
+    scanned += 1;
+    const result = await cancelOrder(id, { as: "expired" });
+    if (result.cancelled) {
+      expired += 1;
+      released += result.released;
+    }
+  }
+  return { scanned, expired, released };
+}
+
+/** Đơn quá hạn đang giữ ghế của những khóa sắp được đặt. */
 async function reconcileStaleOrdersForCourses(courseIds: string[], now = new Date()) {
   if (courseIds.length === 0) return;
   const candidates = await prisma.order.findMany({
@@ -712,8 +862,40 @@ async function reconcileStaleOrdersForCourses(courseIds: string[], now = new Dat
     },
     select: { id: true },
     orderBy: { expiresAt: "asc" },
+    take: 5,
   });
-  for (const order of candidates) await cancelOrder(order.id, { as: "expired" });
+  await closeStaleOrders(
+    candidates.map((order) => order.id),
+    5_000,
+  );
+}
+
+/**
+ * Đơn quá hạn của CHÍNH người sắp đặt đơn.
+ *
+ * Bản theo khóa ở trên không thay được hàm này, dù chúng trông giống nhau: nó
+ * lọc theo khóa trong giỏ, còn credits và ưu đãi "đơn đầu tiên" thì thuộc về
+ * NGƯỜI. Bỏ dở một lần checkout rồi quay lại với một khóa khác là đơn cũ không
+ * nằm trong tầm của bản theo khóa — và chừng nào nó chưa đóng, `claimed` vẫn
+ * đọc nó là "đã dùng ưu đãi" còn dòng `reserved` trong sổ vẫn trừ vào số dư.
+ * Trước đây chỉ cron hằng ngày mới gỡ, tức học viên mất tiền thưởng của mình
+ * tới 24 giờ trên một tài khoản Vercel Hobby.
+ */
+export async function reconcileStaleOrdersForPayer(
+  userId: string,
+  now = new Date(),
+) {
+  const candidates = await prisma.order.findMany({
+    where: { userId, status: "pending", expiresAt: { lte: now } },
+    select: { id: true },
+    orderBy: { expiresAt: "asc" },
+    take: 5,
+  });
+  if (candidates.length === 0) return { scanned: 0, expired: 0, released: 0 };
+  return closeStaleOrders(
+    candidates.map((order) => order.id),
+    5_000,
+  );
 }
 
 /**
@@ -723,22 +905,21 @@ async function reconcileStaleOrdersForCourses(courseIds: string[], now = new Dat
  * bulk update so that each order's seats are released in the same transaction
  * that closes it.
  */
-export async function expireStaleOrders(now = new Date()) {
+export async function expireStaleOrders(now = new Date(), budgetMs = 40_000) {
   const stale = await prisma.order.findMany({
     where: { status: "pending", expiresAt: { lt: now } },
     select: { id: true },
     orderBy: { expiresAt: "asc" },
-    take: 20,
+    // Trần theo THỜI GIAN chứ không theo số đơn. Con số cứng 20 cũ là một hạn
+    // ngạch mỗi ngày, vì cron trên Vercel Hobby chỉ chạy được một lần mỗi ngày:
+    // ngày nào có hơn 20 đơn bị bỏ dở là tồn đọng lớn dần mà không có gì báo.
+    // Sau khi `cancelOrder` bỏ được lượt gọi PayOS cho đơn chưa có link, phần
+    // lớn đơn ở đây đóng được bằng một transaction thuần database.
+    take: 200,
   });
 
-  let expired = 0;
-  let released = 0;
-  for (const order of stale) {
-    const result = await cancelOrder(order.id, { as: "expired" });
-    if (result.cancelled) {
-      expired += 1;
-      released += result.released;
-    }
-  }
-  return { scanned: stale.length, expired, released };
+  return closeStaleOrders(
+    stale.map((order) => order.id),
+    budgetMs,
+  );
 }

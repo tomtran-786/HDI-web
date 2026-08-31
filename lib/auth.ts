@@ -13,6 +13,7 @@ import {
 import { jwtSurvivesSessionCutoff } from "./auth-session";
 import { googleProfilePicture, safeAvatarUrl } from "./avatar";
 import { syncGoogleAvatar } from "./auth-avatar";
+import { adminEmails } from "./admin-emails";
 
 /**
  * Fail loudly at module load rather than signing sessions with a default.
@@ -141,11 +142,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
  * editing one environment variable. Add a `role` column when a second admin
  * exists and the trade-off changes.
  */
+export { adminEmails } from "./admin-emails";
+
 export function isAdminEmail(email: string | null | undefined): boolean {
   if (!email) return false;
-  const allowed = (process.env.ADMIN_EMAILS ?? "")
-    .split(",")
-    .map((e) => e.trim().toLowerCase())
-    .filter(Boolean);
-  return allowed.includes(email.toLowerCase());
+  return adminEmails().includes(email.toLowerCase());
 }

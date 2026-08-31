@@ -272,3 +272,51 @@ export function sendFeedbackResolvedEmail(input: FeedbackEmailInput) {
     ),
   });
 }
+
+/**
+ * Báo cho quản trị viên rằng PayOS vừa gửi về một khoản tiền không tự cấp quyền được.
+ *
+ * Trước đây trường hợp này chỉ để lại một dòng `console.error`. Trên Vercel
+ * Hobby log runtime giữ khoảng một giờ, nên trên thực tế nó là im lặng: tiền đã
+ * vào tài khoản, học viên không có quyền truy cập, và bề mặt duy nhất còn lại
+ * là một hàng chờ trong /quan-tri mà không có gì thúc ai đó mở ra.
+ *
+ * Thư này KHÔNG xác nhận hay từ chối gì cả — nó chỉ nói "có tiền cần người
+ * nhìn". Xác nhận thanh toán vẫn chỉ là việc của webhook đã ký (xem ghi chú
+ * "deliberately no markPaid" ở app/quan-tri/actions.ts).
+ *
+ * Cố ý không nhét payload gốc của PayOS vào thư: nó chứa thông tin tài khoản
+ * ngân hàng của người chuyển, và một hộp thư không phải chỗ để lưu thứ đó.
+ * `providerRef` là đủ để tra ngược trong dashboard.
+ */
+export function sendPaymentReviewEmail(input: {
+  to: string;
+  label: string;
+  reason: string;
+  expectedVnd: number | null;
+  receivedVnd: number;
+  providerRef: string;
+}) {
+  const received = formatVnd(input.receivedVnd);
+  const expected =
+    input.expectedVnd === null ? "không xác định" : formatVnd(input.expectedVnd);
+
+  return sendEmail({
+    to: input.to,
+    subject: `[HDI] Giao dịch cần đối soát — ${input.label}`,
+    html: emailShell(
+      "quản trị viên",
+      `<p>PayOS vừa báo về một giao dịch mà hệ thống <strong>không tự cấp quyền</strong>. ` +
+        `Đơn hàng và ghi danh giữ nguyên trạng thái cũ cho tới khi có người xử lý.</p>` +
+        `<ul style="line-height:1.7">` +
+        `<li>Đối tượng: <strong>${escapeHtml(input.label)}</strong></li>` +
+        `<li>Lý do: <strong>${escapeHtml(input.reason)}</strong></li>` +
+        `<li>Số tiền nhận được: <strong>${escapeHtml(received)}</strong></li>` +
+        `<li>Số tiền đơn chờ: <strong>${escapeHtml(expected)}</strong></li>` +
+        `<li>Mã giao dịch: <code>${escapeHtml(input.providerRef)}</code></li>` +
+        `</ul>` +
+        `<p>Mở hàng chờ đối soát tại ` +
+        `<a href="${appUrl()}/quan-tri">${escapeHtml(appUrl())}/quan-tri</a>.</p>`,
+    ),
+  });
+}

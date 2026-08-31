@@ -6,6 +6,7 @@ const mocks = vi.hoisted(() => ({
   readCartIds: vi.fn(),
   loadCart: vi.fn(),
   referralQuoteFor: vi.fn(),
+  reconcile: vi.fn(),
 }));
 
 vi.mock("@/lib/auth", () => ({ auth: mocks.auth }));
@@ -19,6 +20,9 @@ vi.mock("@/lib/cart", () => ({
 vi.mock("@/lib/referral-quote", () => ({
   referralQuoteFor: mocks.referralQuoteFor,
 }));
+vi.mock("@/lib/orders", () => ({
+  reconcileStaleOrdersForPayer: mocks.reconcile,
+}));
 
 import { GET } from "@/app/api/gio-hang/route";
 
@@ -29,6 +33,7 @@ describe("GET /api/gio-hang", () => {
       eligible: false,
       creditBalanceVnd: 0,
     });
+    mocks.reconcile.mockResolvedValue({ scanned: 0, expired: 0, released: 0 });
   });
 
   it("requires authentication before reading sales data", async () => {
@@ -100,5 +105,51 @@ describe("GET /api/gio-hang", () => {
       referral: { eligible: false, creditBalanceVnd: 0 },
     });
     expect(JSON.stringify(body)).not.toContain("SECRET");
+  });
+  /**
+   * Một lần checkout bị bỏ dở để lại ba thứ sai cùng lúc, vì cả `heldByUser`
+   * lẫn `referralQuoteFor` đều đọc đơn `pending` mà không xét `expiresAt`: khóa
+   * hiện "Đang chờ thanh toán" rồi bị gỡ khỏi giỏ, số dư credits vẫn bị trừ, và
+   * ưu đãi 10% vẫn tính là đã dùng. Trước đây chỉ cron hằng ngày mới gỡ.
+   */
+  it("đóng đơn quá hạn của người này TRƯỚC khi đọc giỏ và báo giá", async () => {
+    mocks.auth.mockResolvedValue({ user: { id: "user-1", email: "a@hdi.test" } });
+    mocks.findUnique.mockResolvedValue({ phone: "0900000000", stage: "other" });
+    mocks.readCartIds.mockResolvedValue([]);
+    const order: string[] = [];
+    mocks.reconcile.mockImplementation(async () => {
+      order.push("reconcile");
+      return { scanned: 1, expired: 1, released: 1 };
+    });
+    mocks.loadCart.mockImplementation(async () => {
+      order.push("loadCart");
+      return { catalog: [], selected: [], staleIds: [], totalVnd: 0 };
+    });
+
+    const response = await GET();
+
+    expect(response.status).toBe(200);
+    expect(mocks.reconcile).toHaveBeenCalledWith("user-1");
+    expect(order).toEqual(["reconcile", "loadCart"]);
+  });
+
+  /** Dọn dẹp hỏng không được phép làm sập giỏ hàng: phần tệ nhất còn lại chỉ là
+   * con số cũ, đúng hành vi trước khi có bước này. */
+  it("vẫn trả giỏ hàng khi bước dọn dẹp ném lỗi", async () => {
+    mocks.auth.mockResolvedValue({ user: { id: "user-1", email: "a@hdi.test" } });
+    mocks.findUnique.mockResolvedValue({ phone: "0900000000", stage: "other" });
+    mocks.readCartIds.mockResolvedValue([]);
+    mocks.reconcile.mockRejectedValue(new Error("PayOS gián đoạn"));
+    mocks.loadCart.mockResolvedValue({
+      catalog: [],
+      selected: [],
+      staleIds: [],
+      totalVnd: 0,
+    });
+
+    const response = await GET();
+
+    expect(response.status).toBe(200);
+    expect(mocks.loadCart).toHaveBeenCalled();
   });
 });

@@ -113,6 +113,15 @@ describe("xác nhận thanh toán đơn dịch vụ", () => {
     await expect(processServicePayment(event())).resolves.toEqual({
       handled: true,
       outcome: "reference_conflict",
+      // Không có đường tự xử lý nào đúng cho một mã ngân hàng gắn hai đơn, nên
+      // nó luôn phải tới tay một con người.
+      review: {
+        label: "Đơn dịch vụ #900000001",
+        reason: "Mã giao dịch đã thuộc về một đơn khác",
+        expectedVnd: 70_000,
+        receivedVnd: 70_000,
+        providerRef: "BANK-REF-1",
+      },
     });
     expect(mocks.paymentCreate).not.toHaveBeenCalled();
   });

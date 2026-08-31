@@ -31,6 +31,8 @@ const pendingOrder = {
   id: "order-1",
   code: 100001,
   provider: "payos",
+  providerRef: "link-1",
+  checkoutUrl: "https://pay.payos.vn/web/link-1",
 };
 
 describe("remote-first PayOS cancellation", () => {
@@ -101,5 +103,40 @@ describe("remote-first PayOS cancellation", () => {
         data: expect.objectContaining({ status: "expired" }),
       }),
     );
+  });
+  /**
+   * `createOrder` gán `provider: "payos"` NGAY lúc tạo đơn, trước khi
+   * `ensurePayosCheckout` gọi sang PayOS. Chỉ đọc `provider` là mọi đường hủy —
+   * kể cả rollback chốt giá chạy ngay giữa lúc học viên đang chờ — đều trả giá
+   * cho một lượt gọi mạng chắc chắn trả về 404. Tệ hơn: PayOS chập lúc đó thành
+   * `gateway_unavailable`, và một đơn chưa từng có link bị giữ nguyên cùng với
+   * ghế, credits và suất giảm giá của chính người mua.
+   */
+  it("không hỏi PayOS về một đơn chưa từng có payment link", async () => {
+    mocks.findFirst.mockResolvedValue({
+      ...pendingOrder,
+      providerRef: null,
+      checkoutUrl: null,
+    });
+
+    await expect(cancelOrder("order-1", { userId: "user-1" })).resolves.toEqual({
+      cancelled: true,
+      released: 1,
+    });
+    expect(mocks.get).not.toHaveBeenCalled();
+    expect(mocks.cancel).not.toHaveBeenCalled();
+  });
+
+  /** Một nửa bằng chứng cũng đủ: link có thể được ghi lại ở nhánh khôi phục
+   * của `ensurePayosCheckout`, nơi chỉ `providerRef` được lưu. */
+  it("vẫn hỏi PayOS khi chỉ có providerRef mà chưa có checkoutUrl", async () => {
+    mocks.findFirst.mockResolvedValue({ ...pendingOrder, checkoutUrl: null });
+    mocks.get.mockResolvedValue({ status: "EXPIRED" });
+
+    await expect(cancelOrder("order-1")).resolves.toEqual({
+      cancelled: true,
+      released: 1,
+    });
+    expect(mocks.get).toHaveBeenCalledWith(100001);
   });
 });

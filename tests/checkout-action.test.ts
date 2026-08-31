@@ -212,11 +212,47 @@ describe("one-step cart checkout action", () => {
     const form = new FormData();
     form.set("tongTienDuKien", "750000");
 
+    mocks.cancelOrder.mockResolvedValue({ cancelled: true, released: 1 });
+
     const result = await checkout({}, form);
     expect(result.refreshCatalog).toBe(true);
     expect(result.error).toContain("thay đổi");
     expect(mocks.cancelOrder).toHaveBeenCalledWith("order-1", { userId: "user-1" });
     expect(mocks.ensurePayosCheckout).not.toHaveBeenCalled();
     expect(mocks.writeCartIds).not.toHaveBeenCalled();
+  });
+
+  /**
+   * Rollback chốt giá có thể KHÔNG thành: PayOS chập, hoặc link đã nhận tiền.
+   * Khi đó đơn vừa tạo vẫn đang giữ ghế, giữ credits và giữ suất giảm giá "đơn
+   * đầu tiên" của chính người này — nên bảo họ "kiểm tra lại giỏ hàng" là chỉ
+   * sai đường: quay lại giỏ sẽ ra một con số khác nữa, vì số dư credits đang bị
+   * chính đơn treo kia trừ mất.
+   */
+  it("đưa học viên tới trang đơn khi không hủy được đơn vừa tạo", async () => {
+    mocks.createOrder.mockResolvedValue({
+      ok: true,
+      orderId: "order-1",
+      code: 100001,
+      amountVnd: 900_000,
+      groupSize: 1,
+      expiresAt: new Date(),
+    });
+    mocks.cancelOrder.mockResolvedValue({
+      cancelled: false,
+      released: 0,
+      reason: "gateway_unavailable",
+    });
+
+    const form = new FormData();
+    form.set("tongTienDuKien", "750000");
+
+    await expect(checkout({}, form)).rejects.toMatchObject({
+      url: "/tai-khoan/don-hang/100001",
+    });
+    // Giỏ giữ nguyên: đơn treo có thể được hủy từ trang kia, và khi đó người mua
+    // cần giỏ của mình còn nguyên để thử lại.
+    expect(mocks.writeCartIds).not.toHaveBeenCalled();
+    expect(mocks.ensurePayosCheckout).not.toHaveBeenCalled();
   });
 });

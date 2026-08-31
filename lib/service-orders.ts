@@ -4,10 +4,13 @@ import { isAiCheckKind, isValidWordCount, quote } from "./ai-check-pricing";
 import {
   classifyPayosPayment,
   payosPaymentLinkMatches,
+  payosReviewReason,
   payosTransactionTime,
+  type PaymentReview,
   type PayosPaymentEvent,
 } from "./orders";
 import { isPayosNotFound, payosClient } from "./payos";
+import { PAYMENT_TX } from "./db-budget";
 import { prisma } from "./prisma";
 
 /**
@@ -289,7 +292,17 @@ export async function processServicePayment(input: PayosPaymentEvent) {
       select: { serviceOrderId: true, status: true },
     });
     if (existing && existing.serviceOrderId !== order.id) {
-      return { handled: true as const, outcome: "reference_conflict" as const };
+      return {
+        handled: true as const,
+        outcome: "reference_conflict" as const,
+        review: {
+          label: `Đơn dịch vụ #${input.orderCode}`,
+          reason: "Mã giao dịch đã thuộc về một đơn khác",
+          expectedVnd: order.amountVnd,
+          receivedVnd: input.amount,
+          providerRef,
+        } satisfies PaymentReview,
+      };
     }
     if (existing) {
       return {
@@ -303,7 +316,7 @@ export async function processServicePayment(input: PayosPaymentEvent) {
     }
 
     const paidAt = payosTransactionTime(input.transactionDateTime);
-    const paymentStatus = classifyPayosPayment({
+    const classifierInput = {
       providerCode: input.code,
       orderStatus: order.status,
       expectedAmount: order.amountVnd,
@@ -319,7 +332,8 @@ export async function processServicePayment(input: PayosPaymentEvent) {
       // của ghi danh luôn thỏa. Truyền `true` thay vì tách nhánh khỏi hàm phân
       // loại: mọi điều kiện còn lại phải giống hệt luồng khóa học.
       consistentEnrollments: true,
-    });
+    };
+    const paymentStatus = classifyPayosPayment(classifierInput);
 
     await tx.payment.create({
       data: {
@@ -337,6 +351,18 @@ export async function processServicePayment(input: PayosPaymentEvent) {
         handled: true as const,
         outcome: paymentStatus,
         serviceOrderId: order.id,
+        // Cùng luật với luồng khóa học: chỉ báo động cho hàng vừa được ghi, và
+        // chỉ với `requires_review`.
+        review:
+          paymentStatus === "requires_review"
+            ? ({
+                label: `Đơn dịch vụ #${input.orderCode}`,
+                reason: payosReviewReason(classifierInput),
+                expectedVnd: order.amountVnd,
+                receivedVnd: input.amount,
+                providerRef,
+              } satisfies PaymentReview)
+            : undefined,
       };
     }
 
@@ -360,7 +386,7 @@ export async function processServicePayment(input: PayosPaymentEvent) {
       outcome: "succeeded" as const,
       serviceOrderId: order.id,
     };
-  });
+  }, PAYMENT_TX);
 }
 
 /**

@@ -1,5 +1,11 @@
 import { NextResponse } from "next/server";
-import { processPayosPayment, type PayosPaymentEvent } from "@/lib/orders";
+import { adminEmails } from "@/lib/admin-emails";
+import { sendPaymentReviewEmail } from "@/lib/email";
+import {
+  processPayosPayment,
+  type PaymentReview,
+  type PayosPaymentEvent,
+} from "@/lib/orders";
 import { PayosConfigurationError, verifyPayosWebhook } from "@/lib/payos";
 import { processServicePayment } from "@/lib/service-orders";
 import {
@@ -18,6 +24,47 @@ export const dynamic = "force-dynamic";
  * nó biến một lần thanh toán thành một lần chờ, nên cứ cho đủ giờ ngay từ đầu.
  */
 export const maxDuration = 60;
+
+/**
+ * Đưa một khoản tiền treo tới tay người có thể xử lý nó.
+ *
+ * Trước đây chỗ này chỉ có `console.error`. Trên Vercel Hobby log runtime giữ
+ * khoảng một giờ, nên trong thực tế một giao dịch `requires_review` biến mất
+ * không dấu vết: tiền đã vào tài khoản, học viên không có quyền truy cập, và
+ * bề mặt duy nhất còn lại là một hàng chờ trong /quan-tri mà không có gì thúc
+ * ai đó mở ra.
+ *
+ * ĐỌC `result.sent`, không chỉ `await`: `sendEmail` báo Resend từ chối bằng
+ * `{ sent: false }` chứ không ném, nên `catch` sẽ không bao giờ chạy cho trường
+ * hợp đó — đúng cái bẫy đã làm mọi thư xác thực biến mất trong im lặng.
+ *
+ * Gửi thư không bao giờ được làm hỏng phản hồi webhook: PayOS coi mọi phản hồi
+ * khác 2xx là lý do giao lại, và giao lại một sự kiện đã ghi xong chỉ tạo thêm
+ * việc. Vì vậy mọi lỗi ở đây đều bị nuốt sau khi log.
+ */
+async function alertAdmins(review: PaymentReview) {
+  const recipients = adminEmails();
+  if (recipients.length === 0) {
+    console.error(
+      "[payos-webhook] Có giao dịch cần đối soát nhưng ADMIN_EMAILS trống:",
+      review,
+    );
+    return;
+  }
+
+  for (const to of recipients) {
+    try {
+      const sent = await sendPaymentReviewEmail({ to, ...review });
+      if (!sent.sent) {
+        console.error(
+          `[payos-webhook] Thư đối soát tới ${to} bị từ chối: ${sent.error}`,
+        );
+      }
+    } catch (error) {
+      console.error(`[payos-webhook] Không gửi được thư đối soát tới ${to}:`, error);
+    }
+  }
+}
 
 export async function POST(request: Request) {
   let payload: unknown;
@@ -72,6 +119,9 @@ export async function POST(request: Request) {
       ) {
         console.error("[payos-webhook] Đơn dịch vụ cần kiểm tra thủ công:", service);
       }
+      if ("review" in service && service.review) {
+        await alertAdmins(service.review);
+      }
       return NextResponse.json({
         ok: true,
         scope: "service",
@@ -81,6 +131,12 @@ export async function POST(request: Request) {
 
     if (result.outcome === "requires_review" || result.outcome === "reference_conflict") {
       console.error("[payos-webhook] Thanh toán cần kiểm tra thủ công:", result);
+    }
+    // `review` chỉ có mặt ở lượt vừa GHI một hàng `payments` mới. Lượt PayOS
+    // giao lại đi vào nhánh `existing` và không mang cờ này, nên một sự kiện
+    // sinh đúng một lá thư dù nó được gửi lại bao nhiêu lần.
+    if ("review" in result && result.review) {
+      await alertAdmins(result.review);
     }
     if ("fulfill" in result && result.fulfill && result.orderId) {
       const orderId = result.orderId;

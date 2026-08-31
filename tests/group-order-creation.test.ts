@@ -4,7 +4,7 @@ const mocks = vi.hoisted(() => ({
   transaction: vi.fn(),
   queryRaw: vi.fn(),
   enrollmentFindMany: vi.fn(),
-  enrollmentCreate: vi.fn(),
+  enrollmentCreateMany: vi.fn(),
   orderCreate: vi.fn(),
   orderFindFirst: vi.fn(),
   orderFindMany: vi.fn(),
@@ -18,7 +18,7 @@ vi.mock("@/lib/prisma", () => ({
     order: { findMany: mocks.orderFindMany },
   },
 }));
-vi.mock("@/lib/enrollment", () => ({ confirmEnrollment: vi.fn() }));
+vi.mock("@/lib/enrollment", () => ({ confirmEnrollments: vi.fn() }));
 vi.mock("@/lib/payos", () => ({
   payosClient: vi.fn(),
   isPayosNotFound: vi.fn(() => true),
@@ -89,7 +89,12 @@ describe("tạo đơn nhóm", () => {
     mocks.ledgerAggregate.mockResolvedValue({ _sum: { amountVnd: null } });
     mocks.enrollmentFindMany.mockResolvedValue([]);
     let n = 0;
-    mocks.enrollmentCreate.mockImplementation(async () => ({ id: `enrollment-${++n}` }));
+    // `createManyAndReturn` trả về đúng thứ tự của `data`, và `createOrder` dựa
+    // vào chính thứ tự đó để ánh xạ ngược ra người học của mỗi ghế.
+    mocks.enrollmentCreateMany.mockImplementation(
+      async ({ data }: { data: { userId: string; courseId: string }[] }) =>
+        data.map((row) => ({ id: `enrollment-${++n}`, ...row })),
+    );
     mocks.orderCreate.mockImplementation(async ({ data }: { data: { amountVnd: number } }) => ({
       id: "order-1",
       code: 100001,
@@ -98,7 +103,10 @@ describe("tạo đơn nhóm", () => {
     mocks.transaction.mockImplementation(async (callback: (tx: unknown) => unknown) =>
       callback({
         $queryRaw: mocks.queryRaw,
-        enrollment: { findMany: mocks.enrollmentFindMany, create: mocks.enrollmentCreate },
+        enrollment: {
+          findMany: mocks.enrollmentFindMany,
+          createManyAndReturn: mocks.enrollmentCreateMany,
+        },
         order: { create: mocks.orderCreate, findFirst: mocks.orderFindFirst },
         referralLedger: {
           aggregate: mocks.ledgerAggregate,
@@ -114,12 +122,15 @@ describe("tạo đơn nhóm", () => {
     const result = await createOrder("user-1", ["course-1"], { members });
 
     expect(result).toMatchObject({ ok: true, amountVnd: 750000, groupSize: 3 });
-    expect(mocks.enrollmentCreate).toHaveBeenCalledTimes(3);
-    for (const userId of ["user-1", "user-2", "user-3"]) {
-      expect(mocks.enrollmentCreate).toHaveBeenCalledWith(
-        expect.objectContaining({ data: { userId, courseId: "course-1" } }),
-      );
-    }
+    // MỘT lệnh ghi cho cả nhóm, không phải một lệnh mỗi ghế: đó là thứ giữ cho
+    // transaction đặt đơn không vượt hạn khi nhóm đông và giỏ nhiều khóa.
+    expect(mocks.enrollmentCreateMany).toHaveBeenCalledTimes(1);
+    expect(mocks.enrollmentCreateMany.mock.calls[0][0].data).toEqual(
+      ["user-1", "user-2", "user-3"].map((userId) => ({
+        userId,
+        courseId: "course-1",
+      })),
+    );
 
     const items = mocks.orderCreate.mock.calls[0][0].data.items.create;
     expect(items).toHaveLength(3);
@@ -142,7 +153,7 @@ describe("tạo đơn nhóm", () => {
     seats(0);
     const result = await createOrder("user-1", ["course-1"]);
     expect(result).toMatchObject({ ok: true, amountVnd: 300000, groupSize: 1 });
-    expect(mocks.enrollmentCreate).toHaveBeenCalledTimes(1);
+    expect(mocks.enrollmentCreateMany.mock.calls[0][0].data).toHaveLength(1);
   });
 
   /** Nhóm chiếm nhiều ghế cùng lúc, nên "còn một chỗ" không đủ cho ba người. */
@@ -164,7 +175,7 @@ describe("tạo đơn nhóm", () => {
 
     expect(result).toMatchObject({ ok: false, reason: "already_enrolled" });
     if (!result.ok) expect(result.message).toContain("c@hdi.test");
-    expect(mocks.enrollmentCreate).not.toHaveBeenCalled();
+    expect(mocks.enrollmentCreateMany).not.toHaveBeenCalled();
   });
 
   /** Hai ghế cùng một người sẽ đâm vào partial unique index của enrollments. */
@@ -174,7 +185,7 @@ describe("tạo đơn nhóm", () => {
       members: [{ id: "user-1", email: "a@hdi.test" }, ...members],
     });
     expect(result).toMatchObject({ ok: true, groupSize: 3, amountVnd: 750000 });
-    expect(mocks.enrollmentCreate).toHaveBeenCalledTimes(3);
+    expect(mocks.enrollmentCreateMany.mock.calls[0][0].data).toHaveLength(3);
   });
 
   /**
@@ -187,7 +198,7 @@ describe("tạo đơn nhóm", () => {
     seats(0, [AIQT]);
     const result = await createOrder("user-1", ["course-2"], { members });
     expect(result).toMatchObject({ ok: false, reason: "group_not_eligible" });
-    expect(mocks.enrollmentCreate).not.toHaveBeenCalled();
+    expect(mocks.enrollmentCreateMany).not.toHaveBeenCalled();
     expect(mocks.orderCreate).not.toHaveBeenCalled();
   });
 
