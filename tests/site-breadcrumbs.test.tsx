@@ -25,7 +25,7 @@ describe("breadcrumb toàn site", () => {
     expect(html).toContain('aria-label="Breadcrumb"');
     expect(html).toContain('href="/"');
     expect(html).toContain('href="/khoa-hoc"');
-    expect(html).toContain("NCKH chuyên sâu với SPSS");
+    expect(html).toContain("NCKH chuyên sâu với SPSS &amp; Stata");
     expect(html).toContain('aria-current="page"');
   });
 

@@ -4,10 +4,12 @@ import { COURSE_SLUGS, courses } from "@/content/course";
 import { structuredDataForCourse } from "@/lib/structured-data";
 
 class NotFoundSignal extends Error {}
+class RedirectSignal extends Error {}
 
 const mocks = vi.hoisted(() => ({
   landingCourseData: vi.fn(),
   notFound: vi.fn(),
+  redirect: vi.fn(),
   openCart: vi.fn(),
 }));
 
@@ -23,15 +25,22 @@ vi.mock("@/components/cart-provider", () => ({
 }));
 vi.mock("next/navigation", () => ({
   notFound: mocks.notFound,
+  redirect: mocks.redirect,
 }));
 
-import CourseDetailPage, { generateStaticParams } from "@/app/khoa-hoc/[slug]/page";
+import CourseDetailPage, {
+  generateMetadata,
+  generateStaticParams,
+} from "@/app/khoa-hoc/[slug]/page";
 
 const reviewedSlug = "viet-bao-cao-khoa-hoc";
 
 beforeEach(() => {
   mocks.notFound.mockImplementation(() => {
     throw new NotFoundSignal();
+  });
+  mocks.redirect.mockImplementation((path: string) => {
+    throw new RedirectSignal(path);
   });
   mocks.landingCourseData.mockResolvedValue({
     summaries: {
@@ -55,7 +64,7 @@ beforeEach(() => {
 });
 
 describe("trang chi tiết khóa học", () => {
-  it("tạo sẵn đúng bảy route khóa học", () => {
+  it("tạo sẵn đúng tám route khóa học", () => {
     expect(generateStaticParams()).toEqual(COURSE_SLUGS.map((slug) => ({ slug })));
   });
 
@@ -131,7 +140,7 @@ describe("trang chi tiết khóa học", () => {
     expect(html).toContain(`Buổi ${total}:`);
   });
 
-  it("đánh số hai phần và ẩn đánh giá khi khóa chưa có review đã duyệt", async () => {
+  it("render đủ sáu buổi cho khóa SPSS & Stata và ẩn đánh giá khi chưa có review", async () => {
     const course = courses.find((item) => item.slug === "nckh-chuyen-sau-spss")!;
     const html = renderToStaticMarkup(
       await CourseDetailPage({
@@ -139,7 +148,11 @@ describe("trang chi tiết khóa học", () => {
       }),
     );
 
-    expect(html).toContain(">1.1<");
+    expect(html).toContain("Buổi 1:");
+    expect(html).toContain("Thiết kế nghiên cứu và lựa chọn SPSS/Stata");
+    expect(html).toContain("Buổi 6:");
+    expect(html).toContain("IV/2SLS, GMM/PMG và mini-project");
+    expect(html).not.toContain("Kho record");
     expect(html).not.toContain("Đánh giá học viên");
   });
 
@@ -211,7 +224,7 @@ describe("trang chi tiết khóa học", () => {
   });
 
   it("không render nút đăng ký chết khi khóa chưa mở", async () => {
-    const course = courses.find((item) => item.slug === "stata-kinh-te-luong")!;
+    const course = courses.find((item) => item.slug === "nckh-chuyen-sau-spss")!;
     mocks.landingCourseData.mockResolvedValueOnce({
       summaries: {},
       reviews: {},
@@ -227,6 +240,25 @@ describe("trang chi tiết khóa học", () => {
     expect(html).toContain("Chưa mở đăng ký");
     expect(html).not.toContain("Đăng ký học khóa này");
     expect(html).toContain("Nhắn Zalo");
+  });
+
+  it("redirect URL Stata cũ về khóa SPSS & Stata ở page và metadata", async () => {
+    await expect(
+      CourseDetailPage({
+        params: Promise.resolve({ slug: "stata-kinh-te-luong" }),
+      }),
+    ).rejects.toBeInstanceOf(RedirectSignal);
+
+    await expect(
+      generateMetadata({
+        params: Promise.resolve({ slug: "stata-kinh-te-luong" }),
+      }),
+    ).rejects.toBeInstanceOf(RedirectSignal);
+
+    expect(mocks.redirect).toHaveBeenCalledWith(
+      "/khoa-hoc/nckh-chuyen-sau-spss",
+    );
+    expect(mocks.landingCourseData).not.toHaveBeenCalled();
   });
 
   it("trả 404 cho slug lạ trước khi truy vấn dữ liệu", async () => {

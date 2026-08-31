@@ -13,6 +13,7 @@ describe("số học viên quảng cáo", () => {
       "AIQT",
       "TIEULUAN",
       "SPSS",
+      "SMARTPLS",
       "STATA",
       "TAPCHI",
       "BAOCAO",

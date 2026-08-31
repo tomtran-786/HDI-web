@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import Script from "next/script";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { CourseEnroll } from "@/components/course-enroll";
 import { CourseRoadmap } from "@/components/course-roadmap";
 import { Badge } from "@/components/ui/badge";
@@ -28,6 +28,13 @@ import { structuredDataForCourse } from "@/lib/structured-data";
 
 type CoursePageProps = { params: Promise<{ slug: string }> };
 
+const LEGACY_STATA_SLUG = "stata-kinh-te-luong";
+const MERGED_SPSS_SLUG = "nckh-chuyen-sau-spss";
+
+function redirectLegacyCourse(slug: string): void {
+  if (slug === LEGACY_STATA_SLUG) redirect(`/khoa-hoc/${MERGED_SPSS_SLUG}`);
+}
+
 function courseForSlug(slug: string): Course | undefined {
   return courses.find((course) => course.slug === slug);
 }
@@ -40,6 +47,7 @@ export async function generateMetadata({
   params,
 }: CoursePageProps): Promise<Metadata> {
   const { slug } = await params;
+  redirectLegacyCourse(slug);
   const course = courseForSlug(slug);
   if (!course) notFound();
 
@@ -79,6 +87,7 @@ function StructuredData({ course }: { course: Course }) {
 
 export default async function CourseDetailPage({ params }: CoursePageProps) {
   const { slug } = await params;
+  redirectLegacyCourse(slug);
   const course = courseForSlug(slug);
   if (!course) notFound();
 

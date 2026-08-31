@@ -75,12 +75,16 @@ export const nav: readonly NavItem[] = [
         label: "Chuyên sâu",
         children: [
           {
-            label: "NCKH chuyên sâu với SPSS",
+            label: "NCKH chuyên sâu với SPSS & Stata",
             href: "/khoa-hoc/nckh-chuyen-sau-spss",
           },
           {
-            label: "NCKH chuyên sâu với Stata",
-            href: "/khoa-hoc/stata-kinh-te-luong",
+            label: "Nghiên cứu với SPSS, SmartPLS & AI",
+            href: "/khoa-hoc/spss-smartpls-ai",
+          },
+          {
+            label: "Kinh tế lượng ứng dụng với Stata & AI",
+            href: "/khoa-hoc/kinh-te-luong-stata-ai",
           },
           {
             label: "Viết bài đăng tạp chí",

@@ -8,5 +8,25 @@
     "meetingUrl": "https://us02web.zoom.us/j/000000000?pwd=xxxx",
     "communityUrl": "https://zalo.me/g/example",
     "driveFolderId": "1AbCdEfGhIjKlMnOpQrStUvWxYz"
+  },
+  {
+    "slug": "spss-smartpls-ai",
+    "capacity": 40,
+    "priceVnd": 1000000,
+    "accessDays": 730,
+    "status": "open",
+    "meetingUrl": "https://us02web.zoom.us/j/000000000?pwd=xxxx",
+    "communityUrl": "https://zalo.me/g/example",
+    "driveFolderId": "1ZljA9fn9oavE38pl0F601-QwqTdZ2GSU"
+  },
+  {
+    "slug": "kinh-te-luong-stata-ai",
+    "capacity": 40,
+    "priceVnd": 1000000,
+    "accessDays": 730,
+    "status": "open",
+    "meetingUrl": "https://us02web.zoom.us/j/000000000?pwd=xxxx",
+    "communityUrl": "https://zalo.me/g/example",
+    "driveFolderId": "1xo4lzVfnmi-9mK5Oy47BBGSRdhXevi7c"
   }
 ]

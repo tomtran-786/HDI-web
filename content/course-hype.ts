@@ -9,8 +9,6 @@ import type { CourseSlug } from "./course";
  */
 export const enrolledCount: Partial<Record<CourseSlug, number>> = {
   "training-tieu-luan-nckh-kltn": 1428,
-  "nckh-chuyen-sau-spss": 862,
-  "stata-kinh-te-luong": 634,
   "viet-bai-tap-chi": 517,
   "viet-bao-cao-khoa-hoc": 386,
   "ung-dung-chatgpt-nckh": 245,

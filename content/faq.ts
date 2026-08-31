@@ -16,7 +16,7 @@ export const faqItems = [
   {
     question: "Tôi nên bắt đầu với khóa học nào?",
     answer:
-      "Trang Khóa học sắp xếp sáu khóa theo lộ trình từ kỹ năng viết nền tảng, SPSS, Stata và viết bài đến báo cáo khoa học và ứng dụng ChatGPT. Bạn có thể xem đối tượng và nội dung trên từng trang chi tiết; nếu vẫn chưa chắc, hãy liên hệ HDI để trao đổi trước khi đăng ký.",
+      "Trang Khóa học sắp xếp tám khóa theo lộ trình từ kỹ năng viết nền tảng; phân tích dữ liệu với SPSS & Stata, chuyên sâu SPSS–SmartPLS và kinh tế lượng với Stata; đến viết bài, báo cáo khoa học và ứng dụng ChatGPT. Bạn có thể xem đối tượng và nội dung trên từng trang chi tiết; nếu vẫn chưa chắc, hãy liên hệ HDI để trao đổi trước khi đăng ký.",
   },
   {
     question: "Có thể học và nhận hỗ trợ hoàn toàn trực tuyến không?",

@@ -5,7 +5,7 @@ import { SERVICE_SLUGS } from "@/content/services";
 import { appUrl } from "@/lib/app-url";
 
 describe("sitemap công khai", () => {
-  it("liệt kê hub và đủ sáu trang chi tiết khóa học", () => {
+  it("liệt kê hub và đủ tám trang chi tiết khóa học", () => {
     const urls = sitemap().map((entry) => entry.url);
     const base = appUrl();
 

@@ -1,7 +1,9 @@
 /**
  * The courses listed in #khoa-hoc.
  *
- * SOURCES — every fact below is transcribed, not invented:
+ * SOURCES — most published facts below are transcribed from the sources noted
+ * here. The merged SPSS & Stata course is the authored exception documented in
+ * F.
  *
  * A. `viet-bao-cao-khoa-hoc` — the eight session titles, the tuition, the group
  *    discount, the format, the duration and the class hours all come from the
@@ -39,8 +41,15 @@
  *    bundle of "19 tài liệu" of graded sample work. Re-add them only if the
  *    owner confirms they still hold.
  *
- * ATTRIBUTION — recorded here because the page does not show it. On edubit the
- * four courses are taught by:
+ * F. `nckh-chuyen-sau-spss` was merged with the former Stata course on
+ * 2026-08-30 at the owner's request. Its title, six-session curriculum and
+ * outcomes are an HDI-authored sketch. The price and access policy remain the
+ * existing SPSS catalog values so the public content still matches its
+ * existing commercial record. The old Stata slug is retained only as a public
+ * redirect; no database record is changed.
+ *
+ * HISTORICAL ATTRIBUTION — recorded here because the page does not show it.
+ * Before the merge, the edubit courses were taught by:
  *
  *    stata          TS. Trịnh Công Tâm — sole instructor, all 5 modules
  *    spss           PGS.TS. Phương Hữu Từng (M1, M2, M5, M6)
@@ -51,8 +60,8 @@
  *    nckh-sinh-vien ThS. Đặng Văn Phong — sole instructor.
  *                   Dr. Trinh teaches NO part of this course.
  *
- * Listing all four under HDI was an explicit instruction (2026-08-20), to be
- * refined later. Keep this block accurate so that refinement is possible.
+ * This historical block is retained for reference; it is not a claim about
+ * the current merged course's instructor assignment.
  *
  * Tuition for the four edubit courses is that site's current price and will
  * drift if they reprice. Star ratings come only from approved HDI reviews.
@@ -106,7 +115,8 @@ export const COURSE_SLUGS = [
   "nckh-ung-dung-ai-xuat-ban-quoc-te",
   "training-tieu-luan-nckh-kltn",
   "nckh-chuyen-sau-spss",
-  "stata-kinh-te-luong",
+  "spss-smartpls-ai",
+  "kinh-te-luong-stata-ai",
   "viet-bai-tap-chi",
   "viet-bao-cao-khoa-hoc",
   "ung-dung-chatgpt-nckh",
@@ -186,6 +196,29 @@ export type Course = {
 const REGISTER_NOTE_GENERIC =
   "Đăng nhập, chọn khóa trong giỏ và thanh toán trực tiếp qua PayOS.";
 
+/**
+ * Cùng một giảng viên đứng ba khóa (AIQT, SPSS–SmartPLS, Stata), nên hồ sơ được
+ * tách ra đây thay vì chép lại — sửa một chỗ là cả ba trang cập nhật.
+ */
+const INSTRUCTOR_TAM = {
+  name: "Trịnh Công Tâm",
+  credential: "Tiến sĩ",
+  highlights: [
+    "Thành viên Ban Biên tập của Eurasian Economic Review (xếp hạng C theo ABDC; ESCI Q1).",
+    "Session Chair tại các hội thảo quốc tế EBES và AGBA.",
+    "Active Reviewer cho các tạp chí quốc tế thuộc hệ thống Scopus và các tạp chí khoa học uy tín trong nước.",
+    "Có công trình công bố trên các tạp chí SSCI Q1 và tạp chí xếp hạng A*, A theo ABDC Journal Quality List.",
+    "Có kinh nghiệm nghiên cứu, phản biện và hỗ trợ phát triển nghiên cứu thực nghiệm trong kinh tế, kinh doanh và các lĩnh vực liên quan.",
+  ],
+  links: [
+    { label: "Website", href: "https://congtamtrinh.com" },
+    {
+      label: "Google Scholar",
+      href: "https://scholar.google.com.au/citations?user=-XIR3uYAAAAJ&hl=en&oi=ao",
+    },
+  ],
+} satisfies NonNullable<Course["instructor"]>;
+
 export const coursesIntro = {
   eyebrow: "Khóa học",
   title: "Phát triển năng lực nghiên cứu theo lộ trình",
@@ -199,9 +232,10 @@ export const coursesIntro = {
 
 /**
  * ORDER — the currently promoted intake comes first, followed by the existing
- * learning path: foundations (tiểu luận/NCKH/KLTN) → SPSS → Stata → viết bài
- * tạp chí → viết luận văn/báo cáo khoa học → công cụ ChatGPT. Nothing reads a
- * course by index (cart, seed and lookups all go by slug).
+ * learning path: foundations (tiểu luận/NCKH/KLTN) → SPSS & Stata gộp → hai khóa
+ * chuyên biệt SPSS–SmartPLS và kinh tế lượng Stata → viết bài tạp chí → viết
+ * luận văn/báo cáo khoa học → công cụ ChatGPT. Nothing reads a course by index
+ * (cart, seed and lookups all go by slug).
  *
  * `COURSE_SLUGS` above defines the closed slug union. `satisfies Course[]`
  * checks every authored entry against that union without changing the inferred
@@ -293,24 +327,7 @@ export const courses = [
       "Đọc Similarity Report và cải thiện bản thảo bằng đóng góp học thuật thực chất.",
       "Lựa chọn, ước lượng và trình bày FGLS, PMG, IV/2SLS hoặc System GMM phù hợp với vấn đề panel data.",
     ],
-    instructor: {
-      name: "Trịnh Công Tâm",
-      credential: "Tiến sĩ",
-      highlights: [
-        "Thành viên Ban Biên tập của Eurasian Economic Review (xếp hạng C theo ABDC; ESCI Q1).",
-        "Session Chair tại các hội thảo quốc tế EBES và AGBA.",
-        "Active Reviewer cho các tạp chí quốc tế thuộc hệ thống Scopus và các tạp chí khoa học uy tín trong nước.",
-        "Có công trình công bố trên các tạp chí SSCI Q1 và tạp chí xếp hạng A*, A theo ABDC Journal Quality List.",
-        "Có kinh nghiệm nghiên cứu, phản biện và hỗ trợ phát triển nghiên cứu thực nghiệm trong kinh tế, kinh doanh và các lĩnh vực liên quan.",
-      ],
-      links: [
-        { label: "Website", href: "https://congtamtrinh.com" },
-        {
-          label: "Google Scholar",
-          href: "https://scholar.google.com.au/citations?user=-XIR3uYAAAAJ&hl=en&oi=ao",
-        },
-      ],
-    },
+    instructor: INSTRUCTOR_TAM,
     registerNote: REGISTER_NOTE_GENERIC,
   },
 
@@ -588,174 +605,397 @@ export const courses = [
   {
     code: "SPSS",
     slug: "nckh-chuyen-sau-spss",
-    eyebrow: "Khóa chuyên sâu",
-    title: "Phương pháp NCKH chuyên sâu với SPSS — thực chiến",
+    eyebrow: "Khóa chuyên sâu · 06 buổi thực hành",
+    title: "Phân tích dữ liệu nghiên cứu với SPSS & Stata — thực chiến",
     audience:
-      "Dành cho sinh viên và học viên cao học đang thực hiện đề tài thuộc lĩnh vực khoa học xã hội",
+      "Dành cho sinh viên, học viên cao học, nghiên cứu sinh và giảng viên đang thực hiện đề tài trong khoa học xã hội, kinh tế, tài chính và quản trị",
     intro:
-      "Thiết kế nghiên cứu, khung lý thuyết, tổng quan và mô hình — rồi thực hành xử lý dữ liệu ngay trong lớp trên SPSS, từ làm sạch dữ liệu đến đọc và trình bày kết quả.",
-    curriculum: "modules",
+      "Khóa học kết hợp SPSS và Stata theo một quy trình nghiên cứu hoàn chỉnh: từ thiết kế mô hình, chuẩn bị dữ liệu, phân tích khảo sát đến hồi quy, dữ liệu bảng và các kỹ thuật kinh tế lượng nâng cao. Mỗi buổi đều gắn với dữ liệu thực hành và cách đọc, trình bày kết quả trong bài nghiên cứu.",
+    curriculum: "sessions",
     price: {
       amount: "1.100.000 đ",
       note: "Giảm 10% cho nhóm từ 03 người",
       group: true,
       vnd: 1100000,
     },
-    // No class-size figure on the SPSS page, unlike Stata and tap-chi — so none
-    // is claimed here.
     facts: [
-      { label: "Lớp trực tiếp", value: "06 module qua Zoom" },
-      { label: "Kho record", value: "51 giờ 02 phút — 60 bài học" },
+      { label: "Lớp trực tiếp", value: "06 buổi qua Zoom" },
+      { label: "Học liệu", value: "Recording và bộ dữ liệu thực hành" },
       { label: "Xem lại", value: "02 năm kể từ ngày đăng ký" },
     ],
     phases: [
       {
-        name: "Giới thiệu nghiên cứu",
+        name: "Nền tảng nghiên cứu và dữ liệu",
         sessions: [
-          "Khái niệm nghiên cứu, nghiên cứu khoa học",
-          "Phân loại một công trình nghiên cứu khoa học",
-          "Các chuẩn mực cơ bản của công trình nghiên cứu khoa học",
-          "Quy trình thực hiện một công trình nghiên cứu khoa học",
-          "Thiết kế nghiên cứu và lựa chọn lý thuyết phù hợp",
-          "Thảo luận, giải đáp thắc mắc",
+          {
+            text: "Thiết kế nghiên cứu và lựa chọn SPSS/Stata",
+            points: [
+              "Xác định câu hỏi nghiên cứu, biến nghiên cứu và mô hình phân tích",
+              "Phân biệt dữ liệu khảo sát, dữ liệu cắt ngang, chuỗi thời gian và dữ liệu bảng",
+              "Chọn SPSS hay Stata theo mục tiêu, loại dữ liệu và kỹ thuật cần sử dụng",
+              "Chuẩn bị codebook, quy ước biến và kế hoạch phân tích",
+            ],
+          },
+          {
+            text: "Nhập, mã hóa, làm sạch dữ liệu và thống kê mô tả",
+            points: [
+              "Nhập dữ liệu, mã hóa biến và kiểm tra cấu trúc bộ dữ liệu",
+              "Xử lý giá trị thiếu, quan sát bất thường và ngoại lệ",
+              "Thực hiện thống kê mô tả, bảng tần số và trực quan hóa cơ bản",
+              "Thiết lập quy trình syntax/do-file có thể kiểm tra và lặp lại",
+            ],
+          },
         ],
       },
       {
-        name: "Tổng quan nghiên cứu và đề xuất mô hình",
+        name: "Phân tích khảo sát và hồi quy với SPSS",
         sessions: [
-          "Ứng dụng phần mềm VOSviewer trong tổng quan nghiên cứu",
-          "Ứng dụng công cụ Elicit trong tổng quan nghiên cứu",
-          "Các lý thuyết nền tảng xây dựng mô hình nghiên cứu",
-          "Đề xuất mô hình nghiên cứu",
-          "Ứng dụng trong một số đề tài cụ thể của sinh viên, học viên cao học",
-          "Thảo luận, giải đáp thắc mắc",
+          {
+            text: "Cronbach’s Alpha, EFA và kiểm tra thang đo trên SPSS",
+            points: [
+              "Đánh giá độ tin cậy thang đo bằng Cronbach’s Alpha",
+              "Thực hiện EFA và kiểm tra KMO, Bartlett, factor loading và tổng phương sai trích",
+              "Phát hiện biến không phù hợp và tạo biến đại diện cho mô hình",
+              "Đọc output, lập bảng kết quả và viết diễn giải học thuật",
+            ],
+          },
+          {
+            text: "Tương quan, OLS và Logistic Regression",
+            points: [
+              "Phân tích tương quan và chuẩn bị biến cho mô hình hồi quy",
+              "Ước lượng OLS, đọc hệ số, mức ý nghĩa, R² và kiểm định mô hình",
+              "Kiểm tra đa cộng tuyến, phương sai thay đổi và các vấn đề thường gặp",
+              "Ứng dụng Binary Logistic Regression và trình bày kết quả đúng ngữ cảnh",
+            ],
+          },
         ],
       },
       {
-        name: "Phương pháp nghiên cứu cho các ngành khoa học xã hội",
+        name: "Kinh tế lượng ứng dụng và hoàn thiện nghiên cứu với Stata",
         sessions: [
-          "Phương pháp nghiên cứu là gì?",
-          "Cấu trúc trình bày đối với phương pháp nghiên cứu",
-          "Lựa chọn phương pháp nghiên cứu dựa trên định hướng nghiên cứu",
-          "Phương pháp nghiên cứu định tính",
-          "Phương pháp nghiên cứu định lượng",
-          "Thảo luận, giải đáp thắc mắc",
-        ],
-      },
-      {
-        name: "Kỹ thuật phân tích dữ liệu nghiên cứu",
-        sessions: [
-          "Giới thiệu các phần mềm dùng trong NCKH (SPSS, AMOS, SmartPLS, Stata, EViews, R, Python)",
-          "SPSS dùng trong trường hợp nào và những vấn đề cần lưu ý",
-          "Phân tích nhân tố và hồi quy OLS: làm sạch dữ liệu, thống kê mô tả, Cronbach’s alpha, EFA, tương quan, đa cộng tuyến",
-          "Kỹ thuật phân tích và trình bày: hồi quy Binary Logistic",
-          "Mở rộng kiến thức",
-          "Thảo luận, giải đáp thắc mắc",
-        ],
-      },
-      {
-        name: "Trình bày kết quả nghiên cứu",
-        sessions: [
-          "Thuật ngữ và văn phong khoa học",
-          "Trình bày thuyết minh nghiên cứu, phần mở đầu",
-          "Trình bày phần tổng quan và phương pháp nghiên cứu",
-          "Trình bày phần cơ sở lý luận",
-          "Trình bày kết quả nghiên cứu và thảo luận",
-          "Trình bày phần kết luận và tài liệu tham khảo",
-        ],
-      },
-      {
-        name: "Tư vấn chi tiết đề tài cho học viên",
-        sessions: [
-          "Giảng viên trao đổi và tư vấn trực tiếp cách triển khai đề tài cho từng học viên",
-          "Học viên đặt câu hỏi và được giải đáp trên chính đề tài của mình",
+          {
+            text: "Stata workflow và dữ liệu bảng",
+            points: [
+              "Làm quen với do-file, log-file, quản lý dữ liệu và quy trình phân tích trên Stata",
+              "Thiết lập panel data bằng xtset; thực hiện FE, RE và kiểm định Hausman",
+              "Kiểm tra tự tương quan, phương sai thay đổi, phụ thuộc chéo và sử dụng robust SE/FGLS",
+              "So sánh output, lựa chọn mô hình và giải thích kết quả theo câu hỏi nghiên cứu",
+            ],
+          },
+          {
+            text: "IV/2SLS, GMM/PMG và mini-project",
+            points: [
+              "Nhận diện nội sinh và thực hành IV/2SLS khi OLS không còn phù hợp",
+              "Giới thiệu GMM động và PMG trong các bài toán dữ liệu bảng nâng cao",
+              "Hoàn thiện mini-project từ dữ liệu, lệnh phân tích đến bảng kết quả",
+              "Trình bày, diễn giải và viết phần kết quả/thảo luận cho luận văn hoặc bài báo",
+            ],
+          },
         ],
       },
     ],
     outcomes: [
-      "Nắm được phương pháp nghiên cứu khoa học ứng dụng trong khoa học xã hội và nhân văn, đủ để triển khai tiểu luận, khóa luận tốt nghiệp và đề tài cấp cơ sở.",
-      "Hình thành kỹ năng tự nghiên cứu: thu thập, xử lý thông tin và trình bày được kết quả của một đề tài cụ thể một cách độc lập.",
-      "Được giảng viên tư vấn trực tiếp đề tài trong khóa học, và tiếp tục đồng hành hỗ trợ sau khóa.",
-      "Nhận chứng nhận sau khi hoàn thành khóa học.",
+      "Thiết kế được kế hoạch phân tích phù hợp với câu hỏi nghiên cứu, loại dữ liệu và mô hình đề xuất.",
+      "Chuẩn bị, mã hóa, làm sạch và mô tả dữ liệu bằng quy trình có thể kiểm tra và lặp lại.",
+      "Thực hiện và diễn giải Cronbach’s Alpha, EFA, tương quan, OLS và Logistic Regression trên SPSS.",
+      "Thực hiện workflow trên Stata cho dữ liệu bảng, FE/RE, Hausman, robust SE, FGLS và các kỹ thuật nâng cao phù hợp.",
+      "Hoàn thiện bảng kết quả và phần diễn giải học thuật từ một mini-project nghiên cứu thực tế.",
     ],
     registerNote: REGISTER_NOTE_GENERIC,
   },
 
   {
-    code: "STATA",
-    slug: "stata-kinh-te-luong",
-    eyebrow: "Khóa chuyên sâu",
-    title: "Nghiên cứu khoa học chuyên sâu với phần mềm Stata",
+    code: "SMARTPLS",
+    slug: "spss-smartpls-ai",
+    eyebrow: "Khóa chuyên sâu · 06 module thực hành",
+    title: "Thiết kế nghiên cứu và phân tích dữ liệu với SPSS, SmartPLS & AI",
     audience:
-      "Dành cho sinh viên, học viên cao học, nghiên cứu sinh và giảng viên khối kinh tế, tài chính, quản trị",
+      "Dành cho sinh viên đại học, học viên cao học và người đang thực hiện nghiên cứu định lượng",
     intro:
-      "Phần lớn người học dừng lại ở các phần mềm thống kê cơ bản. Khóa này đi thẳng vào những estimator mà bài báo và luận án thực sự cần — FGLS, IV/2SLS, 3SLS, GMM động, PMG — trên dữ liệu kinh tế – tài chính thật.",
+      "Khóa học cung cấp quy trình thực hành toàn diện, từ xác định vấn đề, xây dựng mô hình, thiết kế bảng hỏi đến xử lý, phân tích và trình bày dữ liệu bằng SPSS và SmartPLS. AI được tích hợp có kiểm soát vào từng giai đoạn để hỗ trợ phát triển ý tưởng, kiểm tra tính logic, xử lý dữ liệu, giải thích kết quả và cải thiện cách trình bày; học viên đồng thời được hướng dẫn kiểm chứng thông tin, bảo vệ dữ liệu và sử dụng AI phù hợp với chuẩn mực liêm chính học thuật.",
     curriculum: "modules",
     price: {
-      amount: "1.100.000 đ",
+      amount: "1.000.000 đ",
       note: "Giảm 10% cho nhóm từ 03 người",
       group: true,
-      vnd: 1100000,
+      vnd: 1000000,
     },
     facts: [
-      { label: "Lớp trực tiếp", value: "05 module qua Zoom — tối đa 40 học viên" },
-      { label: "Kho record", value: "47 giờ 29 phút — 42 bài học" },
+      { label: "Hình thức", value: "Lý thuyết cô đọng kết hợp thực hành" },
+      { label: "Nội dung", value: "06 module, có buổi Research Clinic góp ý đề tài" },
+      { label: "Học liệu", value: "Recording và bộ dữ liệu thực hành" },
       { label: "Xem lại", value: "02 năm kể từ ngày đăng ký" },
     ],
     phases: [
       {
-        name: "Tổng quan về kinh tế lượng ứng dụng và phần mềm Stata",
+        name: "Thiết kế nghiên cứu và xây dựng mô hình",
+        summary:
+          "Sản phẩm: câu hỏi, mục tiêu, mô hình, giả thuyết và kế hoạch phân tích sơ bộ.",
         sessions: [
-          "Tổng quan về kinh tế lượng ứng dụng trong nghiên cứu",
-          "Làm quen với phần mềm Stata: do-file, log-file, nhập và quản lý dữ liệu",
-          "Ôn tập hồi quy OLS trên Stata và cách đọc output",
-          "Trình bày kết quả và thực hành",
+          "Xác định vấn đề và khoảng trống nghiên cứu",
+          "Xây dựng câu hỏi và mục tiêu nghiên cứu",
+          "Phân biệt nghiên cứu khám phá, mô tả, giải thích và dự báo",
+          "Lựa chọn phương pháp định tính, định lượng hoặc hỗn hợp",
+          "Xác định biến độc lập, phụ thuộc, trung gian, điều tiết và kiểm soát",
+          "Lựa chọn lý thuyết nền và xây dựng khung lý thuyết",
+          "Xây dựng mô hình và giả thuyết nghiên cứu",
+          "Lập kế hoạch thu thập và phân tích dữ liệu",
+          "Ứng dụng AI để phát triển câu hỏi, kiểm tra tính logic của mô hình và đề xuất từ khóa tìm kiếm",
+          "Thực hành xây dựng mô hình và kế hoạch phân tích cho một đề tài cụ thể",
         ],
       },
       {
-        name: "Các vấn đề mô hình và FGLS trong dữ liệu cắt ngang, chuỗi thời gian",
+        name: "Thiết kế thang đo, bảng hỏi và chuẩn bị dữ liệu",
+        summary:
+          "Sản phẩm: bảng hỏi, codebook và file dữ liệu SPSS đã được làm sạch.",
         sessions: [
-          "Phương sai thay đổi (Heteroskedasticity) và FGLS",
-          "Đa cộng tuyến (Multicollinearity) và chỉ số VIF",
-          "Tự tương quan (Autocorrelation) trong chuỗi thời gian",
-          "Thực hành tổng hợp: so sánh OLS, OLS robust SE và FGLS",
+          "Phân biệt khái niệm nghiên cứu, biến quan sát và biến tiềm ẩn",
+          "Các loại thang đo và nguyên tắc mã hóa dữ liệu",
+          "Tìm kiếm, lựa chọn và điều chỉnh thang đo từ nghiên cứu trước",
+          "Thiết kế cấu trúc và nội dung bảng hỏi khoa học",
+          "Dịch thuật, hiệu chỉnh thang đo và thực hiện pilot test",
+          "Xác định tổng thể, phương pháp chọn mẫu và cỡ mẫu",
+          "Khởi tạo, đặt tên, mã hóa và gắn nhãn biến trên SPSS",
+          "Phát hiện và xử lý dữ liệu thiếu, ngoại lệ, biến đảo chiều và câu trả lời thiếu tin cậy",
+          "Ứng dụng AI để rà soát bảng hỏi, hỗ trợ xây dựng codebook và SPSS Syntax cơ bản",
+          "Thực hành thiết kế bảng hỏi và làm sạch bộ dữ liệu khảo sát",
         ],
       },
       {
-        name: "Nội sinh, biến công cụ và hệ phương trình (IV/2SLS, 3SLS)",
+        name: "Thống kê mô tả, kiểm định khác biệt và EFA trên SPSS",
+        summary:
+          "Sản phẩm: bảng thống kê mô tả, kiểm định khác biệt, Cronbach’s Alpha, EFA và phần diễn giải.",
         sessions: [
-          "Nội sinh trong mô hình hồi quy và hậu quả với ước lượng OLS",
-          "Phương pháp biến công cụ (IV/2SLS) với lệnh ivregress",
-          "Hệ phương trình đồng thời và 3SLS với lệnh reg3",
-          "Thực hành trên bộ dữ liệu kinh tế – tài chính",
-          "Giải đáp thắc mắc",
+          "Thống kê mô tả đặc điểm mẫu và các biến nghiên cứu",
+          "Lựa chọn kỹ thuật kiểm định theo câu hỏi nghiên cứu và loại dữ liệu",
+          "Kiểm định sự khác biệt giữa hai nhóm bằng Independent-samples t-test",
+          "Kiểm định sự khác biệt giữa nhiều nhóm bằng One-way ANOVA",
+          "Đánh giá độ tin cậy thang đo bằng Cronbach’s Alpha và tương quan biến–tổng",
+          "Phân biệt Principal Component Analysis và Exploratory Factor Analysis",
+          "Đánh giá KMO, Bartlett’s Test, factor loading và tổng phương sai trích",
+          "Lựa chọn phép xoay, xác định số nhân tố và tạo biến đại diện",
+          "Ứng dụng AI để đọc output, kiểm tra lựa chọn phương pháp và hỗ trợ diễn giải kết quả",
+          "Thực hành phân tích và trình bày bảng kết quả theo chuẩn khóa luận, luận văn",
         ],
       },
       {
-        name: "Dữ liệu bảng, GMM động và PMG (Panel ARDL)",
+        name: "Phân tích hồi quy trên SPSS",
+        summary:
+          "Sản phẩm: mô hình hồi quy, kết quả kiểm tra giả định, bảng kiểm định giả thuyết và phần diễn giải.",
         sessions: [
-          "Tổng quan về dữ liệu bảng (Panel data) và thiết lập với xtset",
-          "Mô hình tác động cố định và ngẫu nhiên (FE/RE), kiểm định Hausman",
-          "Phương sai thay đổi, tự tương quan và phụ thuộc chéo trong panel",
-          "Mô hình panel động và GMM (Arellano–Bond, System GMM)",
-          "Mô hình PMG (Panel ARDL) với xtpmg",
+          "Phân tích tương quan và lựa chọn mô hình hồi quy phù hợp",
+          "Thực hiện hồi quy tuyến tính OLS đơn biến và đa biến",
+          "Đưa biến kiểm soát, biến giả và biến tương tác vào mô hình",
+          "Kiểm tra đa cộng tuyến bằng VIF và Tolerance",
+          "Kiểm tra tính tuyến tính, phần dư, phương sai sai số và quan sát ảnh hưởng",
+          "Diễn giải R², Adjusted R², F-test, hệ số hồi quy và p-value",
+          "Phân biệt ý nghĩa thống kê và ý nghĩa thực tiễn của kết quả",
+          "Thực hiện Binary Logistic Regression và diễn giải odds ratio",
+          "Ứng dụng AI để hỗ trợ đọc output, kiểm tra giả định và phát hiện kết luận chưa phù hợp",
+          "Thực hành lập bảng, kiểm định giả thuyết và viết phần kết quả hồi quy",
         ],
       },
       {
-        name: "Ôn tập kỹ thuật xử lý dữ liệu và thực hành đề tài của học viên",
+        name: "Phân tích dữ liệu với SmartPLS",
+        summary:
+          "Sản phẩm: mô hình SmartPLS, bảng đánh giá thang đo, kết quả kiểm định giả thuyết và phần diễn giải.",
         sessions: [
-          "Quy trình chuẩn và thiết kế do-file hoàn chỉnh cho một nghiên cứu",
-          "Thực hành “mini research project” trên dữ liệu thực tế",
-          "Giải đáp thắc mắc và định hướng tự học tiếp",
+          "Xác định trường hợp phù hợp và những lưu ý khi sử dụng SmartPLS",
+          "Chuẩn bị, kiểm tra và nhập dữ liệu vào SmartPLS",
+          "Khởi tạo dự án và xây dựng mô hình nghiên cứu trên phần mềm",
+          "Chạy mô hình và đánh giá outer loading của các biến quan sát",
+          "Đánh giá độ tin cậy bằng Cronbach’s Alpha, rho_A và Composite Reliability",
+          "Đánh giá giá trị hội tụ bằng AVE và giá trị phân biệt bằng HTMT",
+          "Kiểm tra VIF, path coefficient, R² và f²",
+          "Chạy bootstrapping, kiểm định giả thuyết và phân tích tác động trực tiếp, gián tiếp",
+          "Ứng dụng AI để đọc kết quả, lập bảng kiểm định và kiểm tra sự thống nhất trong diễn giải",
+          "Thực hành toàn bộ quy trình SmartPLS và giới thiệu phân tích trung gian, điều tiết",
+        ],
+      },
+      {
+        name: "AI-Assisted Research Clinic – thảo luận và góp ý đề tài",
+        summary:
+          "Sản phẩm: phiếu góp ý, danh mục điều chỉnh và kế hoạch hành động dành riêng cho từng học viên.",
+        sessions: [
+          "Học viên trình bày đề tài, tiến độ và những khó khăn hiện tại",
+          "Góp ý tên đề tài, vấn đề, câu hỏi và mục tiêu nghiên cứu",
+          "Đánh giá cơ sở lý thuyết, mô hình và giả thuyết nghiên cứu",
+          "Góp ý thang đo, bảng hỏi và phương pháp thu thập dữ liệu",
+          "Tư vấn đối tượng khảo sát, phương pháp chọn mẫu và cỡ mẫu",
+          "Lựa chọn kỹ thuật phân tích phù hợp với câu hỏi và đặc điểm dữ liệu",
+          "Xác định phạm vi sử dụng SPSS, hồi quy hoặc SmartPLS",
+          "Góp ý dữ liệu, kết quả phân tích và cách diễn giải hiện có",
+          "Ứng dụng AI để rà soát tính nhất quán và xây dựng danh mục nội dung cần chỉnh sửa",
+          "Đề xuất hướng nghiên cứu và lập kế hoạch triển khai tiếp theo cho từng đề tài",
         ],
       },
     ],
     outcomes: [
-      "Nắm vững quy trình phân tích định lượng hoàn chỉnh từ xây dựng mô hình, kiểm định, ước lượng đến báo cáo kết quả trên Stata.",
-      "Phát hiện và xử lý được các vấn đề kỹ thuật trong mô hình hồi quy và dữ liệu bảng: phương sai thay đổi, đa cộng tuyến, tự tương quan, phụ thuộc chéo, nội sinh.",
-      "Triển khai thành thạo OLS với robust SE, FGLS, IV/2SLS, 3SLS, GMM động và PMG trên dữ liệu kinh tế – tài chính thực tế.",
-      "Viết được do-file chuẩn, xuất bảng kết quả và diễn giải theo ngôn ngữ học thuật, phục vụ luận văn, bài báo và báo cáo tư vấn.",
+      "Xây dựng được câu hỏi, mục tiêu, mô hình và giả thuyết nghiên cứu kèm kế hoạch phân tích phù hợp.",
+      "Thiết kế thang đo, bảng hỏi khoa học và làm sạch bộ dữ liệu khảo sát trên SPSS.",
+      "Thực hiện và diễn giải thống kê mô tả, Independent-samples t-test, One-way ANOVA, Cronbach’s Alpha và EFA.",
+      "Chạy và kiểm định hồi quy OLS đơn biến, đa biến và Binary Logistic Regression với đầy đủ kiểm tra giả định.",
+      "Thực hiện quy trình SmartPLS: đánh giá mô hình đo lường, mô hình cấu trúc, bootstrapping và phân tích trung gian, điều tiết.",
+      "Trình bày bảng kết quả và phần diễn giải theo chuẩn khóa luận, luận văn; dùng AI hỗ trợ nhưng vẫn kiểm chứng kết quả.",
     ],
+    instructor: INSTRUCTOR_TAM,
+    registerNote: REGISTER_NOTE_GENERIC,
+  },
+
+  {
+    code: "STATA",
+    slug: "kinh-te-luong-stata-ai",
+    eyebrow: "Khóa chuyên sâu · 05 buổi",
+    title: "Kinh tế lượng ứng dụng với Stata & AI",
+    audience:
+      "Dành cho người đã có kiến thức thống kê hoặc hồi quy cơ bản và muốn học kinh tế lượng ứng dụng trên Stata",
+    audienceProfiles: [
+      {
+        name: "Sinh viên năm 3–4",
+        detail:
+          "Đang thực hiện nghiên cứu khoa học hoặc khóa luận tốt nghiệp.",
+      },
+      {
+        name: "Học viên cao học & nghiên cứu sinh",
+        detail: "Sử dụng dữ liệu định lượng trong luận văn, luận án.",
+      },
+      {
+        name: "Giảng viên",
+        detail:
+          "Thuộc các ngành kinh tế, tài chính, kinh doanh và quản lý.",
+      },
+      {
+        name: "Chuyên viên phân tích",
+        detail:
+          "Phân tích dữ liệu, nghiên cứu thị trường và phân tích chính sách.",
+      },
+      {
+        name: "Người đã có nền tảng",
+        detail:
+          "Đã có kiến thức thống kê hoặc hồi quy cơ bản và muốn học kinh tế lượng ứng dụng trên Stata một cách bài bản.",
+      },
+    ],
+    intro:
+      "Khóa học hướng dẫn xây dựng và thực hiện một quy trình nghiên cứu kinh tế lượng hoàn chỉnh bằng Stata, từ tổ chức dữ liệu, lựa chọn mô hình, kiểm định các vấn đề kỹ thuật đến ước lượng và trình bày kết quả. Nội dung tập trung vào OLS, FE/RE, FGLS, IV/2SLS, GMM và Panel ARDL–PMG tuyến tính, phi tuyến; AI được tích hợp có kiểm soát để hỗ trợ viết lệnh, phát hiện lỗi, giải thích kết quả và rà soát tính nhất quán của nghiên cứu.",
+    curriculum: "modules",
+    price: {
+      amount: "1.000.000 đ",
+      note: "Giảm 10% cho nhóm từ 03 người",
+      group: true,
+      vnd: 1000000,
+    },
+    facts: [
+      { label: "Thời lượng", value: "05 buổi" },
+      {
+        label: "Hình thức",
+        value: "Lý thuyết cô đọng kết hợp thực hành trên dữ liệu thực tế",
+      },
+      { label: "Nội dung", value: "05 module, có buổi Research Clinic góp ý đề tài" },
+      { label: "Học liệu", value: "Recording, do-file và bộ dữ liệu thực hành" },
+      { label: "Xem lại", value: "02 năm kể từ ngày đăng ký" },
+    ],
+    phases: [
+      {
+        name: "Quy trình nghiên cứu kinh tế lượng và nền tảng Stata",
+        summary:
+          "Sản phẩm: do-file có cấu trúc, dữ liệu sạch, bảng thống kê mô tả và kết quả OLS.",
+        sessions: [
+          "Xây dựng câu hỏi, giả thuyết và mô hình kinh tế lượng từ vấn đề nghiên cứu",
+          "Phân biệt dữ liệu cắt ngang, chuỗi thời gian và dữ liệu bảng",
+          "Lựa chọn biến phụ thuộc, biến giải thích, biến kiểm soát và dạng hàm",
+          "Làm quen với giao diện, command, do-file, log-file và help trong Stata",
+          "Nhập, nối, chuyển đổi và tổ chức dữ liệu nghiên cứu",
+          "Làm sạch dữ liệu, xử lý dữ liệu thiếu, ngoại lệ và mã hóa biến",
+          "Thống kê mô tả, tương quan và trực quan hóa dữ liệu",
+          "Ước lượng OLS; đọc hệ số, sai số chuẩn, p-value, khoảng tin cậy và R²",
+          "Ứng dụng AI để xây dựng do-file, giải thích câu lệnh và phát hiện lỗi lập trình",
+          "Thực hành quy trình từ dữ liệu thô đến mô hình OLS và xuất bảng kết quả",
+        ],
+      },
+      {
+        name: "Phân tích dữ liệu bảng và xử lý các vấn đề mô hình",
+        summary:
+          "Sản phẩm: bảng so sánh Pooled OLS, FE, RE và mô hình hiệu chỉnh phù hợp.",
+        sessions: [
+          "Cấu trúc dữ liệu bảng, nhận diện panel cân bằng và không cân bằng",
+          "Khai báo, kiểm tra và tổ chức dữ liệu bảng bằng xtset",
+          "Ước lượng Pooled OLS, Fixed Effects và Random Effects",
+          "Lựa chọn mô hình bằng F-test, Breusch–Pagan LM và Hausman test",
+          "Phát hiện đa cộng tuyến và đánh giá VIF",
+          "Kiểm định phương sai sai số thay đổi và tự tương quan trong dữ liệu bảng",
+          "Kiểm định phụ thuộc chéo giữa các đơn vị bảng",
+          "Lựa chọn robust/clustered standard errors, Driscoll–Kraay và FGLS phù hợp",
+          "Ứng dụng AI để xây dựng chuỗi kiểm định và so sánh các phương án xử lý mô hình",
+          "Thực hành lựa chọn estimator, kiểm tra độ vững và trình bày kết quả panel",
+        ],
+      },
+      {
+        name: "Nội sinh, biến công cụ và GMM động",
+        summary:
+          "Sản phẩm: mô hình IV/2SLS hoặc GMM, kết quả kiểm định công cụ và đoạn diễn giải học thuật.",
+        sessions: [
+          "Nhận diện nội sinh do biến bỏ sót, quan hệ đồng thời, sai số đo lường và quan hệ động",
+          "Phân biệt tương quan, quan hệ nhân quả và vấn đề nhận dạng mô hình",
+          "Điều kiện relevance và exogeneity của biến công cụ",
+          "Ước lượng IV/2SLS và so sánh với OLS",
+          "Kiểm định nội sinh, công cụ yếu và các hạn chế quá xác định",
+          "Xây dựng mô hình dữ liệu bảng động",
+          "Phân biệt Difference GMM và System GMM",
+          "Kiểm soát số lượng công cụ; diễn giải Hansen test, AR(1) và AR(2)",
+          "Ứng dụng AI để rà soát đặc tả mô hình, giải thích kiểm định và phát hiện kết luận nhân quả quá mức",
+          "Thực hành IV/2SLS hoặc System GMM và lập bảng kiểm tra độ tin cậy của mô hình",
+        ],
+      },
+      {
+        name: "Linear và Nonlinear Panel ARDL–PMG",
+        summary:
+          "Sản phẩm: hai mô hình Linear và Nonlinear PMG, bảng kết quả ngắn hạn–dài hạn và kiểm định bất đối xứng.",
+        sessions: [
+          "Nhận diện dữ liệu bảng động và điều kiện sử dụng Panel ARDL–PMG",
+          "Kiểm định phụ thuộc chéo và lựa chọn thế hệ kiểm định nghiệm đơn vị phù hợp",
+          "Kiểm định tính dừng và bảo đảm không có biến tích hợp bậc hai, I(2)",
+          "Xây dựng Panel ARDL và lựa chọn cấu trúc độ trễ",
+          "Phân biệt Mean Group, Dynamic Fixed Effects và Pooled Mean Group",
+          "Ước lượng Linear PMG; diễn giải quan hệ dài hạn, ngắn hạn và hệ số hiệu chỉnh sai số",
+          "Kiểm định lựa chọn giữa PMG, MG và DFE; thực hiện các kiểm tra độ vững",
+          "Xây dựng Nonlinear PMG bằng phân rã biến thành các thay đổi dương và âm; kiểm định bất đối xứng",
+          "Ứng dụng AI để hỗ trợ viết lệnh, rà soát kết quả và diễn giải tác động tuyến tính, bất đối xứng",
+          "Thực hành so sánh Linear PMG và Nonlinear PMG trên dữ liệu bảng thực tế",
+        ],
+      },
+      {
+        name: "Ôn tập và Research Clinic – góp ý đề tài học viên",
+        summary:
+          "Sản phẩm: phiếu góp ý, mô hình đề xuất, danh mục kiểm định và kế hoạch hành động riêng cho từng học viên.",
+        sessions: [
+          "Hệ thống hóa quy trình từ câu hỏi nghiên cứu đến lựa chọn estimator",
+          "Ôn tập OLS, FE/RE, FGLS, IV/2SLS, GMM và Panel ARDL–PMG",
+          "Học viên trình bày đề tài, dữ liệu, mô hình và tiến độ hiện tại",
+          "Góp ý câu hỏi, giả thuyết và đặc tả mô hình kinh tế lượng",
+          "Đánh giá cấu trúc dữ liệu, biến số, nguồn dữ liệu và thời gian nghiên cứu",
+          "Tư vấn lựa chọn estimator và hệ thống kiểm định phù hợp",
+          "Góp ý do-file, kết quả ước lượng và các kiểm tra độ vững",
+          "Rà soát cách lập bảng, diễn giải kết quả và mức độ phù hợp của kết luận",
+          "Ứng dụng AI để kiểm tra do-file, tổng hợp góp ý và xây dựng danh mục điều chỉnh",
+          "Đề xuất hướng nghiên cứu và lập kế hoạch triển khai tiếp theo cho từng đề tài",
+        ],
+      },
+    ],
+    outcomes: [
+      "Xây dựng mô hình kinh tế lượng phù hợp với câu hỏi nghiên cứu.",
+      "Tổ chức dữ liệu và viết do-file có cấu trúc.",
+      "Ước lượng, kiểm định và diễn giải mô hình OLS.",
+      "Phân tích dữ liệu bảng bằng Pooled OLS, FE và RE.",
+      "Phát hiện và xử lý các vấn đề kỹ thuật của mô hình.",
+      "Lựa chọn giữa robust SE, clustered SE, Driscoll–Kraay và FGLS.",
+      "Nhận diện nội sinh và thực hiện IV/2SLS hoặc GMM.",
+      "Ước lượng Linear Panel ARDL–PMG.",
+      "Xây dựng và diễn giải Nonlinear PMG.",
+      "Xuất bảng và trình bày kết quả theo chuẩn luận văn, bài báo.",
+      "Sử dụng AI để hỗ trợ lập trình và diễn giải nhưng vẫn kiểm chứng kết quả.",
+      "Xác định những điều chỉnh và hướng phát triển tiếp theo cho đề tài.",
+    ],
+    instructor: INSTRUCTOR_TAM,
     registerNote: REGISTER_NOTE_GENERIC,
   },
 
