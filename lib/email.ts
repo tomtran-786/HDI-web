@@ -2,6 +2,7 @@ import { Resend } from "resend";
 import { feedbackKindLabel } from "@/content/feedback";
 import type { FeedbackKindInput } from "./feedback-input";
 import { appUrl } from "./app-url";
+import { formatVnd } from "./format";
 
 // Re-exported so callers that already reach for the email module — and the
 // tests that mock it — keep working after the helper moved to ./app-url.
@@ -220,6 +221,42 @@ export function sendGroupMemberEnrolledEmail(input: {
         "<p style=\"font-size:13px;color:#6b7785\">Nếu bạn không quen người nêu trên hoặc cho rằng đây là nhầm lẫn, " +
         "vui lòng liên hệ HDI để chúng tôi kiểm tra lại đơn này.</p>",
       { action: "Xem khóa học của bạn", href: `${appUrl()}/tai-khoan` },
+    ),
+  });
+}
+
+/**
+ * Báo cho người giới thiệu biết họ vừa được cộng credits.
+ *
+ * Không có lá thư này thì credits chỉ tồn tại ở một trang họ không có lý do gì
+ * để mở — và một phần thưởng không ai biết mình có thì không khuyến khích được
+ * điều gì cả.
+ *
+ * Cố ý KHÔNG nêu tên hay email của người được giới thiệu: đó là thông tin của
+ * người thứ ba, và việc ai mua khóa nào không phải chuyện người giới thiệu được
+ * biết chỉ vì họ đưa mã.
+ */
+export function sendReferralCommissionEmail(input: {
+  to: string;
+  name: string;
+  amountVnd: number;
+  balanceVnd: number;
+}) {
+  const amount = formatVnd(input.amountVnd);
+  const balance = formatVnd(input.balanceVnd);
+
+  return sendEmail({
+    to: input.to,
+    subject: "Bạn vừa nhận credits giới thiệu — HDI Research Center",
+    html: emailShell(
+      input.name?.trim() || "bạn",
+      `<p>Một người bạn giới thiệu vừa hoàn tất thanh toán khóa học đầu tiên. ` +
+        `HDI đã cộng <strong>${escapeHtml(amount)}</strong> credits vào tài khoản của bạn.</p>` +
+        `<p>Số dư hiện tại: <strong>${escapeHtml(balance)}</strong>.</p>` +
+        "<p>Credits được trừ vào học phí ở lần mua sau — bật ô “Dùng credits giới thiệu” " +
+        "trong giỏ hàng trước khi thanh toán. Đơn luôn giữ lại một khoản nhỏ phải trả qua PayOS, " +
+        "nên phần dư được giữ lại cho những lần tiếp theo.</p>",
+      { action: "Xem credits của bạn", href: `${appUrl()}/tai-khoan/gioi-thieu` },
     ),
   });
 }

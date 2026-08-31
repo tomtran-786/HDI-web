@@ -7,6 +7,7 @@ import { allowAuthEmail, serverActionIp } from "@/lib/auth-throttle";
 import { createAuthToken, VERIFY_TOKEN_TTL_MS } from "@/lib/auth-tokens";
 import { sendVerificationEmail } from "@/lib/email";
 import { prisma } from "@/lib/prisma";
+import { normalizeReferralCode } from "@/lib/referral-code";
 import { safeNext } from "@/lib/safe-path";
 
 const REGISTER = "/dang-ky-tai-khoan";
@@ -27,6 +28,28 @@ export async function registerAccount(formData: FormData) {
   const ip = await serverActionIp();
   if (!(await allowAuthEmail("register", email, ip))) {
     redirect(`${REGISTER}?error=throttled${nextSuffix}`);
+  }
+
+  /**
+   * Mã giới thiệu là tùy chọn, nhưng mã SAI thì báo lỗi rõ chứ không bỏ qua.
+   *
+   * Bỏ qua im lặng là cách chắc chắn nhất để cả hai bên cùng mất phần mà không
+   * ai biết: người mới mất khoản giảm 10% của đơn đầu tiên, người giới thiệu
+   * mất hoa hồng, và quan hệ này chỉ gắn được đúng một lần lúc xác thực nên
+   * không có đường sửa lại về sau.
+   *
+   * Tra ở đây chứ không đợi tới lúc xác thực: người vừa gõ mã là người duy nhất
+   * sửa được nó.
+   */
+  let referrerId: string | null = null;
+  const referralCode = normalizeReferralCode(formData.get("maGioiThieu"));
+  if (referralCode) {
+    const referrer = await prisma.user.findUnique({
+      where: { referralCode },
+      select: { id: true },
+    });
+    if (!referrer) redirect(`${REGISTER}?error=ma_gioi_thieu${nextSuffix}`);
+    referrerId = referrer.id;
   }
 
   /**
@@ -62,6 +85,7 @@ export async function registerAccount(formData: FormData) {
         purpose: "verify",
         ttlMs: VERIFY_TOKEN_TTL_MS,
         pendingPasswordHash: passwordHash,
+        pendingReferrerId: referrerId,
       });
       recipient = {
         email: existing.email,
@@ -79,6 +103,7 @@ export async function registerAccount(formData: FormData) {
           purpose: "verify",
           ttlMs: VERIFY_TOKEN_TTL_MS,
           pendingPasswordHash: passwordHash,
+          pendingReferrerId: referrerId,
         });
         return { user, token: createdToken.token };
       });

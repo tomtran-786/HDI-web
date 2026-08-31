@@ -6,6 +6,7 @@ import { hasLiveAccess } from "@/lib/enrollment";
 import { findCourse } from "@/lib/courses";
 import { links } from "@/content/site";
 import { serviceKindLabel } from "@/content/ai-check";
+import { referralPage } from "@/content/referral";
 import {
   groupOrderLabel,
   enrollmentStatusLabel,
@@ -21,6 +22,7 @@ import {
   IconFolder,
   IconMessage,
   IconReceipt,
+  IconUsers,
   IconVideo,
 } from "@/components/ui/icons";
 import { retryDriveAccess } from "./actions";
@@ -179,6 +181,13 @@ export default async function AccountPage() {
           >
             <IconReceipt size={16} />
             Đơn hàng
+          </Link>
+          <Link
+            href="/tai-khoan/gioi-thieu"
+            className="inline-flex items-center gap-2 rounded-full border border-line px-5 py-2.5 text-sm font-bold text-fg-muted transition hover:border-primary hover:text-primary"
+          >
+            <IconUsers size={16} />
+            {referralPage.accountCta}
           </Link>
           <LogoutButton />
         </div>

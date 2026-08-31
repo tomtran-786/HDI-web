@@ -7,6 +7,9 @@ const mocks = vi.hoisted(() => ({
   paymentCreate: vi.fn(),
   itemFindMany: vi.fn(),
   orderUpdateMany: vi.fn(),
+  userFindUnique: vi.fn(),
+  ledgerUpdateMany: vi.fn(),
+  ledgerCreateMany: vi.fn(),
   confirmEnrollment: vi.fn(),
 }));
 
@@ -28,10 +31,13 @@ describe("append-only PayOS event processing", () => {
         userId: "user-1",
         status: "pending",
         amountVnd: 1_000_000,
+        creditAppliedVnd: 0,
         expiresAt: new Date(Date.now() + 60_000),
         providerRef: "link-1",
       },
     ]);
+    // Mặc định: người mua không được ai giới thiệu, nên không sinh hoa hồng.
+    mocks.userFindUnique.mockResolvedValue({ referredById: null });
     mocks.transaction.mockImplementation(async (callback) =>
       callback({
         $queryRaw: mocks.queryRaw,
@@ -41,6 +47,11 @@ describe("append-only PayOS event processing", () => {
         },
         orderItem: { findMany: mocks.itemFindMany },
         order: { updateMany: mocks.orderUpdateMany },
+        user: { findUnique: mocks.userFindUnique },
+        referralLedger: {
+          updateMany: mocks.ledgerUpdateMany,
+          createMany: mocks.ledgerCreateMany,
+        },
       }),
     );
   });

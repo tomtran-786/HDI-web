@@ -102,6 +102,7 @@ export default async function AdminPage({
     serviceOrders,
     missingDriveCount,
     occupiedSeats,
+    referralBalances,
   ] =
     await Promise.all([
     // The reconciliation queue: money expected but not yet confirmed. There is
@@ -240,7 +241,37 @@ export default async function AdminPage({
       },
     }),
     coursesPromise.then((rows) => seatsTaken(rows.map((course) => course.id))),
+    /**
+     * Công nợ credits theo từng người: TỔNG các dòng chưa bị void.
+     *
+     * Cố ý KHÔNG theo bộ lọc ngày. Số dư là tình trạng "ngay lúc này" — cộng
+     * riêng các dòng trong một khoảng ngày ra một con số không phải số dư của
+     * ai cả, và đó đúng là loại con số mà người đọc sẽ tưởng là số dư.
+     */
+    prisma.referralLedger.groupBy({
+      by: ["userId"],
+      where: { status: { not: "void" } },
+      _sum: { amountVnd: true },
+      orderBy: { _sum: { amountVnd: "desc" } },
+      take: 20,
+    }),
   ]);
+
+  // groupBy không join được, nên tra email trong một lượt thứ hai.
+  const referralHolders = referralBalances.filter(
+    (row) => (row._sum.amountVnd ?? 0) > 0,
+  );
+  const referralUsers = referralHolders.length
+    ? await prisma.user.findMany({
+        where: { id: { in: referralHolders.map((row) => row.userId) } },
+        select: { id: true, email: true, referralCode: true },
+      })
+    : [];
+  const referralEmailById = new Map(referralUsers.map((user) => [user.id, user]));
+  const referralLiabilityVnd = referralHolders.reduce(
+    (sum, row) => sum + (row._sum.amountVnd ?? 0),
+    0,
+  );
 
   const awaitingPayment = orders.filter((o) => o.status === "pending");
   const awaitingReview = reviews.filter((r) => r.status === "pending");
@@ -694,6 +725,49 @@ export default async function AdminPage({
               </p>
             </li>
           ))}
+        </ul>
+      )}
+
+      {/* Công nợ credits giới thiệu.
+          Đây là tiền HDI đã hứa trừ vào các đơn sau, nên nó phải nhìn thấy được
+          ở một chỗ nào đó — một khoản nợ chỉ đọc được bằng SQL là một khoản nợ
+          không ai theo dõi. Cố ý KHÔNG theo bộ lọc ngày: số dư là tình trạng
+          ngay lúc này. */}
+      <h2 className="mb-2 mt-14 text-xl font-bold tracking-tight text-primary">
+        Credits giới thiệu
+      </h2>
+      <p className="mb-5 text-sm text-fg-muted">
+        Tổng công nợ {vnd.format(referralLiabilityVnd)}đ, không theo bộ lọc ngày.
+      </p>
+      {referralHolders.length === 0 ? (
+        <p className="rounded-card border border-line bg-card p-5 text-sm text-fg-muted">
+          Chưa ai có số dư credits.
+        </p>
+      ) : (
+        <ul className="space-y-2">
+          {referralHolders.map((row) => {
+            const holder = referralEmailById.get(row.userId);
+            return (
+              <li
+                key={row.userId}
+                className="flex flex-col gap-2 rounded-card border border-line bg-card p-5 sm:flex-row sm:items-center sm:justify-between"
+              >
+                <div className="min-w-0">
+                  <p className="break-all text-sm font-semibold text-fg">
+                    {holder?.email ?? row.userId}
+                  </p>
+                  {holder?.referralCode && (
+                    <p className="mt-1 text-[13px] tracking-[0.12em] text-fg-subtle">
+                      {holder.referralCode}
+                    </p>
+                  )}
+                </div>
+                <p className="shrink-0 text-lg font-bold tracking-tight text-primary">
+                  {vnd.format(row._sum.amountVnd ?? 0)}đ
+                </p>
+              </li>
+            );
+          })}
         </ul>
       )}
     </Section>

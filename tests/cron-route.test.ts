@@ -8,6 +8,7 @@ const mocks = vi.hoisted(() => ({
   tokens: vi.fn(),
   leases: vi.fn(),
   services: vi.fn(),
+  referralRepairs: vi.fn(),
 }));
 
 vi.mock("@/lib/orders", () => ({ expireStaleOrders: mocks.expire }));
@@ -21,6 +22,9 @@ vi.mock("@/lib/fulfillment", () => ({
 vi.mock("@/lib/auth-throttle", () => ({ pruneAuthThrottles: mocks.throttles }));
 vi.mock("@/lib/auth-tokens", () => ({ pruneExpiredAuthTokens: mocks.tokens }));
 vi.mock("@/lib/external-lease", () => ({ pruneExpiredLeases: mocks.leases }));
+vi.mock("@/lib/referral-ledger", () => ({
+  repairReferralReservations: mocks.referralRepairs,
+}));
 
 import { GET } from "@/app/api/cron/don-hang-het-han/route";
 
@@ -35,6 +39,7 @@ describe("bounded housekeeping cron route", () => {
     mocks.tokens.mockResolvedValue(0);
     mocks.leases.mockResolvedValue(0);
     mocks.services.mockResolvedValue({ expired: 0 });
+    mocks.referralRepairs.mockResolvedValue(0);
   });
 
   it("returns 404 without the bearer secret and performs no work", async () => {
@@ -54,6 +59,7 @@ describe("bounded housekeeping cron route", () => {
       ok: true,
       orders: { scanned: 0, expired: 0, released: 0 },
       services: { expired: 0 },
+      referralRepairs: 0,
       driveGrants: { checked: 0, granted: 0 },
       pruned: { throttles: 0, tokens: 0, leases: 0 },
     });

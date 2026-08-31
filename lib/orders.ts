@@ -4,6 +4,14 @@ import { findCourse } from "./courses";
 import { isPayosNotFound, payosClient } from "./payos";
 import { seatPriceVnd, type GroupPricedCourse } from "./group-pricing";
 import { groupApplies } from "./group-invite";
+import {
+  accrueReferralCommission,
+  creditBalanceVnd,
+  reserveCredit,
+  settleCreditReservation,
+  voidCreditReservation,
+} from "./referral-ledger";
+import { creditToApply, referralDiscountVnd } from "./referral-pricing";
 
 /**
  * How long a pending order holds its seats.
@@ -33,7 +41,12 @@ export type OrderSuccess = {
   ok: true;
   orderId: string;
   code: number;
+  /** Số tiền PHẢI TRẢ, tức đã trừ cả hai khoản dưới đây. */
   amountVnd: number;
+  /** Giảm 10% cho đơn đầu tiên của người được giới thiệu. 0 nếu không áp dụng. */
+  referralDiscountVnd: number;
+  /** Credits đã trừ (số dương). 0 nếu học viên không bật hoặc không có số dư. */
+  creditAppliedVnd: number;
   groupSize: number;
   expiresAt: Date;
 };
@@ -65,7 +78,7 @@ type LockedCourse = GroupPricedCourse & {
 export async function createOrder(
   payerUserId: string,
   courseIds: string[],
-  options: { members?: OrderBuyer[] } = {},
+  options: { members?: OrderBuyer[]; useCredit?: boolean } = {},
 ): Promise<OrderResult> {
   if (courseIds.length === 0) {
     return { ok: false, reason: "empty", message: "Giỏ hàng đang trống." };
@@ -92,6 +105,23 @@ export async function createOrder(
   await reconcileStaleOrdersForCourses(sorted);
 
   return prisma.$transaction(async (tx) => {
+    /**
+     * Khóa hàng người trả tiền TRƯỚC khi khóa courses, và mọi checkout đều theo
+     * đúng thứ tự đó — thứ tự khóa cố định giữa hai bảng là thứ giữ cho hai giỏ
+     * hàng chồng nhau không deadlock, y hệt lý do `courses` được khóa
+     * `ORDER BY id`.
+     *
+     * Khóa này bảo vệ HAI con số đọc bên dưới: số dư credits và quyền dùng ưu
+     * đãi "đơn đầu tiên". Prisma chạy ở READ COMMITTED, nên không có nó thì hai
+     * tab checkout của cùng một người cùng đọc thấy số dư đầy đủ và cùng tiêu
+     * hết nó, hoặc cùng thấy "chưa dùng ưu đãi" và cùng được giảm.
+     */
+    const [payer] = await tx.$queryRaw<{ referredById: string | null }[]>`
+      SELECT referred_by_id AS "referredById"
+        FROM users
+       WHERE id = ${payerUserId}
+         FOR UPDATE`;
+
     const locked = await tx.$queryRaw<LockedCourse[]>`
       SELECT id,
              slug,
@@ -250,10 +280,47 @@ export async function createOrder(
       }
     }
 
+    const subtotalVnd = items.reduce((sum, i) => sum + i.priceVnd, 0);
+
+    /**
+     * "Một lần cho mỗi tài khoản" đọc ra thành hai điều kiện.
+     *
+     * Đơn `paid` nào cũng chặn, vì ưu đãi gắn với LẦN THANH TOÁN ĐẦU TIÊN. Đơn
+     * `pending` đang mang ưu đãi cũng chặn, nếu không thì mở hai tab là được
+     * giảm hai lần — người ta chỉ cần trả một đơn và bỏ đơn kia.
+     *
+     * Index `orders_referral_discount_once_key` trong database là lớp thứ hai
+     * của cùng luật này, độc lập với đoạn code ở đây.
+     */
+    const claimed = await tx.order.findFirst({
+      where: {
+        userId: payerUserId,
+        OR: [
+          { status: "paid" },
+          { status: "pending", referralDiscountVnd: { gt: 0 } },
+        ],
+      },
+      select: { id: true },
+    });
+
+    const referralDiscount = referralDiscountVnd(
+      subtotalVnd,
+      payer?.referredById != null && claimed === null,
+    );
+
+    const creditApplied = creditToApply({
+      balanceVnd: await creditBalanceVnd(tx, payerUserId),
+      dueVnd: subtotalVnd - referralDiscount,
+      // Trình duyệt chỉ gửi lên Ý MUỐN bật/tắt, không bao giờ là số tiền (BR-02).
+      wanted: options.useCredit === true,
+    });
+
     const order = await tx.order.create({
       data: {
         userId: payerUserId,
-        amountVnd: items.reduce((sum, i) => sum + i.priceVnd, 0),
+        amountVnd: subtotalVnd - referralDiscount - creditApplied,
+        referralDiscountVnd: referralDiscount,
+        creditAppliedVnd: creditApplied,
         groupSize,
         expiresAt,
         provider: "payos",
@@ -262,11 +329,21 @@ export async function createOrder(
       select: { id: true, code: true, amountVnd: true },
     });
 
+    // Giữ chỗ credits NGAY, không đợi tới lúc trả tiền: link PayOS sắp được tạo
+    // với một số tiền cố định, nên khoản trừ phải chốt trước khi link tồn tại.
+    await reserveCredit(tx, {
+      userId: payerUserId,
+      orderId: order.id,
+      amountVnd: creditApplied,
+    });
+
     return {
       ok: true as const,
       orderId: order.id,
       code: order.code,
       amountVnd: order.amountVnd,
+      referralDiscountVnd: referralDiscount,
+      creditAppliedVnd: creditApplied,
       groupSize,
       expiresAt,
     };
@@ -289,6 +366,8 @@ type LockedOrder = {
   userId: string;
   status: "pending" | "paid" | "cancelled" | "expired" | "refunded";
   amountVnd: number;
+  /** Cần để dựng lại tiền thực thu làm căn cứ tính hoa hồng. */
+  creditAppliedVnd: number;
   expiresAt: Date;
   providerRef: string | null;
 };
@@ -348,6 +427,7 @@ export async function processPayosPayment(input: PayosPaymentEvent) {
              user_id AS "userId",
              status::text AS status,
              amount_vnd AS "amountVnd",
+             credit_applied_vnd AS "creditAppliedVnd",
              expires_at AS "expiresAt",
              provider_ref AS "providerRef"
         FROM orders
@@ -473,6 +553,35 @@ export async function processPayosPayment(input: PayosPaymentEvent) {
       const result = await confirmEnrollment(item.enrollmentId!, tx, moment);
       if (result.confirmed) enrolled += 1;
     }
+
+    // Đóng sổ khoản credits đã giữ chỗ. Về số học là no-op — `reserved` và
+    // `applied` đều được tính vào số dư — nhưng đối soát cần phân biệt "đang
+    // giữ" với "đã tiêu thật".
+    await settleCreditReservation(tx, order.id, moment);
+
+    /**
+     * Hoa hồng cho người giới thiệu của NGƯỜI TRẢ TIỀN.
+     *
+     * Căn cứ là tiền thực thu CỘNG LẠI phần credits đã trừ: credits là khoản
+     * thưởng đã ghi nợ từ trước chứ không phải một khoản giảm giá, nên trừ nó
+     * khỏi căn cứ là tính hai lần trên cùng một đồng.
+     *
+     * Luật "một lần cho mỗi tài khoản" KHÔNG được kiểm ở đây — nó nằm ở partial
+     * unique index `referral_ledger_commission_referee_key`, và `skipDuplicates`
+     * là thứ biến va chạm index thành một no-op im lặng. Cùng cơ chế đó cũng
+     * chặn luôn lượt webhook được PayOS giao lại.
+     */
+    const payer = await tx.user.findUnique({
+      where: { id: order.userId },
+      select: { referredById: true },
+    });
+    await accrueReferralCommission(tx, {
+      referrerId: payer?.referredById,
+      payerUserId: order.userId,
+      orderId: order.id,
+      basisVnd: order.amountVnd + order.creditAppliedVnd,
+    });
+
     return {
       handled: true as const,
       outcome: "succeeded" as const,
@@ -523,6 +632,12 @@ async function cancelOrderLocally(
       where: { id: { in: enrollmentIds }, status: "pending" },
       data: { status: "cancelled", accessRevokedAt: now },
     });
+
+    // Trả credits về ví trong CÙNG transaction đã đóng đơn. Mọi đường hủy —
+    // nút của học viên, trang PayOS trả về, rollback chốt giá, quản trị viên,
+    // đối soát trước mỗi lần đặt đơn mới, và cron hằng ngày — đều đi qua đây,
+    // nên đây là chỗ duy nhất cần biết chuyện này.
+    await voidCreditReservation(tx, orderId, now);
 
     return { cancelled: true as const, released: released.count };
   });

@@ -2,8 +2,12 @@ import { prisma } from "./prisma";
 import { liveAccessWhere } from "./enrollment";
 import { acquireExternalLease } from "./external-lease";
 import { findCourse } from "./courses";
-import { sendGroupMemberEnrolledEmail } from "./email";
+import {
+  sendGroupMemberEnrolledEmail,
+  sendReferralCommissionEmail,
+} from "./email";
 import { grantDrivePermission, revokeDrivePermission } from "./google-drive";
+import { creditBalanceVnd } from "./referral-ledger";
 
 function externalErrorSummary(error: unknown) {
   const shaped = error as {
@@ -235,6 +239,58 @@ export async function notifyGroupMembers(orderId: string) {
     }
   }
   return { notified };
+}
+
+/**
+ * Báo cho người giới thiệu biết họ vừa được cộng credits vì đơn này.
+ *
+ * Chạy SAU khi transaction của webhook đã commit, cạnh `notifyGroupMembers` và
+ * vì cùng lý do: gửi thư trong transaction là giữ một hàng đơn bị khóa suốt một
+ * lượt gọi mạng ra ngoài.
+ *
+ * `notifiedAt` trên dòng sổ là dấu chống gửi trùng, đúng vai trò của
+ * `OrderItem.notifiedAt`: webhook được PayOS giao lại sẽ chạy lại phần giao
+ * hàng, và không có dấu này thì mỗi lượt giao lại là một lá thư nữa.
+ */
+export async function notifyReferralCommission(orderId: string) {
+  const entry = await prisma.referralLedger.findFirst({
+    where: { orderId, type: "commission", status: "posted", notifiedAt: null },
+    select: {
+      id: true,
+      userId: true,
+      amountVnd: true,
+      user: { select: { name: true, email: true } },
+    },
+  });
+  if (!entry) return { notified: 0 };
+
+  try {
+    // ĐỌC kết quả, không chỉ `await`: `sendEmail` báo Resend từ chối bằng
+    // `{ sent: false }` chứ không ném, nên `catch` bên dưới không bao giờ chạy
+    // cho trường hợp đó.
+    const result = await sendReferralCommissionEmail({
+      to: entry.user.email,
+      name: entry.user.name ?? "",
+      amountVnd: entry.amountVnd,
+      balanceVnd: await creditBalanceVnd(prisma, entry.userId),
+    });
+    if (!result.sent) {
+      console.error(
+        `[referral] Thư credits tới ${entry.user.email} bị từ chối: ${result.error}`,
+      );
+      return { notified: 0 };
+    }
+    // Đóng dấu SAU khi Resend nhận thư, để một lá thư bị từ chối còn cơ hội ở
+    // lượt webhook sau.
+    await prisma.referralLedger.updateMany({
+      where: { id: entry.id, notifiedAt: null },
+      data: { notifiedAt: new Date() },
+    });
+    return { notified: 1 };
+  } catch (error) {
+    console.error("[referral] Không gửi được thư credits:", error);
+    return { notified: 0 };
+  }
 }
 
 export async function reconcileMissingDriveGrants(limit = 50) {

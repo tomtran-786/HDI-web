@@ -2,7 +2,11 @@ import { NextResponse } from "next/server";
 import { processPayosPayment, type PayosPaymentEvent } from "@/lib/orders";
 import { PayosConfigurationError, verifyPayosWebhook } from "@/lib/payos";
 import { processServicePayment } from "@/lib/service-orders";
-import { fulfillOrderDrive, notifyGroupMembers } from "@/lib/fulfillment";
+import {
+  fulfillOrderDrive,
+  notifyGroupMembers,
+  notifyReferralCommission,
+} from "@/lib/fulfillment";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -88,6 +92,11 @@ export async function POST(request: Request) {
       // ngay khi handler trả về và thư chưa gửi xong sẽ biến mất.
       await notifyGroupMembers(orderId).catch((error) =>
         console.error(`[payos-webhook] Đơn ${orderId} không báo được cho thành viên:`, error),
+      );
+      // Credits chỉ tồn tại ở một trang người giới thiệu không có lý do gì để
+      // mở, nên không có lá thư này thì phần thưởng coi như vô hình.
+      await notifyReferralCommission(orderId).catch((error) =>
+        console.error(`[payos-webhook] Đơn ${orderId} không báo được credits:`, error),
       );
     }
 

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { currentSession } from "@/lib/current-session";
+import { normalizeReferralCode } from "@/lib/referral-code";
 import { safeNext } from "@/lib/safe-path";
 import { registerPage } from "@/content/auth";
 import { registerAccount } from "./actions";
@@ -20,8 +21,13 @@ const inputClass =
 export default async function RegisterPage({
   searchParams,
 }: PageProps<"/dang-ky-tai-khoan">) {
-  const { error, sent, tiep } = await searchParams;
+  const { error, sent, tiep, ref } = await searchParams;
   const next = safeNext(tiep);
+  // Link mời trỏ thẳng vào trang này kèm `?ref=`, nên không cần cookie hay
+  // sessionStorage để giữ mã: nó đã ở ngay trên thanh địa chỉ của form. Vẫn để
+  // ô sửa được, cho người vào site trước rồi mới được đọc mã qua điện thoại.
+  // Chuẩn hóa trước khi hiển thị lại vì giá trị này đến từ URL.
+  const referralCode = normalizeReferralCode(Array.isArray(ref) ? ref[0] : ref);
   const nextQuery =
     next === "/tai-khoan" ? "" : `?tiep=${encodeURIComponent(next)}`;
   if ((await currentSession())?.user) redirect(next);
@@ -118,6 +124,20 @@ export default async function RegisterPage({
                 <label className="block text-sm font-semibold">
                   {registerPage.fields.confirmPassword}
                   <input className={inputClass} name="confirmPassword" type="password" autoComplete="new-password" required minLength={12} />
+                </label>
+                <label className="block text-sm font-semibold">
+                  {registerPage.fields.referralCode}
+                  <input
+                    className={`${inputClass} uppercase`}
+                    name="maGioiThieu"
+                    defaultValue={referralCode}
+                    autoComplete="off"
+                    spellCheck={false}
+                    maxLength={12}
+                  />
+                  <span className="mt-1.5 block text-xs font-normal leading-relaxed text-fg-subtle">
+                    {registerPage.referralHint}
+                  </span>
                 </label>
                 <button className="w-full rounded-full bg-primary px-6 py-3 text-sm font-bold text-primary-fg transition hover:bg-primary-deep" type="submit">
                   {registerPage.action}

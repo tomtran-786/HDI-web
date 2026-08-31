@@ -12,6 +12,7 @@ import {
   consumeAuthToken,
   createAuthToken,
   pendingPasswordHashFor,
+  pendingReferrerFor,
   VERIFY_TOKEN_TTL_MS,
 } from "@/lib/auth-tokens";
 import { sendVerificationEmail } from "@/lib/email";
@@ -44,6 +45,21 @@ export async function verifyEmail(formData: FormData) {
         ...(found.pendingPasswordHash
           ? { passwordHash: found.pendingPasswordHash }
           : {}),
+        /**
+         * Quan hệ giới thiệu được gắn ĐÚNG Ở ĐÂY và đúng một lần.
+         *
+         * Bộ lọc `emailVerified: null` ở trên chính là cái khóa: nó chỉ khớp
+         * một lần trong đời một tài khoản, nên không có đường nào ghi đè quan
+         * hệ này về sau — và không có code path nào khác trong repo cập nhật
+         * `referredById`. Bất biến đó là thứ khiến mọi dòng hoa hồng đã ghi
+         * còn căn cứ để kiểm toán.
+         *
+         * Gắn lúc xác thực chứ không lúc đăng ký cũng có nghĩa là chỉ tài khoản
+         * có người thật sở hữu hộp thư mới sinh ra được hoa hồng.
+         */
+        ...(found.pendingReferrerId
+          ? { referredById: found.pendingReferrerId }
+          : {}),
       },
     });
     return user.count === 1;
@@ -70,13 +86,19 @@ export async function resendVerification(formData: FormData) {
     if (user && !user.emailVerified) {
       // Đọc trước khi phát token mới: `createAuthToken` xoá token cũ, nên không
       // mang hash chờ sang thì người dùng xác thực xong sẽ không có mật khẩu nào
-      // để đăng nhập, dù họ đã đặt một cái lúc đăng ký.
-      const carriedPasswordHash = await pendingPasswordHashFor(prisma, user.id);
+      // để đăng nhập, dù họ đã đặt một cái lúc đăng ký. Mã giới thiệu đi cùng
+      // token vì đúng lý do đó, và với hậu quả còn khó thấy hơn: quan hệ giới
+      // thiệu chỉ gắn được một lần, nên đánh rơi ở đây là mất vĩnh viễn.
+      const [carriedPasswordHash, carriedReferrerId] = await Promise.all([
+        pendingPasswordHashFor(prisma, user.id),
+        pendingReferrerFor(prisma, user.id),
+      ]);
       const created = await createAuthToken(prisma, {
         userId: user.id,
         purpose: "verify",
         ttlMs: VERIFY_TOKEN_TTL_MS,
         pendingPasswordHash: carriedPasswordHash,
+        pendingReferrerId: carriedReferrerId,
       });
       await sendVerificationEmail({
         to: user.email,

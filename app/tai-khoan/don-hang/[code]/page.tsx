@@ -10,6 +10,7 @@ import {
   orderPage,
   orderStatusLabel,
   orderStatusTone,
+  referralPanel,
 } from "@/content/checkout";
 import { composeEmailHref, links } from "@/content/site";
 import { HoldCountdown } from "@/components/hold-countdown";
@@ -44,6 +45,8 @@ export default async function OrderDetailPage({
       code: true,
       status: true,
       amountVnd: true,
+      referralDiscountVnd: true,
+      creditAppliedVnd: true,
       createdAt: true,
       expiresAt: true,
       paidAt: true,
@@ -114,6 +117,38 @@ export default async function OrderDetailPage({
               </li>
             ))}
           </ul>
+
+          {/* Hai khoản trừ ở mức ĐƠN, kể tên riêng: cộng các dòng ghế phía trên
+              không còn ra tổng cuối, và một hóa đơn không cộng lại được là một
+              hóa đơn không ai đối chiếu được. */}
+          {(order.referralDiscountVnd > 0 || order.creditAppliedVnd > 0) && (
+            <div className="mt-5 space-y-1.5 border-t border-line pt-5 text-sm text-fg-muted">
+              <p className="flex items-baseline justify-between gap-4">
+                <span>{referralPanel.subtotal}</span>
+                <span className="tabular-nums">
+                  {formatVnd(
+                    order.amountVnd + order.referralDiscountVnd + order.creditAppliedVnd,
+                  )}
+                </span>
+              </p>
+              {order.referralDiscountVnd > 0 && (
+                <p className="flex items-baseline justify-between gap-4">
+                  <span>{referralPanel.discountLine}</span>
+                  <span className="tabular-nums font-semibold text-primary">
+                    −{formatVnd(order.referralDiscountVnd)}
+                  </span>
+                </p>
+              )}
+              {order.creditAppliedVnd > 0 && (
+                <p className="flex items-baseline justify-between gap-4">
+                  <span>{referralPanel.creditLine}</span>
+                  <span className="tabular-nums font-semibold text-primary">
+                    −{formatVnd(order.creditAppliedVnd)}
+                  </span>
+                </p>
+              )}
+            </div>
+          )}
 
           <div className="mt-5 flex flex-wrap items-baseline justify-between gap-3 border-t border-line pt-5">
             <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-fg-subtle">

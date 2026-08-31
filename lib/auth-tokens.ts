@@ -37,6 +37,12 @@ export async function createAuthToken(
      * của `VerificationToken.pendingPasswordHash` trong schema.
      */
     pendingPasswordHash?: string | null;
+    /**
+     * Chỉ dùng cho token `verify`: người giới thiệu mà chính lần đăng ký này
+     * khai. Ở trên token vì lý do y hệt `pendingPasswordHash` — xem chú thích
+     * của `VerificationToken.pendingReferrerId` trong schema.
+     */
+    pendingReferrerId?: string | null;
   },
 ) {
   const identifier = authTokenIdentifier(input.purpose, input.userId);
@@ -51,6 +57,7 @@ export async function createAuthToken(
       token: tokenHash,
       expires,
       pendingPasswordHash: input.pendingPasswordHash ?? null,
+      pendingReferrerId: input.pendingReferrerId ?? null,
     },
   });
   return { token, expires };
@@ -69,6 +76,22 @@ export async function pendingPasswordHashFor(db: AuthDb, userId: string) {
     select: { pendingPasswordHash: true },
   });
   return record?.pendingPasswordHash ?? null;
+}
+
+/**
+ * Người giới thiệu đang chờ trên token `verify` còn sống.
+ *
+ * Cùng bẫy với `pendingPasswordHashFor`: `createAuthToken` xoá token cũ trước
+ * khi tạo token mới, nên một lượt "gửi lại liên kết" không đọc trước sẽ làm rơi
+ * mất quan hệ giới thiệu — người dùng xác thực xong và người giới thiệu vĩnh
+ * viễn không được ghi nhận, vì quan hệ đó chỉ gắn được đúng một lần.
+ */
+export async function pendingReferrerFor(db: AuthDb, userId: string) {
+  const record = await db.verificationToken.findFirst({
+    where: { identifier: authTokenIdentifier("verify", userId) },
+    select: { pendingReferrerId: true },
+  });
+  return record?.pendingReferrerId ?? null;
 }
 
 export async function findAuthToken(
@@ -115,6 +138,7 @@ export async function consumeAuthToken(
   return {
     userId: found.userId,
     pendingPasswordHash: found.record.pendingPasswordHash ?? null,
+    pendingReferrerId: found.record.pendingReferrerId ?? null,
   };
 }
 

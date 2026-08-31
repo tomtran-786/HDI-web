@@ -6,6 +6,7 @@ import { expireStaleServiceOrders } from "@/lib/service-orders";
 import { pruneAuthThrottles } from "@/lib/auth-throttle";
 import { pruneExpiredAuthTokens } from "@/lib/auth-tokens";
 import { pruneExpiredLeases } from "@/lib/external-lease";
+import { repairReferralReservations } from "@/lib/referral-ledger";
 import {
   reconcileMissingDriveGrants,
   revokeExpiredDriveAccess,
@@ -52,8 +53,13 @@ export async function GET(request: Request) {
   const driveRevokes = await revokeExpiredDriveAccess();
   // Đơn dịch vụ không giữ chỗ của ai nên nó không cần đứng chung hàng với hai
   // bước Drive ở trên; nó chỉ là một lượt dọn trạng thái, chạy song song được.
-  const [services, throttles, tokens, leases] = await Promise.all([
+  // Khoản credits bị bỏ lửng ở `reserved` trên một đơn ĐÃ trả tiền: webhook
+  // commit xong rồi chết trước khi đóng sổ (một lambda hết giờ là đủ). Không có
+  // pass này thì đối soát đọc nó là "đang giữ" mãi mãi. Nó chỉ SỬA, không bao
+  // giờ hoàn credits — mọi đường hủy đơn đã tự hoàn rồi.
+  const [services, referralRepairs, throttles, tokens, leases] = await Promise.all([
     expireStaleServiceOrders(),
+    repairReferralReservations(),
     pruneAuthThrottles(),
     pruneExpiredAuthTokens(),
     pruneExpiredLeases(),
@@ -70,6 +76,7 @@ export async function GET(request: Request) {
     ok: true,
     orders: result,
     services,
+    referralRepairs,
     driveGrants,
     driveRevokes,
     pruned: { throttles, tokens, leases },

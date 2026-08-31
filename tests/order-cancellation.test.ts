@@ -6,6 +6,7 @@ const mocks = vi.hoisted(() => ({
   orderUpdateMany: vi.fn(),
   itemFindMany: vi.fn(),
   enrollmentUpdateMany: vi.fn(),
+  ledgerUpdateMany: vi.fn(),
   get: vi.fn(),
   cancel: vi.fn(),
   isNotFound: vi.fn(),
@@ -45,6 +46,7 @@ describe("remote-first PayOS cancellation", () => {
         order: { updateMany: mocks.orderUpdateMany },
         orderItem: { findMany: mocks.itemFindMany },
         enrollment: { updateMany: mocks.enrollmentUpdateMany },
+        referralLedger: { updateMany: mocks.ledgerUpdateMany },
       }),
     );
   });

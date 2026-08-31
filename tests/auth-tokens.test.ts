@@ -91,7 +91,11 @@ describe("authentication tokens", () => {
 
     await expect(
       consumeAuthToken(db as never, "verify", token),
-    ).resolves.toEqual({ userId: "user-1", pendingPasswordHash: null });
+    ).resolves.toEqual({
+      userId: "user-1",
+      pendingPasswordHash: null,
+      pendingReferrerId: null,
+    });
     expect(deletes).toHaveLength(2);
   });
 
@@ -119,6 +123,7 @@ describe("authentication tokens", () => {
     ).resolves.toEqual({
       userId: "user-1",
       pendingPasswordHash: "$2b$12$hash-from-this-registration",
+      pendingReferrerId: null,
     });
   });
 });

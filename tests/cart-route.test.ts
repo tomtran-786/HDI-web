@@ -5,6 +5,7 @@ const mocks = vi.hoisted(() => ({
   findUnique: vi.fn(),
   readCartIds: vi.fn(),
   loadCart: vi.fn(),
+  referralQuoteFor: vi.fn(),
 }));
 
 vi.mock("@/lib/auth", () => ({ auth: mocks.auth }));
@@ -15,12 +16,19 @@ vi.mock("@/lib/cart", () => ({
   readCartIds: mocks.readCartIds,
   loadCart: mocks.loadCart,
 }));
+vi.mock("@/lib/referral-quote", () => ({
+  referralQuoteFor: mocks.referralQuoteFor,
+}));
 
 import { GET } from "@/app/api/gio-hang/route";
 
 describe("GET /api/gio-hang", () => {
   beforeEach(() => {
     for (const mock of Object.values(mocks)) mock.mockReset();
+    mocks.referralQuoteFor.mockResolvedValue({
+      eligible: false,
+      creditBalanceVnd: 0,
+    });
   });
 
   it("requires authentication before reading sales data", async () => {
@@ -86,6 +94,10 @@ describe("GET /api/gio-hang", () => {
         },
       ],
       staleIds: ["gone"],
+      // Chỉ hai dữ kiện, không phải số tiền: giỏ hàng tự tính khoản trừ bằng
+      // đúng các hàm mà `createOrder` gọi, nên không có phép tính thứ hai nào
+      // để đi lệch với hóa đơn.
+      referral: { eligible: false, creditBalanceVnd: 0 },
     });
     expect(JSON.stringify(body)).not.toContain("SECRET");
   });

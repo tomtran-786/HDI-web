@@ -51,6 +51,18 @@ model User {
   createdAt DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt DateTime       @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
 
+  /// Mã người này chia sẻ cho bạn bè. Nullable vì tài khoản tạo trước tính năng
+  /// chưa có mã, và `ensureReferralCode()` cấp lười lúc họ mở trang giới thiệu —
+  /// cấp hàng loạt lúc migrate sẽ phát mã cho cả những tài khoản không bao giờ
+  /// dùng tới.
+  referralCode String? @unique @map("referral_code") @db.VarChar(12)
+
+  /// Ai đã giới thiệu tài khoản này. Ghi đúng MỘT lần, trong transaction xác
+  /// thực email, và không có code path nào sửa lại. Bất biến chính là thứ khiến
+  /// sổ hoa hồng kiểm toán được: nếu quan hệ này đổi được thì mọi dòng hoa hồng
+  /// đã ghi đều mất căn cứ.
+  referredById String? @map("referred_by_id")
+
   accounts      Account[]
   sessions      Session[]
   enrollments   Enrollment[]
@@ -61,6 +73,14 @@ model User {
   serviceOrders ServiceOrder[]
   feedbacks     Feedback[]
 
+  referrer          User?            @relation("UserReferral", fields: [referredById], references: [id], onDelete: SetNull)
+  referrals         User[]           @relation("UserReferral")
+  /// Các dòng sổ mà người này là CHỦ SỐ DƯ.
+  referralEntries   ReferralLedger[] @relation("LedgerOwner")
+  /// Các dòng hoa hồng phát sinh vì người này mua hàng.
+  referralAsReferee ReferralLedger[] @relation("LedgerReferee")
+
+  @@index([referredById])
   @@map("users")
 }
 
@@ -109,6 +129,14 @@ model VerificationToken {
   /// cho tài khoản mà chủ hộp thư kích hoạt hộ. Buộc mật khẩu vào token khiến
   /// liên kết nào được bấm thì mật khẩu của lần đăng ký đó có hiệu lực.
   pendingPasswordHash String? @map("pending_password_hash") @db.VarChar(100)
+
+  /// Người giới thiệu mà chính lần đăng ký phát ra token này đã khai, chỉ có ở
+  /// token `verify`. Ở đây chứ không phải trên hàng User vì lý do y hệt
+  /// `pendingPasswordHash`: đăng ký lại một địa chỉ CHƯA xác thực là hợp lệ và
+  /// khi đó `registerAccount` không đụng vào hàng User, chỉ phát token mới. Ghi
+  /// thẳng lúc `user.create` thì lần đăng ký lại với mã khác sẽ bị bỏ qua im
+  /// lặng, và người giới thiệu mất hoa hồng mà không ai biết.
+  pendingReferrerId String? @map("pending_referrer_id")
 
   @@id([identifier, token])
   @@unique([token])
@@ -308,9 +336,29 @@ model Order {
   userId String      @map("user_id")
   status OrderStatus @default(pending)
 
-  /// Sum of the item snapshots, in đồng. Recomputed server-side at creation and
-  /// never accepted from the client — the browser only ever names course ids.
+  /// Số tiền PHẢI TRẢ, in đồng. Recomputed server-side at creation and never
+  /// accepted from the client — the browser only ever names course ids.
+  ///
+  /// BẤT BIẾN:
+  ///   amount_vnd = SUM(order_items.price_vnd)
+  ///              − referral_discount_vnd
+  ///              − credit_applied_vnd
+  ///
+  /// Tức nó KHÔNG còn đơn thuần là tổng các dòng đơn. Hai khoản trừ được lưu
+  /// riêng chứ không gộp vào giá từng ghế, vì `order_items.price_vnd` là giá của
+  /// một chỗ học và phải đọc lại được nguyên vẹn khi đối soát, còn hai khoản kia
+  /// là ưu đãi ở mức ĐƠN.
   amountVnd Int @map("amount_vnd")
+
+  /// Giảm 10% cho đơn ĐẦU TIÊN của người được ai đó giới thiệu. 0 = không áp
+  /// dụng. Có partial unique index `orders_referral_discount_once_key` bảo đảm
+  /// mỗi tài khoản chỉ có một đơn còn sống mang khoản này.
+  referralDiscountVnd Int @default(0) @map("referral_discount_vnd")
+
+  /// Credits đã trừ vào đơn này (số dương). Luôn đi kèm đúng một dòng
+  /// `referral_ledger` kiểu `redemption` gắn cùng `order_id`, và số tiền trên
+  /// dòng đó là số âm tương ứng.
+  creditAppliedVnd Int @default(0) @map("credit_applied_vnd")
 
   /// A pending order holds a seat. Without a deadline an abandoned checkout
   /// takes that seat forever, and the course silently looks full.
@@ -335,9 +383,10 @@ model Order {
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
 
-  user     User        @relation(fields: [userId], references: [id], onDelete: Cascade)
-  items    OrderItem[]
-  payments Payment[]
+  user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items           OrderItem[]
+  payments        Payment[]
+  referralEntries ReferralLedger[]
 
   @@index([userId, status])
   @@index([status, expiresAt])
@@ -443,6 +492,93 @@ model Payment {
   @@index([serviceOrderId])
   @@index([status, receivedAt])
   @@map("payments")
+}
+
+// ----------------------------------------------------- Giới thiệu bạn bè ---
+
+enum ReferralEntryType {
+  /// Người giới thiệu được cộng 10% trên tiền thực thu của đơn ĐẦU TIÊN mà
+  /// người họ giới thiệu thanh toán.
+  commission
+  /// Một lần tiêu credits vào một đơn hàng.
+  redemption
+  /// Sửa tay của quản trị viên, cả cộng lẫn trừ.
+  adjustment
+
+  @@map("referral_entry_type")
+}
+
+enum ReferralEntryStatus {
+  posted
+  reserved
+  applied
+  void
+
+  @@map("referral_entry_status")
+}
+
+/// Sổ credits giới thiệu — CHỈ GHI THÊM (trừ redemption được đổi trạng thái).
+///
+/// Số dư của một người là MỘT công thức duy nhất, không ngoại lệ:
+///
+///   balance = SUM(amount_vnd) WHERE user_id = ? AND status <> 'void'
+///
+/// Không có cột số dư ở đâu cả. Một cột như vậy là hai nguồn sự thật cho cùng
+/// một con số, và chúng chỉ cần lệch nhau đúng một lần là không ai biết bên nào
+/// đúng nữa.
+///
+///   commission  + round(basis × 10/100)   `posted`    — không bao giờ sửa
+///   redemption  − số credits đã tiêu      `reserved` → `applied` | `void`
+///   adjustment  ±                         `posted`    — sửa tay
+///
+/// `reserved` ĐÃ trừ vào số dư ngay lúc ghi, nên hai lần checkout song song
+/// không tiêu được cùng một khoản. Chuyển sang `applied` không đổi số học, nó
+/// chỉ đánh dấu rằng tiền đã thực sự về.
+model ReferralLedger {
+  id String @id @default(cuid())
+
+  /// CHỦ SỐ DƯ: người giới thiệu (với `commission`) hoặc người tiêu credits
+  /// (với `redemption`).
+  userId String              @map("user_id")
+  type   ReferralEntryType
+  status ReferralEntryStatus @default(posted)
+
+  /// Đồng. Dương = cộng vào số dư, âm = trừ.
+  amountVnd Int @map("amount_vnd")
+
+  /// `commission`: đơn làm phát sinh khoản này. `redemption`: đơn đã tiêu
+  /// credits. Hai partial unique index trong migration dựa vào cột này để một
+  /// đơn không bao giờ sinh hoa hồng hai lần dù PayOS giao lại webhook.
+  orderId String? @map("order_id")
+
+  /// `commission`: người được giới thiệu vừa mua hàng. Cũng là khóa của quy tắc
+  /// "mỗi tài khoản chỉ mang lại hoa hồng đúng một lần".
+  refereeUserId String? @map("referee_user_id")
+
+  /// Tỷ lệ (%) tại thời điểm ghi sổ, giữ lại phòng khi chính sách đổi — lịch sử
+  /// phải đọc được bằng luật của chính nó, không phải luật hôm nay.
+  ratePct Int? @map("rate_pct")
+
+  /// Số tiền dùng làm căn cứ tính hoa hồng, tức tiền thực thu của đơn đó.
+  basisVnd Int? @map("basis_vnd")
+
+  note String? @db.VarChar(200)
+
+  /// Đã báo cho chủ số dư biết khoản này. Cần một cột thật vì webhook PayOS có
+  /// thể được giao lại, đúng lý do của `OrderItem.notifiedAt`.
+  notifiedAt DateTime? @map("notified_at") @db.Timestamptz(6)
+
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  settledAt DateTime? @map("settled_at") @db.Timestamptz(6)
+
+  user    User   @relation("LedgerOwner", fields: [userId], references: [id], onDelete: Cascade)
+  referee User?  @relation("LedgerReferee", fields: [refereeUserId], references: [id], onDelete: SetNull)
+  order   Order? @relation(fields: [orderId], references: [id], onDelete: SetNull)
+
+  @@index([userId, status])
+  @@index([orderId])
+  @@index([refereeUserId])
+  @@map("referral_ledger")
 }
 
 // ------------------------------------------------------- Đánh giá khóa học ---

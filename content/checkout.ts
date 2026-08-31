@@ -66,6 +66,27 @@ export const groupPanel = {
   checkout: (n: number) => `Thanh toán cho ${n} người`,
 } as const;
 
+/**
+ * Khối ưu đãi giới thiệu trong giỏ hàng.
+ *
+ * Hai khoản trừ được kể tên riêng chứ không gộp vào một con số "đã giảm": người
+ * mua cần thấy vì sao mình trả ít hơn, và nhất là cần thấy credits của mình bị
+ * tiêu đi bao nhiêu — đó là tiền của họ, không phải một khuyến mãi.
+ */
+export const referralPanel = {
+  discountLine: "Giảm giới thiệu (đơn đầu tiên)",
+  creditLine: "Trừ credits giới thiệu",
+  subtotal: "Tạm tính",
+  useCredit: "Dùng credits giới thiệu",
+  balance: (amount: string) => `Số dư ${amount}`,
+  /**
+   * Nói ngay khi phần dư không tiêu hết được, thay vì để người mua tự hỏi vì
+   * sao số dư còn mà đơn vẫn phải trả tiền.
+   */
+  remainderNote:
+    "Đơn luôn giữ lại một khoản nhỏ phải thanh toán qua PayOS, nên số dư còn lại được giữ cho lần mua sau.",
+} as const;
+
 export const orderPage = {
   eyebrow: "Đơn hàng",
   listTitle: "Đơn hàng của bạn",
@@ -90,6 +111,41 @@ export const orderPage = {
       "Đơn này đã quá hạn giữ chỗ và tự đóng. Bạn có thể đặt lại nếu khóa học vẫn còn chỗ.",
     refunded: "Đơn này đã được hoàn tiền.",
   },
+} as const;
+
+/**
+ * Trang PayOS trả về khi học viên bấm "Hủy" giữa chừng.
+ *
+ * Có bốn kết cục khác hẳn nhau nên có bốn bộ chữ, và không bộ nào được nói thay
+ * cho bộ khác: chỉ khi chỗ đã thực sự được trả thì trang mới được viết là đã
+ * hủy. Nói "đã hủy" trong lúc PayOS vẫn đang giữ một link sống là cách chắc
+ * chắn nhất để hai người cùng tin mình đang giữ một ghế.
+ */
+export const paymentCancelPage = {
+  eyebrow: "PayOS",
+  released: {
+    title: "Đã hủy đơn và trả lại chỗ",
+    subtitle:
+      "Link thanh toán trên PayOS đã đóng. Bạn có thể đặt lại bất cứ lúc nào khóa học còn chỗ.",
+  },
+  confirm: {
+    title: "Bạn đã rời trang thanh toán",
+    subtitle:
+      "Chỉ mở trang này không hủy đơn. Hãy xác nhận bên dưới để HDI kiểm tra và hủy link PayOS trước khi trả chỗ.",
+  },
+  closed: {
+    title: "Đơn này không còn chờ thanh toán",
+    subtitle:
+      "Đơn đã được đóng trước đó, nên không còn chỗ nào bị giữ. Xem chi tiết trong trang đơn hàng.",
+  },
+  busy: {
+    title: "Chưa thể tự hủy đơn này",
+    payment_in_progress:
+      "PayOS đang xử lý hoặc đã nhận tiền nên đơn chưa thể tự hủy. Nếu bạn đã chuyển khoản, hãy chờ vài phút để HDI nhận xác nhận.",
+    gateway_unavailable:
+      "Chưa liên hệ được PayOS nên đơn vẫn được giữ, để tránh hủy nhầm một khoản đang thanh toán. Bạn có thể thử lại bên dưới.",
+  },
+  backToOrder: (code: number) => `Quay lại đơn #${code}`,
 } as const;
 
 export const paymentResultPage = {

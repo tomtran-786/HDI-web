@@ -6,16 +6,22 @@ import { useRouter } from "next/navigation";
 import type { CatalogCourse, CourseAvailability } from "@/lib/cart";
 import { formatVnd } from "@/lib/format";
 import { trackCartAdd, trackCartRemove, trackCheckout } from "@/lib/analytics";
-import { cartModal, groupPanel } from "@/content/checkout";
+import { cartModal, groupPanel, referralPanel } from "@/content/checkout";
 import { GROUP_MIN_SIZE, seatPriceVnd } from "@/lib/group-pricing";
+import { creditToApply, referralDiscountVnd } from "@/lib/referral-pricing";
 import { addMemberEmails, groupApplies, MAX_MEMBERS } from "@/lib/group-invite";
 import { IconCart, IconClose } from "./ui/icons";
+
+type ReferralQuote = { eligible: boolean; creditBalanceVnd: number };
 
 type CatalogResponse = {
   email: string;
   catalog: CatalogCourse[];
   staleIds: string[];
+  referral: ReferralQuote;
 };
+
+const NO_REFERRAL: ReferralQuote = { eligible: false, creditBalanceVnd: 0 };
 
 type GroupPreview = {
   groupSize: number;
@@ -72,6 +78,10 @@ export function CartModal({
   // khắc giỏ thôi hưởng ưu đãi nhóm. Xem khối chỉnh state bên dưới.
   const [groupWasEligible, setGroupWasEligible] = useState(false);
   const [draft, setDraft] = useState("");
+  const [referral, setReferral] = useState<ReferralQuote>(NO_REFERRAL);
+  // Ý muốn tiêu credits. Chỉ MỘT bit này đi lên server; số tiền được trừ do
+  // `createOrder` tự tính lại bên trong transaction đã khóa hàng user.
+  const [useCredit, setUseCredit] = useState(false);
   const [preview, setPreview] = useState<GroupPreview | null>(null);
   const [previewLoading, setPreviewLoading] = useState(false);
   // Mỗi lượt gọi mang một số thứ tự. Người dùng gõ nhanh hơn mạng trả lời, nên
@@ -104,6 +114,7 @@ export function CartModal({
       const data = (await response.json()) as CatalogResponse;
       setLeaderEmail(data.email ?? "");
       setCatalog(data.catalog);
+      setReferral(data.referral ?? NO_REFERRAL);
       if (data.staleIds.length > 0) {
         for (const id of data.staleIds) remove(id);
         setPruned(true);
@@ -163,8 +174,24 @@ export function CartModal({
   );
   // Ưu tiên con số server vừa trả, nhưng chỉ khi nó còn ứng với đúng nhóm hiện
   // tại — nếu không, một preview cũ sẽ hiện giá của nhóm ít người hơn.
-  const totalVnd =
+  const subtotalVnd =
     preview && preview.groupSize === groupSize ? preview.totalVnd : localTotalVnd;
+
+  /**
+   * Hai khoản trừ cuối cùng, tính bằng CHÍNH các hàm mà `createOrder` gọi.
+   *
+   * Đây là chỗ dễ vỡ nhất của tính năng: `app/actions/checkout.ts` so
+   * `tongTienDuKien` với `amountVnd` bằng phép so bằng tuyệt đối rồi HỦY đơn
+   * nếu lệch. Viết lại phép tính ở đây — dù chỉ đổi thứ tự trừ — là làm mọi đơn
+   * của người được giới thiệu không thanh toán được.
+   */
+  const referralDiscount = referralDiscountVnd(subtotalVnd, referral.eligible);
+  const creditApplied = creditToApply({
+    balanceVnd: referral.creditBalanceVnd,
+    dueVnd: subtotalVnd - referralDiscount,
+    wanted: useCredit,
+  });
+  const totalVnd = subtotalVnd - referralDiscount - creditApplied;
   const discounted = listTotalVnd > totalVnd;
   const anyGroupEligible = selected.some((course) => course.groupEligible);
   const blocked = Boolean(preview && preview.groupSize === groupSize && preview.blocked);
@@ -500,6 +527,52 @@ export function CartModal({
         </div>
 
         <div className="sticky bottom-0 z-20 border-t border-line bg-card px-5 py-4 sm:px-7">
+          {/* Kể tên từng khoản trừ. Gộp tất cả vào một con số "đã giảm" thì
+              người mua không thấy credits của chính mình vừa bị tiêu bao nhiêu —
+              đó là tiền của họ, không phải một khuyến mãi. */}
+          {selected.length > 0 &&
+            (referral.eligible || referral.creditBalanceVnd > 0) && (
+              <div className="mb-3 space-y-1.5 text-sm text-fg-muted">
+                {referralDiscount > 0 && (
+                  <p className="flex items-baseline justify-between gap-4">
+                    <span>{referralPanel.discountLine}</span>
+                    <span className="font-semibold text-primary">
+                      −{formatVnd(referralDiscount)}
+                    </span>
+                  </p>
+                )}
+                {referral.creditBalanceVnd > 0 && (
+                  <>
+                    <label className="flex cursor-pointer items-baseline justify-between gap-4">
+                      <span className="flex items-baseline gap-2">
+                        <input
+                          type="checkbox"
+                          checked={useCredit}
+                          onChange={(event) => setUseCredit(event.target.checked)}
+                          className="translate-y-0.5"
+                        />
+                        <span>
+                          {referralPanel.useCredit}{" "}
+                          <span className="text-fg-subtle">
+                            ({referralPanel.balance(formatVnd(referral.creditBalanceVnd))})
+                          </span>
+                        </span>
+                      </span>
+                      {creditApplied > 0 && (
+                        <span className="font-semibold text-primary">
+                          −{formatVnd(creditApplied)}
+                        </span>
+                      )}
+                    </label>
+                    {useCredit && creditApplied < referral.creditBalanceVnd && (
+                      <p className="text-xs leading-relaxed text-fg-subtle">
+                        {referralPanel.remainderNote}
+                      </p>
+                    )}
+                  </>
+                )}
+              </div>
+            )}
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-fg-subtle">
@@ -527,6 +600,7 @@ export function CartModal({
                 <input key={email} type="hidden" name="thanhVien" value={email} />
               ))}
               <input type="hidden" name="tongTienDuKien" value={String(totalVnd)} />
+              <input type="hidden" name="duNgCredit" value={useCredit ? "1" : "0"} />
               <button
                 type="submit"
                 disabled={

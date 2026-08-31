@@ -185,6 +185,11 @@ export const registerPage = {
     // dùng đi gửi lại liên kết thay vì đăng ký lại từ đầu.
     email_failed:
       "Đã tạo tài khoản nhưng chưa gửi được thư xác thực do lỗi hệ thống email. Hãy yêu cầu gửi lại liên kết sau ít phút.",
+    // Mã sai phải được nói ra chứ không âm thầm bỏ qua. Bỏ qua im lặng là cách
+    // chắc chắn nhất để người giới thiệu mất phần của họ mà không ai biết, và
+    // người mới thì mất luôn khoản giảm 10% của đơn đầu tiên.
+    ma_gioi_thieu:
+      "Mã giới thiệu không tồn tại. Hãy kiểm tra lại mã bạn được gửi, hoặc xóa trống ô đó để đăng ký không kèm mã.",
   },
 
   errorLinks: {
@@ -198,7 +203,17 @@ export const registerPage = {
     email: "Email",
     password: "Mật khẩu",
     confirmPassword: "Nhập lại mật khẩu",
+    referralCode: "Mã giới thiệu (nếu có)",
   },
+  /**
+   * Ô mã luôn hiện, không nằm sau một nút "tôi có mã".
+   *
+   * Người vào bằng link mời đã được điền sẵn; người nghe bạn đọc mã qua điện
+   * thoại thì cần thấy ô đó tồn tại. Một ưu đãi phải bấm mới thấy là một ưu đãi
+   * phần lớn người dùng không bao giờ dùng.
+   */
+  referralHint:
+    "Nhập mã của người giới thiệu để được giảm 10% cho đơn đầu tiên của bạn.",
   action: "Tạo tài khoản",
   driveNote:
     "Record được cấp qua Google Drive. Email đăng ký cần thuộc một tài khoản Google; địa chỉ không phải Gmail vẫn dùng được nếu đã liên kết với Google.",

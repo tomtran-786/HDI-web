@@ -68,7 +68,10 @@ export async function checkout(
   }
 
   const ids = await readCartIds();
-  const result = await createOrder(session.user.id, ids, { members });
+  // Trình duyệt gửi lên đúng một bit: "có muốn tiêu credits không". Số dư, số
+  // tiền được trừ và tổng cuối cùng đều do server tự tính lại (BR-02).
+  const useCredit = formData.get("duNgCredit") === "1";
+  const result = await createOrder(session.user.id, ids, { members, useCredit });
   if (!result.ok) {
     return { error: result.message, refreshCatalog: true };
   }

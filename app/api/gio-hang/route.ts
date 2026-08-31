@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth";
 import { loadCart, readCartIds } from "@/lib/cart";
 import { currentProfile } from "@/lib/current-profile";
 import { isProfileComplete } from "@/lib/profile";
+import { referralQuoteFor } from "@/lib/referral-quote";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -32,7 +33,10 @@ export async function GET() {
     );
   }
 
-  const cart = await loadCart(await readCartIds(), session.user.id);
+  const [cart, referral] = await Promise.all([
+    loadCart(await readCartIds(), session.user.id),
+    referralQuoteFor(session.user.id),
+  ]);
   return NextResponse.json(
     {
       // Địa chỉ của chính người đang đăng nhập. Giỏ hàng cần nó để ô mời nhóm
@@ -55,6 +59,10 @@ export async function GET() {
         availability: course.availability,
       })),
       staleIds: cart.staleIds,
+      // Giỏ hàng tự tính khoản giảm và khoản credits bằng CHÍNH các hàm trong
+      // lib/referral-pricing.ts mà server dùng, từ hai dữ kiện này. Gửi sẵn con
+      // số tiền xuống sẽ tạo ra một phép tính thứ hai để đi lệch với `createOrder`.
+      referral,
     },
     { headers: noStore },
   );

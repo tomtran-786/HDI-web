@@ -6,7 +6,10 @@ const mocks = vi.hoisted(() => ({
   enrollmentFindMany: vi.fn(),
   enrollmentCreate: vi.fn(),
   orderCreate: vi.fn(),
+  orderFindFirst: vi.fn(),
   orderFindMany: vi.fn(),
+  ledgerAggregate: vi.fn(),
+  ledgerCreate: vi.fn(),
 }));
 
 vi.mock("@/lib/prisma", () => ({
@@ -60,9 +63,20 @@ const members = [
   { id: "user-3", email: "c@hdi.test" },
 ];
 
-/** Số ghế đang bị chiếm, do truy vấn đếm raw thứ hai trả về. */
-function seats(held: number, courses: LockedRow[] = [TIEULUAN]) {
+/**
+ * Ba truy vấn raw của `createOrder`, đúng thứ tự: khóa hàng người trả tiền,
+ * khóa các hàng courses, rồi đếm ghế đang bị chiếm.
+ *
+ * Thứ tự khóa user-trước-courses là cố ý và là thứ giữ cho hai giỏ chồng nhau
+ * không deadlock, nên nó được cố định ở đây chứ không phải chuyện ngẫu nhiên.
+ */
+function seats(
+  held: number,
+  courses: LockedRow[] = [TIEULUAN],
+  payer: { referredById: string | null } = { referredById: null },
+) {
   mocks.queryRaw
+    .mockResolvedValueOnce([payer])
     .mockResolvedValueOnce(courses)
     .mockResolvedValueOnce(held > 0 ? [{ courseId: "course-1", held: BigInt(held) }] : []);
 }
@@ -71,6 +85,8 @@ describe("tạo đơn nhóm", () => {
   beforeEach(() => {
     for (const mock of Object.values(mocks)) mock.mockReset();
     mocks.orderFindMany.mockResolvedValue([]);
+    mocks.orderFindFirst.mockResolvedValue(null);
+    mocks.ledgerAggregate.mockResolvedValue({ _sum: { amountVnd: null } });
     mocks.enrollmentFindMany.mockResolvedValue([]);
     let n = 0;
     mocks.enrollmentCreate.mockImplementation(async () => ({ id: `enrollment-${++n}` }));
@@ -83,7 +99,11 @@ describe("tạo đơn nhóm", () => {
       callback({
         $queryRaw: mocks.queryRaw,
         enrollment: { findMany: mocks.enrollmentFindMany, create: mocks.enrollmentCreate },
-        order: { create: mocks.orderCreate },
+        order: { create: mocks.orderCreate, findFirst: mocks.orderFindFirst },
+        referralLedger: {
+          aggregate: mocks.ledgerAggregate,
+          create: mocks.ledgerCreate,
+        },
       }),
     );
   });

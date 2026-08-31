@@ -84,7 +84,7 @@ describe("one-step cart checkout action", () => {
     expect(mocks.createOrder).toHaveBeenCalledWith(
       "user-1",
       ["course-b", "course-a"],
-      { members: [] },
+      { members: [], useCredit: false },
     );
     expect(mocks.writeCartIds).toHaveBeenCalledWith([]);
   });
@@ -174,6 +174,7 @@ describe("one-step cart checkout action", () => {
           { id: "user-2", email: "b@hdi.test" },
           { id: "user-3", email: "c@hdi.test" },
         ],
+        useCredit: false,
       },
     );
   });
