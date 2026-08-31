@@ -60,8 +60,12 @@
  *    nckh-sinh-vien ThS. Đặng Văn Phong — sole instructor.
  *                   Dr. Trinh teaches NO part of this course.
  *
- * This historical block is retained for reference; it is not a claim about
- * the current merged course's instructor assignment.
+ * This historical block is retained for reference. It is NOT a claim about who
+ * teaches today: on 2026-08-31 the owner confirmed that TS. Trịnh Công Tâm
+ * teaches all eight courses in this file, which is why every entry now carries
+ * `instructor: INSTRUCTOR_TAM`. Any future change to that assignment has to
+ * come from the owner too — the names above belong to real academics, and a
+ * course page is a public claim about who will be in the room.
  *
  * Tuition for the four edubit courses is that site's current price and will
  * drift if they reprice. Star ratings come only from approved HDI reviews.
@@ -69,7 +73,20 @@
  * in content/course-hype.ts, separate from both this sourced content and real
  * enrollment data.
  *
- * WHY `facts` SPLITS "Lớp trực tiếp" FROM "Kho record" — every course here is
+ * BỘ NHÃN `facts` — tám khóa dùng chung SÁU nhãn, đúng thứ tự này:
+ *
+ *    Hình thức · Thời lượng · Lịch học · Sĩ số · Học liệu · Xem lại
+ *
+ * Trước đây mỗi khóa tự đặt nhãn riêng và tổng cộng có mười một nhãn khác nhau
+ * ("Lớp trực tiếp", "Nội dung", "Giờ học", "Khai giảng", "Kho record"…), nên
+ * hai trang khóa học cạnh nhau in hai bảng thông tin không so sánh được. Thêm
+ * một khóa mới thì điền đủ sáu dòng theo đúng thứ tự trên; ô nào chưa có số
+ * thật thì dùng `FACT_TBA`, KHÔNG mượn số của khóa khác.
+ *
+ * "Kho record" cũ nay nằm dưới "Học liệu" chứ không dưới "Thời lượng", và đó là
+ * chỗ duy nhất nó được phép nằm — xem đoạn ngay dưới đây.
+ *
+ * WHY "Thời lượng" IS NOT THE RECORD LIBRARY — every course here is
  * taught live on a schedule, with recordings as a catch-up benefit. The single
  * figure edubit prints as "Thời lượng" is the ACCUMULATED record library across
  * past intakes, not the length of one course. Adding up the per-intake records
@@ -81,8 +98,9 @@
  *             one intake ~15h (6 modules)
  *
  * Printing "Thời lượng: 47 giờ 29 phút" made readers think the course runs for
- * 47 hours. Splitting the rows states the same sourced numbers accurately — and
- * surfaces the record library as the benefit it is instead of burying it.
+ * 47 hours. So "Thời lượng" carries the length of ONE live intake, and the
+ * accumulated library goes under "Học liệu" — the same sourced numbers, stated
+ * accurately, with the record library surfaced as the benefit it is.
  */
 
 /**
@@ -197,8 +215,27 @@ const REGISTER_NOTE_GENERIC =
   "Đăng nhập, chọn khóa trong giỏ và thanh toán trực tiếp qua PayOS.";
 
 /**
- * Cùng một giảng viên đứng ba khóa (AIQT, SPSS–SmartPLS, Stata), nên hồ sơ được
- * tách ra đây thay vì chép lại — sửa một chỗ là cả ba trang cập nhật.
+ * Ô `facts` chưa có dữ liệu thật.
+ *
+ * Tám khóa dùng chung MỘT bộ nhãn theo thứ tự cố định (xem khối "BỘ NHÃN
+ * `facts`" ở đầu file), nên khóa nào chưa biết một con số vẫn phải có dòng đó —
+ * bỏ dòng đi thì bảng thông tin của tám trang lại lệch nhau như trước.
+ *
+ * Một hằng số chứ không phải chuỗi gõ tay ở từng chỗ: đây là danh sách việc còn
+ * nợ, và `grep FACT_TBA content/course.ts` phải liệt kê được đúng những ô đang
+ * chờ chủ khóa cung cấp số thật. Điền một con số "cho giống các khóa khác" —
+ * chính sách xem lại, sĩ số — là hứa với người mua một điều chưa ai cam kết.
+ */
+const FACT_TBA = "Sẽ thông báo";
+
+/**
+ * Một giảng viên đứng CẢ TÁM khóa, nên hồ sơ được tách ra đây thay vì chép lại
+ * — sửa một chỗ là cả tám trang cập nhật.
+ *
+ * Chủ dự án xác nhận điều này ngày 2026-08-31, và đó là nguồn duy nhất cho
+ * việc gán giảng viên hiện nay. Khối "HISTORICAL ATTRIBUTION" ở đầu file ghi
+ * những người từng dạy các khóa edubit gốc; nó là lịch sử, không phải lời khẳng
+ * định về khóa đang bán.
  */
 const INSTRUCTOR_TAM = {
   name: "Trịnh Công Tâm",
@@ -259,11 +296,15 @@ export const courses = [
       vnd: 3000000,
     },
     facts: [
-      { label: "Hình thức", value: "06 buổi trực tuyến qua Zoom" },
-      { label: "Khai giảng", value: "07/09/2026" },
-      { label: "Lịch học", value: "Lịch chi tiết sẽ được thông báo" },
+      { label: "Hình thức", value: "Trực tuyến qua Zoom" },
+      { label: "Thời lượng", value: "06 buổi" },
+      {
+        label: "Lịch học",
+        value: "Khai giảng 07/09/2026 · lịch chi tiết sẽ được thông báo",
+      },
       { label: "Sĩ số", value: "Tối đa 15 học viên/lớp" },
       { label: "Học liệu", value: "Recording và dữ liệu thực hành" },
+      { label: "Xem lại", value: FACT_TBA },
     ],
     phases: [
       {
@@ -378,9 +419,11 @@ export const courses = [
       },
     },
     facts: [
-      { label: "Khai giảng", value: "01/10/2026" },
-      { label: "Lớp trực tiếp", value: "03 buổi Zoom + học liệu online" },
+      { label: "Hình thức", value: "Trực tuyến qua Zoom" },
+      { label: "Thời lượng", value: "03 buổi" },
+      { label: "Lịch học", value: "Khai giảng 01/10/2026" },
       { label: "Sĩ số", value: "Tối đa 15 học viên/lớp" },
+      { label: "Học liệu", value: "Học liệu online" },
       { label: "Xem lại", value: "03 năm kể từ ngày đăng ký" },
     ],
     phases: [
@@ -599,6 +642,7 @@ export const courses = [
       "Phân biệt similarity với đạo văn, paraphrase đúng cách và sử dụng AI theo nguyên tắc Human → AI → Verify → Rewrite.",
       "Có một Research Roadmap cá nhân theo từng năm học, biết bước tiếp theo cần học gì.",
     ],
+    instructor: INSTRUCTOR_TAM,
     registerNote: REGISTER_NOTE_GENERIC,
   },
 
@@ -619,7 +663,10 @@ export const courses = [
       vnd: 1100000,
     },
     facts: [
-      { label: "Lớp trực tiếp", value: "06 buổi qua Zoom" },
+      { label: "Hình thức", value: "Trực tuyến qua Zoom" },
+      { label: "Thời lượng", value: "06 buổi" },
+      { label: "Lịch học", value: FACT_TBA },
+      { label: "Sĩ số", value: FACT_TBA },
       { label: "Học liệu", value: "Recording và bộ dữ liệu thực hành" },
       { label: "Xem lại", value: "02 năm kể từ ngày đăng ký" },
     ],
@@ -701,6 +748,7 @@ export const courses = [
       "Thực hiện workflow trên Stata cho dữ liệu bảng, FE/RE, Hausman, robust SE, FGLS và các kỹ thuật nâng cao phù hợp.",
       "Hoàn thiện bảng kết quả và phần diễn giải học thuật từ một mini-project nghiên cứu thực tế.",
     ],
+    instructor: INSTRUCTOR_TAM,
     registerNote: REGISTER_NOTE_GENERIC,
   },
 
@@ -722,7 +770,9 @@ export const courses = [
     },
     facts: [
       { label: "Hình thức", value: "Lý thuyết cô đọng kết hợp thực hành" },
-      { label: "Nội dung", value: "06 module, có buổi Research Clinic góp ý đề tài" },
+      { label: "Thời lượng", value: "06 module, có buổi Research Clinic góp ý đề tài" },
+      { label: "Lịch học", value: FACT_TBA },
+      { label: "Sĩ số", value: FACT_TBA },
       { label: "Học liệu", value: "Recording và bộ dữ liệu thực hành" },
       { label: "Xem lại", value: "02 năm kể từ ngày đăng ký" },
     ],
@@ -885,12 +935,16 @@ export const courses = [
       vnd: 1000000,
     },
     facts: [
-      { label: "Thời lượng", value: "05 buổi" },
       {
         label: "Hình thức",
         value: "Lý thuyết cô đọng kết hợp thực hành trên dữ liệu thực tế",
       },
-      { label: "Nội dung", value: "05 module, có buổi Research Clinic góp ý đề tài" },
+      {
+        label: "Thời lượng",
+        value: "05 buổi — 05 module, có buổi Research Clinic góp ý đề tài",
+      },
+      { label: "Lịch học", value: FACT_TBA },
+      { label: "Sĩ số", value: FACT_TBA },
       { label: "Học liệu", value: "Recording, do-file và bộ dữ liệu thực hành" },
       { label: "Xem lại", value: "02 năm kể từ ngày đăng ký" },
     ],
@@ -1016,8 +1070,11 @@ export const courses = [
       vnd: 2000000,
     },
     facts: [
-      { label: "Lớp trực tiếp", value: "06 module qua Zoom — tối đa 40 học viên" },
-      { label: "Kho record", value: "60 giờ 44 phút — 60 bài học" },
+      { label: "Hình thức", value: "Trực tuyến qua Zoom" },
+      { label: "Thời lượng", value: "06 module" },
+      { label: "Lịch học", value: FACT_TBA },
+      { label: "Sĩ số", value: "Tối đa 40 học viên/lớp" },
+      { label: "Học liệu", value: "Kho record 60 giờ 44 phút — 60 bài học" },
       { label: "Xem lại", value: "02 năm kể từ ngày đăng ký" },
     ],
     phases: [
@@ -1096,6 +1153,7 @@ export const courses = [
       "Biết cách trả lời nhà bình duyệt (reviewer) và biên tập viên (editor), cũng như xử lý các vấn đề sau khi công bố thành công.",
       "Nhận chứng nhận sau khi hoàn thành khóa học.",
     ],
+    instructor: INSTRUCTOR_TAM,
     registerNote: REGISTER_NOTE_GENERIC,
   },
 
@@ -1117,7 +1175,10 @@ export const courses = [
     facts: [
       { label: "Hình thức", value: "Trực tuyến qua Zoom" },
       { label: "Thời lượng", value: "08 buổi / khóa — 02 buổi / tuần" },
-      { label: "Giờ học", value: "19:30 – 21:00" },
+      { label: "Lịch học", value: "19:30 – 21:00" },
+      { label: "Sĩ số", value: FACT_TBA },
+      { label: "Học liệu", value: FACT_TBA },
+      { label: "Xem lại", value: FACT_TBA },
     ],
     phases: [
       {
@@ -1153,6 +1214,7 @@ export const courses = [
       "Mỗi học viên có một đề tài rõ ràng và dàn ý bài báo đầy đủ.",
       "Ba tháng hỗ trợ sau khóa để hoàn thành bài viết và submit tạp chí dưới sự hướng dẫn của giảng viên.",
     ],
+    instructor: INSTRUCTOR_TAM,
     registerNote:
       "Tạo tài khoản để giữ chỗ khóa Research Class (Advanced). Kỳ khai giảng tiếp theo sẽ được thông báo qua email và Zalo.",
   },
@@ -1174,8 +1236,11 @@ export const courses = [
       vnd: 550000,
     },
     facts: [
-      { label: "Lớp trực tiếp", value: "04 module qua Zoom" },
-      { label: "Giờ học", value: "19:30 – 21:00 · 02 buổi / tuần" },
+      { label: "Hình thức", value: "Trực tuyến qua Zoom" },
+      { label: "Thời lượng", value: "04 module — 02 buổi / tuần" },
+      { label: "Lịch học", value: "19:30 – 21:00" },
+      { label: "Sĩ số", value: FACT_TBA },
+      { label: "Học liệu", value: FACT_TBA },
       { label: "Xem lại", value: "02 năm kể từ ngày đăng ký" },
     ],
     phases: [
@@ -1233,6 +1298,7 @@ export const courses = [
       "Dùng AI hỗ trợ viết và biên tập bản thảo có kiểm soát, phù hợp nguyên tắc liêm chính học thuật.",
       "Ứng dụng AI vào làm sạch dữ liệu, sinh cú pháp, đọc output và trình bày kết quả trên đề tài thực tế.",
     ],
+    instructor: INSTRUCTOR_TAM,
     registerNote: REGISTER_NOTE_GENERIC,
   },
 ] satisfies Course[];
