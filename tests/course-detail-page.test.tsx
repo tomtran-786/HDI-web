@@ -77,7 +77,7 @@ describe("trang chi tiết khóa học", () => {
     );
 
     expect(course.slug).toBe("nckh-ung-dung-ai-xuat-ban-quoc-te");
-    expect(html).toContain("NGHIÊN CỨU KHOA HỌC ỨNG DỤNG AI &amp; XUẤT BẢN QUỐC TẾ");
+    expect(html).toContain("Nghiên cứu khoa học ứng dụng AI &amp; xuất bản quốc tế");
     expect(html).toContain("07/09/2026");
     // Chủ khóa yêu cầu chưa công bố lịch theo thứ cho tới khi có thời khóa biểu
     // chi tiết (xem ghi chú D ở đầu content/course.ts). Dòng "Lịch học" mang cả

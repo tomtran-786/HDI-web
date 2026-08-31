@@ -147,6 +147,29 @@ export type Course = {
   code: string;
   slug: CourseSlug;
   eyebrow: string;
+  /**
+   * KIỂU VIẾT HOA — câu thường, và chỉ tên riêng mới được viết hoa.
+   *
+   * Cụ thể là ba luật:
+   *
+   *   1. Viết hoa chữ cái đầu tiên của tên khóa, hết.
+   *   2. Danh từ chung tiếng Việt giữa câu viết thường: "nghiên cứu khoa học",
+   *      "khóa luận tốt nghiệp", "xuất bản quốc tế". Viết hoa chúng là áp kiểu
+   *      Title Case của tiếng Anh lên tiếng Việt, và nó chỉ đúng một nửa số
+   *      chữ nên trông như gõ nhầm.
+   *   3. Tên riêng và thuật ngữ thì GIỮ NGUYÊN dạng chính thức của chúng: tên
+   *      phần mềm (SPSS, Stata, SmartPLS, ChatGPT, Zoom), viết tắt phương pháp
+   *      (AI, EFA, FGLS, GMM, ANOVA, HTMT) và thuật ngữ tiếng Anh dùng như tên
+   *      (Literature Review, Research Clinic).
+   *
+   * TUYỆT ĐỐI không IN HOA TOÀN BỘ. Khóa AIQT từng như vậy, và vì nó là khóa
+   * đứng đầu danh sách, trang chủ mở ra là một tên hét lên giữa bảy tên nói
+   * bình thường. Muốn nhấn mạnh thì dùng `eyebrow`, đó là việc của trường đó.
+   *
+   * Luật này áp cho `title`; `phases`, `outcomes` và `facts` đi theo cùng tinh
+   * thần, nhưng ở đó thuật ngữ chuyên môn chiếm đa số nên chúng có nhiều chữ
+   * hoa hơn một cách hợp lệ.
+   */
   title: string;
   audience: string;
   /**
@@ -283,7 +306,7 @@ export const courses = [
     code: "AIQT",
     slug: "nckh-ung-dung-ai-xuat-ban-quoc-te",
     eyebrow: "Khóa mới · Khai giảng 07/09/2026",
-    title: "NGHIÊN CỨU KHOA HỌC ỨNG DỤNG AI & XUẤT BẢN QUỐC TẾ",
+    title: "Nghiên cứu khoa học ứng dụng AI & xuất bản quốc tế",
     audience:
       "Dành cho người đang thực hiện nghiên cứu và muốn ứng dụng AI có kiểm soát, chuẩn bị bài báo quốc tế hoặc phân tích dữ liệu bảng",
     intro:
@@ -376,7 +399,7 @@ export const courses = [
     code: "TIEULUAN",
     slug: "training-tieu-luan-nckh-kltn",
     eyebrow: "Khóa nền tảng · Khai giảng 01/10/2026",
-    title: "Viết tiểu luận, Nghiên cứu khoa học & Khóa luận tốt nghiệp",
+    title: "Viết tiểu luận, nghiên cứu khoa học & khóa luận tốt nghiệp",
     audience:
       "Dành cho sinh viên năm 1–4 và người mới bắt đầu nghiên cứu",
     audienceProfiles: [
