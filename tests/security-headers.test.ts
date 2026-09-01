@@ -60,12 +60,18 @@ describe("Content-Security-Policy", () => {
   const nonce = "abc123def456";
   const policy = contentSecurityPolicy(nonce);
 
-  it("gắn nonce của request và cho phép script kế thừa qua strict-dynamic", () => {
+  it("gắn nonce của request, cho phép bundle first party qua 'self', và không dùng strict-dynamic", () => {
     const scriptSrc = directives(policy).get("script-src")!;
     expect(scriptSrc).toContain(`'nonce-${nonce}'`);
-    // 'strict-dynamic' là thứ cho phép script mà @vercel/analytics chèn bằng
-    // DOM chạy được mà không phải nới script-src cho cả origin.
-    expect(scriptSrc).toContain("'strict-dynamic'");
+    expect(scriptSrc).toContain("'self'");
+    // KHÔNG 'strict-dynamic': nó vô hiệu hóa phần 'self' cho thẻ <script>, và
+    // Turbopack bỏ sót nonce trên đúng thẻ preinit của một client chunk tách
+    // code — thẻ đó bị chặn, làm treo điều hướng client ở màn loading skeleton
+    // ngay sau khi đăng nhập. Xem chú thích trong lib/security-headers.ts.
+    expect(scriptSrc).not.toContain("'strict-dynamic'");
+    // Ở preview, @vercel/analytics tải script từ host này; production thì script
+    // của nó nằm cùng origin nên đã thuộc 'self'.
+    expect(scriptSrc).toContain("https://va.vercel-scripts.com");
     expect(scriptSrc).not.toContain("'unsafe-inline'");
   });
 
