@@ -42,11 +42,15 @@
  *    owner confirms they still hold.
  *
  * F. `nckh-chuyen-sau-spss` was merged with the former Stata course on
- * 2026-08-30 at the owner's request. Its title, six-session curriculum and
- * outcomes are an HDI-authored sketch. The price and access policy remain the
- * existing SPSS catalog values so the public content still matches its
- * existing commercial record. The old Stata slug is retained only as a public
- * redirect; no database record is changed.
+ * 2026-08-30 at the owner's request, and re-authored on 2026-09-01 from the
+ * owner-supplied syllabus "PHAN TICH DINH LUONG VOI SPSS va Stata.md". The
+ * title, the six modules of ten topics, the per-module "Sản phẩm" lines, the
+ * thirteen outcomes and the list of documents students send before Module 6 are
+ * that document's own text, no longer the HDI sketch written at merge time. The
+ * price and the access policy remain the existing SPSS catalog values, so the
+ * public content still matches its existing commercial record; the syllabus
+ * states neither. The old Stata slug is retained only as a public redirect; no
+ * database record is changed.
  *
  * HISTORICAL ATTRIBUTION — recorded here because the page does not show it.
  * Before the merge, the edubit courses were taught by:
@@ -672,13 +676,13 @@ export const courses = [
   {
     code: "SPSS",
     slug: "nckh-chuyen-sau-spss",
-    eyebrow: "Khóa chuyên sâu · 06 buổi thực hành",
-    title: "Phân tích dữ liệu nghiên cứu với SPSS & Stata — thực chiến",
+    eyebrow: "Khóa chuyên sâu · 06 module thực hành",
+    title: "Phân tích định lượng với SPSS, Stata & AI",
     audience:
-      "Dành cho sinh viên, học viên cao học, nghiên cứu sinh và giảng viên đang thực hiện đề tài trong khoa học xã hội, kinh tế, tài chính và quản trị",
+      "Dành cho sinh viên năm 3–4, học viên cao học, nghiên cứu sinh, giảng viên và chuyên viên phân tích đang thực hiện nghiên cứu định lượng bằng dữ liệu khảo sát hoặc dữ liệu thống kê có sẵn",
     intro:
-      "Khóa học kết hợp SPSS và Stata theo một quy trình nghiên cứu hoàn chỉnh: từ thiết kế mô hình, chuẩn bị dữ liệu, phân tích khảo sát đến hồi quy, dữ liệu bảng và các kỹ thuật kinh tế lượng nâng cao. Mỗi buổi đều gắn với dữ liệu thực hành và cách đọc, trình bày kết quả trong bài nghiên cứu.",
-    curriculum: "sessions",
+      "Nghiên cứu định lượng thường đi theo một trong hai hướng dữ liệu: dữ liệu sơ cấp thu thập trực tiếp qua khảo sát, và dữ liệu thứ cấp khai thác từ báo cáo thống kê hoặc cơ sở dữ liệu doanh nghiệp, quốc gia và quốc tế. Khóa học đưa cả hai hướng vào một lộ trình thống nhất: SPSS cho dữ liệu khảo sát, Stata cho dữ liệu thứ cấp và dữ liệu bảng, từ xây dựng câu hỏi và mô hình, thiết kế dữ liệu, lựa chọn phương pháp đến phân tích và trình bày kết quả. AI được tích hợp có kiểm soát để hỗ trợ dựng mô hình, thiết kế bảng hỏi, viết câu lệnh, đọc kết quả và rà soát tính nhất quán. Buổi cuối là Research Clinic, nơi giảng viên góp ý trực tiếp đề tài của từng học viên. Người học nên có kiến thức cơ bản về thống kê hoặc phương pháp nghiên cứu; những nội dung cần thiết được ôn tập cô đọng ngay ở module đầu tiên.",
+    curriculum: "modules",
     price: {
       amount: "1.100.000 đ",
       note: "Giảm 10% cho nhóm từ 03 người",
@@ -695,81 +699,140 @@ export const courses = [
     ],
     phases: [
       {
-        name: "Nền tảng nghiên cứu và dữ liệu",
+        name: "Thiết kế nghiên cứu định lượng và lựa chọn dữ liệu",
+        summary:
+          "Sản phẩm: câu hỏi, mô hình, giả thuyết và kế hoạch phân tích sơ bộ.",
         sessions: [
-          {
-            text: "Thiết kế nghiên cứu và lựa chọn SPSS/Stata",
-            points: [
-              "Xác định câu hỏi nghiên cứu, biến nghiên cứu và mô hình phân tích",
-              "Phân biệt dữ liệu khảo sát, dữ liệu cắt ngang, chuỗi thời gian và dữ liệu bảng",
-              "Chọn SPSS hay Stata theo mục tiêu, loại dữ liệu và kỹ thuật cần sử dụng",
-              "Chuẩn bị codebook, quy ước biến và kế hoạch phân tích",
-            ],
-          },
-          {
-            text: "Nhập, mã hóa, làm sạch dữ liệu và thống kê mô tả",
-            points: [
-              "Nhập dữ liệu, mã hóa biến và kiểm tra cấu trúc bộ dữ liệu",
-              "Xử lý giá trị thiếu, quan sát bất thường và ngoại lệ",
-              "Thực hiện thống kê mô tả, bảng tần số và trực quan hóa cơ bản",
-              "Thiết lập quy trình syntax/do-file có thể kiểm tra và lặp lại",
-            ],
-          },
+          "Từ vấn đề thực tiễn đến câu hỏi và mục tiêu nghiên cứu",
+          "Xây dựng mô hình và giả thuyết nghiên cứu định lượng",
+          "Xác định biến phụ thuộc, độc lập, trung gian, điều tiết và kiểm soát",
+          "Phân biệt dữ liệu sơ cấp và dữ liệu thứ cấp",
+          "Nhận diện dữ liệu cắt ngang, chuỗi thời gian và dữ liệu bảng",
+          "Lựa chọn giữa SPSS và Stata theo câu hỏi, dữ liệu và phương pháp",
+          "Xây dựng kế hoạch thu thập, quản lý và phân tích dữ liệu",
+          "Liên kết câu hỏi, giả thuyết, biến số, dữ liệu và kỹ thuật phân tích",
+          "Ứng dụng AI để phát triển mô hình, kiểm tra logic và xây dựng kế hoạch phân tích",
+          "Thực hành thiết kế quy trình định lượng cho đề tài mẫu",
         ],
       },
       {
-        name: "Phân tích khảo sát và hồi quy với SPSS",
+        name: "Thiết kế và chuẩn bị dữ liệu sơ cấp trên SPSS",
+        summary:
+          "Sản phẩm: bảng hỏi, codebook và file dữ liệu SPSS đã được làm sạch.",
         sessions: [
-          {
-            text: "Cronbach’s Alpha, EFA và kiểm tra thang đo trên SPSS",
-            points: [
-              "Đánh giá độ tin cậy thang đo bằng Cronbach’s Alpha",
-              "Thực hiện EFA và kiểm tra KMO, Bartlett, factor loading và tổng phương sai trích",
-              "Phát hiện biến không phù hợp và tạo biến đại diện cho mô hình",
-              "Đọc output, lập bảng kết quả và viết diễn giải học thuật",
-            ],
-          },
-          {
-            text: "Tương quan, OLS và Logistic Regression",
-            points: [
-              "Phân tích tương quan và chuẩn bị biến cho mô hình hồi quy",
-              "Ước lượng OLS, đọc hệ số, mức ý nghĩa, R² và kiểm định mô hình",
-              "Kiểm tra đa cộng tuyến, phương sai thay đổi và các vấn đề thường gặp",
-              "Ứng dụng Binary Logistic Regression và trình bày kết quả đúng ngữ cảnh",
-            ],
-          },
+          "Phân biệt khái niệm nghiên cứu, biến quan sát và biến tiềm ẩn",
+          "Tìm kiếm, lựa chọn và điều chỉnh thang đo",
+          "Thiết kế cấu trúc và nội dung bảng hỏi khoa học",
+          "Dịch thuật, hiệu chỉnh thang đo và pilot test",
+          "Xác định tổng thể, phương pháp chọn mẫu và cỡ mẫu",
+          "Xây dựng codebook, đặt tên và mã hóa biến",
+          "Nhập, tổ chức và quản lý dữ liệu trên SPSS",
+          "Xử lý dữ liệu thiếu, ngoại lệ, biến đảo chiều và câu trả lời thiếu tin cậy",
+          "Ứng dụng AI để rà soát bảng hỏi, xây dựng codebook và hỗ trợ SPSS Syntax",
+          "Thực hành từ bảng hỏi đến file dữ liệu khảo sát hoàn chỉnh",
         ],
       },
       {
-        name: "Kinh tế lượng ứng dụng và hoàn thiện nghiên cứu với Stata",
+        name: "Phân tích dữ liệu sơ cấp trên SPSS",
+        summary:
+          "Sản phẩm: bảng thống kê, Cronbach’s Alpha, EFA, hồi quy và phần diễn giải.",
         sessions: [
+          "Thống kê mô tả đặc điểm mẫu và các biến nghiên cứu",
+          "Lựa chọn kiểm định theo câu hỏi nghiên cứu và loại dữ liệu",
+          "Kiểm định khác biệt bằng t-test và ANOVA",
+          "Đánh giá độ tin cậy bằng Cronbach’s Alpha và tương quan biến–tổng",
+          "Phân tích nhân tố khám phá EFA: KMO, Bartlett’s Test và factor loading",
+          "Xác định số nhân tố, phép xoay, phương sai trích và biến đại diện",
+          "Phân tích tương quan và hồi quy OLS",
+          "Kiểm tra giả định, kiểm định giả thuyết và giới thiệu Binary Logistic",
+          "Ứng dụng AI để đọc output, lập bảng và rà soát cách diễn giải kết quả",
+          "Thực hành phân tích trọn vẹn bộ dữ liệu khảo sát và viết kết quả",
+        ],
+      },
+      {
+        name: "Phân tích dữ liệu thứ cấp và dữ liệu bảng trên Stata",
+        summary:
+          "Sản phẩm: do-file, dữ liệu sạch và bảng so sánh OLS, FE, RE, FGLS.",
+        sessions: [
+          "Tìm kiếm, đánh giá và tổ chức dữ liệu thứ cấp",
+          "Nhập, nối, chuyển đổi và làm sạch dữ liệu trên Stata",
+          "Xây dựng do-file, log-file và quy trình phân tích có thể tái lập",
+          "Thống kê mô tả, tương quan và trực quan hóa dữ liệu",
+          "Ước lượng OLS và diễn giải các chỉ số chính",
+          "Khai báo dữ liệu bảng và kiểm tra cấu trúc dữ liệu",
+          "Ước lượng Pooled OLS, Fixed Effects, Random Effects và FGLS",
+          "Kiểm định lựa chọn mô hình và xử lý các vấn đề sai số",
+          "Ứng dụng AI để xây dựng do-file, phát hiện lỗi và so sánh các estimator",
+          "Thực hành từ dữ liệu thứ cấp thô đến mô hình dữ liệu bảng hoàn chỉnh",
+        ],
+      },
+      {
+        name: "Các phương pháp mở rộng trên Stata",
+        summary:
+          "Sản phẩm: một mô hình nâng cao và bảng diễn giải các kiểm định cần thiết.",
+        sessions: [
+          "Nhận diện nội sinh và phân biệt tương quan với quan hệ nhân quả",
+          "Biến công cụ và ước lượng IV/2SLS",
+          "Kiểm định nội sinh, công cụ yếu và các hạn chế quá xác định",
+          "Mô hình dữ liệu bảng động: Difference GMM và System GMM",
+          "Lựa chọn công cụ và diễn giải Hansen test, AR(1), AR(2)",
+          "Điều kiện sử dụng và cấu trúc của Panel ARDL–PMG",
+          "Linear PMG: tác động ngắn hạn, dài hạn và hệ số hiệu chỉnh sai số",
+          "Nonlinear PMG: phân rã cú sốc dương–âm và kiểm định bất đối xứng",
+          "Ứng dụng AI để hỗ trợ viết lệnh, so sánh mô hình và rà soát kết luận kinh tế lượng",
+          "Thực hành lựa chọn và triển khai phương pháp phù hợp trên dữ liệu mẫu",
+        ],
+      },
+      {
+        name: "Ôn tập và Research Clinic — tư vấn đề tài học viên",
+        summary:
+          "Sản phẩm: phiếu góp ý, phương pháp đề xuất và kế hoạch hành động riêng cho từng học viên.",
+        sessions: [
+          "Hệ thống hóa quy trình nghiên cứu với dữ liệu sơ cấp và thứ cấp",
+          "Ôn tập cách lựa chọn SPSS, Stata và kỹ thuật phân tích phù hợp",
+          "Học viên trình bày đề tài, dữ liệu và tiến độ hiện tại",
+          "Góp ý câu hỏi, mục tiêu, mô hình và giả thuyết nghiên cứu",
+          "Đánh giá thang đo, bảng hỏi hoặc nguồn dữ liệu thứ cấp",
+          "Tư vấn phương pháp chọn mẫu, cấu trúc dữ liệu và phạm vi nghiên cứu",
+          "Lựa chọn phương pháp ước lượng và hệ thống kiểm định phù hợp",
+          "Góp ý output, bảng kết quả và cách diễn giải hiện có",
+          "Ứng dụng AI để rà soát đề tài và xây dựng danh mục nội dung cần điều chỉnh",
+          "Đề xuất hướng phát triển và lập kế hoạch triển khai tiếp theo",
           {
-            text: "Stata workflow và dữ liệu bảng",
+            // Phần 5 của giáo trình gốc là một danh mục đứng riêng, không phải
+            // một module thứ bảy. Nó nằm ở đây vì nó chỉ có nghĩa khi gắn với
+            // buổi Research Clinic — học viên không gửi thì buổi đó không tư vấn
+            // được gì cụ thể.
+            text: "Tài liệu học viên gửi trước Module 6, ít nhất 3–5 ngày",
             points: [
-              "Làm quen với do-file, log-file, quản lý dữ liệu và quy trình phân tích trên Stata",
-              "Thiết lập panel data bằng xtset; thực hiện FE, RE và kiểm định Hausman",
-              "Kiểm tra tự tương quan, phương sai thay đổi, phụ thuộc chéo và sử dụng robust SE/FGLS",
-              "So sánh output, lựa chọn mô hình và giải thích kết quả theo câu hỏi nghiên cứu",
-            ],
-          },
-          {
-            text: "IV/2SLS, GMM/PMG và mini-project",
-            points: [
-              "Nhận diện nội sinh và thực hành IV/2SLS khi OLS không còn phù hợp",
-              "Giới thiệu GMM động và PMG trong các bài toán dữ liệu bảng nâng cao",
-              "Hoàn thiện mini-project từ dữ liệu, lệnh phân tích đến bảng kết quả",
-              "Trình bày, diễn giải và viết phần kết quả/thảo luận cho luận văn hoặc bài báo",
+              "Tên đề tài",
+              "Bối cảnh, câu hỏi và mục tiêu nghiên cứu",
+              "Mô hình và giả thuyết, nếu có",
+              "Thang đo, bảng hỏi hoặc nguồn dữ liệu",
+              "Mô tả cấu trúc dữ liệu",
+              "File SPSS, Stata hoặc do-file hiện có, nếu có",
+              "Kết quả phân tích hiện tại, nếu có",
+              "Nội dung đã sử dụng AI hỗ trợ, nếu có",
+              "Tối đa ba vấn đề cần giảng viên tư vấn",
             ],
           },
         ],
       },
     ],
     outcomes: [
-      "Thiết kế được kế hoạch phân tích phù hợp với câu hỏi nghiên cứu, loại dữ liệu và mô hình đề xuất.",
-      "Chuẩn bị, mã hóa, làm sạch và mô tả dữ liệu bằng quy trình có thể kiểm tra và lặp lại.",
-      "Thực hiện và diễn giải Cronbach’s Alpha, EFA, tương quan, OLS và Logistic Regression trên SPSS.",
-      "Thực hiện workflow trên Stata cho dữ liệu bảng, FE/RE, Hausman, robust SE, FGLS và các kỹ thuật nâng cao phù hợp.",
-      "Hoàn thiện bảng kết quả và phần diễn giải học thuật từ một mini-project nghiên cứu thực tế.",
+      "Phân biệt và lựa chọn dữ liệu sơ cấp hoặc thứ cấp phù hợp với đề tài.",
+      "Xây dựng câu hỏi, giả thuyết và mô hình nghiên cứu định lượng.",
+      "Thiết kế thang đo, bảng hỏi và kế hoạch chọn mẫu.",
+      "Chuẩn bị, làm sạch và quản lý dữ liệu nghiên cứu.",
+      "Phân tích dữ liệu khảo sát bằng SPSS.",
+      "Thực hiện Cronbach’s Alpha, EFA, kiểm định khác biệt và hồi quy.",
+      "Phân tích dữ liệu thứ cấp và dữ liệu bảng bằng Stata.",
+      "Lựa chọn giữa OLS, FE, RE và phương pháp hiệu chỉnh phù hợp.",
+      "Nhận diện nội sinh và tiếp cận IV/2SLS, GMM.",
+      "Hiểu và triển khai Linear và Nonlinear Panel ARDL–PMG.",
+      "Xuất bảng và diễn giải kết quả theo chuẩn học thuật.",
+      "Sử dụng AI để hỗ trợ phân tích nhưng vẫn bảo đảm khả năng kiểm chứng.",
+      "Xây dựng kế hoạch hoàn thiện đề tài sau buổi tư vấn trực tiếp.",
     ],
     instructor: INSTRUCTOR_TAM,
     registerNote: REGISTER_NOTE_GENERIC,

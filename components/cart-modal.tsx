@@ -8,7 +8,12 @@ import { formatVnd } from "@/lib/format";
 import { trackCartAdd, trackCartRemove, trackCheckout } from "@/lib/analytics";
 import { cartModal, groupPanel, referralPanel } from "@/content/checkout";
 import { GROUP_MIN_SIZE, seatPriceVnd } from "@/lib/group-pricing";
-import { creditToApply, referralDiscountVnd } from "@/lib/referral-pricing";
+import {
+  CREDIT_MAX_SHARE_PCT,
+  creditToApply,
+  maxCreditForTuitionVnd,
+  referralDiscountVnd,
+} from "@/lib/referral-pricing";
 import { addMemberEmails, groupApplies, MAX_MEMBERS } from "@/lib/group-invite";
 import { IconCart, IconClose } from "./ui/icons";
 
@@ -185,12 +190,30 @@ export function CartModal({
    * nếu lệch. Viết lại phép tính ở đây — dù chỉ đổi thứ tự trừ — là làm mọi đơn
    * của người được giới thiệu không thanh toán được.
    */
-  const referralDiscount = referralDiscountVnd(subtotalVnd, referral.eligible);
+  const referralDiscount = referralDiscountVnd({
+    listSubtotalVnd: listTotalVnd,
+    subtotalVnd,
+    eligible: referral.eligible,
+  });
   const creditApplied = creditToApply({
     balanceVnd: referral.creditBalanceVnd,
     dueVnd: subtotalVnd - referralDiscount,
+    tuitionVnd: subtotalVnd,
     wanted: useCredit,
   });
+  /**
+   * Ưu đãi nhóm đã nuốt mất khoản giảm giới thiệu. Nói ra, vì im lặng hiện 0đ
+   * thì người mua tưởng mã của mình hỏng chứ không hiểu là hai ưu đãi không
+   * cộng dồn và họ đang hưởng mức cao hơn.
+   */
+  const referralSuperseded =
+    referral.eligible && referralDiscount === 0 && listTotalVnd > subtotalVnd;
+  /** Số dư còn nhưng bị trần 30% học phí chặn lại. */
+  const creditCapped =
+    useCredit &&
+    creditApplied > 0 &&
+    creditApplied < referral.creditBalanceVnd &&
+    creditApplied === maxCreditForTuitionVnd(subtotalVnd);
   const totalVnd = subtotalVnd - referralDiscount - creditApplied;
   const discounted = listTotalVnd > totalVnd;
   const anyGroupEligible = selected.some((course) => course.groupEligible);
@@ -541,6 +564,11 @@ export function CartModal({
                     </span>
                   </p>
                 )}
+                {referralSuperseded && (
+                  <p className="text-xs leading-relaxed text-fg-subtle">
+                    {referralPanel.supersededByGroup}
+                  </p>
+                )}
                 {referral.creditBalanceVnd > 0 && (
                   <>
                     <label className="flex cursor-pointer items-baseline justify-between gap-4">
@@ -566,7 +594,9 @@ export function CartModal({
                     </label>
                     {useCredit && creditApplied < referral.creditBalanceVnd && (
                       <p className="text-xs leading-relaxed text-fg-subtle">
-                        {referralPanel.remainderNote}
+                        {creditCapped
+                          ? referralPanel.creditCapNote(CREDIT_MAX_SHARE_PCT)
+                          : referralPanel.remainderNote}
                       </p>
                     )}
                   </>

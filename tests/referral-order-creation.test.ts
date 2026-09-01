@@ -38,10 +38,13 @@ const COURSE = {
 };
 
 /** Ba truy vấn raw của `createOrder`, đúng thứ tự. */
-function lockRows(referredById: string | null) {
+function lockRows(
+  referredById: string | null,
+  courseOverrides: Record<string, unknown> = {},
+) {
   mocks.queryRaw
     .mockResolvedValueOnce([{ referredById }])
-    .mockResolvedValueOnce([COURSE])
+    .mockResolvedValueOnce([{ ...COURSE, ...courseOverrides }])
     .mockResolvedValueOnce([]);
 }
 
@@ -200,6 +203,28 @@ describe("tiêu credits khi đặt đơn", () => {
    */
   it("luôn chừa lại phần phải trả dù số dư thừa sức phủ hết đơn", async () => {
     lockRows(null);
+    mocks.ledgerAggregate.mockResolvedValue({ _sum: { amountVnd: 50_000_000 } });
+
+    const result = await createOrder("user-1", ["course-1"], { useCredit: true });
+
+    // Trần 30% học phí chạm trước ngưỡng MIN_CHARGE_VND ở đây, và đó chính là
+    // điều chính sách 2026-09-01 muốn: 1.000.000đ học phí → tối đa 300.000đ
+    // credits, nên đơn còn 700.000đ chứ không tụt xuống sát ngưỡng trả được.
+    expect(result).toMatchObject({
+      ok: true,
+      creditAppliedVnd: 300_000,
+      amountVnd: 700_000,
+    });
+    expect(700_000).toBeGreaterThan(MIN_CHARGE_VND);
+  });
+
+  /**
+   * Trần 30% tính trên HỌC PHÍ, nên một đơn nhỏ vẫn phải chạm được ngưỡng
+   * MIN_CHARGE_VND — đây là bài giữ cho luật "đơn không bao giờ về 0đ" còn hiệu
+   * lực sau khi trần mới được thêm vào.
+   */
+  it("vẫn chừa ngưỡng tối thiểu khi trần 30% lớn hơn phần còn phải trả", async () => {
+    lockRows(null, { priceVnd: 2_500 });
     mocks.ledgerAggregate.mockResolvedValue({ _sum: { amountVnd: 50_000_000 } });
 
     const result = await createOrder("user-1", ["course-1"], { useCredit: true });

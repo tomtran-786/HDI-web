@@ -504,6 +504,11 @@ enum ReferralEntryType {
   redemption
   /// Sửa tay của quản trị viên, cả cộng lẫn trừ.
   adjustment
+  /// Xóa sổ phần credits quá hạn sáu tháng chưa tiêu. Cron ghi, luôn là số âm.
+  /// Tách khỏi `adjustment` để đối soát phân biệt được "hết hạn" với "người
+  /// thật sửa tay", và để `expireCredits` cộng lại đúng phần đã xóa sổ trước
+  /// đó mà không phải đoán qua `note`.
+  expiry
 
   @@map("referral_entry_type")
 }
@@ -530,6 +535,15 @@ enum ReferralEntryStatus {
 ///   commission  + round(basis × 10/100)   `posted`    — không bao giờ sửa
 ///   redemption  − số credits đã tiêu      `reserved` → `applied` | `void`
 ///   adjustment  ±                         `posted`    — sửa tay
+///   expiry      − phần quá hạn chưa tiêu  `posted`    — cron ghi
+///
+/// Từ 2026-09-01 công thức trên có thêm ĐÚNG MỘT điều kiện, vì chính sách cho
+/// credits một thời gian giữ:
+///
+///   AND (available_at IS NULL OR available_at <= now())
+///
+/// Hàng `redemption` luôn để `available_at` trống nên luôn được tính — một
+/// khoản đã tiêu không bao giờ được phép biến mất khỏi số dư.
 ///
 /// `reserved` ĐÃ trừ vào số dư ngay lúc ghi, nên hai lần checkout song song
 /// không tiêu được cùng một khoản. Chuyển sang `applied` không đổi số học, nó
@@ -568,6 +582,20 @@ model ReferralLedger {
   /// thể được giao lại, đúng lý do của `OrderItem.notifiedAt`.
   notifiedAt DateTime? @map("notified_at") @db.Timestamptz(6)
 
+  /// Khoản này bắt đầu tiêu được từ lúc nào. Trống = tiêu được ngay.
+  ///
+  /// Hoa hồng nằm im bảy ngày sau khi tiền về, tức đúng thời hạn hoàn phí:
+  /// thưởng ngay là thưởng trên một khoản tiền vẫn có thể chảy ngược.
+  availableAt DateTime? @map("available_at") @db.Timestamptz(6)
+
+  /// Hạn dùng của khoản này, sáu tháng kể từ lúc ghi sổ. Trống với mọi loại
+  /// không phải `commission`.
+  ///
+  /// Quá hạn KHÔNG tự biến khoản này khỏi số dư — `expireCredits` ghi một hàng
+  /// `expiry` âm bằng đúng phần chưa tiêu. Trừ thẳng ở đây thì một khoản đã
+  /// tiêu hết vẫn bị trừ lần nữa, vì sổ không gắn khoản chi với khoản thu nào.
+  expiresAt DateTime? @map("expires_at") @db.Timestamptz(6)
+
   createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
   settledAt DateTime? @map("settled_at") @db.Timestamptz(6)
 
@@ -578,6 +606,7 @@ model ReferralLedger {
   @@index([userId, status])
   @@index([orderId])
   @@index([refereeUserId])
+  @@index([userId, expiresAt])
   @@map("referral_ledger")
 }
 

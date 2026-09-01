@@ -85,6 +85,15 @@ export const referralPanel = {
    */
   remainderNote:
     "Đơn luôn giữ lại một khoản nhỏ phải thanh toán qua PayOS, nên số dư còn lại được giữ cho lần mua sau.",
+  /**
+   * Ưu đãi không cộng dồn, nên khoản giảm giới thiệu có thể bị ưu đãi nhóm nuốt
+   * mất. Không nói ra thì người mua tưởng mã của mình hỏng.
+   */
+  supersededByGroup:
+    "Ưu đãi nhóm đang được áp dụng thay cho khoản giảm giới thiệu — các ưu đãi không cộng dồn, đơn luôn hưởng mức cao nhất.",
+  /** `pct` là trần credits cho một lần đăng ký. */
+  creditCapNote: (pct: number) =>
+    `Credits chỉ được dùng tối đa ${pct}% học phí mỗi lần đăng ký, nên phần dư được giữ cho lần mua sau.`,
 } as const;
 
 export const orderPage = {

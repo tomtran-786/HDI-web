@@ -11,6 +11,7 @@ const mocks = vi.hoisted(() => ({
   userFindUnique: vi.fn(),
   ledgerUpdateMany: vi.fn(),
   ledgerCreateMany: vi.fn(),
+  ledgerCount: vi.fn(),
   confirmEnrollments: vi.fn(),
 }));
 
@@ -71,6 +72,8 @@ beforeEach(() => {
   mocks.orderUpdateMany.mockResolvedValue({ count: 1 });
   mocks.confirmEnrollments.mockResolvedValue({ confirmed: 1 });
   mocks.userFindUnique.mockResolvedValue({ referredById: "user-referrer" });
+  // Chưa lượt nào được thưởng trong cửa sổ sáu tháng, trừ khi bài tự đặt lại.
+  mocks.ledgerCount.mockResolvedValue(0);
   mocks.transaction.mockImplementation(async (callback: (tx: unknown) => unknown) =>
     callback({
       $queryRaw: mocks.queryRaw,
@@ -81,6 +84,7 @@ beforeEach(() => {
       referralLedger: {
         updateMany: mocks.ledgerUpdateMany,
         createMany: mocks.ledgerCreateMany,
+        count: mocks.ledgerCount,
       },
     }),
   );
@@ -181,6 +185,8 @@ describe("luật tính một dòng hoa hồng", () => {
         payerUserId: "user-1",
         orderId: "order-1",
         basisVnd: 900_000,
+        now: NOW,
+        rewardedInWindow: 0,
       }),
     ).toBeNull();
   });
@@ -192,6 +198,8 @@ describe("luật tính một dòng hoa hồng", () => {
         payerUserId: "user-1",
         orderId: "order-1",
         basisVnd: 0,
+        now: NOW,
+        rewardedInWindow: 0,
       }),
     ).toBeNull();
   });
@@ -204,7 +212,60 @@ describe("luật tính một dòng hoa hồng", () => {
         payerUserId: "user-1",
         orderId: "order-1",
         basisVnd: 900_000,
+        now: NOW,
+        rewardedInWindow: 0,
       }),
     ).toMatchObject({ ratePct: 10, basisVnd: 900_000, amountVnd: 90_000 });
+  });
+
+  /**
+   * Trần "tối đa 5 lượt thưởng trong 6 tháng" là giới hạn DUY NHẤT của chương
+   * trình mà database không đỡ được — nó cần đếm nhiều hàng tại thời điểm ghi,
+   * thứ không diễn đạt được bằng partial unique index. Nếu bài này bị xóa thì
+   * không còn gì canh nó.
+   */
+  it("ngừng phát credits từ lượt thứ sáu trong cửa sổ sáu tháng", () => {
+    expect(
+      buildCommissionRow({
+        referrerId: "user-referrer",
+        payerUserId: "user-1",
+        orderId: "order-1",
+        basisVnd: 900_000,
+        now: NOW,
+        rewardedInWindow: 5,
+      }),
+    ).toBeNull();
+  });
+
+  it("vẫn phát ở lượt thứ năm", () => {
+    expect(
+      buildCommissionRow({
+        referrerId: "user-referrer",
+        payerUserId: "user-1",
+        orderId: "order-1",
+        basisVnd: 900_000,
+        now: NOW,
+        rewardedInWindow: 4,
+      }),
+    ).toMatchObject({ amountVnd: 90_000 });
+  });
+
+  /**
+   * Credits nằm im tới khi hết thời hạn hoàn phí, rồi hết hạn sau sáu tháng.
+   * Hai mốc này phải nằm NGAY trên dòng sổ: `creditBalanceVnd` đọc `availableAt`
+   * để quyết định khoản nào đã vào số dư, và cron đọc `expiresAt` để xóa sổ.
+   */
+  it("đóng dấu mốc mở khóa và hạn dùng lên chính dòng sổ", () => {
+    const row = buildCommissionRow({
+      referrerId: "user-referrer",
+      payerUserId: "user-1",
+      orderId: "order-1",
+      basisVnd: 900_000,
+      now: new Date("2026-09-01T00:00:00.000Z"),
+      rewardedInWindow: 0,
+    })!;
+
+    expect(row.availableAt.toISOString()).toBe("2026-09-08T00:00:00.000Z");
+    expect(row.expiresAt.toISOString()).toBe("2027-03-01T00:00:00.000Z");
   });
 });

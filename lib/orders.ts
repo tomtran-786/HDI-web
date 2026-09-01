@@ -299,6 +299,18 @@ export async function createOrder(
     const subtotalVnd = items.reduce((sum, i) => sum + i.priceVnd, 0);
 
     /**
+     * Tổng theo GIÁ NIÊM YẾT của cùng những ghế đó.
+     *
+     * Cần để `referralDiscountVnd` biết ưu đãi nhóm đã giảm bao nhiêu rồi: từ
+     * 2026-09-01 hai ưu đãi không cộng dồn, đơn chỉ hưởng mức cao nhất. Đọc từ
+     * chính các hàng đã khóa FOR UPDATE, không từ đầu vào của người gọi.
+     */
+    const listSubtotalVnd = items.reduce(
+      (sum, i) => sum + byId.get(i.courseId)!.priceVnd,
+      0,
+    );
+
+    /**
      * "Một lần cho mỗi tài khoản" đọc ra thành hai điều kiện.
      *
      * Đơn `paid` nào cũng chặn, vì ưu đãi gắn với LẦN THANH TOÁN ĐẦU TIÊN. Đơn
@@ -319,14 +331,17 @@ export async function createOrder(
       select: { id: true },
     });
 
-    const referralDiscount = referralDiscountVnd(
+    const referralDiscount = referralDiscountVnd({
+      listSubtotalVnd,
       subtotalVnd,
-      payer?.referredById != null && claimed === null,
-    );
+      eligible: payer?.referredById != null && claimed === null,
+    });
 
     const creditApplied = creditToApply({
-      balanceVnd: await creditBalanceVnd(tx, payerUserId),
+      balanceVnd: await creditBalanceVnd(tx, payerUserId, now),
       dueVnd: subtotalVnd - referralDiscount,
+      // Trần 30%: credits chỉ gánh được một phần học phí của lần đăng ký này.
+      tuitionVnd: subtotalVnd,
       // Trình duyệt chỉ gửi lên Ý MUỐN bật/tắt, không bao giờ là số tiền (BR-02).
       wanted: options.useCredit === true,
     });
@@ -668,6 +683,10 @@ export async function processPayosPayment(input: PayosPaymentEvent) {
      * unique index `referral_ledger_commission_referee_key`, và `skipDuplicates`
      * là thứ biến va chạm index thành một no-op im lặng. Cùng cơ chế đó cũng
      * chặn luôn lượt webhook được PayOS giao lại.
+     *
+     * Trần "5 lượt thưởng trong 6 tháng" thì ngược lại: nó cần đếm nhiều hàng
+     * nên không có index nào đỡ, và `accrueReferralCommission` đếm bên trong
+     * chính transaction này.
      */
     const payer = await tx.user.findUnique({
       where: { id: order.userId },
@@ -678,6 +697,7 @@ export async function processPayosPayment(input: PayosPaymentEvent) {
       payerUserId: order.userId,
       orderId: order.id,
       basisVnd: order.amountVnd + order.creditAppliedVnd,
+      now: moment,
     });
 
     return {

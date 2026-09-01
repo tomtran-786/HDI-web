@@ -25,7 +25,7 @@ describe("breadcrumb toàn site", () => {
     expect(html).toContain('aria-label="Breadcrumb"');
     expect(html).toContain('href="/"');
     expect(html).toContain('href="/khoa-hoc"');
-    expect(html).toContain("NCKH chuyên sâu với SPSS &amp; Stata");
+    expect(html).toContain("Phân tích định lượng với SPSS &amp; Stata");
     expect(html).toContain('aria-current="page"');
   });
 
@@ -47,5 +47,18 @@ describe("breadcrumb toàn site", () => {
     expect(result.map((item) => item.label).join(" ")).not.toContain("PRIVATE-REF");
     expect(order.at(-1)?.label).toBe("Chi tiết đơn hàng");
     expect(result.at(-1)?.label).toBe("Kết quả dịch vụ");
+  });
+
+  /**
+   * Trang giới thiệu bạn bè từng rơi xuống nhánh cuối của bảng tra và in
+   * "Không tìm thấy trang" ngay trên một trang chạy bình thường.
+   */
+  it("nhận ra trang giới thiệu bạn bè và lối vào công khai của nó", () => {
+    for (const path of ["/tai-khoan/gioi-thieu", "/gioi-thieu-ban-be"]) {
+      mocks.pathname = path;
+      const html = renderToStaticMarkup(<SiteBreadcrumbs />);
+      expect(html).toContain("Giới thiệu bạn bè");
+      expect(html).not.toContain("Không tìm thấy trang");
+    }
   });
 });

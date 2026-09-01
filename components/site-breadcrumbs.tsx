@@ -99,6 +99,17 @@ export function breadcrumbsForPathname(pathname: string): BreadcrumbItem[] {
     ];
   }
 
+  // Trang giới thiệu bạn bè, và lối vào công khai dẫn tới nó. Thiếu hai nhánh
+  // này thì cả hai rơi xuống nhánh cuối và in "Không tìm thấy trang" ngay trên
+  // một trang hoạt động bình thường.
+  if (pathname === "/tai-khoan/gioi-thieu" || pathname === "/gioi-thieu-ban-be") {
+    return [
+      HOME,
+      { label: "Tài khoản", href: "/tai-khoan" },
+      { label: "Giới thiệu bạn bè" },
+    ];
+  }
+
   if (pathname === "/thanh-toan/ket-qua") {
     return [
       HOME,

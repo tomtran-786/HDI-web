@@ -11,6 +11,8 @@
  *      ngồi chờ một email không bao giờ tới.
  */
 
+import { REFERRAL_DISCOUNT_PCT } from "@/lib/referral-pricing";
+
 export const verifyPage = {
   eyebrow: "Bảo mật tài khoản",
   title: "Xác thực email",
@@ -212,8 +214,7 @@ export const registerPage = {
    * thoại thì cần thấy ô đó tồn tại. Một ưu đãi phải bấm mới thấy là một ưu đãi
    * phần lớn người dùng không bao giờ dùng.
    */
-  referralHint:
-    "Nhập mã của người giới thiệu để được giảm 10% cho đơn đầu tiên của bạn.",
+  referralHint: `Nhập mã của người giới thiệu để được giảm ${REFERRAL_DISCOUNT_PCT}% cho khóa học đầu tiên của bạn.`,
   action: "Tạo tài khoản",
   driveNote:
     "Record được cấp qua Google Drive. Email đăng ký cần thuộc một tài khoản Google; địa chỉ không phải Gmail vẫn dùng được nếu đã liên kết với Google.",

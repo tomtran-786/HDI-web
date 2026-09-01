@@ -7,6 +7,22 @@ const sql = readFileSync(
   "utf8",
 );
 
+/** Chính sách bản 2026-09-01: thời gian giữ và hạn dùng của credits. */
+const enumSql = readFileSync(
+  join(
+    process.cwd(),
+    "prisma/migrations/20260901120000_referral_expiry_entry_type/migration.sql",
+  ),
+  "utf8",
+);
+const limitsSql = readFileSync(
+  join(
+    process.cwd(),
+    "prisma/migrations/20260901120100_referral_policy_limits/migration.sql",
+  ),
+  "utf8",
+);
+
 /**
  * Toàn bộ những gì bài này canh đều KHÔNG diễn đạt được trong schema.prisma.
  *
@@ -73,5 +89,48 @@ describe("hợp đồng của migration giới thiệu bạn bè", () => {
   it("không xóa dữ liệu thương mại nào", () => {
     expect(sql).not.toMatch(/DELETE\s+FROM\s+"?(orders|payments|enrollments|courses|users)/i);
     expect(sql).not.toMatch(/DROP\s+TABLE/i);
+  });
+});
+
+describe("hợp đồng của migration chính sách 2026-09-01", () => {
+  /**
+   * Postgres không cho dùng một giá trị enum vừa được thêm trong cùng
+   * transaction đã thêm nó, và Prisma chạy mỗi file migration trong một
+   * transaction. Gộp hai file lại thì ràng buộc CHECK nhắc tới 'expiry' đổ ngay
+   * lúc deploy — trên production, giữa một lần release.
+   */
+  it("thêm giá trị enum trong một migration riêng", () => {
+    expect(enumSql).toMatch(
+      /ALTER TYPE "referral_entry_type" ADD VALUE IF NOT EXISTS 'expiry'/,
+    );
+    expect(limitsSql).not.toContain("ADD VALUE");
+  });
+
+  it("thêm hai cột mốc thời gian của credits", () => {
+    expect(limitsSql).toMatch(/ADD COLUMN "available_at" TIMESTAMPTZ/);
+    expect(limitsSql).toMatch(/ADD COLUMN "expires_at"\s+TIMESTAMPTZ/);
+  });
+
+  /**
+   * Backfill không được hồi tố theo cả hai chiều: không khóa lại credits người
+   * ta đã có, và không cho hết hạn ngay một khoản mà chủ sở hữu chưa từng được
+   * báo là có hạn.
+   */
+  it("backfill không hồi tố", () => {
+    expect(limitsSql).toMatch(/"available_at" = "created_at"/);
+    expect(limitsSql).toMatch(/"expires_at"\s+= now\(\) \+ interval '6 months'/);
+  });
+
+  it("bắt hàng xóa sổ luôn mang số âm", () => {
+    expect(limitsSql).toContain('"referral_ledger_expiry_negative_check"');
+    expect(limitsSql).toMatch(
+      /CHECK \("type" <> 'expiry' OR "amount_vnd" < 0\)/,
+    );
+  });
+
+  it("đánh index cho lượt quét hằng đêm của cron", () => {
+    expect(limitsSql).toMatch(
+      /CREATE INDEX "referral_ledger_user_id_expires_at_idx"/,
+    );
   });
 });

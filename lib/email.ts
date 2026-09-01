@@ -3,6 +3,11 @@ import { feedbackKindLabel } from "@/content/feedback";
 import type { FeedbackKindInput } from "./feedback-input";
 import { appUrl } from "./app-url";
 import { formatVnd } from "./format";
+import {
+  COMMISSION_HOLD_DAYS,
+  CREDIT_MAX_SHARE_PCT,
+  CREDIT_TTL_MONTHS,
+} from "./referral-pricing";
 
 // Re-exported so callers that already reach for the email module — and the
 // tests that mock it — keep working after the helper moved to ./app-url.
@@ -253,9 +258,12 @@ export function sendReferralCommissionEmail(input: {
       `<p>Một người bạn giới thiệu vừa hoàn tất thanh toán khóa học đầu tiên. ` +
         `HDI đã cộng <strong>${escapeHtml(amount)}</strong> credits vào tài khoản của bạn.</p>` +
         `<p>Số dư hiện tại: <strong>${escapeHtml(balance)}</strong>.</p>` +
-        "<p>Credits được trừ vào học phí ở lần mua sau — bật ô “Dùng credits giới thiệu” " +
-        "trong giỏ hàng trước khi thanh toán. Đơn luôn giữ lại một khoản nhỏ phải trả qua PayOS, " +
-        "nên phần dư được giữ lại cho những lần tiếp theo.</p>",
+        `<p>Khoản này dùng được sau <strong>${COMMISSION_HOLD_DAYS} ngày</strong>, khi đã qua thời hạn hoàn phí, ` +
+        `và có hạn <strong>${CREDIT_TTL_MONTHS} tháng</strong> kể từ hôm nay.</p>` +
+        `<p>Credits được trừ vào học phí ở lần mua sau — bật ô “Dùng credits giới thiệu” ` +
+        `trong giỏ hàng trước khi thanh toán. Mỗi lần đăng ký chỉ trừ được tối đa ` +
+        `<strong>${CREDIT_MAX_SHARE_PCT}%</strong> học phí, và đơn luôn giữ lại một khoản nhỏ phải trả qua PayOS, ` +
+        `nên phần dư được giữ lại cho những lần tiếp theo.</p>`,
       { action: "Xem credits của bạn", href: `${appUrl()}/tai-khoan/gioi-thieu` },
     ),
   });

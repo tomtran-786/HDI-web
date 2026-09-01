@@ -75,7 +75,7 @@ export const nav: readonly NavItem[] = [
         label: "Chuyên sâu",
         children: [
           {
-            label: "NCKH chuyên sâu với SPSS & Stata",
+            label: "Phân tích định lượng với SPSS & Stata",
             href: "/khoa-hoc/nckh-chuyen-sau-spss",
           },
           {
@@ -117,6 +117,10 @@ export const nav: readonly NavItem[] = [
     ],
   },
   { label: "Hồ sơ học thuật", href: "/cong-bo" },
+  // Hiện cho mọi người, kể cả khách chưa đăng nhập: chương trình chỉ chạy được
+  // khi người ta biết nó tồn tại, và `/gioi-thieu-ban-be` lo phần đưa khách qua
+  // màn đăng nhập rồi trả về đúng chỗ.
+  { label: "Giới thiệu bạn bè", href: "/gioi-thieu-ban-be" },
   { label: "Liên hệ", href: "/#lien-he" },
 ];
 

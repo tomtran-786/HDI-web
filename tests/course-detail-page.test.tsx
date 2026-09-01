@@ -145,7 +145,7 @@ describe("trang chi tiết khóa học", () => {
     expect(html).toContain(`Buổi ${total}:`);
   });
 
-  it("render đủ sáu buổi cho khóa SPSS & Stata và ẩn đánh giá khi chưa có review", async () => {
+  it("render đủ sáu module cho khóa SPSS & Stata và ẩn đánh giá khi chưa có review", async () => {
     const course = courses.find((item) => item.slug === "nckh-chuyen-sau-spss")!;
     const html = renderToStaticMarkup(
       await CourseDetailPage({
@@ -153,10 +153,16 @@ describe("trang chi tiết khóa học", () => {
       }),
     );
 
-    expect(html).toContain("Buổi 1:");
-    expect(html).toContain("Thiết kế nghiên cứu và lựa chọn SPSS/Stata");
-    expect(html).toContain("Buổi 6:");
-    expect(html).toContain("IV/2SLS, GMM/PMG và mini-project");
+    // Khóa này đánh số theo module (1.1 … 6.11), không phải "Buổi n" — giáo
+    // trình gốc chia hai tầng và đánh số đúng như vậy.
+    expect(html).toContain("1.1");
+    expect(html).toContain("Từ vấn đề thực tiễn đến câu hỏi và mục tiêu nghiên cứu");
+    expect(html).toContain("6.10");
+    expect(html).toContain("Đề xuất hướng phát triển và lập kế hoạch triển khai tiếp theo");
+    // Danh mục tài liệu gửi trước buổi tư vấn là mục cuối của Module 6, kèm ý con.
+    expect(html).toContain("Tài liệu học viên gửi trước Module 6");
+    expect(html).toContain("Tối đa ba vấn đề cần giảng viên tư vấn");
+    expect(html).not.toContain("Buổi 1:");
     expect(html).not.toContain("Kho record");
     expect(html).not.toContain("Đánh giá học viên");
   });

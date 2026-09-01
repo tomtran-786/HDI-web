@@ -6,7 +6,7 @@ import { expireStaleServiceOrders } from "@/lib/service-orders";
 import { pruneAuthThrottles } from "@/lib/auth-throttle";
 import { pruneExpiredAuthTokens } from "@/lib/auth-tokens";
 import { pruneExpiredLeases } from "@/lib/external-lease";
-import { repairReferralReservations } from "@/lib/referral-ledger";
+import { expireCredits, repairReferralReservations } from "@/lib/referral-ledger";
 import {
   reconcileMissingDriveGrants,
   revokeExpiredDriveAccess,
@@ -76,13 +76,18 @@ export async function GET(request: Request) {
   // commit xong rồi chết trước khi đóng sổ (một lambda hết giờ là đủ). Không có
   // pass này thì đối soát đọc nó là "đang giữ" mãi mãi. Nó chỉ SỬA, không bao
   // giờ hoàn credits — mọi đường hủy đơn đã tự hoàn rồi.
-  const [services, referralRepairs, throttles, tokens, leases] = await Promise.all([
-    expireStaleServiceOrders(),
-    repairReferralReservations(),
-    pruneAuthThrottles(),
-    pruneExpiredAuthTokens(),
-    pruneExpiredLeases(),
-  ]);
+  // Credits quá hạn sáu tháng: ghi một dòng xóa sổ bằng đúng phần chưa tiêu.
+  // Chạy lại trong cùng một ngày ra 0, nên nó chịu được cả việc cron chạy hai
+  // lần lẫn việc bỏ lỡ một đêm.
+  const [services, referralRepairs, expiredCredits, throttles, tokens, leases] =
+    await Promise.all([
+      expireStaleServiceOrders(),
+      repairReferralReservations(),
+      expireCredits(new Date()),
+      pruneAuthThrottles(),
+      pruneExpiredAuthTokens(),
+      pruneExpiredLeases(),
+    ]);
   if (result.released > 0 || driveRevokes.revoked > 0 || driveRevokes.kept > 0) {
     revalidateTag(COURSES_TAG, { expire: 0 });
   }
@@ -96,6 +101,7 @@ export async function GET(request: Request) {
     orders: result,
     services,
     referralRepairs,
+    expiredCredits,
     driveGrants,
     driveRevokes,
     pruned: { throttles, tokens, leases },
