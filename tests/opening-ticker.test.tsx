@@ -102,14 +102,6 @@ describe("<OpeningTicker>", () => {
     expect(html).toContain("07/09/2026");
   });
 
-  it("chưa hydrate thì dải đang chạy và nút mời tạm dừng", () => {
-    const html = renderToStaticMarkup(<OpeningTicker items={items} />);
-
-    expect(html).toContain('data-paused="false"');
-    expect(html).toContain("Tạm dừng");
-    expect(html).not.toContain("Chạy tiếp");
-  });
-
   it("không có mục nào thì không dựng dải rỗng", () => {
     expect(renderToStaticMarkup(<OpeningTicker items={[]} />)).toBe("");
   });

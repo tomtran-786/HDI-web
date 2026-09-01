@@ -1,7 +1,6 @@
 import type { CSSProperties } from "react";
 import Link from "next/link";
 import type { OpeningAnnouncement } from "@/lib/courses";
-import { TickerPauseButton } from "../ticker-pause-button";
 import { IconCalendar } from "../ui/icons";
 
 /**
@@ -59,7 +58,6 @@ export function OpeningTicker({ items }: { items: OpeningAnnouncement[] }) {
   return (
     <section
       data-ticker
-      data-paused="false"
       aria-label="Lịch khai giảng các khóa đang mở đăng ký"
       className="border-t border-line bg-tint text-fg"
     >
@@ -73,10 +71,6 @@ export function OpeningTicker({ items }: { items: OpeningAnnouncement[] }) {
           <IconCalendar size={16} />
           <span className="hidden sm:inline">Lịch khai giảng</span>
         </p>
-
-        {/* Nút đứng TRƯỚC vùng chạy trong DOM: người dùng bàn phím gặp "Tạm
-            dừng" trước khi gặp các liên kết đang trôi. */}
-        <TickerPauseButton />
 
         <div
           className="ticker-viewport"

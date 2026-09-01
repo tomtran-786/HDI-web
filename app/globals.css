@@ -257,10 +257,9 @@ dialog[open] {
   to { transform: translate3d(-50%, 0, 0); }
 }
 
-/* Ba đường tạm dừng. Cả `:hover` lẫn `:focus-within` đều gắn vào .ticker-viewport
-   chứ KHÔNG gắn vào cả dải — nút bấm nằm ngoài vùng này, nếu không thì bấm
-   "Chạy tiếp" xong dải vẫn đứng im vì chính cái nút đang giữ focus. */
-[data-ticker][data-paused="true"] .ticker-track,
+/* Hai đường tạm dừng, cả hai đều gắn vào .ticker-viewport: rê chuột vào (mouse),
+   hoặc tab tới một liên kết đang trôi bên trong (bàn phím — :focus-within kích
+   hoạt ngay khi focus vào, không cần đợi rời dải). */
 .ticker-viewport:hover .ticker-track,
 .ticker-viewport:focus-within .ticker-track {
   animation-play-state: paused;
