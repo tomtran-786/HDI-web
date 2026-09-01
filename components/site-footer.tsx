@@ -18,29 +18,32 @@ const documents = [
   { label: "Tư vấn miễn phí", cta: "footer" as CtaSource },
 ];
 
+// Shared link treatment — explicit `transition-colors` (not `transition`), a
+// designed focus ring, and a hover colour, so every footer link has real
+// hover/focus states rather than browser defaults.
+const linkClass =
+  "rounded-sm text-sm text-fg-muted transition-colors hover:text-primary " +
+  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary " +
+  "focus-visible:ring-offset-2 focus-visible:ring-offset-bg";
+
 export function SiteFooter() {
   return (
     <footer className="border-t border-line bg-bg">
-      <div className="shell grid gap-10 py-14 sm:grid-cols-2 lg:grid-cols-4">
-        <div>
-          <p className="flex items-center gap-2.5 font-bold tracking-tight">
-            <Image
-              src="/images/logo-mark.png"
-              alt=""
-              width={256}
-              height={256}
-              className="h-9 w-9 rounded-lg"
-            />
-            <span className="flex items-baseline gap-2">
-              <span className="text-lg text-primary">{site.short}</span>
-              <span className="text-sm text-fg-muted">Research Center</span>
-            </span>
-          </p>
-          <p className="mt-3 max-w-xs text-sm leading-relaxed text-fg-muted">
+      <div className="shell grid gap-x-8 gap-y-10 py-12 sm:grid-cols-2 lg:grid-cols-[1.5fr_1fr_1fr_1fr]">
+        <div className="max-w-xs">
+          <Image
+            src="/images/logo.webp"
+            alt={`${site.name} logo`}
+            width={560}
+            height={876}
+            className="h-auto w-28 rounded-xl"
+          />
+          <p className="mt-5 text-sm leading-relaxed text-fg-muted">
             {site.blurb}
           </p>
           <p className="mt-4 text-sm text-fg-subtle">
-            {site.lead.role}: {site.lead.name}
+            {site.lead.role}:{" "}
+            <span className="text-fg-muted">{site.lead.name}</span>
             <br />
             {site.lead.credential}
           </p>
@@ -58,21 +61,23 @@ export function SiteFooter() {
       </div>
 
       <div className="border-t border-line">
-        <div className="shell flex flex-col gap-2 py-6 text-sm text-fg-subtle sm:flex-row sm:items-center sm:justify-between">
+        <div className="shell flex flex-col gap-2 py-5 text-sm text-fg-subtle sm:flex-row sm:items-center sm:justify-between">
           <p>
             © {new Date().getFullYear()} {site.name}
           </p>
-          <p>
+          <p className="flex items-center gap-2.5">
             <a
-              className="hover:text-primary"
+              className={linkClass}
               href={composeEmailHref()}
               target="_blank"
               rel="noopener noreferrer"
             >
               {contact.email}
             </a>
-            <span className="px-2">·</span>
-            <a className="hover:text-primary" href={contact.phoneHref}>
+            <span aria-hidden className="text-fg-subtle/40">
+              ·
+            </span>
+            <a className={linkClass} href={contact.phoneHref}>
               {contact.phone}
             </a>
           </p>
@@ -93,14 +98,14 @@ function FooterColumn({
 }) {
   return (
     <div>
-      <p className="mb-4 text-[11px] font-bold uppercase tracking-[0.16em] text-fg-subtle">
+      <p className="mb-4 flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.16em] text-fg-muted">
+        <span aria-hidden className="h-px w-4 shrink-0 bg-primary" />
         {title}
       </p>
-      <ul className="space-y-2.5">
+      <ul className="space-y-2">
         {items.map((item) => {
           const offsite = external ||
             (item.href?.startsWith("http") ?? false);
-          const style = "text-sm text-fg-muted transition hover:text-primary";
           const label = (
             <>
               {item.label}
@@ -110,7 +115,7 @@ function FooterColumn({
           return (
             <li key={item.label}>
               {item.cta ? (
-                <CtaLink source={item.cta} target="tu-van" className={style}>
+                <CtaLink source={item.cta} target="tu-van" className={linkClass}>
                   {label}
                 </CtaLink>
               ) : (
@@ -120,7 +125,7 @@ function FooterColumn({
                   {...(offsite
                     ? { target: "_blank", rel: "noopener noreferrer" }
                     : {})}
-                  className={style}
+                  className={linkClass}
                 >
                   {label}
                 </a>
