@@ -373,9 +373,6 @@ export function CartModal({
                           className="mt-1 h-4 w-4 shrink-0 accent-[var(--primary)]"
                         />
                         <span className="min-w-0 flex-1">
-                          <span className="mb-1 block text-[10px] font-bold uppercase tracking-[0.16em] text-fg-subtle">
-                            Mã khóa {course.code}
-                          </span>
                           <span className="block font-bold leading-snug tracking-tight text-fg">
                             {course.title}
                           </span>
@@ -412,7 +409,7 @@ export function CartModal({
                   return (
                     <li key={course.id} className="flex items-start justify-between gap-3 text-sm">
                       <span className="leading-snug text-fg-muted">
-                        <span className="font-bold text-fg">{course.code}</span> · {course.title}
+                        <span className="font-bold text-fg">{course.title}</span>
                       </span>
                       <span className="shrink-0 text-right">
                         <span className="block font-semibold text-fg">{formatVnd(unit)}</span>
