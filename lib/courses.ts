@@ -1,4 +1,5 @@
 import { courses, type Course, type CourseSlug } from "@/content/course";
+import { formatDate, startOfDayVN } from "./format";
 
 /** Bridge a persisted Course slug to its authored marketing content. */
 export function findCourse(slug: string): Course | undefined {
@@ -30,4 +31,44 @@ export function courseSummaryLine(
     seen.set(item.course.code, `${item.course.code} · ${title}`);
   }
   return [...seen.values()].join(" — ");
+}
+
+/** Một mục trong dải lịch khai giảng ở trang chủ. */
+export type OpeningAnnouncement = {
+  slug: CourseSlug;
+  title: string;
+  /** ISO `YYYY-MM-DD` — đi thẳng vào `dateTime` của <time>. */
+  startDate: string;
+  /** `07/09/2026`, giờ Việt Nam — bản in ra cho người đọc. */
+  dateLabel: string;
+};
+
+/**
+ * Các khóa ĐANG BÁN mà đã chốt ngày khai giảng, sắp ngày gần nhất trước.
+ *
+ * Nhận thẳng danh sách khóa mà `OpenCourses` vừa lọc, KHÔNG tự đọc dữ liệu và
+ * cũng không tra `availability` lần nữa: dải chạy và mục "Khóa học đang nhận học
+ * viên" phải chung đúng một cái cổng, nếu không sẽ có ngày dải quảng cáo một
+ * khóa mà bên dưới không có thẻ nào.
+ *
+ * Ngày hỏng — chuỗi sai dạng, hoặc một ngày không tồn tại như "2026-02-31" —
+ * bị BỎ chứ không in bừa, vì `startOfDayVN` trả `null` cho những chuỗi đó.
+ */
+export function openingAnnouncements(open: Course[]): OpeningAnnouncement[] {
+  return open
+    .flatMap((course) => {
+      if (!course.opening) return [];
+      const at = startOfDayVN(course.opening.startDate);
+      if (!at) return [];
+      return [
+        {
+          slug: course.slug,
+          title: course.title,
+          startDate: course.opening.startDate,
+          dateLabel: formatDate(at),
+        },
+      ];
+    })
+    // ISO `YYYY-MM-DD` sắp theo chuỗi là sắp đúng theo thời gian.
+    .sort((a, b) => a.startDate.localeCompare(b.startDate));
 }

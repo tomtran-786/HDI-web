@@ -87,6 +87,15 @@
  * một khóa mới thì điền đủ sáu dòng theo đúng thứ tự trên; ô nào chưa có số
  * thật thì dùng `FACT_TBA`, KHÔNG mượn số của khóa khác.
  *
+ * Bộ nhãn này nay là `FACT_LABELS` ở ngay dưới, và `Course["facts"]` dùng
+ * `FactLabel` chứ không dùng `string` — gõ sai một nhãn là hỏng build, không còn
+ * là một ô im lặng biến mất.
+ *
+ * NGÀY KHAI GIẢNG đi kèm nhưng KHÔNG nằm trong `facts`: ô "Lịch học" là một câu
+ * tiếng Việt cho người đọc, còn `opening.startDate` là cùng cái ngày đó ở dạng
+ * ISO cho máy. Chốt được ngày thì phải sửa CẢ BA — `opening`, ô "Lịch học" và
+ * `eyebrow` — và tests/opening-ticker.test.tsx canh đúng chuyện đó.
+ *
  * "Kho record" cũ nay nằm dưới "Học liệu" chứ không dưới "Thời lượng", và đó là
  * chỗ duy nhất nó được phép nằm — xem đoạn ngay dưới đây.
  *
@@ -128,6 +137,40 @@ export type CoursePhase = {
   summary?: string;
   sessions: CourseSession[];
 };
+
+/**
+ * Ngày khai giảng ĐÃ CHỐT của một khóa, ở dạng máy đọc được.
+ *
+ * Ô `facts` nhãn "Lịch học" mang câu tiếng Việt dành cho người đọc — "Khai giảng
+ * 07/09/2026 · lịch chi tiết sẽ được thông báo" — còn trường này mang đúng cái
+ * ngày đó ở dạng ISO, để dải lịch khai giảng ngoài trang chủ sắp xếp và định
+ * dạng được mà không phải bóc chuỗi tiếng Việt bằng regex.
+ *
+ * `null` KHÔNG phải "quên điền": nó là lời khai rằng khóa chưa có ngày công bố
+ * được, đúng với ô "Lịch học" đang để `FACT_TBA` hoặc chỉ có khung giờ. Trường
+ * này BẮT BUỘC ở cả tám khóa — thêm một khóa mới mà quên khai báo thì TypeScript
+ * làm hỏng build, thay vì khóa đó im lặng biến mất khỏi dải.
+ */
+export type CourseOpening = { startDate: string } | null;
+
+/**
+ * Sáu nhãn `facts` dùng chung, đúng thứ tự đã mô tả ở đầu file.
+ *
+ * Có mặt ở đây để luật đó được TypeScript canh chứ không chỉ nằm trong chú
+ * thích: `components/sections/open-courses.tsx` từng tra `label === "Khai giảng"`
+ * — một nhãn không tồn tại — nên ô ngày khai giảng trên thẻ trang chủ im lặng
+ * không bao giờ hiện. Với `FactLabel`, một chuỗi gõ sai làm hỏng build.
+ */
+export const FACT_LABELS = [
+  "Hình thức",
+  "Thời lượng",
+  "Lịch học",
+  "Sĩ số",
+  "Học liệu",
+  "Xem lại",
+] as const;
+
+export type FactLabel = (typeof FACT_LABELS)[number];
 
 /**
  * Nguồn sự thật duy nhất cho tập slug. `as const` ở đây mới là thứ giữ literal
@@ -222,7 +265,12 @@ export type Course = {
      */
     group?: true;
   };
-  facts: { label: string; value: string }[];
+  /**
+   * Đặt ngay trên `facts` để người sửa câu tiếng Việt ở ô "Lịch học" nhìn thấy
+   * ngày ISO ở dòng kề bên — đó là hàng rào chống lệch giữa hai chỗ.
+   */
+  opening: CourseOpening;
+  facts: { label: FactLabel; value: string }[];
   phases: CoursePhase[];
   outcomes: string[];
   instructor?: {
@@ -322,6 +370,7 @@ export const courses = [
       noteLabel: "Quyền lợi",
       vnd: 3000000,
     },
+    opening: { startDate: "2026-09-07" },
     facts: [
       { label: "Hình thức", value: "Trực tuyến qua Zoom" },
       { label: "Thời lượng", value: "06 buổi" },
@@ -445,6 +494,7 @@ export const courses = [
         condition: "mỗi người · nhóm từ 03 bạn",
       },
     },
+    opening: { startDate: "2026-10-05" },
     facts: [
       { label: "Hình thức", value: "Trực tuyến qua Zoom" },
       { label: "Thời lượng", value: "03 buổi" },
@@ -692,6 +742,8 @@ export const courses = [
       group: true,
       vnd: 1100000,
     },
+    // Chưa chốt ngày — ô "Lịch học" vẫn là FACT_TBA. Năm khóa dưới đây cũng vậy.
+    opening: null,
     facts: [
       { label: "Hình thức", value: "Trực tuyến qua Zoom" },
       { label: "Thời lượng", value: "06 buổi" },
@@ -857,6 +909,7 @@ export const courses = [
       group: true,
       vnd: 1000000,
     },
+    opening: null,
     facts: [
       { label: "Hình thức", value: "Lý thuyết cô đọng kết hợp thực hành" },
       { label: "Thời lượng", value: "06 module, có buổi Research Clinic góp ý đề tài" },
@@ -1017,6 +1070,7 @@ export const courses = [
       group: true,
       vnd: 1000000,
     },
+    opening: null,
     facts: [
       {
         label: "Hình thức",
@@ -1146,6 +1200,7 @@ export const courses = [
       group: true,
       vnd: 2000000,
     },
+    opening: null,
     facts: [
       { label: "Hình thức", value: "Trực tuyến qua Zoom" },
       { label: "Thời lượng", value: "06 module" },
@@ -1249,6 +1304,8 @@ export const courses = [
       group: true,
       vnd: 1000000,
     },
+    // Ô "Lịch học" ở đây chỉ có khung giờ, không có ngày — vẫn là chưa chốt.
+    opening: null,
     facts: [
       { label: "Hình thức", value: "Trực tuyến qua Zoom" },
       { label: "Thời lượng", value: "08 buổi / khóa — 02 buổi / tuần" },
@@ -1312,6 +1369,7 @@ export const courses = [
       group: true,
       vnd: 550000,
     },
+    opening: null,
     facts: [
       { label: "Hình thức", value: "Trực tuyến qua Zoom" },
       { label: "Thời lượng", value: "04 module — 02 buổi / tuần" },

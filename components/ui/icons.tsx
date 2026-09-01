@@ -295,6 +295,22 @@ export function IconClock({ className, size = 18 }: IconProps) {
   );
 }
 
+export function IconPause({ className, size = 18 }: IconProps) {
+  return (
+    <svg {...base(size)} className={className} aria-hidden>
+      <path d="M9 4v16M15 4v16" />
+    </svg>
+  );
+}
+
+export function IconPlay({ className, size = 18 }: IconProps) {
+  return (
+    <svg {...base(size)} className={className} aria-hidden>
+      <path d="m7 4 12 8-12 8z" />
+    </svg>
+  );
+}
+
 export function IconBug({ className, size = 20 }: IconProps) {
   return (
     <svg {...base(size)} className={className} aria-hidden>

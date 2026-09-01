@@ -56,6 +56,19 @@ describe("kiến trúc nội dung homepage và Về HDI", () => {
     expect(html.indexOf('id="khoa-hoc"')).toBeLessThan(
       html.indexOf('id="ve-chung-toi"'),
     );
+
+    // Dải lịch khai giảng đứng giữa hero và mục khóa đang mở.
+    expect(html.indexOf('id="top"')).toBeLessThan(html.indexOf("data-ticker"));
+    expect(html.indexOf("data-ticker")).toBeLessThan(
+      html.indexOf('id="khoa-hoc"'),
+    );
+    // Khẳng định theo ngày máy đọc được, KHÔNG theo chuỗi hiển thị: hero cũng
+    // đang in tay "07/09/2026" (components/sections/hero.tsx:27), nên bám vào
+    // chuỗi đó sẽ xanh kể cả khi dải hỏng hoàn toàn.
+    expect(html).toMatch(/datetime="2026-09-07"/i);
+    // TIEULUAN `not_open` trong mock: đã chốt ngày cũng không được lên dải.
+    expect(html).not.toMatch(/datetime="2026-10-05"/i);
+    expect(html).not.toContain("05/10/2026");
     expect(html).not.toContain("/khoa-hoc/training-tieu-luan-nckh-kltn");
     expect(html).not.toContain("/khoa-hoc/stata-kinh-te-luong");
     expect(html).not.toContain("220.000 đ");
@@ -83,6 +96,9 @@ describe("kiến trúc nội dung homepage và Về HDI", () => {
     const html = renderToStaticMarkup(await Home());
     expect(html).not.toContain('id="khoa-hoc"');
     expect(html).not.toContain("Còn 0 chỗ");
+    // Dải và mục khóa dùng chung một cái cổng: mất mục thì cũng phải mất dải,
+    // không để lại một dải trơ trọi phía trên khoảng trống.
+    expect(html).not.toContain("data-ticker");
   });
 
   it("không dựng số ghế giả khi database lỗi", async () => {
@@ -92,6 +108,9 @@ describe("kiến trúc nội dung homepage và Về HDI", () => {
     const html = renderToStaticMarkup(await Home());
     expect(html).not.toContain('id="khoa-hoc"');
     expect(html).not.toMatch(/Còn \d+ chỗ/);
+    // Gãy ngay nếu sau này ai đó tách dải ra app/page.tsx với lần đọc dữ liệu
+    // và nhánh catch riêng của nó.
+    expect(html).not.toContain("data-ticker");
     consoleError.mockRestore();
   });
 

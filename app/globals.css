@@ -173,7 +173,133 @@ dialog[open] {
   animation: hype-pulse 1.8s ease-in-out infinite;
 }
 
+/* Dải lịch khai giảng chạy ngang, ngay trên #khoa-hoc.
+   components/sections/opening-ticker.tsx dựng markup; phần chuyển động nằm ở
+   đây vì nó là CSS thuần — không có JS nào thì dải vẫn chạy đúng. */
+.ticker-viewport {
+  --ticker-fade: 1rem;
+  position: relative;
+  flex: 1 1 auto;
+  min-width: 0;
+  /* `clip` chứ KHÔNG `hidden`. Hộp `overflow: hidden` vẫn cuộn được bằng chương
+     trình, nên khi người dùng tab tới một liên kết đang trôi ngoài khung, trình
+     duyệt tự đặt scrollLeft và phép tịnh tiến của track lệch hẳn đi, vĩnh viễn.
+     `clip` không tạo hộp cuộn nên không có chuyện đó. */
+  overflow: clip;
+  /* Chừa chỗ cho vòng focus của liên kết (ring 2px + offset 2px) khỏi bị cắt. */
+  padding-block: 6px;
+  /* Đơn vị đo của `min-width: 100cqw` bên dưới. */
+  container-type: inline-size;
+  /* MASK, không phải một lớp gradient vẽ đè: nó ăn vào alpha nên tự đúng ở cả
+     nền sáng lẫn nền tối, không cần token màu riêng cho từng theme. */
+  -webkit-mask-image: linear-gradient(
+    to right,
+    transparent 0,
+    #000 var(--ticker-fade),
+    #000 calc(100% - var(--ticker-fade)),
+    transparent 100%
+  );
+  mask-image: linear-gradient(
+    to right,
+    transparent 0,
+    #000 var(--ticker-fade),
+    #000 calc(100% - var(--ticker-fade)),
+    transparent 100%
+  );
+}
+
+@media (min-width: 640px) {
+  .ticker-viewport { --ticker-fade: 2rem; }
+}
+
+/* `width: max-content` là điều kiện sống còn của vòng lặp: nhờ nó chiều rộng
+   track đúng bằng TỔNG hai nhóm, nên `-50%` dịch đúng MỘT nhóm. Nếu track rộng
+   bằng khung nhìn (mặc định của một block), `-50%` chỉ là nửa khung nhìn và
+   vòng lặp rách. */
+.ticker-track {
+  display: flex;
+  width: max-content;
+  animation: ticker-scroll var(--ticker-duration, 36s) linear infinite;
+  will-change: transform;
+}
+
+/* Hai nhóm giống hệt nhau, mỗi nhóm rộng tối thiểu bằng khung nhìn. Nhờ vậy một
+   nhóm chỉ có MỘT mục vẫn không để lộ khoảng trống: nhóm sau luôn tới kịp trước
+   khi nhóm trước đi hết. `100cqw` đo theo .ticker-viewport chứ không theo màn
+   hình, nên nhãn trái và nút tạm dừng không làm sai phép tính — và cũng không
+   dính chiều rộng thanh cuộn như `100vw`. Nhiều mục thì `min-width` chỉ còn là
+   sàn, nhóm cứ rộng theo nội dung. */
+.ticker-group {
+  display: flex;
+  flex: 0 0 auto;
+  min-width: 100cqw;
+  align-items: center;
+  justify-content: space-around;
+  /* Khoảng cách GIỮA các mục (48px) phải lớn hẳn so với khoảng cách TRONG một
+     mục (8px, do `gap-2` của liên kết), nếu không mắt đọc thành một câu dài. */
+  gap: 3rem;
+  margin: 0;
+  padding: 0 1.5rem;
+  list-style: none;
+}
+
+.ticker-link {
+  white-space: nowrap;
+}
+
+@keyframes ticker-scroll {
+  from { transform: translate3d(0, 0, 0); }
+  to { transform: translate3d(-50%, 0, 0); }
+}
+
+/* Ba đường tạm dừng. Cả `:hover` lẫn `:focus-within` đều gắn vào .ticker-viewport
+   chứ KHÔNG gắn vào cả dải — nút bấm nằm ngoài vùng này, nếu không thì bấm
+   "Chạy tiếp" xong dải vẫn đứng im vì chính cái nút đang giữ focus. */
+[data-ticker][data-paused="true"] .ticker-track,
+.ticker-viewport:hover .ticker-track,
+.ticker-viewport:focus-within .ticker-track {
+  animation-play-state: paused;
+}
+
+/* Bàn phím: dừng HẲN và đưa track về mốc 0, chỗ mà nhóm thật phủ kín khung nhìn.
+   Chỉ tạm dừng thôi thì liên kết vừa nhận focus có thể đang đứng ngoài khung và
+   người dùng không thấy gì cả. Chỉ nhóm thật mới có liên kết focus được (bản sao
+   mang tabindex="-1"), nên mốc 0 luôn là chỗ đúng. */
+.ticker-track:has(a:focus-visible) {
+  animation: none;
+  transform: none;
+}
+
 @media (prefers-reduced-motion: reduce) {
   dialog[open] { animation: none; }
   .hype-live { animation: none; }
+
+  /* Không phải "đóng băng dải ở nửa chừng" — mà là một danh sách tĩnh, xuống
+     dòng, căn giữa, đọc được trọn vẹn. Vì thế phải gỡ cả `overflow: clip`, cả
+     mask và cả `min-width` của nhóm, chứ chỉ tắt animation là chữ bị cắt cụt. */
+  .ticker-track {
+    animation: none;
+    transform: none;
+    width: auto;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .ticker-viewport {
+    overflow: visible;
+    -webkit-mask-image: none;
+    mask-image: none;
+    container-type: normal;
+  }
+  .ticker-group {
+    min-width: 0;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.5rem 2rem;
+  }
+  .ticker-link { white-space: normal; }
+  /* Bản sao chỉ tồn tại để vá vòng lặp; không còn vòng lặp thì nó là bản sao
+     thừa nằm ngay cạnh bản gốc. */
+  .ticker-echo { display: none; }
+  /* Không có gì chạy thì không có gì để dừng. */
+  .ticker-toggle { display: none; }
 }
