@@ -89,7 +89,9 @@ describe("trang chi tiết khóa học", () => {
     expect(html).not.toContain("Chủ Nhật");
     expect(html).toContain("Tiến sĩ Trịnh Công Tâm");
     expect(html).toContain("System GMM");
-    expect(html).not.toContain("học viên đã đăng ký");
+    // Số marketing giờ có cho mọi khóa, nên badge "học viên đã đăng ký" cũng
+    // xuất hiện ở khóa AI mới này (xem content/course-hype.ts).
+    expect(html).toContain("học viên đã đăng ký");
   });
 
   it("render đủ các block theo đúng thứ tự và chỉ dùng dữ liệu thật", async () => {

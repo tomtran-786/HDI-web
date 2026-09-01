@@ -7,7 +7,6 @@ const avatarOpacity = ["opacity-100", "opacity-85", "opacity-70"] as const;
 
 export function EnrolledPill({ slug }: { slug: CourseSlug }) {
   const count = enrolledCount[slug];
-  if (count === undefined) return null;
 
   return (
     <div
