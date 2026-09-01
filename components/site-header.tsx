@@ -8,7 +8,6 @@ import { nav, type NavItem } from "@/content/navigation";
 import { site } from "@/content/site";
 import { ThemeToggle } from "./theme-toggle";
 import { Avatar } from "./ui/avatar";
-import { CtaLink } from "./ui/cta-link";
 import { CartButton } from "./cart-button";
 import {
   IconChevronDown,
@@ -96,12 +95,12 @@ export function SiteHeader({
       return pathname === "/" && activeHref === item.href;
     }
     if (item.href === "/dich-vu") {
-      return (
-        pathname === "/dich-vu" ||
-        pathname.startsWith("/dich-vu/") ||
-        pathname === "/kiem-tra-ai-dao-van" ||
-        pathname.startsWith("/kiem-tra-ai-dao-van/")
-      );
+      return pathname === "/dich-vu" || pathname.startsWith("/dich-vu/");
+    }
+    // "Hồ sơ học thuật" (/cong-bo) sống dưới mục "Về HDI" nhưng không nằm trên
+    // path /ve-hdi/, nên nhánh chung không bắt được — phải nêu tên riêng.
+    if (item.href === "/ve-hdi") {
+      return pathname === "/ve-hdi" || pathname === "/cong-bo";
     }
     return pathname === item.href || pathname.startsWith(`${item.href}/`);
   };
@@ -213,9 +212,11 @@ export function SiteHeader({
                 >
                   <div
                     className={`grid max-w-[calc(100vw-3rem)] gap-7 rounded-card border border-line bg-bg p-6 shadow-[0_24px_56px_-20px_rgba(12,73,143,0.45)] ${
-                      item.href === "/dich-vu"
-                        ? "w-[42rem] grid-cols-2"
-                        : "w-[56rem] grid-cols-4"
+                      item.groups.length === 1
+                        ? "w-[19rem] grid-cols-1"
+                        : item.href === "/dich-vu"
+                          ? "w-[42rem] grid-cols-2"
+                          : "w-[56rem] grid-cols-4"
                     }`}
                   >
                     {item.groups.map((group) => (
@@ -238,15 +239,19 @@ export function SiteHeader({
                         </ul>
                       </div>
                     ))}
-                    <Link
-                      href={item.href}
-                      onClick={() => setDesktopOpen(null)}
-                      className="col-span-full inline-flex items-center justify-center rounded-full border border-line px-4 py-2.5 text-sm font-bold text-primary transition hover:border-primary"
-                    >
-                      {item.href === "/dich-vu"
-                        ? "Tất cả dịch vụ"
-                        : "Tất cả khóa học"}
-                    </Link>
+                    {/* Nút "xem tất cả" chỉ có nghĩa với hub nhiều nhóm; menu
+                        một nhóm (Về HDI) đã có link cha ngay trên tiêu đề. */}
+                    {item.groups.length > 1 && (
+                      <Link
+                        href={item.href}
+                        onClick={() => setDesktopOpen(null)}
+                        className="col-span-full inline-flex items-center justify-center rounded-full border border-line px-4 py-2.5 text-sm font-bold text-primary transition hover:border-primary"
+                      >
+                        {item.href === "/dich-vu"
+                          ? "Tất cả dịch vụ"
+                          : "Tất cả khóa học"}
+                      </Link>
+                    )}
                   </div>
                 </div>
               </div>
@@ -277,13 +282,12 @@ export function SiteHeader({
               >
                 Đăng nhập
               </Link>
-              <CtaLink
-                source="header"
-                target="tu-van"
+              <Link
+                href="/dang-ky-tai-khoan"
                 className="hidden rounded-full border border-primary px-4 py-2 text-[11px] font-bold uppercase tracking-[0.12em] text-primary transition hover:bg-primary hover:text-primary-fg sm:inline-block"
               >
-                Tư vấn miễn phí
-              </CtaLink>
+                Đăng ký
+              </Link>
             </>
           )}
           <CartButton />
@@ -423,14 +427,13 @@ export function SiteHeader({
                     >
                       Đăng nhập
                     </Link>
-                    <CtaLink
-                      source="header-mobile"
-                      target="tu-van"
-                      onNavigate={closeMobile}
+                    <Link
+                      href="/dang-ky-tai-khoan"
+                      onClick={closeMobile}
                       className="rounded-full bg-primary px-5 py-3 text-center text-sm font-bold text-primary-fg"
                     >
-                      Tư vấn miễn phí
-                    </CtaLink>
+                      Đăng ký
+                    </Link>
                   </>
                 )}
               </div>

@@ -47,7 +47,7 @@ export function quote(words: unknown, kind: unknown): Quote {
 
   // Bậc đầu tiên còn chứa được số từ này. Các bậc trong content/ai-check.ts
   // xếp tăng dần theo `maxWords`, nên "bậc đầu tiên khớp" cũng là bậc rẻ nhất
-  // khớp — đúng cách đọc dấu "≤" ở ranh giới 10.000 từ.
+  // khớp — đúng cách đọc dấu "≤" ở mỗi ranh giới bậc.
   const tier = aiCheckTiers.find((candidate) => words <= candidate.maxWords);
   // Không xảy ra được: WORD_LIMIT chính là `maxWords` của bậc cuối, nên mọi số
   // đi qua được kiểm tra trên đều tìm thấy bậc. Vẫn xử lý để một bảng giá sửa

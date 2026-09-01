@@ -29,10 +29,9 @@ describe("breadcrumb toàn site", () => {
     expect(html).toContain('aria-current="page"');
   });
 
-  it("xếp route AI chuyên biệt dưới hub Dịch vụ", () => {
+  it("để route AI chuyên biệt đứng thẳng dưới trang chủ, không lồng dưới hub Dịch vụ", () => {
     expect(breadcrumbsForPathname("/kiem-tra-ai-dao-van")).toEqual([
       { label: "Trang chủ", href: "/" },
-      { label: "Dịch vụ", href: "/dich-vu" },
       { label: "Kiểm tra AI & Đạo văn" },
     ]);
   });

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import { aiCheck, aiCheckKinds, aiCheckTiers } from "@/content/ai-check";
 import { site } from "@/content/site";
 import { formatVnd } from "@/lib/format";
@@ -15,9 +16,9 @@ export const metadata: Metadata = {
 /**
  * Dịch vụ check AI/đạo văn có trang riêng thay vì một thẻ trên trang chủ.
  *
- * Trang chủ được giữ ngắn có chủ đích; một bảng giá hai bậc sáu ô cộng với một
- * form nhập liệu là đúng loại nội dung phải nằm ở trang con và được dẫn tới từ
- * khối liên quan (#dich-vu).
+ * Trang chủ được giữ ngắn có chủ đích; một bảng giá ba bậc chín ô cộng với một
+ * form nhập liệu là đúng loại nội dung phải nằm ở trang con, có mục riêng trên
+ * thanh điều hướng dẫn thẳng vào.
  */
 export default async function AiCheckPage({
   searchParams,
@@ -29,6 +30,20 @@ export default async function AiCheckPage({
 
   return (
     <>
+      {/* Banner quảng cáo do HDI cung cấp — ảnh thuần, chạy full-width và tự
+          giữ tỷ lệ 2048×768 qua `h-auto w-full`. Chỉ đặt ở trang này. */}
+      <div className="w-full border-b border-line bg-bg">
+        <Image
+          src="/images/banner-check-turnitin.png"
+          alt="Check AI & Đạo văn Turnitin — Check AI chỉ từ 20K, Check đạo văn chỉ từ 15K, Combo AI + Đạo văn chỉ từ 35K"
+          width={2048}
+          height={768}
+          priority
+          sizes="100vw"
+          className="h-auto w-full"
+        />
+      </div>
+
       <section className="border-b border-line bg-bg">
         <div className="shell py-14 sm:py-16 lg:py-20">
           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-fg-muted">

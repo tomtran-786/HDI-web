@@ -2,8 +2,10 @@
  * Dịch vụ kiểm tra AI & đạo văn — bảng giá và toàn bộ chữ của trang
  * /kiem-tra-ai-dao-van.
  *
- * NGUỒN: bảng giá do HDI cung cấp ngày 2026-08-23, chép nguyên văn hai bậc và
- * sáu mức giá. Không có mức nào được nội suy, làm tròn hay suy ra từ mức khác.
+ * NGUỒN: bảng giá do HDI cung cấp, cập nhật ngày 2026-09-01 — chép nguyên văn
+ * ba bậc và chín mức giá. Không có mức nào được nội suy, làm tròn hay suy ra từ
+ * mức khác. Ranh giới bậc ghi theo trang; quy đổi sang từ theo tỷ lệ 250 từ/
+ * trang mà bảng đang dùng (40 trang = 10.000 từ ⇒ 20 trang = 5.000 từ).
  *
  * Bảng giá là DỮ LIỆU chứ không phải JSX vì đúng những con số này còn được
  * server dùng lại để tính số tiền gửi sang PayOS (lib/ai-check-pricing.ts).
@@ -26,12 +28,21 @@ export function serviceKindLabel(kind: string) {
 
 export const aiCheckTiers = [
   {
+    id: "duoi-20-trang",
+    label: "Dưới 20 trang",
+    words: "≤ 5.000 từ",
+    // Đúng 5.000 từ thuộc bậc này: bảng ghi "≤ 5.000 từ", còn bậc sau mở bằng
+    // "5.000 – 10.000". Chỗ chồng lấn đó được xử theo dấu "≤", tức là theo mức
+    // có lợi cho học viên.
+    maxWords: 5_000,
+    prices: { ai: 20_000, plagiarism: 15_000, combo: 35_000 },
+  },
+  {
     id: "duoi-40-trang",
-    label: "Dưới 40 trang",
-    words: "≤ 10.000 từ",
-    // Đúng 10.000 từ thuộc bậc này: bảng ghi "≤ 10.000 từ", còn bậc sau mở
-    // bằng "10.000 – 29.000". Chỗ chồng lấn đó được xử theo dấu "≤", tức là
-    // theo mức có lợi cho học viên.
+    label: "Từ 20 đến 40 trang",
+    words: "5.000 – 10.000 từ",
+    // Cùng cách xử dấu "≤" ở ranh giới 10.000 từ: đúng 10.000 từ vẫn thuộc bậc
+    // này chứ không rơi sang bậc trên.
     maxWords: 10_000,
     prices: { ai: 35_000, plagiarism: 25_000, combo: 50_000 },
   },
@@ -53,6 +64,9 @@ export type AiCheckTierId = AiCheckTier["id"];
  * chuyển sang mời liên hệ thay vì đoán một con số.
  */
 export const WORD_LIMIT = aiCheckTiers[aiCheckTiers.length - 1].maxWords;
+
+/** Bậc giá thấp nhất, để hero mời "chỉ từ …" mà không chép lại số. */
+export const aiCheckFromPrices = aiCheckTiers[0].prices;
 
 export const aiCheck = {
   eyebrow: "Dịch vụ",
