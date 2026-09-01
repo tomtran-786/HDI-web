@@ -127,7 +127,7 @@ const manuscriptServices: readonly ServiceItem[] = [
     name: "Kiểm tra AI & Đạo văn",
     nameVi: "Checking AI & similarity index",
     summary:
-      "Bảng giá công khai theo độ dài bản thảo, từ 25.000đ. Nhập số từ để biết chi phí và thanh toán trực tuyến.",
+      "Bảng giá công khai theo độ dài bản thảo, từ 15.000đ. Nhập số từ để biết chi phí và thanh toán trực tuyến.",
   },
   {
     slug: "humanizing-proofreading",

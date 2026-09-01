@@ -54,16 +54,11 @@ export function breadcrumbsForPathname(pathname: string): BreadcrumbItem[] {
   }
 
   if (pathname === "/kiem-tra-ai-dao-van") {
-    return [
-      HOME,
-      { label: "Dịch vụ", href: "/dich-vu" },
-      { label: "Kiểm tra AI & Đạo văn" },
-    ];
+    return [HOME, { label: "Kiểm tra AI & Đạo văn" }];
   }
   if (pathname.startsWith("/kiem-tra-ai-dao-van/ket-qua/")) {
     return [
       HOME,
-      { label: "Dịch vụ", href: "/dich-vu" },
       { label: "Kiểm tra AI & Đạo văn", href: "/kiem-tra-ai-dao-van" },
       { label: "Kết quả dịch vụ" },
     ];

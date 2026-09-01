@@ -90,11 +90,12 @@ describe("lối vào trang quản trị trên navbar", () => {
     for (const child of children) expect(html).toContain(`href="${child.href}"`);
   });
 
-  it("đánh dấu Dịch vụ active trên route AI chuyên biệt", () => {
+  it("đánh dấu mục Kiểm tra AI & Đạo văn active trên route của nó, không phải Dịch vụ", () => {
     mocks.pathname = "/kiem-tra-ai-dao-van";
     const html = render({ signedIn: false });
 
-    expect(html).toMatch(/aria-current="page"[^>]*href="\/dich-vu"/);
+    expect(html).toMatch(/aria-current="page"[^>]*href="\/kiem-tra-ai-dao-van"/);
+    expect(html).not.toMatch(/aria-current="page"[^>]*href="\/dich-vu"/);
   });
 
   it("footer chỉ dùng link cha và không bung item dropdown", () => {
