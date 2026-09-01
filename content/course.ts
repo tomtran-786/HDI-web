@@ -331,7 +331,7 @@ export const courses = [
       },
       { label: "Sĩ số", value: "Tối đa 15 học viên/lớp" },
       { label: "Học liệu", value: "Recording và dữ liệu thực hành" },
-      { label: "Xem lại", value: FACT_TBA },
+      { label: "Xem lại", value: "02 năm kể từ ngày đăng ký" },
     ],
     phases: [
       {
@@ -402,7 +402,7 @@ export const courses = [
   {
     code: "TIEULUAN",
     slug: "training-tieu-luan-nckh-kltn",
-    eyebrow: "Khóa nền tảng · Khai giảng 01/10/2026",
+    eyebrow: "Khóa nền tảng · Khai giảng 05/10/2026",
     title: "Viết tiểu luận, nghiên cứu khoa học & khóa luận tốt nghiệp",
     audience:
       "Dành cho sinh viên năm 1–4 và người mới bắt đầu nghiên cứu",
@@ -448,10 +448,13 @@ export const courses = [
     facts: [
       { label: "Hình thức", value: "Trực tuyến qua Zoom" },
       { label: "Thời lượng", value: "03 buổi" },
-      { label: "Lịch học", value: "Khai giảng 01/10/2026" },
+      {
+        label: "Lịch học",
+        value: "Thứ Hai hằng tuần, 05/10 – 19/10/2026 · 19:00 – 21:00",
+      },
       { label: "Sĩ số", value: "Tối đa 15 học viên/lớp" },
       { label: "Học liệu", value: "Học liệu online" },
-      { label: "Xem lại", value: "03 năm kể từ ngày đăng ký" },
+      { label: "Xem lại", value: "02 năm kể từ ngày đăng ký" },
     ],
     phases: [
       {
@@ -1252,7 +1255,7 @@ export const courses = [
       { label: "Lịch học", value: "19:30 – 21:00" },
       { label: "Sĩ số", value: FACT_TBA },
       { label: "Học liệu", value: FACT_TBA },
-      { label: "Xem lại", value: FACT_TBA },
+      { label: "Xem lại", value: "02 năm kể từ ngày đăng ký" },
     ],
     phases: [
       {
