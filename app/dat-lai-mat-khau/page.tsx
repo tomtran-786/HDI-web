@@ -4,6 +4,7 @@ import { resetPage } from "@/content/auth";
 import { safeNext } from "@/lib/safe-path";
 import { Section, SectionHeading } from "@/components/ui/section";
 import { Card } from "@/components/ui/card";
+import { SubmitButton } from "@/components/ui/submit-button";
 import { resetPassword } from "./actions";
 
 export const metadata: Metadata = {
@@ -82,12 +83,12 @@ export default async function ResetPasswordPage({
                   required
                 />
               </label>
-              <button
-                type="submit"
+              <SubmitButton
                 className="w-full rounded-full bg-primary px-6 py-3 text-sm font-bold text-primary-fg transition hover:bg-primary-deep"
+                pendingLabel="Đang đổi…"
               >
                 {resetPage.action}
-              </button>
+              </SubmitButton>
               <p className="text-xs leading-relaxed text-fg-subtle">
                 {resetPage.rule}
               </p>

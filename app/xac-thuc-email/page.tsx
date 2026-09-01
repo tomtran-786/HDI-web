@@ -5,6 +5,7 @@ import { safeNext } from "@/lib/safe-path";
 import { verifyPage } from "@/content/auth";
 import { Section, SectionHeading } from "@/components/ui/section";
 import { Card } from "@/components/ui/card";
+import { SubmitButton } from "@/components/ui/submit-button";
 import { IconCheck, IconMail } from "@/components/ui/icons";
 import { resendVerification, verifyEmail } from "./actions";
 
@@ -27,9 +28,9 @@ function ResendForm({ next }: { next: string }) {
         {verifyPage.resend.label}
         <input className={inputClass} name="email" type="email" autoComplete="email" required />
       </label>
-      <button type="submit" className={primaryButton}>
+      <SubmitButton className={primaryButton} pendingLabel="Đang gửi…">
         {verifyPage.resend.action}
-      </button>
+      </SubmitButton>
       <p className="text-xs leading-relaxed text-fg-subtle">
         {verifyPage.resend.hint}
       </p>
@@ -101,9 +102,9 @@ export default async function VerifyEmailPage({
               <form action={verifyEmail} className="mt-6">
                 <input type="hidden" name="token" value={safeToken} />
                 <input type="hidden" name="tiep" value={next} />
-                <button type="submit" className={primaryButton}>
+                <SubmitButton className={primaryButton} pendingLabel="Đang xác thực…">
                   {verifyPage.confirm.action}
-                </button>
+                </SubmitButton>
               </form>
 
               <p className="mt-4 text-xs leading-relaxed text-fg-subtle">

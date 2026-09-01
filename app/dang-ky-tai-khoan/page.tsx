@@ -8,6 +8,7 @@ import { registerPage } from "@/content/auth";
 import { registerAccount } from "./actions";
 import { Section, SectionHeading } from "@/components/ui/section";
 import { Card } from "@/components/ui/card";
+import { SubmitButton } from "@/components/ui/submit-button";
 import { IconMail } from "@/components/ui/icons";
 
 export const metadata: Metadata = {
@@ -139,9 +140,12 @@ export default async function RegisterPage({
                     {registerPage.referralHint}
                   </span>
                 </label>
-                <button className="w-full rounded-full bg-primary px-6 py-3 text-sm font-bold text-primary-fg transition hover:bg-primary-deep" type="submit">
+                <SubmitButton
+                  className="w-full rounded-full bg-primary px-6 py-3 text-sm font-bold text-primary-fg transition hover:bg-primary-deep"
+                  pendingLabel="Đang tạo tài khoản…"
+                >
                   {registerPage.action}
-                </button>
+                </SubmitButton>
               </form>
 
               <p className="mt-5 text-xs leading-relaxed text-fg-subtle">

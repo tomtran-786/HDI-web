@@ -4,6 +4,7 @@ import { forgotPage } from "@/content/auth";
 import { safeNext } from "@/lib/safe-path";
 import { Section, SectionHeading } from "@/components/ui/section";
 import { Card } from "@/components/ui/card";
+import { SubmitButton } from "@/components/ui/submit-button";
 import { IconCheck } from "@/components/ui/icons";
 import { requestPasswordReset } from "./actions";
 
@@ -69,12 +70,12 @@ export default async function ForgotPasswordPage({
                     required
                   />
                 </label>
-                <button
-                  type="submit"
+                <SubmitButton
                   className="w-full rounded-full bg-primary px-6 py-3 text-sm font-bold text-primary-fg transition hover:bg-primary-deep"
+                  pendingLabel="Đang gửi…"
                 >
                   {forgotPage.action}
-                </button>
+                </SubmitButton>
                 <p className="text-xs leading-relaxed text-fg-subtle">
                   {forgotPage.hint}
                 </p>

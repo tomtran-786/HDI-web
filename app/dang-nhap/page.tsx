@@ -8,6 +8,7 @@ import { safeNext } from "@/lib/safe-path";
 import { signInPage } from "@/content/auth";
 import { Section, SectionHeading } from "@/components/ui/section";
 import { Card } from "@/components/ui/card";
+import { SubmitButton } from "@/components/ui/submit-button";
 import { IconCheck, IconGoogle } from "@/components/ui/icons";
 
 export const metadata: Metadata = {
@@ -111,12 +112,12 @@ export default async function SignInPage({
                 required
               />
             </label>
-            <button
-              type="submit"
+            <SubmitButton
               className="w-full rounded-full bg-primary px-6 py-3 text-sm font-bold text-primary-fg transition hover:bg-primary-deep"
+              pendingLabel="Đang đăng nhập…"
             >
               {signInPage.action}
-            </button>
+            </SubmitButton>
           </form>
 
           <div className="my-5 flex items-center gap-3 text-xs text-fg-subtle">
@@ -131,13 +132,13 @@ export default async function SignInPage({
               await signIn("google", { redirectTo: next });
             }}
           >
-            <button
-              type="submit"
+            <SubmitButton
               className="inline-flex w-full items-center justify-center gap-3 rounded-full border border-line bg-bg px-6 py-3 text-sm font-bold text-fg transition hover:border-primary hover:text-primary"
+              pendingLabel="Đang chuyển sang Google…"
             >
               <IconGoogle size={18} />
               {signInPage.google}
-            </button>
+            </SubmitButton>
           </form>
 
           <p className="mt-5 text-center text-xs leading-relaxed text-fg-subtle">
