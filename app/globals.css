@@ -49,6 +49,11 @@
 }
 
 @theme inline {
+  /* Below `sm` (640px) the default scale has no stop, but the header's
+     right-hand button cluster needs one: at 320–399px it has to shed the
+     theme toggle (relocated into the mobile menu) to avoid overflow. */
+  --breakpoint-xs: 25rem;
+
   --color-bg: var(--bg);
   --color-bg-soft: var(--bg-soft);
   --color-card: var(--card);

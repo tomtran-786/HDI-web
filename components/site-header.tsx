@@ -291,7 +291,13 @@ export function SiteHeader({
             </>
           )}
           <CartButton />
-          <ThemeToggle />
+          {/* Below 400px (`xs`) the cluster of cart + theme + menu buttons no
+              longer fits the 320px viewport alongside the logo — the toggle
+              is the least essential of the three, so it drops out here and
+              reappears inside the mobile menu below. */}
+          <div className="hidden xs:inline-flex">
+            <ThemeToggle />
+          </div>
           <button
             type="button"
             onClick={() => {
@@ -322,7 +328,15 @@ export function SiteHeader({
             className="absolute inset-x-0 top-full z-20 max-h-[calc(100dvh-4rem)] overflow-y-auto border-t border-line bg-bg shadow-[0_24px_48px_-24px_rgba(12,73,143,0.4)] xl:hidden"
           >
             <div className="shell py-5">
-              <p className="px-1 text-[10px] font-bold uppercase tracking-[0.16em] text-fg-subtle">
+              {/* Mirrors the header's standalone toggle, which hides below
+                  `xs` to keep the button row from overflowing 320px. */}
+              <div className="flex items-center justify-between gap-2 rounded-card border border-line bg-bg-soft/60 px-4 py-3 xs:hidden">
+                <span className="text-sm font-semibold text-fg-muted">
+                  Giao diện sáng / tối
+                </span>
+                <ThemeToggle />
+              </div>
+              <p className="mt-4 px-1 text-[10px] font-bold uppercase tracking-[0.16em] text-fg-subtle xs:mt-0">
                 Khám phá HDI
               </p>
               <div className="mt-3 grid gap-1">
