@@ -14,6 +14,21 @@ export const dynamic = "force-dynamic";
 const noStore = { "Cache-Control": "private, no-store, max-age=0" };
 
 /**
+ * Dòng log duy nhất của đường thu hồi.
+ *
+ * Trước đây endpoint này không ghi gì cả, nên một lượt thu hồi — thành công hay
+ * thất bại vì `gateway_unavailable` — không để lại dấu vết nào ngoài cột
+ * `orders.status`. Khi đơn treo ở `pending`, không có cách nào biết là thu hồi
+ * đã chạy rồi hỏng hay chưa từng chạy, và trên Vercel Hobby thì log chỉ sống
+ * khoảng một giờ nên câu hỏi phải trả lời được ngay trong ngày.
+ */
+function logReclaim(kind: string, code: number, cancelled: boolean, reason?: string) {
+  console.log(
+    `[reclaim] ${kind} #${code}: ${cancelled ? "đã hủy" : `không hủy (${reason ?? "unknown"})`}`,
+  );
+}
+
+/**
  * Thu hồi một phiên thanh toán bị bỏ dở.
  *
  * PayOS chỉ gọi về `cancelUrl` khi học viên bấm đúng nút "Hủy". Đóng tab, bấm
@@ -68,6 +83,7 @@ export async function POST() {
     if (!order) return NextResponse.json({ huy: false }, { headers: noStore });
 
     const result = await cancelServiceOrder(order.id, { userId });
+    logReclaim("service", order.code, result.cancelled, result.cancelled ? undefined : result.reason);
     return NextResponse.json(
       { huy: result.cancelled, loai: "service", code: order.code, lyDo: result.cancelled ? undefined : result.reason },
       { headers: noStore },
@@ -81,6 +97,7 @@ export async function POST() {
   if (!order) return NextResponse.json({ huy: false }, { headers: noStore });
 
   const result = await cancelOrder(order.id, { userId });
+  logReclaim("order", order.code, result.cancelled, result.cancelled ? undefined : result.reason);
   // Ghế vừa được trả phải hiện lại trên trang khóa học. Đây là Route Handler nên
   // `revalidateTag` dùng được ở đây — khác với `/thanh-toan/huy`, nơi việc hủy
   // xảy ra lúc render page và bộ đếm ghế phải chờ hết 300 giây cache.

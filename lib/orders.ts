@@ -14,22 +14,9 @@ import {
   voidCreditReservation,
 } from "./referral-ledger";
 import { creditToApply, referralDiscountVnd } from "./referral-pricing";
+import { ORDER_TTL_HOURS } from "./order-ttl";
 
-/**
- * How long a pending order holds its seats.
- *
- * A pending enrolment occupies a place. Without a deadline an abandoned
- * checkout keeps that place forever and the course quietly looks
- * full — the failure nobody notices, because nothing errors. PayOS and the
- * local reservation share the same deadline (see `expiredAt` in
- * `lib/payment-checkout.ts`).
- *
- * Sáu giờ, không phải hai: chuyển khoản liên ngân hàng ngoài giờ hành chính có
- * thể về chậm cả tiếng, và khi tiền về sau mốc này thì webhook đẩy giao dịch vào
- * hàng đối soát thủ công thay vì cấp quyền — khách đã trả tiền mà vẫn thấy "Quá
- * hạn". `ORDER_LATE_GRACE_MINUTES` là lớp vá thứ hai cho phần vẫn lọt qua.
- */
-export const ORDER_TTL_HOURS = 6;
+export { ORDER_TTL_HOURS };
 
 /**
  * Khoảng ân hạn sau `expiresAt` mà một khoản tiền về muộn vẫn được tự cấp quyền.
@@ -54,9 +41,13 @@ export type OrderFailure = {
    * Đơn đang chờ thanh toán đã chặn lần đặt này, nếu có.
    *
    * Chỉ có mặt ở `already_enrolled`, và nó là thứ biến một lời từ chối cụt thành
-   * một đường đi tiếp: đơn bỏ dở giữ ghế suốt hai giờ, nên trong quãng đó chính
-   * người mua bị chặn khỏi khóa của mình mà không được cho biết phải làm gì.
-   * Trang đơn hàng là nơi có nút hủy và nút thanh toán lại.
+   * một đường đi tiếp: đơn bỏ dở giữ ghế suốt `ORDER_TTL_HOURS`, nên trong quãng
+   * đó chính người mua bị chặn khỏi khóa của mình mà không được cho biết phải
+   * làm gì. Trang đơn hàng là nơi có nút hủy và nút thanh toán lại.
+   *
+   * Không còn là đường DUY NHẤT: `lib/cart.ts` cũng mang mã đơn xuống từng dòng
+   * khóa, vì một dòng bị `disabled` không bao giờ bấm được nút Thanh toán để
+   * chạm tới lời từ chối này.
    */
   pendingOrderCode?: number;
 };
@@ -1381,6 +1372,55 @@ export async function reconcileStaleOrdersForPayer(
     candidates.map((order) => order.id),
     5_000,
   );
+}
+
+/**
+ * Hỏi PayOS về đơn CHƯA quá hạn của chính người này, rồi đóng những đơn đã chết.
+ *
+ * `reconcileStaleOrdersForPayer` ở trên chỉ nhặt `expiresAt <= now`, nên nó
+ * không chạm được vào trường hợp thường gặp nhất: học viên bấm "Hủy" trên trang
+ * PayOS rồi đóng tab trước khi redirect kịp chạy, hoặc app ngân hàng nuốt mất
+ * deep link. PayOS KHÔNG gửi webhook cho việc hủy, nên phía HDI đơn vẫn đọc là
+ * `pending` và giữ ghế suốt `ORDER_TTL_HOURS` — và trong quãng đó chính người
+ * mua bị `already_enrolled` chặn khỏi khóa của mình.
+ *
+ * CHỈ ĐỌC ở phía PayOS: `syncPayosOrderStatus` không bao giờ gọi
+ * `paymentRequests.cancel`, và nó bỏ qua mọi trạng thái còn sống hoặc đang giữ
+ * tiền. Một đơn thật sự đang chờ chuyển khoản không bị đụng tới.
+ *
+ * `take: 2` và ngân sách thời gian là có chủ đích: hàm này nằm trên đường mở giỏ
+ * hàng, nên nó phải rẻ. Đơn không kịp quét lượt này sẽ được quét ở lượt sau,
+ * hoặc bởi `<CheckoutReclaim />`, hoặc bởi cron.
+ */
+export async function syncLiveOrdersForPayer(
+  userId: string,
+  now = new Date(),
+  budgetMs = 4_000,
+) {
+  const candidates = await prisma.order.findMany({
+    where: {
+      userId,
+      status: "pending",
+      expiresAt: { gt: now },
+      provider: "payos",
+      // Cùng bằng chứng mà `syncPayosOrderStatus` dùng để biết có link ngoài kia
+      // hay không — lọc sẵn ở đây để không tốn một vòng truy vấn cho đơn chưa
+      // từng chạm tới PayOS.
+      OR: [{ providerRef: { not: null } }, { checkoutUrl: { not: null } }],
+    },
+    select: { id: true },
+    orderBy: { createdAt: "desc" },
+    take: 2,
+  });
+
+  const deadline = Date.now() + budgetMs;
+  let closed = 0;
+  for (const order of candidates) {
+    if (Date.now() >= deadline) break;
+    const result = await syncPayosOrderStatus(order.id, { userId });
+    if (result.closed) closed += 1;
+  }
+  return { scanned: candidates.length, closed };
 }
 
 /**

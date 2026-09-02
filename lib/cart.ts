@@ -27,6 +27,16 @@ export type CatalogCourse = {
   capacity: number | null;
   seatsLeft: number | null;
   availability: CourseAvailability;
+  /**
+   * Đơn đang chặn khóa này, khi `availability === "pending"`.
+   *
+   * Không có nó thì dòng bị khóa là một ngõ cụt: ô chọn bị `disabled`, nên nút
+   * Thanh toán không bao giờ bấm được, nên lời từ chối `already_enrolled` — chỗ
+   * duy nhất từng in ra mã đơn — không bao giờ hiện. Người mua bỏ dở một lần
+   * thanh toán rồi quay lại thấy khóa của mình xám đi mà không có đường nào tới
+   * đơn còn sống của chính họ.
+   */
+  pendingOrderCode: number | null;
 };
 
 export type CartView = {
@@ -95,15 +105,16 @@ export async function loadCourseCatalog(userId: string): Promise<CatalogCourse[]
         capacity: null,
         seatsLeft: null,
         availability: "not_open" as const,
+        pendingOrderCode: null,
       };
     }
 
     const seatsLeft = Math.max(0, row.capacity - (taken.get(row.id) ?? 0));
     const mine = held.get(row.id);
     const availability: CourseAvailability =
-      mine === "pending"
+      mine?.status === "pending"
         ? "pending"
-        : mine === "paid"
+        : mine?.status === "paid"
           ? "already_enrolled"
           : row.status !== "open"
             ? "not_open"
@@ -122,6 +133,7 @@ export async function loadCourseCatalog(userId: string): Promise<CatalogCourse[]
       capacity: row.capacity,
       seatsLeft,
       availability,
+      pendingOrderCode: availability === "pending" ? (mine?.orderCode ?? null) : null,
     };
   });
 }

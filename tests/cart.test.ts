@@ -65,7 +65,9 @@ describe("course cart catalog", () => {
         ["course-full", 1],
       ]),
     );
-    mocks.heldByUser.mockResolvedValue(new Map([["course-owned", "paid"]]));
+    mocks.heldByUser.mockResolvedValue(
+      new Map([["course-owned", { status: "paid", orderCode: null }]]),
+    );
 
     const result = await loadCart(
       ["course-open", "course-full", "course-owned", "gone"],
@@ -93,5 +95,55 @@ describe("course cart catalog", () => {
     });
     expect(result.staleIds).toEqual(["course-full", "course-owned", "gone"]);
     expect(result.totalVnd).toBe(450_000);
+  });
+
+  /**
+   * Mã đơn phải đi cùng nhãn "Đang chờ thanh toán".
+   *
+   * Dòng bị khóa không bao giờ vào được `selected`, nên nút Thanh toán không bấm
+   * được, nên lời từ chối `already_enrolled` — chỗ duy nhất còn lại từng in ra
+   * mã đơn — không bao giờ chạy. Thiếu con số này là giỏ hàng trở lại thành ngõ
+   * cụt mà học viên gặp chiều 02/09/2026.
+   */
+  it("carries the blocking order code onto a pending course row", async () => {
+    const [first, second] = courses;
+    mocks.configuredCourses.mockResolvedValue([
+      {
+        id: "course-mine",
+        code: first.code,
+        slug: first.slug,
+        capacity: 20,
+        priceVnd: 300_000,
+        status: "open",
+      },
+      {
+        id: "course-theirs",
+        code: second.code,
+        slug: second.slug,
+        capacity: 20,
+        priceVnd: 300_000,
+        status: "open",
+      },
+    ]);
+    mocks.seatsTaken.mockResolvedValue(new Map());
+    mocks.heldByUser.mockResolvedValue(
+      new Map([
+        ["course-mine", { status: "pending", orderCode: 100035 }],
+        // Ghế nhóm do người khác trả tiền: vẫn khóa dòng, nhưng không có đơn
+        // nào người này mở được.
+        ["course-theirs", { status: "pending", orderCode: null }],
+      ]),
+    );
+
+    const result = await loadCart([], "user-1");
+
+    expect(result.catalog.find((item) => item.id === "course-mine")).toMatchObject({
+      availability: "pending",
+      pendingOrderCode: 100035,
+    });
+    expect(result.catalog.find((item) => item.id === "course-theirs")).toMatchObject({
+      availability: "pending",
+      pendingOrderCode: null,
+    });
   });
 });

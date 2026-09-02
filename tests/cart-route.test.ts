@@ -7,6 +7,7 @@ const mocks = vi.hoisted(() => ({
   loadCart: vi.fn(),
   referralQuoteFor: vi.fn(),
   reconcile: vi.fn(),
+  syncLive: vi.fn(),
 }));
 
 vi.mock("@/lib/auth", () => ({ auth: mocks.auth }));
@@ -22,6 +23,7 @@ vi.mock("@/lib/referral-quote", () => ({
 }));
 vi.mock("@/lib/orders", () => ({
   reconcileStaleOrdersForPayer: mocks.reconcile,
+  syncLiveOrdersForPayer: mocks.syncLive,
 }));
 
 import { GET } from "@/app/api/gio-hang/route";
@@ -34,6 +36,7 @@ describe("GET /api/gio-hang", () => {
       creditBalanceVnd: 0,
     });
     mocks.reconcile.mockResolvedValue({ scanned: 0, expired: 0, released: 0 });
+    mocks.syncLive.mockResolvedValue({ scanned: 0, closed: 0 });
   });
 
   it("requires authentication before reading sales data", async () => {
@@ -70,6 +73,7 @@ describe("GET /api/gio-hang", () => {
           capacity: 10,
           seatsLeft: 2,
           availability: "buyable",
+          pendingOrderCode: null,
           meetingUrl: "SECRET-MEETING",
           driveFolderId: "SECRET-DRIVE",
         },
@@ -96,6 +100,7 @@ describe("GET /api/gio-hang", () => {
           capacity: 10,
           seatsLeft: 2,
           availability: "buyable",
+          pendingOrderCode: null,
         },
       ],
       staleIds: ["gone"],
@@ -121,6 +126,10 @@ describe("GET /api/gio-hang", () => {
       order.push("reconcile");
       return { scanned: 1, expired: 1, released: 1 };
     });
+    mocks.syncLive.mockImplementation(async () => {
+      order.push("syncLive");
+      return { scanned: 1, closed: 1 };
+    });
     mocks.loadCart.mockImplementation(async () => {
       order.push("loadCart");
       return { catalog: [], selected: [], staleIds: [], totalVnd: 0 };
@@ -130,7 +139,33 @@ describe("GET /api/gio-hang", () => {
 
     expect(response.status).toBe(200);
     expect(mocks.reconcile).toHaveBeenCalledWith("user-1");
-    expect(order).toEqual(["reconcile", "loadCart"]);
+    expect(mocks.syncLive).toHaveBeenCalledWith("user-1");
+    expect(order).toEqual(["reconcile", "syncLive", "loadCart"]);
+  });
+
+  /**
+   * Đơn CHƯA quá hạn cũng phải được hỏi.
+   *
+   * PayOS không gửi webhook cho việc hủy, nên bấm "Hủy" rồi đóng tab trước khi
+   * redirect kịp chạy để lại một đơn `pending` giữ ghế suốt `ORDER_TTL_HOURS`,
+   * và `reconcileStaleOrdersForPayer` — vốn chỉ nhìn `expiresAt` — không thấy nó.
+   */
+  it("vẫn trả giỏ hàng khi bước đồng bộ đơn đang chờ ném lỗi", async () => {
+    mocks.auth.mockResolvedValue({ user: { id: "user-1", email: "a@hdi.test" } });
+    mocks.findUnique.mockResolvedValue({ phone: "0900000000", stage: "other" });
+    mocks.readCartIds.mockResolvedValue([]);
+    mocks.syncLive.mockRejectedValue(new Error("PayOS gián đoạn"));
+    mocks.loadCart.mockResolvedValue({
+      catalog: [],
+      selected: [],
+      staleIds: [],
+      totalVnd: 0,
+    });
+
+    const response = await GET();
+
+    expect(response.status).toBe(200);
+    expect(mocks.loadCart).toHaveBeenCalled();
   });
 
   /** Dọn dẹp hỏng không được phép làm sập giỏ hàng: phần tệ nhất còn lại chỉ là

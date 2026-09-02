@@ -219,6 +219,27 @@ export function CartModal({
   const discounted = listTotalVnd > totalVnd;
   const anyGroupEligible = selected.some((course) => course.groupEligible);
   const blocked = Boolean(preview && preview.groupSize === groupSize && preview.blocked);
+  /**
+   * Đơn đang chờ của chính người này, gom từ các dòng bị khóa.
+   *
+   * Đây là lối ra khỏi ngõ cụt: khóa có `availability === "pending"` bị `disabled`
+   * nên không bao giờ vào được `selected`, nút Thanh toán vì thế luôn tắt, và
+   * lời từ chối `already_enrolled` — chỗ duy nhất từng in ra mã đơn — không bao
+   * giờ chạy. Người mua bỏ dở một lần thanh toán thấy khóa của mình xám đi mà
+   * không có đường nào tới đơn còn sống của họ, suốt cả `ORDER_TTL_HOURS`.
+   */
+  const pendingOrderCodes = useMemo(
+    () => [
+      ...new Set(
+        catalog.flatMap((course) =>
+          course.availability === "pending" && course.pendingOrderCode !== null
+            ? [course.pendingOrderCode]
+            : [],
+        ),
+      ),
+    ],
+    [catalog],
+  );
 
   /**
    * Bỏ nhóm ngay khi giỏ không còn khóa nào hưởng ưu đãi.
@@ -331,12 +352,26 @@ export function CartModal({
                 {groupPanel.dropped}
               </p>
             )}
+            {pendingOrderCodes.length > 0 && (
+              <p role="status" className="mb-4 rounded-card border border-primary bg-tint px-4 py-3 text-sm text-fg">
+                {cartModal.pendingHold}{" "}
+                {pendingOrderCodes.map((code) => (
+                  <a
+                    key={code}
+                    href={`/tai-khoan/don-hang/${code}`}
+                    className="font-bold text-primary underline underline-offset-4"
+                  >
+                    {cartModal.openPendingOrder(code)}
+                  </a>
+                ))}
+              </p>
+            )}
             {(loadError || state.error) && (
               <p role="alert" className="mb-4 rounded-card border border-line bg-bg-soft px-4 py-3 text-sm text-danger">
                 {state.error ?? loadError}
-                {/* Một đơn bỏ dở giữ ghế hai tiếng, và lời từ chối một mình
-                    không nói được phải làm gì với nó. Trang đơn hàng là nơi có
-                    nút hủy và nút thanh toán lại. */}
+                {/* Một đơn bỏ dở giữ ghế suốt `ORDER_TTL_HOURS`, và lời từ chối
+                    một mình không nói được phải làm gì với nó. Trang đơn hàng là
+                    nơi có nút hủy và nút thanh toán lại. */}
                 {state.pendingOrderCode !== undefined && (
                   <>
                     {" "}
@@ -399,6 +434,22 @@ export function CartModal({
                             <span className={`text-sm font-semibold ${buyable ? "text-success" : "text-fg-subtle"}`}>
                               {availabilityLabel[course.availability]}
                               {buyable && course.seatsLeft !== null ? ` · còn ${course.seatsLeft} chỗ` : ""}
+                              {/* Liên kết nằm TRONG `<label>`, nên nó phải tự
+                                  chặn sự kiện: một cú bấm lọt ra ngoài sẽ bị
+                                  label chuyển thành cú bấm vào ô đã disabled và
+                                  không đi đâu cả. */}
+                              {course.availability === "pending" && course.pendingOrderCode !== null && (
+                                <>
+                                  {" · "}
+                                  <a
+                                    href={`/tai-khoan/don-hang/${course.pendingOrderCode}`}
+                                    onClick={(event) => event.stopPropagation()}
+                                    className="font-bold text-primary underline underline-offset-4"
+                                  >
+                                    {cartModal.openPendingOrderShort(course.pendingOrderCode)}
+                                  </a>
+                                </>
+                              )}
                             </span>
                             {/* Giá nhóm to & đậm, giá lẻ gạch ngang ngay cạnh,
                                 badge điều kiện — cùng cách trình bày với

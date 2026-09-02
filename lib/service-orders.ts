@@ -25,15 +25,9 @@ import { prisma } from "./prisma";
  * nghĩa thế nào là "đã trả tiền" trong toàn bộ mã nguồn này.
  */
 
-/**
- * Đơn dịch vụ sống 24 giờ, dài hơn hẳn 2 giờ của đơn khóa học.
- *
- * Không phải sự thiếu nhất quán: 2 giờ của đơn khóa học là thời hạn GIỮ CHỖ, và
- * nó ngắn vì mỗi phút trôi qua là một chỗ ngồi bị treo khỏi tay người khác. Đơn
- * dịch vụ không giữ tài nguyên của ai; hết hạn ở đây chỉ là dọn dẹp, nên thời
- * hạn được chọn theo sự thuận tiện của học viên chứ không theo sức ép nào.
- */
-export const SERVICE_ORDER_TTL_HOURS = 24;
+import { SERVICE_ORDER_TTL_HOURS } from "./order-ttl";
+
+export { SERVICE_ORDER_TTL_HOURS };
 
 export type ServiceOrderView =
   | "paid"

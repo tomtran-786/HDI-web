@@ -53,6 +53,19 @@ export async function seatsTaken(courseIds: string[]) {
   return taken;
 }
 
+export type CourseHold = {
+  status: EnrollmentStatus;
+  /**
+   * Mã đơn `pending` CỦA CHÍNH người này đang giữ ghế, nếu có.
+   *
+   * Lọc theo `o.user_id` chứ không chỉ theo ghi danh: một ghế nhóm do người khác
+   * trả tiền cũng khóa dòng này, nhưng mã đơn đó không giúp được gì — họ không
+   * mở, không hủy và không thanh toán tiếp được đơn của người khác. Cùng lý lẽ
+   * với truy vấn `blocking` trong `createOrder`.
+   */
+  orderCode: number | null;
+};
+
 /**
  * The active course reservations/access windows owned by one student.
  *
@@ -62,18 +75,29 @@ export async function seatsTaken(courseIds: string[]) {
  * — một partial unique index không biết gì về `orders.expires_at` — sẽ chặn
  * lệnh ghi bằng một lỗi P2002 giữa luồng thanh toán. Đường đúng là ĐÓNG đơn
  * chết, và `app/api/gio-hang/route.ts` gọi `reconcileStaleOrdersForPayer`
- * ngay trước khi dùng hàm này. Nhãn "Đang chờ thanh toán" vì vậy chỉ còn xuất
- * hiện khi PayOS không liên lạc được — lúc đó nó đang nói đúng sự thật.
+ * ngay trước khi dùng hàm này.
+ *
+ * Nhãn "Đang chờ thanh toán" vẫn xuất hiện thường xuyên, vì đơn CHƯA quá hạn thì
+ * không đường dọn nào đụng tới: một lần checkout bỏ dở khóa đúng khóa đó suốt
+ * `ORDER_TTL_HOURS`. Vì vậy hàm này trả về luôn mã đơn đang chặn — giỏ hàng cần
+ * nó để biến một dòng bị khóa thành một đường đi tiếp thay vì một ngõ cụt.
  */
 export async function heldByUser(userId: string, courseIds: string[]) {
-  const held = new Map<string, EnrollmentStatus>();
+  const held = new Map<string, CourseHold>();
   if (courseIds.length === 0) return held;
 
   const rows = await prisma.$queryRaw<
-    { courseId: string; status: EnrollmentStatus }[]
+    { courseId: string; status: EnrollmentStatus; orderCode: number | null }[]
   >`
-    SELECT e.course_id AS "courseId", e.status::text AS status
+    SELECT e.course_id AS "courseId",
+           e.status::text AS status,
+           MAX(o.code) AS "orderCode"
       FROM enrollments e
+      LEFT JOIN order_items oi ON oi.enrollment_id = e.id
+      LEFT JOIN orders o
+             ON o.id = oi.order_id
+            AND o.user_id = ${userId}
+            AND o.status = 'pending'::order_status
      WHERE e.user_id = ${userId}
        AND e.course_id = ANY(${courseIds}::text[])
        AND (
@@ -84,9 +108,15 @@ export async function heldByUser(userId: string, courseIds: string[]) {
          OR (
            e.status = 'pending'::enrollment_status
          )
-       )`;
+       )
+     GROUP BY e.course_id, e.status`;
 
-  for (const row of rows) held.set(row.courseId, row.status);
+  for (const row of rows) {
+    held.set(row.courseId, {
+      status: row.status,
+      orderCode: row.orderCode === null ? null : Number(row.orderCode),
+    });
+  }
   return held;
 }
 

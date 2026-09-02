@@ -27,6 +27,17 @@ export const cartModal = {
    */
   payosHint: "Bạn sẽ được chuyển sang PayOS để thanh toán. Chỗ học được giữ 6 giờ.",
   openPendingOrder: (code: number) => `Mở đơn #${code} để hủy hoặc thanh toán tiếp.`,
+  /**
+   * Dải báo ở đầu giỏ khi người mua đang có đơn bỏ dở.
+   *
+   * Phải nói ra ngay cả khi giỏ trống: bấm Thanh toán là giỏ bị dọn sạch, nên
+   * người quay lại từ PayOS thấy một giỏ rỗng và một khóa xám không chọn được,
+   * không có gì nối hai chuyện đó với nhau.
+   */
+  pendingHold:
+    "Bạn đang có đơn chờ thanh toán. Chỗ học đang được giữ cho đơn đó, nên khóa trong đơn tạm thời không chọn lại được.",
+  /** Nhãn ngắn đặt ngay trên dòng khóa bị khóa, nơi không đủ chỗ cho một câu. */
+  openPendingOrderShort: (code: number) => `Mở đơn #${code}`,
   paying: "Đang kết nối PayOS…",
   checkout: "Thanh toán",
   availability: {

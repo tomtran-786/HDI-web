@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { loadCart, readCartIds } from "@/lib/cart";
 import { currentProfile } from "@/lib/current-profile";
-import { reconcileStaleOrdersForPayer } from "@/lib/orders";
+import { reconcileStaleOrdersForPayer, syncLiveOrdersForPayer } from "@/lib/orders";
 import { isProfileComplete } from "@/lib/profile";
 import { referralQuoteFor } from "@/lib/referral-quote";
 
@@ -52,6 +52,25 @@ export async function GET() {
     console.error("[cart] Không đóng được đơn quá hạn của người dùng:", error),
   );
 
+  /**
+   * Rồi tới đơn CHƯA quá hạn: hỏi PayOS xem nó còn sống thật không.
+   *
+   * Bước trên chỉ biết `expiresAt`. Nó không thấy được đơn đã bị hủy ở phía
+   * PayOS mà HDI chưa hay — PayOS không gửi webhook cho việc hủy — nên một cú
+   * bấm "Hủy" rồi đóng tab để lại một đơn giữ ghế suốt sáu giờ.
+   *
+   * `Promise.race` chứ không `await` thẳng: PayOS client đặt `timeout: 10_000,
+   * maxRetries: 1`, tức một lượt hỏi có thể mất tới ~20 giây, và mở giỏ hàng
+   * không được phép chờ lâu như thế. Hết 5 giây thì bỏ chờ và trả giỏ về ngay;
+   * lượt quét vẫn chạy nốt và nếu kịp ghi thì lần mở giỏ sau đã thấy kết quả.
+   */
+  await Promise.race([
+    syncLiveOrdersForPayer(session.user.id).catch((error) =>
+      console.error("[cart] Không đồng bộ được đơn đang chờ:", error),
+    ),
+    new Promise((resolve) => setTimeout(resolve, 5_000)),
+  ]);
+
   const [cart, referral] = await Promise.all([
     loadCart(await readCartIds(), session.user.id),
     referralQuoteFor(session.user.id),
@@ -76,6 +95,9 @@ export async function GET() {
         capacity: course.capacity,
         seatsLeft: course.seatsLeft,
         availability: course.availability,
+        // Mã đơn đang chặn khóa này. Không phải secret: `code` là số tự tăng
+        // đoán được, và trang đơn hàng vẫn tự thu hẹp theo phiên đăng nhập.
+        pendingOrderCode: course.pendingOrderCode,
       })),
       staleIds: cart.staleIds,
       // Giỏ hàng tự tính khoản giảm và khoản credits bằng CHÍNH các hàm trong
