@@ -2,7 +2,9 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { currentSession } from "@/lib/current-session";
+import { syncPayosOrderStatus } from "@/lib/orders";
 import { prisma } from "@/lib/prisma";
+import { paymentResultPage } from "@/content/checkout";
 import { Section, SectionHeading } from "@/components/ui/section";
 import { PaymentPoll } from "@/components/payment-poll";
 
@@ -27,10 +29,26 @@ export default async function PaymentResultPage({
 
   const order = await prisma.order.findFirst({
     where: { code, userId: session.user.id },
-    select: { code: true, status: true },
+    select: { id: true, code: true, status: true },
   });
   if (!order) notFound();
-  const paid = order.status === "paid";
+
+  // Chỉ ĐỌC trạng thái link, không hủy gì ở PayOS. Trang này là returnUrl nên
+  // phần lớn lượt vào đây là người vừa trả tiền xong — `syncPayosOrderStatus`
+  // để nguyên mọi trạng thái có tiền và chỉ đóng đơn khi chính PayOS đã coi link
+  // là chết. Không có bước này, một link bị hủy hoặc hết hạn sẽ hiện "đang chờ
+  // xác nhận" rồi poll tám vòng vào hư không.
+  const synced =
+    order.status === "pending"
+      ? await syncPayosOrderStatus(order.id, { userId: session.user.id })
+      : { closed: false as const };
+  const status = synced.closed ? synced.as : order.status;
+
+  const paid = status === "paid";
+  // Ba trạng thái, không phải hai. Trước đây mọi thứ không phải `paid` đều đọc
+  // là "đang chờ PayOS xác nhận", nên một đơn đã hủy vẫn được vẽ như một đơn
+  // sắp có tiền về — và cái nút poll bên dưới hứa một điều không bao giờ tới.
+  const waiting = status === "pending";
 
   return (
     <Section soft>
@@ -38,11 +56,21 @@ export default async function PaymentResultPage({
         <SectionHeading
           align="center"
           eyebrow="PayOS"
-          title={paid ? "Đã xác nhận thanh toán" : "Đang chờ PayOS xác nhận"}
+          title={
+            paid
+              ? "Đã xác nhận thanh toán"
+              : waiting
+                ? "Đang chờ PayOS xác nhận"
+                : paymentResultPage.closed.title
+          }
           subtitle={
             paid
               ? "Webhook đã được kiểm tra và đơn hàng đã chuyển sang trạng thái đã thanh toán."
-              : "Trang quay lại không tự đánh dấu đã trả tiền. HDI đang chờ webhook có chữ ký hợp lệ."
+              : waiting
+                ? "Trang quay lại không tự đánh dấu đã trả tiền. HDI đang chờ webhook có chữ ký hợp lệ."
+                : paymentResultPage.closed[
+                    status as keyof typeof paymentResultPage.closed
+                  ] ?? paymentResultPage.closed.title
           }
         />
         <Link
@@ -51,10 +79,10 @@ export default async function PaymentResultPage({
         >
           {paid ? "Vào khu vực học viên" : `Xem đơn #${order.code}`}
         </Link>
-        {!paid && (
+        {waiting && (
           <PaymentPoll
             statusUrl={`/api/trang-thai-don?donHang=${order.code}`}
-            banDau={order.status}
+            banDau={status}
           />
         )}
       </div>

@@ -333,6 +333,20 @@ export function CartModal({
             {(loadError || state.error) && (
               <p role="alert" className="mb-4 rounded-card border border-line bg-bg-soft px-4 py-3 text-sm text-danger">
                 {state.error ?? loadError}
+                {/* Một đơn bỏ dở giữ ghế hai tiếng, và lời từ chối một mình
+                    không nói được phải làm gì với nó. Trang đơn hàng là nơi có
+                    nút hủy và nút thanh toán lại. */}
+                {state.pendingOrderCode !== undefined && (
+                  <>
+                    {" "}
+                    <a
+                      href={`/tai-khoan/don-hang/${state.pendingOrderCode}`}
+                      className="font-bold underline underline-offset-4"
+                    >
+                      {cartModal.openPendingOrder(state.pendingOrderCode)}
+                    </a>
+                  </>
+                )}
               </p>
             )}
 

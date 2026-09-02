@@ -4,7 +4,7 @@ import { notFound, redirect } from "next/navigation";
 import { paymentCancelPage } from "@/content/checkout";
 import { allowUserAction } from "@/lib/auth-throttle";
 import { currentSession } from "@/lib/current-session";
-import { cancelOrder } from "@/lib/orders";
+import { cancelOrder, syncPayosOrderStatus } from "@/lib/orders";
 import { prisma } from "@/lib/prisma";
 import { Section, SectionHeading } from "@/components/ui/section";
 import { CancelOrder } from "@/app/tai-khoan/don-hang/[code]/cancel";
@@ -18,6 +18,7 @@ type CancelOutcome =
   | { kind: "released" }
   | { kind: "closed" }
   | { kind: "busy"; reason: "payment_in_progress" | "gateway_unavailable" }
+  | { kind: "throttled" }
   | { kind: "confirm" };
 
 /**
@@ -80,6 +81,23 @@ export default async function PaymentCancelPage({
     paymentLinkId === order.providerRef;
 
   let outcome: CancelOutcome = { kind: "confirm" };
+  if (!proven && order.status === "pending") {
+    /**
+     * `id` thiếu hoặc lệch KHÔNG có nghĩa là không làm gì được.
+     *
+     * Trước đây nhánh này hiện thẳng nút xác nhận, kể cả khi PayOS đã đóng link
+     * từ lâu — đúng cái nhịp thừa mà trang này sinh ra để bỏ đi, và nó rơi vào
+     * đúng những trường hợp hay gặp nhất: app ngân hàng nuốt mất tham số, hoặc
+     * học viên hủy trên một thiết bị rồi mở trang này trên thiết bị khác.
+     *
+     * `syncPayosOrderStatus` CHỈ ĐỌC. Nó không gọi `paymentRequests.cancel`, nên
+     * nó không phải là tác dụng phụ mà chốt CSRF ở trên bảo vệ: kể cả khi một
+     * thẻ `<img>` ép được trình duyệt mở URL này, kết quả tệ nhất là HDI ghi
+     * nhận đúng một sự thật PayOS đã có sẵn.
+     */
+    const synced = await syncPayosOrderStatus(order.id, { userId: session.user.id });
+    if (synced.closed) outcome = { kind: "released" };
+  }
   if (proven) {
     // Cùng hạn mức với nút hủy trong trang đơn hàng: mỗi lần hủy đều là một
     // lượt gọi sang PayOS.
@@ -102,6 +120,12 @@ export default async function PaymentCancelPage({
       } else {
         outcome = { kind: "closed" };
       }
+    } else {
+      // Chạm trần thì phải NÓI RA. Bản trước lùi về bộ chữ xác nhận chung, nên
+      // học viên đọc được "hãy xác nhận bên dưới" rồi bấm vào một nút cũng đang
+      // bị chính cái trần đó chặn — một vòng lặp không có lối ra và không có
+      // dòng nào giải thích.
+      outcome = { kind: "throttled" };
     }
   }
 
@@ -116,12 +140,14 @@ export default async function PaymentCancelPage({
       ? paymentCancelPage.released
       : outcome.kind === "closed"
         ? paymentCancelPage.closed
-        : outcome.kind === "busy"
-          ? {
-              title: paymentCancelPage.busy.title,
-              subtitle: paymentCancelPage.busy[outcome.reason],
-            }
-          : paymentCancelPage.confirm;
+        : outcome.kind === "throttled"
+          ? paymentCancelPage.throttled
+          : outcome.kind === "busy"
+            ? {
+                title: paymentCancelPage.busy.title,
+                subtitle: paymentCancelPage.busy[outcome.reason],
+              }
+            : paymentCancelPage.confirm;
 
   // Nút xác nhận chỉ còn ý nghĩa khi đơn vẫn đang chờ VÀ trang chưa trả được
   // chỗ: sau khi tự hủy thành công nó là một nút chết.

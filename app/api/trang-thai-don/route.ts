@@ -1,7 +1,14 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
+import { allowUserAction } from "@/lib/auth-throttle";
+import { clearCheckoutHandoff } from "@/lib/checkout-handoff";
+import { syncPayosOrderStatus } from "@/lib/orders";
 import { prisma } from "@/lib/prisma";
-import { findServiceOrder, serviceOrderView } from "@/lib/service-orders";
+import {
+  findServiceOrder,
+  serviceOrderView,
+  syncPayosServiceOrderStatus,
+} from "@/lib/service-orders";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -23,6 +30,21 @@ const noStore = { "Cache-Control": "private, no-store, max-age=0" };
  * pending sang hết hạn theo thời gian mà không đổi cột `status` nào, và trang
  * kết quả dịch vụ có hiển thị riêng cho trường hợp đó.
  */
+/**
+ * Trần cho lượt hỏi PayOS mà endpoint này sinh ra.
+ *
+ * Không có nó, một tab bị bỏ quên trên trang kết quả là một lượt gọi PayOS mỗi
+ * bốn giây, vô hạn — hạn ngạch của HDI chứ không phải của người dùng. Trần 60
+ * lượt/giờ đủ rộng cho vài lần thanh toán liên tiếp (mỗi lần là 8 vòng poll) và
+ * vẫn là một trần.
+ *
+ * Chạm trần KHÔNG phải là lỗi: endpoint chỉ lùi về đọc trạng thái trong database,
+ * đúng hành vi trước khi có phần đồng bộ này.
+ */
+function allowSync(userId: string) {
+  return allowUserAction("payos_sync", userId, 60);
+}
+
 export async function GET(request: Request) {
   const session = await auth();
   if (!session?.user?.id) {
@@ -39,13 +61,20 @@ export async function GET(request: Request) {
   if (dichVu) {
     // `findServiceOrder` mang userId TRONG `where`, nên ref của người khác trả
     // về null chứ không phải trạng thái của họ.
-    const order = await findServiceOrder(dichVu, session.user.id);
+    let order = await findServiceOrder(dichVu, session.user.id);
     if (!order) {
       return NextResponse.json(
         { error: "not_found" },
         { status: 404, headers: noStore },
       );
     }
+    if (order.status === "pending" && (await allowSync(session.user.id))) {
+      const synced = await syncPayosServiceOrderStatus(order.id, {
+        userId: session.user.id,
+      });
+      if (synced.closed) order = { ...order, status: synced.as };
+    }
+    if (order.status !== "pending") await clearCheckoutHandoff();
     // `cancelledCheckout` là một cờ trên URL của trình duyệt, không phải trạng
     // thái server. Trang truyền `banDau` đã tính với cùng tham số `false` này,
     // nên hai bên so được với nhau.
@@ -65,7 +94,7 @@ export async function GET(request: Request) {
 
   const order = await prisma.order.findFirst({
     where: { code, userId: session.user.id },
-    select: { status: true },
+    select: { id: true, status: true },
   });
   if (!order) {
     return NextResponse.json(
@@ -73,5 +102,17 @@ export async function GET(request: Request) {
       { status: 404, headers: noStore },
     );
   }
+  if (order.status === "pending" && (await allowSync(session.user.id))) {
+    const synced = await syncPayosOrderStatus(order.id, { userId: session.user.id });
+    if (synced.closed) {
+      await clearCheckoutHandoff();
+      return NextResponse.json({ trangThai: synced.as }, { headers: noStore });
+    }
+  }
+  // Đơn đã chốt thì phiên thanh toán không còn gì để thu hồi. Xóa dấu ở ĐÂY,
+  // trong một Route Handler, là cách duy nhất làm được điều đó cho đường trả
+  // tiền thành công: `/thanh-toan/ket-qua` là một page render nên nó không đặt
+  // hay xóa được cookie, và PaymentPoll gọi vào endpoint này ngay trên đó.
+  if (order.status !== "pending") await clearCheckoutHandoff();
   return NextResponse.json({ trangThai: order.status }, { headers: noStore });
 }

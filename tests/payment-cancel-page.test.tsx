@@ -9,6 +9,7 @@ const mocks = vi.hoisted(() => ({
   currentSession: vi.fn(),
   orderFindFirst: vi.fn(),
   cancelOrder: vi.fn(),
+  syncPayosOrderStatus: vi.fn(),
   allowUserAction: vi.fn(),
   notFound: vi.fn(),
   redirect: vi.fn(),
@@ -18,7 +19,10 @@ vi.mock("@/lib/current-session", () => ({ currentSession: mocks.currentSession }
 vi.mock("@/lib/prisma", () => ({
   prisma: { order: { findFirst: mocks.orderFindFirst } },
 }));
-vi.mock("@/lib/orders", () => ({ cancelOrder: mocks.cancelOrder }));
+vi.mock("@/lib/orders", () => ({
+  cancelOrder: mocks.cancelOrder,
+  syncPayosOrderStatus: mocks.syncPayosOrderStatus,
+}));
 vi.mock("@/lib/auth-throttle", () => ({ allowUserAction: mocks.allowUserAction }));
 vi.mock("next/navigation", () => ({
   notFound: mocks.notFound,
@@ -68,6 +72,7 @@ beforeEach(() => {
   mocks.orderFindFirst.mockResolvedValue(pendingOrder);
   mocks.allowUserAction.mockResolvedValue(true);
   mocks.cancelOrder.mockResolvedValue({ cancelled: true, released: 1 });
+  mocks.syncPayosOrderStatus.mockResolvedValue({ closed: false });
 });
 
 describe("trang PayOS trả về khi hủy", () => {
@@ -105,6 +110,37 @@ describe("trang PayOS trả về khi hủy", () => {
     expect(mocks.cancelOrder).not.toHaveBeenCalled();
     expect(markup).toContain(paymentCancelPage.confirm.title);
     expect(markup).toContain('data-cancel-order="order-1"');
+  });
+
+  /**
+   * Thiếu hoặc lệch `id` không được phép HỦY, nhưng vẫn được phép HỎI. Đọc
+   * trạng thái link không tạo ra tác dụng phụ nào ở PayOS, nên nó không phải là
+   * thứ chốt CSRF ở trên bảo vệ — và nó bắt được đúng những lối thoát hay gặp
+   * nhất: app ngân hàng nuốt mất tham số, hoặc hủy ở một thiết bị khác.
+   */
+  it("vẫn đóng đơn khi PayOS cho biết link đã hủy, dù id lệch", async () => {
+    mocks.syncPayosOrderStatus.mockResolvedValueOnce({
+      closed: true,
+      as: "cancelled",
+      released: 1,
+    });
+
+    const markup = await html({ orderCode: "100001", id: "sai-hoan-toan" });
+
+    expect(mocks.cancelOrder).not.toHaveBeenCalled();
+    expect(mocks.syncPayosOrderStatus).toHaveBeenCalledWith("order-1", {
+      userId: USER_ID,
+    });
+    expect(markup).toContain(paymentCancelPage.released.title);
+    expect(markup).not.toContain("data-cancel-order");
+  });
+
+  it("không hỏi PayOS về một đơn đã đóng", async () => {
+    mocks.orderFindFirst.mockResolvedValueOnce({ ...pendingOrder, status: "cancelled" });
+
+    await html({ orderCode: "100001" });
+
+    expect(mocks.syncPayosOrderStatus).not.toHaveBeenCalled();
   });
 
   it("không gọi PayOS khi đơn không còn chờ thanh toán", async () => {
@@ -156,13 +192,17 @@ describe("trang PayOS trả về khi hủy", () => {
     expect(markup).not.toContain("data-cancel-order");
   });
 
-  it("không hủy khi vượt hạn mức thao tác", async () => {
+  it("nói rõ lý do khi vượt hạn mức, thay vì lùi về màn hình xác nhận chung", async () => {
     mocks.allowUserAction.mockResolvedValueOnce(false);
 
     const markup = await html({ orderCode: "100001", id: LINK_ID });
 
     expect(mocks.cancelOrder).not.toHaveBeenCalled();
-    expect(markup).toContain(paymentCancelPage.confirm.title);
+    expect(markup).toContain(paymentCancelPage.throttled.title);
+    // Nút xác nhận đi qua cùng cái trần đó, nên vẽ nó ra là mời người dùng vào
+    // một vòng lặp không có lối thoát và không có dòng nào giải thích.
+    expect(markup).not.toContain("data-cancel-order");
+    expect(markup).not.toContain(paymentCancelPage.confirm.title);
   });
 
   /**

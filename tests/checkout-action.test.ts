@@ -11,6 +11,7 @@ const mocks = vi.hoisted(() => ({
   redirect: vi.fn(),
   findUnique: vi.fn(),
   readCartIds: vi.fn(),
+  markCheckoutHandoff: vi.fn(),
   writeCartIds: vi.fn(),
   createOrder: vi.fn(),
   cancelOrder: vi.fn(),
@@ -42,6 +43,9 @@ vi.mock("@/lib/group-members", async (importOriginal) => ({
 vi.mock("@/lib/auth-throttle", () => ({ allowUserAction: mocks.allowUserAction }));
 vi.mock("@/lib/payment-checkout", () => ({
   ensurePayosCheckout: mocks.ensurePayosCheckout,
+}));
+vi.mock("@/lib/checkout-handoff", () => ({
+  markCheckoutHandoff: mocks.markCheckoutHandoff,
 }));
 
 import { checkout } from "@/app/actions/checkout";
@@ -87,6 +91,50 @@ describe("one-step cart checkout action", () => {
       { members: [], useCredit: false },
     );
     expect(mocks.writeCartIds).toHaveBeenCalledWith([]);
+    // Dấu bàn giao phải được đặt TRƯỚC khi rời đi: sau `redirect` không còn
+    // Server Function nào chạy, nên đây là cơ hội duy nhất, và không có nó thì
+    // không ai thu hồi được phiên thanh toán bị bỏ dở.
+    expect(mocks.markCheckoutHandoff).toHaveBeenCalledWith({
+      kind: "order",
+      key: "100001",
+    });
+  });
+
+  it("chuyển tiếp mã đơn đang chặn ra giỏ hàng, để lời từ chối có đường đi tiếp", async () => {
+    mocks.createOrder.mockResolvedValue({
+      ok: false,
+      reason: "already_enrolled",
+      message: "Bạn đang có quyền hoặc đơn chờ thanh toán cho khóa X.",
+      pendingOrderCode: 100042,
+    });
+
+    await expect(checkout({}, new FormData())).resolves.toEqual({
+      error: "Bạn đang có quyền hoặc đơn chờ thanh toán cho khóa X.",
+      refreshCatalog: true,
+      pendingOrderCode: 100042,
+    });
+  });
+
+  it("không đặt dấu bàn giao khi PayOS chưa trả về link", async () => {
+    mocks.createOrder.mockResolvedValue({
+      ok: true,
+      orderId: "order-1",
+      code: 100001,
+      amountVnd: 900_000,
+      expiresAt: new Date(),
+    });
+    mocks.ensurePayosCheckout.mockResolvedValue({
+      ok: false,
+      state: "pending_gateway",
+      message: "PayOS đã nhận đơn nhưng chưa trả lại đường dẫn.",
+    });
+
+    await expect(checkout({}, new FormData())).rejects.toMatchObject({
+      url: "/tai-khoan/don-hang/100001",
+    });
+    // Trình duyệt không hề sang PayOS, nên không có phiên nào để thu hồi — và
+    // một dấu thừa ở đây sẽ hủy oan đơn ngay lần tải trang kế tiếp.
+    expect(mocks.markCheckoutHandoff).not.toHaveBeenCalled();
   });
 
   it("keeps the basket and returns a modal error when any course fails", async () => {

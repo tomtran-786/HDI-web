@@ -25,7 +25,7 @@ vi.mock("@/lib/payos", () => ({
   isPayosNotFound: mocks.isNotFound,
 }));
 
-import { cancelOrder } from "@/lib/orders";
+import { cancelOrder, syncPayosOrderStatus } from "@/lib/orders";
 
 const pendingOrder = {
   id: "order-1",
@@ -138,5 +138,110 @@ describe("remote-first PayOS cancellation", () => {
       released: 1,
     });
     expect(mocks.get).toHaveBeenCalledWith(100001);
+  });
+});
+
+/**
+ * `syncPayosOrderStatus` là đường đi ngược lại của `cancelOrder`: thay vì bảo
+ * PayOS đóng link, nó hỏi PayOS xem link còn sống không. Nó tồn tại vì PayOS
+ * KHÔNG gửi webhook nào cho việc hủy — mọi sự kiện nó gửi đều là sự kiện tiền —
+ * nên một học viên bấm "Hủy" rồi đóng tab trước khi redirect kịp chạy sẽ để lại
+ * một đơn giữ ghế cho tới lượt cron 03:00 hôm sau.
+ */
+describe("đồng bộ trạng thái đơn từ PayOS", () => {
+  beforeEach(() => {
+    for (const mock of Object.values(mocks)) mock.mockReset();
+    mocks.findFirst.mockResolvedValue(pendingOrder);
+    mocks.isNotFound.mockReturnValue(false);
+    mocks.orderUpdateMany.mockResolvedValue({ count: 1 });
+    mocks.itemFindMany.mockResolvedValue([{ enrollmentId: "enrollment-1" }]);
+    mocks.enrollmentUpdateMany.mockResolvedValue({ count: 1 });
+    mocks.transaction.mockImplementation(async (callback) =>
+      callback({
+        order: { updateMany: mocks.orderUpdateMany },
+        orderItem: { findMany: mocks.itemFindMany },
+        enrollment: { updateMany: mocks.enrollmentUpdateMany },
+        referralLedger: { updateMany: mocks.ledgerUpdateMany },
+      }),
+    );
+  });
+
+  it("đóng đơn và trả ghế khi PayOS báo link đã hủy", async () => {
+    mocks.get.mockResolvedValue({ status: "CANCELLED" });
+
+    await expect(syncPayosOrderStatus("order-1")).resolves.toEqual({
+      closed: true,
+      as: "cancelled",
+      released: 1,
+    });
+    expect(mocks.orderUpdateMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ status: "cancelled" }),
+      }),
+    );
+  });
+
+  it("ghi link hết hạn là `expired`, không phải `cancelled`", async () => {
+    mocks.get.mockResolvedValue({ status: "EXPIRED" });
+
+    await expect(syncPayosOrderStatus("order-1")).resolves.toMatchObject({
+      closed: true,
+      as: "expired",
+    });
+  });
+
+  it("KHÔNG BAO GIỜ gọi cancel lên PayOS", async () => {
+    mocks.get.mockResolvedValue({ status: "CANCELLED" });
+
+    await syncPayosOrderStatus("order-1");
+
+    // Đây là lý do hàm này gọi được từ những chỗ mà một lệnh hủy sẽ là CSRF.
+    expect(mocks.cancel).not.toHaveBeenCalled();
+  });
+
+  it("không đụng vào đơn khi PayOS vẫn đang giữ tiền hoặc link còn sống", async () => {
+    for (const status of ["PAID", "PROCESSING", "UNDERPAID", "PENDING"]) {
+      mocks.transaction.mockClear();
+      mocks.get.mockResolvedValue({ status });
+
+      await expect(syncPayosOrderStatus("order-1")).resolves.toEqual({
+        closed: false,
+      });
+      expect(mocks.transaction).not.toHaveBeenCalled();
+    }
+  });
+
+  it("một lỗi tra cứu không phải là bằng chứng, nên không đóng đơn nào", async () => {
+    mocks.get.mockRejectedValue(new Error("gateway unavailable"));
+
+    await expect(syncPayosOrderStatus("order-1")).resolves.toEqual({
+      closed: false,
+    });
+    expect(mocks.transaction).not.toHaveBeenCalled();
+  });
+
+  it("không tìm thấy link cũng không đóng đơn, khác hẳn cancelOrder", async () => {
+    // Ở `cancelOrder` người dùng vừa yêu cầu đóng đơn nên 404 là đủ để trả chỗ.
+    // Ở đây không ai yêu cầu gì cả.
+    mocks.get.mockRejectedValue(new Error("not found"));
+    mocks.isNotFound.mockReturnValue(true);
+
+    await expect(syncPayosOrderStatus("order-1")).resolves.toEqual({
+      closed: false,
+    });
+    expect(mocks.transaction).not.toHaveBeenCalled();
+  });
+
+  it("không hỏi PayOS về một đơn chưa từng có payment link", async () => {
+    mocks.findFirst.mockResolvedValue({
+      ...pendingOrder,
+      providerRef: null,
+      checkoutUrl: null,
+    });
+
+    await expect(syncPayosOrderStatus("order-1")).resolves.toEqual({
+      closed: false,
+    });
+    expect(mocks.get).not.toHaveBeenCalled();
   });
 });

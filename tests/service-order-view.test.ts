@@ -12,7 +12,10 @@ describe("trạng thái hiển thị của đơn dịch vụ", () => {
     ["pending", future, true, "cancelled_checkout"],
     ["pending", past, false, "closed"],
     ["expired", past, false, "closed"],
-    ["cancelled", future, false, "closed"],
+    // `cancelled` tách khỏi `closed` từ khi luồng dịch vụ hủy đơn thật:
+    // "đã hủy theo yêu cầu" và "quá hạn" là hai chuyện khác nhau.
+    ["cancelled", future, false, "cancelled"],
+    ["cancelled", past, false, "cancelled"],
     ["paid", past, true, "paid"],
   ] as const)(
     "%s / huy=%s → %s",

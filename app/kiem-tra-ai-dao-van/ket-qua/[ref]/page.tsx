@@ -6,11 +6,19 @@ import { aiCheck, serviceKindLabel } from "@/content/ai-check";
 import { orderStatusLabel, orderStatusTone } from "@/content/checkout";
 import { links } from "@/content/site";
 import { formatVnd } from "@/lib/format";
-import { findServiceOrder, serviceOrderView } from "@/lib/service-orders";
+import {
+  cancelServiceOrder,
+  findServiceOrder,
+  serviceOrderView,
+  syncPayosServiceOrderStatus,
+} from "@/lib/service-orders";
+import { allowUserAction } from "@/lib/auth-throttle";
 import { Badge } from "@/components/ui/badge";
 import { Section, SectionHeading } from "@/components/ui/section";
 import { IconArrow, IconMessage } from "@/components/ui/icons";
 import { PaymentPoll } from "@/components/payment-poll";
+import { PayosLink } from "@/components/payos-link";
+import { CancelServiceOrder } from "./cancel";
 import { CopyCode } from "./copy-code";
 
 export const metadata: Metadata = {
@@ -40,14 +48,55 @@ export default async function ServiceOrderResultPage({
   const order = await findServiceOrder(ref, session.user.id);
   if (!order) notFound();
 
+  /**
+   * Nơi PayOS trả người dùng về khi họ bấm "Hủy" trên đơn dịch vụ.
+   *
+   * Trước đây `?huy=1` CHỈ đổi bộ chữ trên trang này: đơn ở nguyên `pending` và
+   * link PayOS sống tiếp đủ 24 giờ, nên một học viên vừa bấm "Hủy" vẫn có thể
+   * chuyển khoản cho một đơn họ tin là đã bỏ. Giờ nó hủy thật.
+   *
+   * Điều kiện là `?id` khớp `providerRef`, đúng chốt CSRF của
+   * `app/thanh-toan/huy/page.tsx` và vì đúng lý do đó: PayOS đính `id` —
+   * `paymentLinkId` 32 ký tự hex, không đoán được — vào cả `cancelUrl`, còn
+   * `?huy=1` một mình thì ai cũng gõ ra được. `ref` trong đường dẫn là 16 byte
+   * ngẫu nhiên nên nó không lộ như `Order.code`, nhưng nó vẫn lộ qua lịch sử
+   * duyệt và qua một liên kết bị chuyển tiếp.
+   */
+  let status = order.status;
+  const paymentLinkId = typeof query.id === "string" ? query.id : null;
+  const proven =
+    status === "pending" &&
+    paymentLinkId !== null &&
+    order.providerRef !== null &&
+    paymentLinkId === order.providerRef;
+
+  if (proven) {
+    if (await allowUserAction("service_order_cancel", session.user.id, 10)) {
+      const result = await cancelServiceOrder(order.id, { userId: session.user.id });
+      if (result.cancelled) status = "cancelled";
+    }
+  } else if (status === "pending") {
+    // Không khớp `id` thì vẫn hỏi PayOS — chỉ đọc, không hủy gì ngoài kia. Đây
+    // là đường bắt được các lối thoát không sinh redirect: đóng tab, app ngân
+    // hàng nuốt deep link, hoặc hủy ở một thiết bị khác.
+    const synced = await syncPayosServiceOrderStatus(order.id, {
+      userId: session.user.id,
+    });
+    if (synced.closed) status = synced.as;
+  }
+
   const kindLabel = serviceKindLabel(order.kind);
-  const view = serviceOrderView(order, new Date(), cancelledCheckout);
+  const view = serviceOrderView({ ...order, status }, new Date(), cancelledCheckout);
   let title: string;
   let subtitle: string;
   switch (view) {
     case "paid":
       title = aiCheck.result.paidTitle;
       subtitle = aiCheck.result.paidBody;
+      break;
+    case "cancelled":
+      title = aiCheck.result.releasedTitle;
+      subtitle = aiCheck.result.releasedBody;
       break;
     case "cancelled_checkout":
       title = aiCheck.result.cancelledTitle;
@@ -78,8 +127,8 @@ export default async function ServiceOrderResultPage({
             <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-fg-subtle">
               {aiCheck.result.codeLabel}
             </p>
-            <Badge tone={orderStatusTone[order.status] ?? "cool"}>
-              {orderStatusLabel[order.status] ?? order.status}
+            <Badge tone={orderStatusTone[status] ?? "cool"}>
+              {orderStatusLabel[status] ?? status}
             </Badge>
           </div>
 
@@ -107,22 +156,24 @@ export default async function ServiceOrderResultPage({
           </dl>
 
           {checkoutOpen && order.checkoutUrl && (
-            <a
+            <PayosLink
               href={order.checkoutUrl}
+              handoff={{ kind: "service", key: ref }}
               className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-full bg-primary px-5 py-3 text-sm font-bold text-primary-fg transition hover:bg-primary-deep"
             >
               Mở lại trang thanh toán
               <IconArrow size={16} />
-            </a>
+            </PayosLink>
           )}
           {view === "open" && (
             <PaymentPoll
               statusUrl={`/api/trang-thai-don?dichVu=${ref}`}
               // Cùng tham số `false` mà endpoint dùng: cờ `huy=1` nằm
               // trên URL của trình duyệt, không phải trạng thái server.
-              banDau={serviceOrderView(order, new Date(), false)}
+              banDau={serviceOrderView({ ...order, status }, new Date(), false)}
             />
           )}
+          {checkoutOpen && <CancelServiceOrder orderId={order.id} />}
           {view === "closed" && (
             <Link
               href="/kiem-tra-ai-dao-van"

@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { currentSession } from "@/lib/current-session";
 import { prisma } from "@/lib/prisma";
 import { findCourse } from "@/lib/courses";
+import { syncPayosOrderStatus } from "@/lib/orders";
 import { formatDate, formatVnd } from "@/lib/format";
 import {
   groupOrderLabel,
@@ -14,6 +15,7 @@ import {
 } from "@/content/checkout";
 import { composeEmailHref, links } from "@/content/site";
 import { HoldCountdown } from "@/components/hold-countdown";
+import { PayosLink } from "@/components/payos-link";
 import { Section, SectionHeading } from "@/components/ui/section";
 import { Badge } from "@/components/ui/badge";
 import { IconArrow, IconMail, IconMessage } from "@/components/ui/icons";
@@ -65,7 +67,28 @@ export default async function OrderDetailPage({
   });
   if (!order) notFound();
 
-  const pending = order.status === "pending";
+  /**
+   * Hỏi PayOS xem đơn này còn sống thật không, trước khi vẽ ra một trang nói
+   * rằng nó đang chờ thanh toán.
+   *
+   * PayOS không gửi webhook cho việc hủy, nên một đơn đã bị hủy ở phía họ vẫn
+   * đọc là `pending` ở đây — kèm nút "Thanh toán với PayOS" trỏ vào một link đã
+   * chết, và một đồng hồ đếm ngược nói rằng chỗ vẫn đang được giữ. Trang đơn
+   * hàng là nơi học viên tới để biết sự thật, nên nó phải trả giá cho việc đi
+   * hỏi.
+   *
+   * Ghi trong lúc render an toàn với render lại, đúng lý do đã ghi ở
+   * `app/thanh-toan/huy/page.tsx`: `cancelOrderLocally` lọc `status: "pending"`.
+   * Cũng như ở đó, `revalidateTag` không gọi được lúc render page, nên bộ đếm
+   * ghế công khai trễ tối đa 5 phút và trễ theo chiều an toàn.
+   */
+  const synced =
+    order.status === "pending"
+      ? await syncPayosOrderStatus(order.id, { userId: session.user.id })
+      : { closed: false as const };
+  const status = synced.closed ? synced.as : order.status;
+
+  const pending = status === "pending";
   const isGroup = order.groupSize > 1;
 
   return (
@@ -78,8 +101,8 @@ export default async function OrderDetailPage({
       <div className="mx-auto max-w-2xl">
         <div className="rounded-card border border-line bg-card p-6 sm:p-7">
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <Badge tone={orderStatusTone[order.status] ?? "cool"}>
-              {orderStatusLabel[order.status] ?? order.status}
+            <Badge tone={orderStatusTone[status] ?? "cool"}>
+              {orderStatusLabel[status] ?? status}
             </Badge>
             {isGroup && <Badge tone="cool">Nhóm {order.groupSize} người</Badge>}
             {pending && (
@@ -170,13 +193,14 @@ export default async function OrderDetailPage({
             </p>
             <div className="mt-5 flex flex-wrap gap-3">
               {order.checkoutUrl && (
-                <a
+                <PayosLink
                   href={order.checkoutUrl}
+                  handoff={{ kind: "order", key: String(order.code) }}
                   className="inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-bold text-primary-fg transition hover:bg-primary-deep"
                 >
                   Thanh toán với PayOS
                   <IconArrow size={16} />
-                </a>
+                </PayosLink>
               )}
               <a
                 href={composeEmailHref(`Thanh toán đơn #${order.code}`)}
@@ -208,7 +232,7 @@ export default async function OrderDetailPage({
               {orderPage.awaitingGateway.hint}
             </p>
           </div>
-        ) : order.status === "paid" ? (
+        ) : status === "paid" ? (
           <div className="mt-5 rounded-card border border-line bg-card p-6 sm:p-7">
             <p className="text-lg font-bold tracking-tight text-success">
               {orderPage.paid.title}
@@ -226,8 +250,8 @@ export default async function OrderDetailPage({
           </div>
         ) : (
           <p className="mt-5 rounded-card border border-line bg-card px-5 py-4 text-sm leading-relaxed text-fg-muted">
-            {orderPage.closed[order.status as keyof typeof orderPage.closed] ??
-              orderStatusLabel[order.status]}
+            {orderPage.closed[status as keyof typeof orderPage.closed] ??
+              orderStatusLabel[status]}
           </p>
         )}
 

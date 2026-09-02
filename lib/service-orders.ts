@@ -3,6 +3,8 @@ import { appUrl } from "./app-url";
 import { isAiCheckKind, isValidWordCount, quote } from "./ai-check-pricing";
 import {
   classifyPayosPayment,
+  PAYOS_DEAD_STATES,
+  PAYOS_MONEY_STATES,
   payosPaymentLinkMatches,
   payosReviewReason,
   payosTransactionTime,
@@ -35,6 +37,7 @@ export const SERVICE_ORDER_TTL_HOURS = 24;
 
 export type ServiceOrderView =
   | "paid"
+  | "cancelled"
   | "cancelled_checkout"
   | "open"
   | "closed";
@@ -52,6 +55,11 @@ export function serviceOrderView(
   cancelledCheckout: boolean,
 ): ServiceOrderView {
   if (order.status === "paid") return "paid";
+  // `cancelled` tách khỏi `closed` từ khi luồng dịch vụ hủy đơn thật. Gộp lại
+  // thì một đơn vừa được hủy theo yêu cầu sẽ đọc là "quá hạn hoặc đã hủy" — một
+  // câu nói chung cho hai chuyện khác nhau, ngay lúc người dùng cần xác nhận
+  // rằng thao tác vừa rồi đã có tác dụng.
+  if (order.status === "cancelled") return "cancelled";
   const open = order.status === "pending" && order.expiresAt > now;
   if (!open) return "closed";
   return cancelledCheckout ? "cancelled_checkout" : "open";
@@ -390,6 +398,103 @@ export async function processServicePayment(input: PayosPaymentEvent) {
 }
 
 /**
+ * Đóng một đơn dịch vụ đang chờ, sau khi đã đóng link PayOS của nó.
+ *
+ * Bản song song của `cancelOrder`, và cố ý giữ nguyên thứ tự: HỎI PayOS TRƯỚC,
+ * từ chối khi link đang giữ tiền, rồi mới ghi. Trước đây luồng dịch vụ không có
+ * hàm này chút nào — `?huy=1` chỉ đổi bộ chữ trên trang kết quả — nên một học
+ * viên bấm "Hủy" trên PayOS vẫn để lại một đơn `pending` và một link sống suốt
+ * 24 giờ, tức vẫn trả tiền được cho một đơn mà họ tin là đã hủy.
+ *
+ * Đơn giản hơn `cancelOrder` ở đúng một điểm: không có ghế và không có credits
+ * để trả lại, nên một `updateMany` có lọc `status: "pending"` là đủ nguyên tử.
+ */
+export async function cancelServiceOrder(
+  orderId: string,
+  options: { userId?: string; as?: "cancelled" | "expired" } = {},
+) {
+  const { userId, as = "cancelled" } = options;
+  const order = await prisma.serviceOrder.findFirst({
+    where: { id: orderId, status: "pending", ...(userId ? { userId } : {}) },
+    select: { id: true, code: true, provider: true, providerRef: true, checkoutUrl: true },
+  });
+  if (!order) return { cancelled: false as const, reason: "not_pending" as const };
+
+  const hasRemoteLink = order.providerRef !== null || order.checkoutUrl !== null;
+  if (order.provider === "payos" && hasRemoteLink) {
+    try {
+      let remote = await payosClient().paymentRequests.get(order.code);
+      if (PAYOS_MONEY_STATES.has(remote.status)) {
+        return { cancelled: false as const, reason: "payment_in_progress" as const };
+      }
+      if (remote.status === "PENDING") {
+        remote = await payosClient().paymentRequests.cancel(
+          order.code,
+          as === "expired" ? "Hết hạn đơn dịch vụ" : "Học viên hủy đơn",
+        );
+      }
+      if (PAYOS_MONEY_STATES.has(remote.status) || remote.status === "PENDING") {
+        return { cancelled: false as const, reason: "payment_in_progress" as const };
+      }
+    } catch (error) {
+      if (!isPayosNotFound(error)) {
+        console.error(`[payos] Không thể đóng link đơn dịch vụ #${order.code}:`, error);
+        return { cancelled: false as const, reason: "gateway_unavailable" as const };
+      }
+    }
+  }
+
+  const flipped = await prisma.serviceOrder.updateMany({
+    where: { id: order.id, status: "pending", ...(userId ? { userId } : {}) },
+    data: { status: as, closedAt: new Date() },
+  });
+  return flipped.count === 1
+    ? { cancelled: true as const }
+    : { cancelled: false as const, reason: "not_pending" as const };
+}
+
+/**
+ * Bản dịch vụ của `syncPayosOrderStatus`: chỉ đọc trạng thái link, không hủy gì
+ * ở PayOS, và chỉ ghi khi PayOS đã tự coi link là chết.
+ */
+export async function syncPayosServiceOrderStatus(
+  orderId: string,
+  options: { userId?: string } = {},
+) {
+  const order = await prisma.serviceOrder.findFirst({
+    where: {
+      id: orderId,
+      status: "pending",
+      ...(options.userId ? { userId: options.userId } : {}),
+    },
+    select: { id: true, code: true, provider: true, providerRef: true, checkoutUrl: true },
+  });
+  if (!order || order.provider !== "payos") return { closed: false as const };
+  if (order.providerRef === null && order.checkoutUrl === null) {
+    return { closed: false as const };
+  }
+
+  let remote;
+  try {
+    remote = await payosClient().paymentRequests.get(order.code);
+  } catch (error) {
+    if (!isPayosNotFound(error)) {
+      console.error(`[payos] Không đọc được trạng thái đơn dịch vụ #${order.code}:`, error);
+    }
+    return { closed: false as const };
+  }
+
+  const as = PAYOS_DEAD_STATES[remote.status];
+  if (!as) return { closed: false as const };
+
+  const flipped = await prisma.serviceOrder.updateMany({
+    where: { id: order.id, status: "pending" },
+    data: { status: as, closedAt: new Date() },
+  });
+  return flipped.count === 1 ? { closed: true as const, as } : { closed: false as const };
+}
+
+/**
  * Đóng các đơn dịch vụ quá hạn mà không ai trả tiền.
  *
  * Khác `expireStaleOrders`, ở đây KHÔNG gọi PayOS để hủy link: link PayOS đã
@@ -417,6 +522,11 @@ export async function findServiceOrder(ref: string, userId: string) {
   return prisma.serviceOrder.findFirst({
     where: { ref, userId },
     select: {
+      // `id` và `providerRef` là hai thứ trang kết quả cần để tự hủy đơn khi
+      // PayOS trả người dùng về: `providerRef` để khớp `?id=` (chốt CSRF y hệt
+      // /thanh-toan/huy), `id` để gọi `cancelServiceOrder`.
+      id: true,
+      providerRef: true,
       code: true,
       kind: true,
       tier: true,

@@ -4,8 +4,10 @@ import { revalidatePath, revalidateTag } from "next/cache";
 import { parseId } from "@/lib/action-input";
 import { auth } from "@/lib/auth";
 import { allowUserAction } from "@/lib/auth-throttle";
+import { markCheckoutHandoff } from "@/lib/checkout-handoff";
 import { cancelOrder } from "@/lib/orders";
 import { ensurePayosCheckout } from "@/lib/payment-checkout";
+import { prisma } from "@/lib/prisma";
 import { COURSES_TAG } from "@/lib/cache-tags";
 
 const BUSY = "Bạn vừa thao tác quá nhiều lần. Vui lòng thử lại sau ít phút.";
@@ -65,7 +67,16 @@ export async function retryMyPayment(orderId: unknown) {
 
   const result = await ensurePayosCheckout(id, session.user.id);
   revalidatePath("/tai-khoan/don-hang");
-  return result.ok
-    ? { ok: true as const, checkoutUrl: result.checkoutUrl }
-    : { ok: false as const, message: result.message };
+  if (!result.ok) return { ok: false as const, message: result.message };
+
+  // Lần thử lại cũng là một lần bàn giao sang PayOS, nên nó cũng phải để lại
+  // dấu — nếu không, đúng những đơn đã một lần lỡ nhịp lại là những đơn không ai
+  // thu hồi được. `ensurePayosCheckout` đã kiểm đơn thuộc về người này.
+  const order = await prisma.order.findFirst({
+    where: { id, userId: session.user.id },
+    select: { code: true },
+  });
+  if (order) await markCheckoutHandoff({ kind: "order", key: String(order.code) });
+
+  return { ok: true as const, checkoutUrl: result.checkoutUrl };
 }

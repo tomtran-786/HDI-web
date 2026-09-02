@@ -4,6 +4,10 @@ const mocks = vi.hoisted(() => ({
   auth: vi.fn(),
   findFirst: vi.fn(),
   findServiceOrder: vi.fn(),
+  syncPayosOrderStatus: vi.fn(),
+  syncPayosServiceOrderStatus: vi.fn(),
+  allowUserAction: vi.fn(),
+  clearCheckoutHandoff: vi.fn(),
 }));
 
 vi.mock("@/lib/auth", () => ({ auth: mocks.auth }));
@@ -15,8 +19,19 @@ vi.mock("@/lib/service-orders", async () => {
   const actual = await vi.importActual<typeof import("@/lib/service-orders")>(
     "@/lib/service-orders",
   );
-  return { ...actual, findServiceOrder: mocks.findServiceOrder };
+  return {
+    ...actual,
+    findServiceOrder: mocks.findServiceOrder,
+    syncPayosServiceOrderStatus: mocks.syncPayosServiceOrderStatus,
+  };
 });
+vi.mock("@/lib/orders", () => ({
+  syncPayosOrderStatus: mocks.syncPayosOrderStatus,
+}));
+vi.mock("@/lib/auth-throttle", () => ({ allowUserAction: mocks.allowUserAction }));
+vi.mock("@/lib/checkout-handoff", () => ({
+  clearCheckoutHandoff: mocks.clearCheckoutHandoff,
+}));
 
 import { GET } from "@/app/api/trang-thai-don/route";
 
@@ -26,6 +41,9 @@ const call = (query: string) =>
 describe("GET /api/trang-thai-don", () => {
   beforeEach(() => {
     for (const mock of Object.values(mocks)) mock.mockReset();
+    mocks.allowUserAction.mockResolvedValue(true);
+    mocks.syncPayosOrderStatus.mockResolvedValue({ closed: false });
+    mocks.syncPayosServiceOrderStatus.mockResolvedValue({ closed: false });
   });
 
   it("từ chối khi chưa đăng nhập, trước khi chạm database", async () => {
@@ -40,7 +58,7 @@ describe("GET /api/trang-thai-don", () => {
 
   it("không bao giờ đọc đơn ngoài tài khoản đang đăng nhập", async () => {
     mocks.auth.mockResolvedValue({ user: { id: "user-1" } });
-    mocks.findFirst.mockResolvedValue({ status: "pending" });
+    mocks.findFirst.mockResolvedValue({ id: "order-1", status: "pending" });
 
     await call("?donHang=100018");
 
@@ -54,13 +72,48 @@ describe("GET /api/trang-thai-don", () => {
 
   it("trả trạng thái đơn hàng kèm no-store", async () => {
     mocks.auth.mockResolvedValue({ user: { id: "user-1" } });
-    mocks.findFirst.mockResolvedValue({ status: "paid" });
+    mocks.findFirst.mockResolvedValue({ id: "order-1", status: "paid" });
 
     const response = await call("?donHang=100018");
 
     expect(response.status).toBe(200);
     await expect(response.json()).resolves.toEqual({ trangThai: "paid" });
     expect(response.headers.get("cache-control")).toContain("no-store");
+    // Đơn đã chốt thì không có gì để hỏi PayOS nữa.
+    expect(mocks.syncPayosOrderStatus).not.toHaveBeenCalled();
+    // …và cũng không còn phiên thanh toán nào để thu hồi. Đây là Route Handler
+    // duy nhất chạy trên trang kết quả, nên đây là chỗ duy nhất xóa được dấu
+    // trên đường trả tiền thành công.
+    expect(mocks.clearCheckoutHandoff).toHaveBeenCalled();
+  });
+
+  it("hỏi PayOS trước khi trả lời cho một đơn còn chờ, và trả về trạng thái mới", async () => {
+    mocks.auth.mockResolvedValue({ user: { id: "user-1" } });
+    mocks.findFirst.mockResolvedValue({ id: "order-1", status: "pending" });
+    mocks.syncPayosOrderStatus.mockResolvedValue({ closed: true, as: "cancelled" });
+
+    const response = await call("?donHang=100018");
+
+    // Không có bước này, PaymentPoll đọc mãi một chuỗi "pending" không bao giờ
+    // đổi: PayOS không gửi webhook nào cho việc hủy.
+    expect(mocks.syncPayosOrderStatus).toHaveBeenCalledWith("order-1", {
+      userId: "user-1",
+    });
+    await expect(response.json()).resolves.toEqual({ trangThai: "cancelled" });
+  });
+
+  it("chạm trần đồng bộ thì lùi về đọc database, không phải trả lỗi", async () => {
+    mocks.auth.mockResolvedValue({ user: { id: "user-1" } });
+    mocks.findFirst.mockResolvedValue({ id: "order-1", status: "pending" });
+    mocks.allowUserAction.mockResolvedValue(false);
+
+    const response = await call("?donHang=100018");
+
+    expect(mocks.syncPayosOrderStatus).not.toHaveBeenCalled();
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toEqual({ trangThai: "pending" });
+    // Đơn vẫn đang chờ nên dấu bàn giao phải được giữ lại.
+    expect(mocks.clearCheckoutHandoff).not.toHaveBeenCalled();
   });
 
   it("đơn không phải của mình trả 404 giống hệt đơn không tồn tại", async () => {
@@ -76,6 +129,7 @@ describe("GET /api/trang-thai-don", () => {
   it("tính trạng thái đơn dịch vụ đã hết hạn là closed dù status vẫn pending", async () => {
     mocks.auth.mockResolvedValue({ user: { id: "user-1" } });
     mocks.findServiceOrder.mockResolvedValue({
+      id: "svc-1",
       status: "pending",
       expiresAt: new Date(Date.now() - 60_000),
     });

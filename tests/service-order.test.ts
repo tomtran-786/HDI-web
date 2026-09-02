@@ -6,6 +6,7 @@ const mocks = vi.hoisted(() => ({
   updateMany: vi.fn(),
   payosCreate: vi.fn(),
   payosGet: vi.fn(),
+  payosCancel: vi.fn(),
   isPayosNotFound: vi.fn(),
 }));
 
@@ -20,12 +21,21 @@ vi.mock("@/lib/prisma", () => ({
 }));
 vi.mock("@/lib/payos", () => ({
   payosClient: () => ({
-    paymentRequests: { create: mocks.payosCreate, get: mocks.payosGet },
+    paymentRequests: {
+      create: mocks.payosCreate,
+      get: mocks.payosGet,
+      cancel: mocks.payosCancel,
+    },
   }),
   isPayosNotFound: mocks.isPayosNotFound,
 }));
 
-import { createServiceOrder, ensureServiceCheckout } from "@/lib/service-orders";
+import {
+  cancelServiceOrder,
+  createServiceOrder,
+  ensureServiceCheckout,
+  syncPayosServiceOrderStatus,
+} from "@/lib/service-orders";
 
 const USER = "user-1";
 
@@ -184,5 +194,100 @@ describe("đơn dịch vụ check AI", () => {
         data: { provider: "payos", providerRef: "link-cu" },
       }),
     );
+  });
+});
+
+/**
+ * Trước đây luồng dịch vụ KHÔNG có đường hủy nào: `cancelUrl` trỏ về trang kết
+ * quả với `?huy=1`, và cờ đó chỉ đổi bộ chữ. Đơn ở nguyên `pending` và link
+ * PayOS sống tiếp đủ 24 giờ, nên một học viên vừa bấm "Hủy" vẫn chuyển khoản
+ * được cho một đơn họ tin là đã bỏ.
+ */
+describe("hủy đơn dịch vụ", () => {
+  const pending = {
+    id: "svc-1",
+    code: 900_000_001,
+    provider: "payos",
+    providerRef: "link-1",
+    checkoutUrl: "https://pay.payos.vn/web/link-1",
+  };
+
+  beforeEach(() => {
+    for (const mock of Object.values(mocks)) mock.mockReset();
+    mocks.isPayosNotFound.mockReturnValue(false);
+    mocks.findFirst.mockResolvedValue(pending);
+    mocks.updateMany.mockResolvedValue({ count: 1 });
+  });
+
+  it("đóng link PayOS TRƯỚC khi ghi trạng thái", async () => {
+    mocks.payosGet.mockResolvedValue({ status: "PENDING" });
+    mocks.payosCancel.mockResolvedValue({ status: "CANCELLED" });
+
+    await expect(
+      cancelServiceOrder("svc-1", { userId: USER }),
+    ).resolves.toEqual({ cancelled: true });
+    expect(mocks.payosCancel).toHaveBeenCalledWith(900_000_001, "Học viên hủy đơn");
+    expect(mocks.payosCancel.mock.invocationCallOrder[0]).toBeLessThan(
+      mocks.updateMany.mock.invocationCallOrder[0]!,
+    );
+  });
+
+  it("không hủy khi PayOS đang giữ tiền", async () => {
+    for (const status of ["PAID", "PROCESSING", "UNDERPAID"]) {
+      mocks.updateMany.mockClear();
+      mocks.payosGet.mockResolvedValue({ status });
+
+      await expect(cancelServiceOrder("svc-1")).resolves.toEqual({
+        cancelled: false,
+        reason: "payment_in_progress",
+      });
+      expect(mocks.updateMany).not.toHaveBeenCalled();
+    }
+  });
+
+  it("PayOS chập thì giữ nguyên đơn, không đóng bừa", async () => {
+    mocks.payosGet.mockRejectedValue(new Error("gateway unavailable"));
+
+    await expect(cancelServiceOrder("svc-1")).resolves.toEqual({
+      cancelled: false,
+      reason: "gateway_unavailable",
+    });
+    expect(mocks.updateMany).not.toHaveBeenCalled();
+  });
+
+  it("userId đi vào `where`, nên id của người khác không hủy được gì", async () => {
+    mocks.payosGet.mockResolvedValue({ status: "CANCELLED" });
+
+    await cancelServiceOrder("svc-1", { userId: USER });
+
+    expect(mocks.findFirst).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: "svc-1", status: "pending", userId: USER },
+      }),
+    );
+    expect(mocks.updateMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: "svc-1", status: "pending", userId: USER },
+      }),
+    );
+  });
+
+  it("đồng bộ chỉ ĐỌC: đóng đơn khi link đã chết, không bao giờ gọi cancel", async () => {
+    mocks.payosGet.mockResolvedValue({ status: "CANCELLED" });
+
+    await expect(syncPayosServiceOrderStatus("svc-1")).resolves.toEqual({
+      closed: true,
+      as: "cancelled",
+    });
+    expect(mocks.payosCancel).not.toHaveBeenCalled();
+  });
+
+  it("đồng bộ không đụng vào đơn khi link còn PENDING", async () => {
+    mocks.payosGet.mockResolvedValue({ status: "PENDING" });
+
+    await expect(syncPayosServiceOrderStatus("svc-1")).resolves.toEqual({
+      closed: false,
+    });
+    expect(mocks.updateMany).not.toHaveBeenCalled();
   });
 });

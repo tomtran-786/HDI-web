@@ -4,6 +4,7 @@ import { Source_Sans_3 } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
 import { SessionProvider } from "next-auth/react";
 import { CartProvider } from "@/components/cart-provider";
+import { CheckoutReclaim } from "@/components/checkout-reclaim";
 import { ContactDock } from "@/components/contact-dock";
 import { ScrollProgress } from "@/components/scroll-progress";
 import { SiteHeader } from "@/components/site-header";
@@ -74,6 +75,9 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
       <main className="flex-1">{children}</main>
       <SiteFooter />
       <ContactDock signedIn={Boolean(session?.user?.id)} />
+      {/* Không tốn gì cho khách thường: component tự dừng lại ngay khi thấy
+          trình duyệt không mang dấu bàn giao PayOS nào. */}
+      <CheckoutReclaim />
     </CartProvider>
   );
 

@@ -95,6 +95,9 @@ export const aiCheck = {
     pendingTitle: "Đơn đã tạo, đang chờ thanh toán",
     pendingBody:
       "Nếu bạn đã chuyển khoản, trạng thái sẽ đổi trong ít phút sau khi ngân hàng báo về. Bạn có thể gửi bài trước.",
+    releasedTitle: "Đã hủy đơn dịch vụ",
+    releasedBody:
+      "Link thanh toán trên PayOS đã đóng nên không còn khoản nào có thể bị trừ. Bạn có thể tạo lại đơn mới bất cứ lúc nào.",
     cancelledTitle: "Bạn đã rời trang thanh toán",
     cancelledBody:
       "Đơn vẫn được giữ trong thời hạn hiển thị bên dưới. Bạn có thể mở lại PayOS để tiếp tục, hoặc quay lại tạo đơn khác.",
@@ -111,5 +114,6 @@ export const aiCheck = {
       "Nhắn cho HDI kèm mã đơn ở trên và đính kèm file bản thảo (.doc/.docx/.pdf).",
     sendCta: "Mở Zalo để gửi bài",
     back: "Tạo đơn khác",
+    cancel: "Hủy đơn này",
   },
 } as const;

@@ -13,6 +13,7 @@ const mocks = vi.hoisted(() => ({
   allowUserAction: vi.fn(),
   createServiceOrder: vi.fn(),
   ensureServiceCheckout: vi.fn(),
+  markCheckoutHandoff: vi.fn(),
 }));
 
 vi.mock("next/navigation", () => ({ redirect: mocks.redirect }));
@@ -22,6 +23,10 @@ vi.mock("@/lib/auth-throttle", () => ({ allowUserAction: mocks.allowUserAction }
 vi.mock("@/lib/service-orders", () => ({
   createServiceOrder: mocks.createServiceOrder,
   ensureServiceCheckout: mocks.ensureServiceCheckout,
+  cancelServiceOrder: vi.fn(),
+}));
+vi.mock("@/lib/checkout-handoff", () => ({
+  markCheckoutHandoff: mocks.markCheckoutHandoff,
 }));
 
 import { startServiceCheckout } from "@/app/kiem-tra-ai-dao-van/actions";

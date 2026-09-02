@@ -18,6 +18,7 @@ export const cartModal = {
   selected: "Đã chọn",
   empty: "Chọn ít nhất một khóa đang mở để thanh toán.",
   total: "Tổng cộng",
+  openPendingOrder: (code: number) => `Mở đơn #${code} để hủy hoặc thanh toán tiếp.`,
   paying: "Đang kết nối PayOS…",
   checkout: "Thanh toán",
   availability: {
@@ -154,10 +155,46 @@ export const paymentCancelPage = {
     gateway_unavailable:
       "Chưa liên hệ được PayOS nên đơn vẫn được giữ, để tránh hủy nhầm một khoản đang thanh toán. Bạn có thể thử lại bên dưới.",
   },
+  throttled: {
+    title: "Bạn vừa thao tác quá nhiều lần",
+    subtitle:
+      "Mỗi lần hủy là một lượt gọi sang PayOS nên số lượt mỗi giờ có giới hạn. Đơn vẫn đang được giữ nguyên; vui lòng thử lại sau ít phút trong trang đơn hàng.",
+  },
   backToOrder: (code: number) => `Quay lại đơn #${code}`,
 } as const;
 
+/**
+ * Banner khi HDI tự thu hồi một phiên thanh toán bị bỏ dở.
+ *
+ * Nói thẳng ba điều, vì đây là một việc HDI làm mà học viên không bấm: đơn nào,
+ * chuyện gì đã xảy ra, và cách lấy lại lựa chọn cũ. Giỏ hàng đã bị dọn từ lúc
+ * bàn giao sang PayOS, nên nếu không có nút "Đặt lại đơn" thì một lần thu hồi
+ * nhầm — người dùng chỉ mở tab thứ hai trong lúc đang trả tiền — sẽ bắt họ chọn
+ * lại từ đầu.
+ */
+export const checkoutReclaim = {
+  title: (code: number) => `Đã hủy đơn #${code} và trả lại chỗ`,
+  body:
+    "Bạn đã rời trang thanh toán PayOS mà chưa hoàn tất, nên HDI đóng link và trả chỗ về cho khóa học. Không có khoản nào bị trừ.",
+  restore: "Đặt lại đơn",
+  dismiss: "Đóng",
+} as const;
+
 export const paymentResultPage = {
+  /**
+   * Trang quay lại của PayOS không chỉ có "đã trả" và "đang chờ". Học viên tới
+   * đây với một đơn đã đóng cũng là chuyện thường: link hết hạn giữa chừng, hoặc
+   * họ đã hủy ở một thiết bị khác. Nói đúng trạng thái đó thay vì hứa một xác
+   * nhận sẽ không bao giờ tới.
+   */
+  closed: {
+    title: "Đơn này đã đóng",
+    cancelled:
+      "Đơn đã được hủy và chỗ đã được trả lại. Bạn có thể đặt lại bất cứ lúc nào khóa học còn chỗ.",
+    expired:
+      "Link thanh toán đã hết hạn nên đơn tự đóng. Bạn có thể đặt lại nếu khóa học vẫn còn chỗ.",
+    refunded: "Đơn này đã được hoàn tiền.",
+  },
   pollingHint: "Đang tự động kiểm tra xác nhận từ PayOS…",
   pollingExhausted:
     "Vẫn chưa nhận được xác nhận. PayOS đôi khi mất vài phút để gửi webhook — bấm kiểm tra lại, hoặc liên hệ Zalo/email nếu bạn chắc đã thanh toán.",

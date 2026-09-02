@@ -6,7 +6,13 @@ import { allowUserAction } from "@/lib/auth-throttle";
 import { isAiCheckKind, isValidWordCount } from "@/lib/ai-check-pricing";
 import { currentProfile } from "@/lib/current-profile";
 import { isProfileComplete } from "@/lib/profile";
-import { createServiceOrder, ensureServiceCheckout } from "@/lib/service-orders";
+import { markCheckoutHandoff } from "@/lib/checkout-handoff";
+import { parseId } from "@/lib/action-input";
+import {
+  cancelServiceOrder,
+  createServiceOrder,
+  ensureServiceCheckout,
+} from "@/lib/service-orders";
 
 export type QuoteState = { error?: string };
 
@@ -78,5 +84,47 @@ export async function startServiceCheckout(
     return { error: checkout.message };
   }
 
+  // Cùng lý do với luồng khóa học: đây là Server Function cuối cùng chạy trước
+  // khi trình duyệt rời sang PayOS, nên đây là chỗ duy nhất đặt được dấu bàn
+  // giao. Đơn dịch vụ không giữ ghế của ai, nhưng nó vẫn là một link sống nhận
+  // được tiền cho một việc học viên tin là đã hủy.
+  await markCheckoutHandoff({ kind: "service", key: order.ref });
   redirect(checkout.checkoutUrl);
+}
+
+/**
+ * Học viên tự hủy đơn dịch vụ chưa thanh toán của mình.
+ *
+ * Đối xứng với `cancelMyOrder` của luồng khóa học, kể cả ở chỗ quan trọng nhất:
+ * `userId` đi vào `where` của `cancelServiceOrder` chứ không được kiểm sau khi
+ * đọc. `orderId` đến từ payload RSC nên nó cũng do trình duyệt nắm y như một
+ * tham số URL, và `parseId` chạy trước mọi thứ để một object không lọt xuống
+ * Prisma dưới dạng bộ lọc.
+ */
+export async function cancelMyServiceOrder(orderId: unknown) {
+  const session = await auth();
+  if (!session?.user?.id) return { ok: false, message: "Chưa đăng nhập." };
+
+  const id = parseId(orderId);
+  if (!id) return { ok: false, message: "Đơn dịch vụ không hợp lệ." };
+  // Mỗi lần hủy là một tới hai lượt gọi sang PayOS, cùng trần với luồng khóa học.
+  if (!(await allowUserAction("service_order_cancel", session.user.id, 10))) {
+    return {
+      ok: false,
+      message: "Bạn vừa thao tác quá nhiều lần. Vui lòng thử lại sau ít phút.",
+    };
+  }
+
+  const result = await cancelServiceOrder(id, { userId: session.user.id });
+  return result.cancelled
+    ? { ok: true, message: "Đã hủy đơn dịch vụ." }
+    : {
+        ok: false,
+        message:
+          result.reason === "gateway_unavailable"
+            ? "Chưa liên hệ được PayOS nên đơn vẫn được giữ để tránh hủy nhầm khoản đang thanh toán."
+            : result.reason === "payment_in_progress"
+              ? "PayOS đang xử lý hoặc đã nhận tiền; không thể tự động hủy đơn."
+              : "Đơn này không còn ở trạng thái chờ thanh toán.",
+      };
 }

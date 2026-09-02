@@ -2,17 +2,25 @@
 
 import { revalidateTag } from "next/cache";
 import { redirect } from "next/navigation";
+import { parseId } from "@/lib/action-input";
 import { auth } from "@/lib/auth";
 import { allowUserAction } from "@/lib/auth-throttle";
 import { currentProfile } from "@/lib/current-profile";
 import { isProfileComplete } from "@/lib/profile";
 import { readCartIds, writeCartIds } from "@/lib/cart";
+import { markCheckoutHandoff } from "@/lib/checkout-handoff";
+import { prisma } from "@/lib/prisma";
 import { normalizeMemberEmails, resolveGroupMembers } from "@/lib/group-members";
 import { cancelOrder, createOrder } from "@/lib/orders";
 import { ensurePayosCheckout } from "@/lib/payment-checkout";
 import { COURSES_TAG } from "@/lib/cache-tags";
 
-export type CheckoutState = { error?: string; refreshCatalog?: boolean };
+export type CheckoutState = {
+  error?: string;
+  refreshCatalog?: boolean;
+  /** Mã đơn đang chờ đã chặn lần đặt này — giỏ hàng vẽ nó thành một liên kết. */
+  pendingOrderCode?: number;
+};
 
 const LANDING_CART = "/?cart=1";
 
@@ -73,7 +81,11 @@ export async function checkout(
   const useCredit = formData.get("duNgCredit") === "1";
   const result = await createOrder(session.user.id, ids, { members, useCredit });
   if (!result.ok) {
-    return { error: result.message, refreshCatalog: true };
+    return {
+      error: result.message,
+      refreshCatalog: true,
+      pendingOrderCode: result.pendingOrderCode,
+    };
   }
   revalidateTag(COURSES_TAG, { expire: 0 });
 
@@ -111,6 +123,49 @@ export async function checkout(
   // new order. Clear only after a recoverable PayOS/order destination exists.
   await writeCartIds([]);
 
-  if (payment.ok) redirect(payment.checkoutUrl);
+  if (payment.ok) {
+    // Đánh dấu TRƯỚC khi rời đi. Cookie chỉ đặt được từ một Server Function, và
+    // sau `redirect` thì không còn Server Function nào chạy nữa — nên đây là cơ
+    // hội duy nhất để ghi lại rằng trình duyệt này đang có một phiên thanh toán
+    // treo dở. Xem app/api/thanh-toan/roi-trang/route.ts.
+    await markCheckoutHandoff({ kind: "order", key: String(result.code) });
+    redirect(payment.checkoutUrl);
+  }
   redirect(`/tai-khoan/don-hang/${result.code}`);
+}
+
+/**
+ * Dựng lại giỏ hàng từ một đơn đã đóng.
+ *
+ * Đường phục hồi cho việc tự hủy: giỏ hàng bị dọn ngay lúc bàn giao sang PayOS,
+ * nên một đơn bị thu hồi — dù đúng ý người dùng hay do họ chỉ mở tab thứ hai —
+ * để lại một giỏ trống và không có cách nào lấy lại lựa chọn cũ ngoài việc bấm
+ * lại từ đầu. Một cú bấm đưa mọi thứ về chỗ cũ.
+ *
+ * CHỈ nhận đơn đã đóng của CHÍNH người đang đăng nhập. Đơn `pending` bị loại
+ * không phải vì bảo mật mà vì đúng đắn: ghế của nó vẫn đang được giữ, và đổ nó
+ * vào giỏ sẽ dẫn thẳng tới một lần checkout bị `already_enrolled` từ chối.
+ */
+export async function restoreCartFromOrder(orderId: unknown) {
+  const session = await auth();
+  if (!session?.user?.id) return { ok: false as const };
+
+  const id = parseId(orderId);
+  if (!id) return { ok: false as const };
+
+  const order = await prisma.order.findFirst({
+    where: {
+      id,
+      userId: session.user.id,
+      status: { in: ["cancelled", "expired"] },
+    },
+    select: { items: { select: { courseId: true } } },
+  });
+  if (!order) return { ok: false as const };
+
+  // Đơn nhóm có nhiều dòng cho cùng một khóa, mỗi dòng một ghế. Giỏ hàng là một
+  // TẬP khóa, không phải danh sách ghế — số người được gõ lại ở ô mời nhóm.
+  const ids = [...new Set(order.items.map((item) => item.courseId))];
+  await writeCartIds(ids);
+  return { ok: true as const, count: ids.length };
 }

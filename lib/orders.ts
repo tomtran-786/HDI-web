@@ -33,6 +33,15 @@ export type OrderFailure = {
     | "no_seats"
     | "group_not_eligible";
   message: string;
+  /**
+   * Đơn đang chờ thanh toán đã chặn lần đặt này, nếu có.
+   *
+   * Chỉ có mặt ở `already_enrolled`, và nó là thứ biến một lời từ chối cụt thành
+   * một đường đi tiếp: đơn bỏ dở giữ ghế suốt hai giờ, nên trong quãng đó chính
+   * người mua bị chặn khỏi khóa của mình mà không được cho biết phải làm gì.
+   * Trang đơn hàng là nơi có nút hủy và nút thanh toán lại.
+   */
+  pendingOrderCode?: number;
 };
 
 /** Người trả tiền, rồi tới các thành viên, theo đúng thứ tự nhóm trưởng gõ. */
@@ -218,12 +227,26 @@ export async function createOrder(
       const clash = buyerIds.find((buyerId) => existing.has(`${buyerId}:${id}`));
       if (clash) {
         const email = emailById.get(clash);
+        // Đơn nào đang chặn? Chỉ tra khi đã chắc chắn từ chối, nên nó không nằm
+        // trên đường đi của một lần đặt đơn thành công. Lọc theo NGƯỜI TRẢ TIỀN
+        // vì chỉ đơn của họ mới hủy được từ trang đơn hàng của họ; một ghế do
+        // nhóm trưởng khác trả tiền thì mã đơn đó không giúp được gì.
+        const blocking = await tx.order.findFirst({
+          where: {
+            userId: payerUserId,
+            status: "pending",
+            items: { some: { courseId: id, memberUserId: clash } },
+          },
+          select: { code: true },
+          orderBy: { createdAt: "desc" },
+        });
         return {
           ok: false as const,
           reason: "already_enrolled" as const,
           message: email
             ? `Bạn ${email} đang có quyền hoặc đơn chờ thanh toán cho khóa ${title}.`
             : `Bạn đang có quyền hoặc đơn chờ thanh toán cho khóa ${title}.`,
+          ...(blocking ? { pendingOrderCode: blocking.code } : {}),
         };
       }
 
@@ -761,7 +784,8 @@ async function cancelOrderLocally(
   }, PAYMENT_TX);
 }
 
-const PAYOS_MONEY_STATES = new Set(["PAID", "PROCESSING", "UNDERPAID"]);
+/** Link đang giữ tiền: không đường hủy nào được phép đụng vào. */
+export const PAYOS_MONEY_STATES = new Set(["PAID", "PROCESSING", "UNDERPAID"]);
 
 /** Cancel/expire remotely first; gateway uncertainty never releases a seat. */
 export async function cancelOrder(
@@ -840,6 +864,77 @@ export async function cancelOrder(
   }
 
   return cancelOrderLocally(order.id, options);
+}
+
+/**
+ * Trạng thái link PayOS mà HDI coi là "đã chết, không còn nhận được tiền".
+ *
+ * `FAILED` và `EXPIRED` đi cùng `expired` chứ không `cancelled`: không ai từ
+ * chối đơn cả, nó chỉ hết đường sống. Chỉ `CANCELLED` mới là một quyết định của
+ * con người, và `OrderStatus` đã cố ý tách hai thứ đó ra.
+ */
+export const PAYOS_DEAD_STATES: Record<string, "cancelled" | "expired"> = {
+  CANCELLED: "cancelled",
+  EXPIRED: "expired",
+  FAILED: "expired",
+};
+
+/**
+ * Hỏi PayOS xem một đơn còn sống thật không, rồi đóng nó nếu không.
+ *
+ * PayOS KHÔNG gửi webhook cho việc hủy — mọi sự kiện nó gửi đều là sự kiện tiền
+ * (xem `classifyPayosPayment`). Nên nếu học viên bấm "Hủy" trên trang PayOS rồi
+ * đóng tab trước khi redirect kịp chạy, hoặc app ngân hàng nuốt mất deep link,
+ * thì phía HDI không có gì báo và đơn giữ ghế tới tận lượt cron 03:00. Hàm này
+ * là đường đi ngược lại: HDI chủ động hỏi.
+ *
+ * CHỈ ĐỌC, không bao giờ gọi `paymentRequests.cancel`. Đó là khác biệt quan
+ * trọng với `cancelOrder`: vì nó không tạo ra thay đổi nào ở PayOS, nó gọi được
+ * từ những chỗ mà một lệnh hủy sẽ là CSRF — kể cả khi `orderCode` bị đoán ra,
+ * kết quả tệ nhất là HDI đồng bộ đúng một sự thật đã có sẵn ngoài kia.
+ *
+ * Trạng thái có tiền (`PAID`/`PROCESSING`/`UNDERPAID`) và `PENDING` đều không bị
+ * đụng tới: webhook là chủ của nhóm đầu, và nhóm sau nghĩa là link vẫn sống.
+ */
+export async function syncPayosOrderStatus(
+  orderId: string,
+  options: { userId?: string } = {},
+) {
+  const order = await prisma.order.findFirst({
+    where: {
+      id: orderId,
+      status: "pending",
+      ...(options.userId ? { userId: options.userId } : {}),
+    },
+    select: { id: true, code: true, provider: true, providerRef: true, checkoutUrl: true },
+  });
+  // Cùng lý lẽ với `cancelOrder`: hai cột này còn null là bằng chứng không có
+  // link nào ngoài kia để mà hỏi.
+  if (!order || order.provider !== "payos") return { closed: false as const };
+  if (order.providerRef === null && order.checkoutUrl === null) {
+    return { closed: false as const };
+  }
+
+  let remote;
+  try {
+    remote = await payosClient().paymentRequests.get(order.code);
+  } catch (error) {
+    // Không tìm thấy KHÔNG được hiểu là đã hủy ở đây, khác với `cancelOrder`:
+    // ở đó người dùng vừa yêu cầu đóng đơn nên trả chỗ là làm đúng ý họ, còn ở
+    // đây không ai yêu cầu gì cả và một lỗi tra cứu không phải là bằng chứng.
+    if (!isPayosNotFound(error)) {
+      console.error(`[payos] Không đọc được trạng thái đơn #${order.code}:`, error);
+    }
+    return { closed: false as const };
+  }
+
+  const as = PAYOS_DEAD_STATES[remote.status];
+  if (!as) return { closed: false as const };
+
+  const result = await cancelOrderLocally(order.id, { ...options, as });
+  return result.cancelled
+    ? { closed: true as const, as, released: result.released }
+    : { closed: false as const };
 }
 
 /**
