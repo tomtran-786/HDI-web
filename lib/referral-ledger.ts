@@ -150,6 +150,50 @@ export async function settleCreditReservation(
   });
 }
 
+/**
+ * Đóng sổ lại khoản giữ chỗ khi một đơn được cứu từ trạng thái đã đóng.
+ *
+ * `settleCreditReservation` chỉ nhận hàng `reserved`. Nhưng nếu một lượt quét đã
+ * đóng đơn quá hạn TRƯỚC khi tiền của khách kịp về, nó cũng đã gọi
+ * `voidCreditReservation` — khoản đó giờ là hàng `void` và đã được cộng trả lại
+ * số dư. Cứu đơn thì phải trừ lại, nhưng CHỈ khi số dư hiện tại vẫn phủ được:
+ * nếu khách đã tiêu số credits đó cho một đơn khác thì trả về `false` để nơi gọi
+ * đẩy giao dịch sang đối soát thủ công thay vì cho số dư âm.
+ *
+ * PHẢI chạy trong transaction đã khóa hàng `users` FOR UPDATE — `creditBalanceVnd`
+ * đọc ở READ COMMITTED và kết quả ở đây quyết định một khoản chi.
+ */
+export async function reclaimCreditReservation(
+  db: ReferralDb,
+  input: { userId: string; orderId: string; amountVnd: number },
+  now: Date,
+): Promise<{ ok: boolean; reason?: "missing" | "balance_changed" }> {
+  if (input.amountVnd <= 0) return { ok: true };
+
+  const row = await db.referralLedger.findFirst({
+    where: { orderId: input.orderId, type: "redemption" },
+    select: { status: true },
+  });
+  if (!row) return { ok: false, reason: "missing" };
+  if (row.status === "applied") return { ok: true };
+
+  if (row.status === "void") {
+    // Số dư hiện tại đã CỘNG lại khoản void này; chỉ trừ lại khi vẫn còn đủ.
+    const balance = await creditBalanceVnd(db, input.userId, now);
+    if (balance < input.amountVnd) return { ok: false, reason: "balance_changed" };
+  }
+
+  await db.referralLedger.updateMany({
+    where: {
+      orderId: input.orderId,
+      type: "redemption",
+      status: { in: ["reserved", "void"] },
+    },
+    data: { status: "applied", settledAt: now },
+  });
+  return { ok: true };
+}
+
 export type CommissionRow = {
   userId: string;
   type: "commission";

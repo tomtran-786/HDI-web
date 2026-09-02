@@ -138,6 +138,13 @@ export async function POST(request: Request) {
     if ("review" in result && result.review) {
       await alertAdmins(result.review);
     }
+    // Đơn quá hạn được cứu vì tiền về muộn nhưng khóa vẫn còn ghế. Không phải
+    // lỗi — chỉ ghi một dòng để đối soát về sau lần ra được cái khoảng trễ.
+    if ("reclaimed" in result && result.reclaimed) {
+      console.warn(
+        `[payos-webhook] Đơn ${event.orderCode} được cứu từ trạng thái quá hạn sau thanh toán muộn.`,
+      );
+    }
     if ("fulfill" in result && result.fulfill && result.orderId) {
       const orderId = result.orderId;
       await fulfillOrderDrive(orderId).catch((error) =>

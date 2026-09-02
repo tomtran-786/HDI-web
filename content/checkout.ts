@@ -25,7 +25,7 @@ export const cartModal = {
    * hàng bị dọn ngay lúc đó. Không có dòng này thì người mua bị chuyển đi mà
    * không biết mình vừa rời site.
    */
-  payosHint: "Bạn sẽ được chuyển sang PayOS để thanh toán. Chỗ học được giữ 2 giờ.",
+  payosHint: "Bạn sẽ được chuyển sang PayOS để thanh toán. Chỗ học được giữ 6 giờ.",
   openPendingOrder: (code: number) => `Mở đơn #${code} để hủy hoặc thanh toán tiếp.`,
   paying: "Đang kết nối PayOS…",
   checkout: "Thanh toán",
@@ -118,7 +118,7 @@ export const orderPage = {
   awaitingGateway: {
     title: "Chờ thanh toán qua PayOS",
     body:
-      "Chỗ học đang được giữ trong 2 giờ. Hoàn tất trên PayOS; HDI chỉ xác nhận khi nhận được webhook có chữ ký hợp lệ.",
+      "Chỗ học đang được giữ trong 6 giờ. Hoàn tất trên PayOS; HDI chỉ xác nhận khi nhận được webhook có chữ ký hợp lệ.",
     hint: "Nếu đường dẫn chưa xuất hiện, PayOS có thể đang gián đoạn. Không tạo thêm đơn cho cùng khóa học.",
   },
   paid: {

@@ -1,6 +1,6 @@
 import { CHECKOUT_TX, PAYMENT_TX } from "./db-budget";
 import { prisma } from "./prisma";
-import { confirmEnrollments } from "./enrollment";
+import { confirmEnrollments, reactivateEnrollments, type Db } from "./enrollment";
 import { findCourse } from "./courses";
 import { isPayosNotFound, payosClient } from "./payos";
 import { seatPriceVnd, type GroupPricedCourse } from "./group-pricing";
@@ -8,6 +8,7 @@ import { groupApplies } from "./group-invite";
 import {
   accrueReferralCommission,
   creditBalanceVnd,
+  reclaimCreditReservation,
   reserveCredit,
   settleCreditReservation,
   voidCreditReservation,
@@ -20,9 +21,25 @@ import { creditToApply, referralDiscountVnd } from "./referral-pricing";
  * A pending enrolment occupies a place. Without a deadline an abandoned
  * checkout keeps that place forever and the course quietly looks
  * full — the failure nobody notices, because nothing errors. PayOS and the
- * local reservation share the same two-hour deadline.
+ * local reservation share the same deadline (see `expiredAt` in
+ * `lib/payment-checkout.ts`).
+ *
+ * Sáu giờ, không phải hai: chuyển khoản liên ngân hàng ngoài giờ hành chính có
+ * thể về chậm cả tiếng, và khi tiền về sau mốc này thì webhook đẩy giao dịch vào
+ * hàng đối soát thủ công thay vì cấp quyền — khách đã trả tiền mà vẫn thấy "Quá
+ * hạn". `ORDER_LATE_GRACE_MINUTES` là lớp vá thứ hai cho phần vẫn lọt qua.
  */
-export const ORDER_TTL_HOURS = 2;
+export const ORDER_TTL_HOURS = 6;
+
+/**
+ * Khoảng ân hạn sau `expiresAt` mà một khoản tiền về muộn vẫn được tự cấp quyền.
+ *
+ * Chỉ áp dụng khi mọi điều kiện khác của `classifyPayosPayment` đều thỏa (đúng
+ * số tiền, đúng link, đúng ghi danh) và khóa vẫn còn ghế trống — xem
+ * `reclaimLatePayment`. Ngoài khoảng này, hoặc khi ghế đã hết, giao dịch vẫn vào
+ * `requires_review` để một người xử lý.
+ */
+export const ORDER_LATE_GRACE_MINUTES = 90;
 
 export type OrderFailure = {
   ok: false;
@@ -517,6 +534,171 @@ export type PaymentReview = {
 };
 
 /**
+ * Số ghế đang bị giữ cho mỗi khóa: ghi danh `paid` còn hiệu lực, cộng các suất
+ * `pending` mà đơn của nó vẫn còn hạn (hoặc suất mồ côi không có dòng đơn nào).
+ *
+ * Cùng vị từ với truy vấn đếm ghế trong `createOrder`. Một đơn quá hạn KHÔNG
+ * tính vào vì `o.expires_at > now()` — nên đơn đang được cứu không tự chặn chính
+ * nó.
+ */
+async function countHeldSeats(
+  tx: Db,
+  courseIds: string[],
+): Promise<Map<string, number>> {
+  if (courseIds.length === 0) return new Map();
+  const rows = await tx.$queryRaw<{ courseId: string; held: bigint }[]>`
+    SELECT course_id AS "courseId", count(*)::bigint AS held
+      FROM enrollments
+     WHERE course_id = ANY(${courseIds}::text[])
+       AND (
+         (
+           status = 'paid'::enrollment_status
+           AND access_revoked_at IS NULL
+         )
+         OR (
+           status = 'pending'::enrollment_status
+           AND (
+             NOT EXISTS (
+               SELECT 1 FROM order_items oi
+                WHERE oi.enrollment_id = enrollments.id
+             )
+             OR EXISTS (
+               SELECT 1
+                 FROM order_items oi
+                 JOIN orders o ON o.id = oi.order_id
+                WHERE oi.enrollment_id = enrollments.id
+                  AND o.status = 'pending'::order_status
+                  AND o.expires_at > now()
+             )
+           )
+         )
+       )
+     GROUP BY course_id`;
+  return new Map(rows.map((row) => [row.courseId, Number(row.held)]));
+}
+
+type ReclaimItem = {
+  enrollmentId: string | null;
+  memberUserId: string;
+  courseId: string;
+  course: { capacity: number };
+  enrollment: { userId: string; status: string } | null;
+};
+
+/**
+ * Cửa quyết định "có được cứu một khoản tiền về muộn không".
+ *
+ * Chạy khi `classifyPayosPayment` đã trả `requires_review`. Chỉ mở khi thứ DUY
+ * NHẤT vướng là giao dịch xảy ra sau `expiresAt` và/hoặc đơn đã bị một lượt quét
+ * đóng thành `expired` — mọi điều kiện còn lại (đúng mã, đúng số tiền, đúng
+ * link, ghi danh nhất quán) phải sạch — VÀ khóa vẫn còn ghế, không có ghi danh
+ * hiệu lực nào khác cho cùng (người, khóa), và số dư credits vẫn phủ được phần
+ * đã giữ chỗ nếu lượt quét đã trả nó về ví.
+ *
+ * CHỈ ĐỌC. Khóa hàng `users` FOR UPDATE để hai vế đọc bên dưới (đếm ghế, số dư)
+ * không đua với một checkout song song, đúng kỷ luật của `createOrder`. Lệnh ghi
+ * `void → applied` cho credits do nơi gọi thực hiện sau khi cửa này mở.
+ *
+ * `adminOverride` bỏ đúng một điều kiện: khoảng ân hạn. Một quản trị viên đã
+ * nhìn giao dịch và xác nhận tiền có thật thì "muộn bao lâu" không còn là câu
+ * hỏi; ghế, ràng buộc ghi danh và số dư thì vẫn phải kiểm.
+ */
+async function reclaimLatePayment(
+  tx: Db,
+  input: {
+    order: LockedOrder;
+    items: ReclaimItem[];
+    transactionAt: Date | null;
+    providerCode: string;
+    receivedAmount: number;
+    currency: string;
+    paymentLinkMatches: boolean;
+    adminOverride?: boolean;
+  },
+): Promise<{ eligible: boolean; reason?: string }> {
+  const { order, items, transactionAt } = input;
+
+  if (input.providerCode !== "00") return { eligible: false, reason: "PayOS trả mã lỗi" };
+  if (!transactionAt) return { eligible: false, reason: "Không đọc được thời điểm giao dịch" };
+  if (input.receivedAmount !== order.amountVnd) {
+    return { eligible: false, reason: "Số tiền không khớp" };
+  }
+  if (input.currency !== "VND") return { eligible: false, reason: "Đơn vị tiền tệ lạ" };
+  if (!input.paymentLinkMatches) return { eligible: false, reason: "Payment link không khớp" };
+  if (order.status !== "pending" && order.status !== "expired") {
+    return { eligible: false, reason: `Đơn đang ở "${order.status}", không tự cứu` };
+  }
+
+  const reclaimableEnrollments =
+    items.length > 0 &&
+    items.every(
+      (item) =>
+        item.enrollmentId &&
+        item.enrollment?.userId === item.memberUserId &&
+        (item.enrollment.status === "pending" || item.enrollment.status === "cancelled"),
+    );
+  if (!reclaimableEnrollments) {
+    return { eligible: false, reason: "Ghi danh của đơn không nhất quán" };
+  }
+
+  if (!input.adminOverride) {
+    const graceMs = ORDER_LATE_GRACE_MINUTES * 60_000;
+    if (transactionAt.getTime() > order.expiresAt.getTime() + graceMs) {
+      return { eligible: false, reason: "Giao dịch quá xa hạn đơn" };
+    }
+  }
+
+  await tx.$queryRaw`SELECT id FROM users WHERE id = ${order.userId} FOR UPDATE`;
+
+  const courseIds = [...new Set(items.map((item) => item.courseId))];
+  const held = await countHeldSeats(tx, courseIds);
+  const needed = new Map<string, number>();
+  const capacity = new Map<string, number>();
+  for (const item of items) {
+    needed.set(item.courseId, (needed.get(item.courseId) ?? 0) + 1);
+    capacity.set(item.courseId, item.course.capacity);
+  }
+  const seatShort = courseIds.some(
+    (id) => (held.get(id) ?? 0) + (needed.get(id) ?? 0) > (capacity.get(id) ?? 0),
+  );
+  if (seatShort) return { eligible: false, reason: "Khóa đã hết chỗ" };
+
+  const enrollmentIds = items
+    .map((item) => item.enrollmentId)
+    .filter((id): id is string => id !== null);
+  const clash = await tx.enrollment.findFirst({
+    where: {
+      AND: [
+        { id: { notIn: enrollmentIds } },
+        { OR: [{ status: "pending" }, { status: "paid", accessRevokedAt: null }] },
+        { OR: items.map((item) => ({ userId: item.memberUserId, courseId: item.courseId })) },
+      ],
+    },
+    select: { id: true },
+  });
+  if (clash) return { eligible: false, reason: "Đã có ghi danh hiệu lực cho khóa này" };
+
+  if (order.creditAppliedVnd > 0) {
+    const redemption = await tx.referralLedger.findFirst({
+      where: { orderId: order.id, type: "redemption" },
+      select: { status: true },
+    });
+    if (!redemption) {
+      return { eligible: false, reason: "Không tìm thấy khoản giữ chỗ credits" };
+    }
+    if (redemption.status === "void") {
+      // Số dư đã CỘNG lại khoản void này; chỉ trừ lại được khi vẫn còn đủ.
+      const balance = await creditBalanceVnd(tx, order.userId, new Date());
+      if (balance < order.creditAppliedVnd) {
+        return { eligible: false, reason: "Số dư credits đã đổi" };
+      }
+    }
+  }
+
+  return { eligible: true };
+}
+
+/**
  * Record a signed PayOS event and update the order aggregate in one short
  * transaction. A crash can therefore leave neither half committed.
  */
@@ -596,6 +778,8 @@ export async function processPayosPayment(input: PayosPaymentEvent) {
       select: {
         enrollmentId: true,
         memberUserId: true,
+        courseId: true,
+        course: { select: { capacity: true } },
         enrollment: { select: { userId: true, status: true } },
       },
       orderBy: { id: "asc" },
@@ -628,7 +812,28 @@ export async function processPayosPayment(input: PayosPaymentEvent) {
       paymentLinkMatches,
       consistentEnrollments,
     };
-    const paymentStatus = classifyPayosPayment(classifierInput);
+    let paymentStatus = classifyPayosPayment(classifierInput);
+
+    // Cứu một khoản tiền về muộn. Nếu `classifyPayosPayment` chỉ vướng "giao
+    // dịch sau hạn đơn" hoặc "đơn đã bị một lượt quét đóng", mà khóa vẫn còn ghế
+    // và mọi thứ khác sạch, thì mở lại đơn thay vì đẩy vào hàng đối soát thủ
+    // công — khách trả đúng tiền, chỉ về chậm. Xem `reclaimLatePayment`.
+    let reclaimed = false;
+    if (paymentStatus === "requires_review") {
+      const gate = await reclaimLatePayment(tx, {
+        order,
+        items,
+        transactionAt: paidAt,
+        providerCode: input.code,
+        receivedAmount: input.amount,
+        currency: input.currency,
+        paymentLinkMatches,
+      });
+      if (gate.eligible) {
+        paymentStatus = "succeeded";
+        reclaimed = true;
+      }
+    }
 
     await tx.payment.create({
       data: {
@@ -667,7 +872,12 @@ export async function processPayosPayment(input: PayosPaymentEvent) {
 
     const moment = paidAt!;
     const flipped = await tx.order.updateMany({
-      where: { id: order.id, status: "pending" },
+      // Đơn được cứu đang ở `expired`, không phải `pending` — nới điều kiện cho
+      // đúng nhánh đó. Đường thường vẫn chỉ nhận `pending`.
+      where: {
+        id: order.id,
+        status: reclaimed ? { in: ["pending", "expired"] } : "pending",
+      },
       data: {
         status: "paid",
         paidAt: moment,
@@ -684,16 +894,40 @@ export async function processPayosPayment(input: PayosPaymentEvent) {
     // chú thích ở `confirmEnrollments`: transaction này chạy bên trong webhook,
     // và vượt hạn ở đây làm bay luôn hàng `payments` vừa ghi — tiền vào tài
     // khoản mà không để lại dấu vết nào, kể cả trong hàng chờ đối soát.
-    const { confirmed: enrolled } = await confirmEnrollments(
-      items.map((item) => item.enrollmentId!),
-      tx,
-      moment,
-    );
+    //
+    // Đơn được cứu cần `reactivateEnrollments`: một lượt quét đã hủy ghi danh
+    // của nó, nên `confirmEnrollments` (chỉ nhận `pending`) sẽ không vực dậy
+    // được hàng nào.
+    const { confirmed: enrolled } = reclaimed
+      ? await reactivateEnrollments(
+          items.map((item) => item.enrollmentId!),
+          tx,
+          moment,
+        )
+      : await confirmEnrollments(
+          items.map((item) => item.enrollmentId!),
+          tx,
+          moment,
+        );
 
     // Đóng sổ khoản credits đã giữ chỗ. Về số học là no-op — `reserved` và
     // `applied` đều được tính vào số dư — nhưng đối soát cần phân biệt "đang
-    // giữ" với "đã tiêu thật".
-    await settleCreditReservation(tx, order.id, moment);
+    // giữ" với "đã tiêu thật". Đơn được cứu có thể đã bị `voidCreditReservation`
+    // bởi lượt quét; `reclaimCreditReservation` trừ lại đúng khoản đó, và
+    // `reclaimLatePayment` đã kiểm số dư còn phủ trước khi tới đây.
+    if (reclaimed) {
+      await reclaimCreditReservation(
+        tx,
+        {
+          userId: order.userId,
+          orderId: order.id,
+          amountVnd: order.creditAppliedVnd,
+        },
+        moment,
+      );
+    } else {
+      await settleCreditReservation(tx, order.id, moment);
+    }
 
     /**
      * Hoa hồng cho người giới thiệu của NGƯỜI TRẢ TIỀN.
@@ -729,7 +963,143 @@ export async function processPayosPayment(input: PayosPaymentEvent) {
       orderId: order.id,
       enrolled,
       fulfill: true as const,
+      // Đúng khi đơn được vực dậy từ `expired` sau một khoản tiền về muộn — để
+      // route webhook ghi lại một dòng log (không phải một lá thư: đây là thành
+      // công, không phải việc cần người xử lý).
+      reclaimed,
     };
+  }, PAYMENT_TX);
+}
+
+/**
+ * Cấp quyền cho một giao dịch đang nằm trong hàng đối soát thủ công.
+ *
+ * KHÔNG phải một "nút đã thanh toán" mới. Nó chạy đúng cái cổng
+ * `reclaimLatePayment` mà webhook đã chạy, chỉ bỏ đúng một ràng buộc — khoảng ân
+ * hạn — vì một người đã nhìn giao dịch và xác nhận tiền có thật. Ghế, ràng buộc
+ * ghi danh và số dư credits vẫn được kiểm; hết ghế thì trả `granted: false` để
+ * quản trị viên chọn hoàn tiền.
+ *
+ * Phần giao hàng (Drive + thư) chạy NGOÀI transaction này, do nơi gọi lo — y
+ * hệt route webhook.
+ */
+export async function grantReviewedPayment(paymentId: string) {
+  return prisma.$transaction(async (tx) => {
+    const payment = await tx.payment.findUnique({
+      where: { id: paymentId },
+      select: {
+        id: true,
+        status: true,
+        reconciledAt: true,
+        orderId: true,
+        receivedAt: true,
+      },
+    });
+    if (!payment || !payment.orderId) {
+      return {
+        granted: false as const,
+        message: "Giao dịch không gắn với một đơn khóa học.",
+      };
+    }
+    if (payment.status !== "requires_review" || payment.reconciledAt) {
+      return { granted: false as const, message: "Giao dịch này không còn chờ xử lý." };
+    }
+
+    const locked = await tx.$queryRaw<LockedOrder[]>`
+      SELECT id,
+             user_id AS "userId",
+             status::text AS status,
+             amount_vnd AS "amountVnd",
+             credit_applied_vnd AS "creditAppliedVnd",
+             expires_at AS "expiresAt",
+             provider_ref AS "providerRef"
+        FROM orders
+       WHERE id = ${payment.orderId}
+       FOR UPDATE`;
+    const order = locked[0];
+    if (!order) return { granted: false as const, message: "Không tìm thấy đơn." };
+
+    const items = await tx.orderItem.findMany({
+      where: { orderId: order.id },
+      select: {
+        enrollmentId: true,
+        memberUserId: true,
+        courseId: true,
+        course: { select: { capacity: true } },
+        enrollment: { select: { userId: true, status: true } },
+      },
+      orderBy: { id: "asc" },
+    });
+
+    const paidAt = payment.receivedAt;
+    const gate = await reclaimLatePayment(tx, {
+      order,
+      items,
+      transactionAt: paidAt,
+      providerCode: "00",
+      receivedAmount: order.amountVnd,
+      currency: "VND",
+      paymentLinkMatches: true,
+      adminOverride: true,
+    });
+    if (!gate.eligible) {
+      return {
+        granted: false as const,
+        message: gate.reason ?? "Không đủ điều kiện cấp quyền.",
+      };
+    }
+
+    const flipped = await tx.order.updateMany({
+      where: { id: order.id, status: { in: ["pending", "expired"] } },
+      data: {
+        status: "paid",
+        paidAt,
+        closedAt: paidAt,
+        provider: "payos",
+        providerRef: order.providerRef,
+      },
+    });
+    if (flipped.count !== 1) {
+      throw new Error(`Không thể xác nhận nguyên tử đơn ${order.id}.`);
+    }
+
+    await reactivateEnrollments(
+      items.map((item) => item.enrollmentId!),
+      tx,
+      paidAt,
+    );
+    if (order.creditAppliedVnd > 0) {
+      await reclaimCreditReservation(
+        tx,
+        {
+          userId: order.userId,
+          orderId: order.id,
+          amountVnd: order.creditAppliedVnd,
+        },
+        paidAt,
+      );
+    }
+
+    const payer = await tx.user.findUnique({
+      where: { id: order.userId },
+      select: { referredById: true },
+    });
+    await accrueReferralCommission(tx, {
+      referrerId: payer?.referredById,
+      payerUserId: order.userId,
+      orderId: order.id,
+      basisVnd: order.amountVnd + order.creditAppliedVnd,
+      now: paidAt,
+    });
+
+    // Lật chính hàng `payments` này khỏi hàng chờ. `status: "requires_review"`
+    // trong `where` là cửa idempotency: hai lần bấm không cùng cấp quyền hai lần.
+    await tx.payment.updateMany({
+      where: { id: payment.id, status: "requires_review" },
+      data: { status: "succeeded", reconciledAt: new Date() },
+    });
+
+    return { granted: true as const, orderId: order.id };
   }, PAYMENT_TX);
 }
 

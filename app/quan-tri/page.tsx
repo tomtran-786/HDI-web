@@ -22,6 +22,8 @@ import { renderMarkdown } from "@/lib/markdown-lite";
 import {
   cancelPendingOrder,
   dismissFeedback,
+  flagPaymentForRefund,
+  grantPendingPayment,
   markFeedbackResolved,
   markPaymentReconciled,
   moderateReview,
@@ -169,6 +171,7 @@ export default async function AdminPage({
       take: 25,
       select: {
         id: true,
+        status: true,
         amountVnd: true,
         providerRef: true,
         receivedAt: true,
@@ -343,15 +346,37 @@ export default async function AdminPage({
                     {" · ref "}
                     {payment.providerRef}
                   </span>
-                  {/* KHÔNG phải nút "đã thanh toán". Nó chỉ ghi lại rằng có
-                      người đã đọc qua giao dịch, để hàng chờ đừng lặp lại mãi
-                      cùng một dòng — trạng thái đơn và ghi danh không đổi. */}
-                  <AdminActionButton
-                    action={markPaymentReconciled}
-                    id={payment.id}
-                    label="Đã đối soát"
-                    confirm="Đánh dấu giao dịch này là đã đối soát? Thao tác này KHÔNG xác nhận thanh toán — đơn và ghi danh giữ nguyên trạng thái."
-                  />
+                  <div className="flex flex-col items-end gap-2">
+                    {/* Cấp quyền / hoàn tiền chỉ cho giao dịch khóa học đang chờ
+                        đối soát: tiền về sau hạn giữ chỗ là ca thường gặp nhất.
+                        "Cấp quyền" chạy đúng cổng của webhook (đếm ghế, số dư),
+                        chỉ bỏ ràng buộc khoảng ân hạn. */}
+                    {payment.order && payment.status === "requires_review" && (
+                      <>
+                        <AdminActionButton
+                          action={grantPendingPayment}
+                          id={payment.id}
+                          label="Cấp quyền"
+                          confirm="Cấp quyền và xác nhận thanh toán cho đơn này? Hệ thống sẽ kiểm ghế còn trống và số dư credits; nếu khóa đã hết chỗ, thao tác sẽ bị từ chối."
+                        />
+                        <AdminActionButton
+                          action={flagPaymentForRefund}
+                          id={payment.id}
+                          label="Cần hoàn tiền"
+                          confirm="Đánh dấu giao dịch này là cần hoàn tiền? Dòng sẽ rời hàng chờ; đơn và ghi danh giữ nguyên. Việc hoàn tiền làm thủ công trên PayOS."
+                        />
+                      </>
+                    )}
+                    {/* KHÔNG phải nút "đã thanh toán". Nó chỉ ghi lại rằng có
+                        người đã đọc qua giao dịch, để hàng chờ đừng lặp lại mãi
+                        cùng một dòng — trạng thái đơn và ghi danh không đổi. */}
+                    <AdminActionButton
+                      action={markPaymentReconciled}
+                      id={payment.id}
+                      label="Đã đối soát"
+                      confirm="Đánh dấu giao dịch này là đã đối soát? Thao tác này KHÔNG xác nhận thanh toán — đơn và ghi danh giữ nguyên trạng thái."
+                    />
+                  </div>
                 </li>
               );
             })}

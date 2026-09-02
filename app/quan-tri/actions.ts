@@ -4,8 +4,13 @@ import { revalidatePath, revalidateTag } from "next/cache";
 import { COURSES_TAG, REVIEWS_TAG } from "@/lib/cache-tags";
 import { parseId } from "@/lib/action-input";
 import { requireAdmin } from "@/lib/admin";
-import { reconcileDriveFolder } from "@/lib/fulfillment";
-import { cancelOrder } from "@/lib/orders";
+import {
+  fulfillOrderDrive,
+  notifyGroupMembers,
+  notifyReferralCommission,
+  reconcileDriveFolder,
+} from "@/lib/fulfillment";
+import { cancelOrder, grantReviewedPayment } from "@/lib/orders";
 import { prisma } from "@/lib/prisma";
 import { sendFeedbackResolvedEmail } from "@/lib/email";
 import type { CourseStatus, ReviewStatus } from "@/lib/generated/prisma/enums";
@@ -111,6 +116,83 @@ export async function markPaymentReconciled(paymentId: unknown) {
   return done.count > 0
     ? { ok: true, message: "Đã đánh dấu giao dịch là đã đối soát." }
     : { ok: false, message: "Giao dịch này đã được đối soát trước đó." };
+}
+
+/**
+ * Cấp quyền cho một giao dịch `requires_review` — thường là tiền về sau hạn giữ
+ * chỗ nên webhook đã không tự cấp.
+ *
+ * Đây KHÔNG mâu thuẫn với "không có nút đã thanh toán": `grantReviewedPayment`
+ * chạy đúng cái cổng `reclaimLatePayment` mà webhook đã chạy (đếm ghế, ràng buộc
+ * ghi danh, số dư credits), chỉ bỏ ràng buộc khoảng ân hạn vì đã có người xác
+ * nhận tiền có thật. Cấp quyền vẫn đi qua một đường duy nhất.
+ *
+ * Ghế đã hết thì trả về `ok: false` kèm lý do — quản trị viên chuyển sang "Cần
+ * hoàn tiền".
+ */
+export async function grantPendingPayment(paymentId: unknown) {
+  await requireAdmin();
+  const id = parseId(paymentId);
+  if (!id) return { ok: false, message: "Mã giao dịch không hợp lệ." };
+
+  // `grantReviewedPayment` NÉM khi lệnh flip đơn không còn khớp `pending`/
+  // `expired` — thường là một lượt webhook chạy trước vừa xác nhận xong. Đó là
+  // kết quả tốt, không phải lỗi để làm gãy trang: bắt lại và nói cho người bấm.
+  let result: Awaited<ReturnType<typeof grantReviewedPayment>>;
+  try {
+    result = await grantReviewedPayment(id);
+  } catch (error) {
+    console.error("[quan-tri] Cấp quyền giao dịch treo hỏng:", error);
+    revalidatePath("/quan-tri");
+    return {
+      ok: false,
+      message: "Đơn vừa được xử lý ở một luồng khác. Tải lại trang để xem trạng thái mới.",
+    };
+  }
+  if (!result.granted) {
+    revalidatePath("/quan-tri");
+    return { ok: false, message: result.message };
+  }
+
+  // Phần giao hàng chạy NGOÀI transaction, y hệt route webhook: cấp quyền Drive
+  // rồi báo cho thành viên và người giới thiệu. Lỗi ở đây được log và nuốt —
+  // đơn đã `paid`, cron ngày và các nút cấp lại quyền là lưới đỡ.
+  await fulfillOrderDrive(result.orderId).catch((error) =>
+    console.error(`[quan-tri] Đơn ${result.orderId} đã paid nhưng Drive lỗi:`, error),
+  );
+  await notifyGroupMembers(result.orderId).catch((error) =>
+    console.error(`[quan-tri] Đơn ${result.orderId} không báo được cho thành viên:`, error),
+  );
+  await notifyReferralCommission(result.orderId).catch((error) =>
+    console.error(`[quan-tri] Đơn ${result.orderId} không báo được credits:`, error),
+  );
+
+  revalidatePath("/quan-tri");
+  revalidateTag(COURSES_TAG, { expire: 0 });
+  return { ok: true, message: "Đã cấp quyền và xác nhận thanh toán." };
+}
+
+/**
+ * Đánh dấu một giao dịch `requires_review` là "cần hoàn tiền".
+ *
+ * Chỉ đóng dấu `reconciledAt` để dòng rời hàng chờ — trạng thái đơn và ghi danh
+ * giữ nguyên. Việc hoàn tiền thật làm thủ công trên PayOS; hệ thống không có
+ * đường tự hoàn.
+ */
+export async function flagPaymentForRefund(paymentId: unknown) {
+  await requireAdmin();
+  const id = parseId(paymentId);
+  if (!id) return { ok: false, message: "Mã giao dịch không hợp lệ." };
+
+  const done = await prisma.payment.updateMany({
+    where: { id, reconciledAt: null, status: "requires_review" },
+    data: { reconciledAt: new Date() },
+  });
+
+  revalidatePath("/quan-tri");
+  return done.count > 0
+    ? { ok: true, message: "Đã ghi nhận cần hoàn tiền. Hoàn thủ công trên PayOS." }
+    : { ok: false, message: "Giao dịch này không còn trong hàng chờ." };
 }
 
 async function setFeedbackStatus(

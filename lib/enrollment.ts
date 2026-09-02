@@ -138,3 +138,51 @@ export async function confirmEnrollments(
 
   return { confirmed };
 }
+
+/**
+ * Như `confirmEnrollments`, nhưng cũng vực dậy được ghi danh đã bị `cancelled`.
+ *
+ * Dùng đúng một chỗ: khi một khoản tiền về sau khi đơn đã bị đóng thành `expired`
+ * và một lượt quét đã hủy ghi danh cùng nó, nhưng khóa vẫn còn ghế — xem
+ * `reclaimLatePayment` trong `lib/orders.ts`. Nơi gọi PHẢI kiểm ghế trống và
+ * ràng buộc `enrollments_user_id_course_id_active_key` trước; hàm này chỉ ghi.
+ *
+ * `accessRevokedAt` phải được xóa về `null`: lượt quét đã đóng dấu nó khi hủy,
+ * và `hasLiveAccess` coi bất kỳ hàng nào còn `accessRevokedAt` là đã mất quyền.
+ */
+export async function reactivateEnrollments(
+  enrollmentIds: string[],
+  db: Db = prisma,
+  paidAt = new Date(),
+) {
+  if (enrollmentIds.length === 0) return { confirmed: 0 };
+
+  const rows = await db.enrollment.findMany({
+    where: { id: { in: enrollmentIds } },
+    select: { id: true, course: { select: { accessDays: true } } },
+  });
+
+  const byAccessDays = new Map<number | null, string[]>();
+  for (const row of rows) {
+    const key = row.course.accessDays;
+    const group = byAccessDays.get(key) ?? [];
+    group.push(row.id);
+    byAccessDays.set(key, group);
+  }
+
+  let confirmed = 0;
+  for (const [accessDays, ids] of byAccessDays) {
+    const flipped = await db.enrollment.updateMany({
+      where: { id: { in: ids }, status: { in: ["pending", "cancelled"] } },
+      data: {
+        status: "paid",
+        paidAt,
+        accessExpiresAt: accessExpiry(accessDays, paidAt),
+        accessRevokedAt: null,
+      },
+    });
+    confirmed += flipped.count;
+  }
+
+  return { confirmed };
+}

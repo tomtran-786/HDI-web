@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   classifyPayosPayment,
+  ORDER_LATE_GRACE_MINUTES,
   ORDER_TTL_HOURS,
   payosPaymentLinkMatches,
   payosTransactionTime,
@@ -25,8 +26,12 @@ function classify(overrides: Partial<Parameters<typeof classifyPayosPayment>[0]>
 }
 
 describe("PayOS state validation", () => {
-  it("uses a two-hour hold for new orders", () => {
-    expect(ORDER_TTL_HOURS).toBe(2);
+  it("holds a new order's seats for six hours, with a grace window past that", () => {
+    // Sáu giờ, không phải hai: chuyển khoản liên ngân hàng ngoài giờ về chậm cả
+    // tiếng, và tiền về sau mốc này bị đẩy vào đối soát thủ công thay vì cấp
+    // quyền. `ORDER_LATE_GRACE_MINUTES` là lớp vá thứ hai — xem `reclaimLatePayment`.
+    expect(ORDER_TTL_HOURS).toBe(6);
+    expect(ORDER_LATE_GRACE_MINUTES).toBeGreaterThan(0);
   });
 
   it("accepts only an exact, on-time VND payment for a pending order", () => {
