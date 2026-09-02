@@ -15,6 +15,7 @@ import {
   referralDiscountVnd,
 } from "@/lib/referral-pricing";
 import { addMemberEmails, groupApplies, MAX_MEMBERS } from "@/lib/group-invite";
+import { Badge } from "./ui/badge";
 import { IconCart, IconClose } from "./ui/icons";
 
 type ReferralQuote = { eligible: boolean; creditBalanceVnd: number };
@@ -361,6 +362,10 @@ export function CartModal({
                 {catalog.map((course) => {
                   const buyable = course.availability === "buyable" && Boolean(course.id);
                   const checked = Boolean(course.id && ids.includes(course.id));
+                  // Giá một ghế khi đủ bậc nhóm — tính bằng chính hàm server dùng.
+                  // Hiện sẵn để người mua thấy mức tiết kiệm trước khi làm gì.
+                  const groupFromVnd = seatPriceVnd(course, GROUP_MIN_SIZE);
+                  const hasGroupDeal = course.groupEligible && groupFromVnd < course.priceVnd;
                   return (
                     <li
                       id={`cart-course-${course.slug}`}
@@ -390,14 +395,30 @@ export function CartModal({
                           <span className="block font-bold leading-snug tracking-tight text-fg">
                             {course.title}
                           </span>
-                          <span className="mt-2 flex flex-wrap items-center justify-between gap-2">
+                          <span className="mt-2 flex flex-wrap items-center justify-between gap-x-2 gap-y-1">
                             <span className={`text-sm font-semibold ${buyable ? "text-success" : "text-fg-subtle"}`}>
                               {availabilityLabel[course.availability]}
                               {buyable && course.seatsLeft !== null ? ` · còn ${course.seatsLeft} chỗ` : ""}
                             </span>
-                            <span className="text-lg font-bold text-primary">
-                              {formatVnd(course.priceVnd)}
-                            </span>
+                            {/* Giá nhóm to & đậm, giá lẻ gạch ngang ngay cạnh,
+                                badge điều kiện — cùng cách trình bày với
+                                components/ui/price-tag.tsx. */}
+                            {hasGroupDeal ? (
+                              <span className="flex flex-wrap items-baseline justify-end gap-x-2 gap-y-1">
+                                <span className="text-lg font-bold text-primary">
+                                  {formatVnd(groupFromVnd)}
+                                </span>
+                                <s className="text-sm font-semibold text-fg-subtle">
+                                  <span className="sr-only">{groupPanel.listPrice} </span>
+                                  {formatVnd(course.priceVnd)}
+                                </s>
+                                <Badge tone="success">{groupPanel.dealBadge}</Badge>
+                              </span>
+                            ) : (
+                              <span className="text-lg font-bold text-primary">
+                                {formatVnd(course.priceVnd)}
+                              </span>
+                            )}
                           </span>
                         </span>
                       </label>
@@ -409,7 +430,7 @@ export function CartModal({
           </div>
 
           <aside className="border-t border-line bg-bg-soft px-5 py-5 lg:border-l lg:border-t-0 sm:px-7 lg:px-5">
-            <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-fg-subtle">
+            <p className="text-sm font-bold text-fg">
               {cartModal.selected} · {selected.length} khóa
             </p>
             {selected.length === 0 ? (
@@ -442,35 +463,34 @@ export function CartModal({
 
             {selected.length > 0 && anyGroupEligible && (
               <div className="mt-5 border-t border-line pt-4">
-                {!groupOpen ? (
-                  <button
-                    type="button"
-                    onClick={() => {
+                {/* Checkbox bật ưu đãi nhóm — mental model quen cho "chọn thêm
+                    một lựa chọn". Bỏ tick chính là huỷ nhóm, nên không cần link
+                    "Bỏ thanh toán nhóm" riêng nữa. */}
+                <label className="flex cursor-pointer gap-3 rounded-card border border-primary/40 bg-tint p-3">
+                  <input
+                    type="checkbox"
+                    checked={groupOpen}
+                    onChange={(event) => {
                       setDroppedGroup(false);
-                      setGroupOpen(true);
+                      if (event.target.checked) {
+                        setGroupOpen(true);
+                      } else {
+                        setGroupOpen(false);
+                        setMemberEmails([]);
+                        setDraft("");
+                        setPreview(null);
+                      }
                     }}
-                    className="w-full rounded-card border border-primary/40 bg-tint px-3 py-2.5 text-left text-sm font-semibold text-primary transition hover:border-primary"
-                  >
-                    👥 {groupPanel.invite}
-                  </button>
-                ) : (
-                  <div>
-                    <div className="flex items-start justify-between gap-2">
-                      <p className="text-sm font-bold text-fg">{groupPanel.title}</p>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setGroupOpen(false);
-                          setMemberEmails([]);
-                          setDraft("");
-                          setPreview(null);
-                        }}
-                        className="shrink-0 text-xs font-semibold text-fg-subtle underline transition hover:text-primary"
-                      >
-                        {groupPanel.close}
-                      </button>
-                    </div>
-                    <p className="mt-1 text-xs leading-relaxed text-fg-muted">
+                    className="mt-0.5 h-4 w-4 shrink-0 accent-[var(--primary)]"
+                  />
+                  <span className="text-sm font-semibold text-primary">
+                    {groupPanel.invite}
+                  </span>
+                </label>
+
+                {groupOpen && (
+                  <div className="mt-3">
+                    <p className="text-xs leading-relaxed text-fg-muted">
                       {groupPanel.intro} {groupPanel.requirement}
                     </p>
 
@@ -557,6 +577,14 @@ export function CartModal({
                 )}
               </div>
             )}
+
+            {/* Làm phép trừ hộ người mua: mức tiết kiệm hiện thành một con số,
+                cùng chênh lệch mà giá gốc gạch ngang ở footer đang thể hiện. */}
+            {selected.length > 0 && discounted && (
+              <p className="mt-5 border-t border-line pt-4 text-sm font-semibold text-success">
+                {cartModal.savings(formatVnd(listTotalVnd - totalVnd))}
+              </p>
+            )}
           </aside>
         </div>
 
@@ -582,13 +610,13 @@ export function CartModal({
                 )}
                 {referral.creditBalanceVnd > 0 && (
                   <>
-                    <label className="flex cursor-pointer items-baseline justify-between gap-4">
-                      <span className="flex items-baseline gap-2">
+                    <label className="flex cursor-pointer items-start justify-between gap-4">
+                      <span className="flex items-start gap-2">
                         <input
                           type="checkbox"
                           checked={useCredit}
                           onChange={(event) => setUseCredit(event.target.checked)}
-                          className="translate-y-0.5"
+                          className="mt-0.5 h-4 w-4 shrink-0 accent-[var(--primary)]"
                         />
                         <span>
                           {referralPanel.useCredit}{" "}
@@ -614,7 +642,7 @@ export function CartModal({
                 )}
               </div>
             )}
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
             <div>
               <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-fg-subtle">
                 {cartModal.total}
@@ -634,7 +662,7 @@ export function CartModal({
                 )}
               </p>
             </div>
-            <form action={action}>
+            <form action={action} className="sm:text-right">
               {/* Chỉ gửi email và con số đang hiển thị. Server phân giải lại nhóm
                   và tính lại giá; `tongTienDuKien` chỉ dùng để phát hiện lệch. */}
               {memberEmails.map((email) => (
@@ -655,12 +683,16 @@ export function CartModal({
                 className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-primary px-7 py-3.5 text-sm font-bold text-primary-fg transition hover:bg-primary-deep disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
               >
                 <IconCart size={16} />
+                {/* Không nhắc lại số tiền: tổng cộng đã hiện to ngay bên trái. */}
                 {checkoutPending
                   ? cartModal.paying
                   : groupSize > 1
-                    ? `${groupPanel.checkout(groupSize)} · ${formatVnd(totalVnd)}`
-                    : `${cartModal.checkout} · ${formatVnd(totalVnd)}`}
+                    ? groupPanel.checkout(groupSize)
+                    : cartModal.checkout}
               </button>
+              <p className="mt-2 text-xs leading-relaxed text-fg-subtle">
+                {cartModal.payosHint}
+              </p>
             </form>
           </div>
         </div>

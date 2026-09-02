@@ -50,16 +50,19 @@ function CartHarness() {
   );
 }
 
-function button(text: string) {
-  const found = [...host.querySelectorAll("button")].find((item) => item.textContent?.includes(text));
-  if (!found) throw new Error(`Không tìm thấy nút: ${text}`);
-  return found;
-}
-
 function emailInput() {
   const input = host.querySelector<HTMLInputElement>('input[type="email"]');
   if (!input) throw new Error("Không tìm thấy ô email nhóm.");
   return input;
+}
+
+function groupToggle() {
+  const label = [...host.querySelectorAll("label")].find((item) =>
+    item.textContent?.includes(groupPanel.invite),
+  );
+  const box = label?.querySelector<HTMLInputElement>('input[type="checkbox"]');
+  if (!box) throw new Error(`Không tìm thấy checkbox: ${groupPanel.invite}`);
+  return box;
 }
 
 function setNativeValue(input: HTMLInputElement, value: string) {
@@ -77,7 +80,7 @@ async function flush() {
 }
 
 async function openGroup() {
-  await act(async () => button(groupPanel.invite).click());
+  await act(async () => groupToggle().click());
 }
 
 async function enterMember(email: string) {

@@ -18,6 +18,14 @@ export const cartModal = {
   selected: "Đã chọn",
   empty: "Chọn ít nhất một khóa đang mở để thanh toán.",
   total: "Tổng cộng",
+  /** `amount` là chênh lệch giữa tổng giá lẻ và số phải trả sau ưu đãi. */
+  savings: (amount: string) => `Bạn tiết kiệm ${amount}`,
+  /**
+   * Nói trước khi rời trang: nút thanh toán redirect thẳng sang PayOS và giỏ
+   * hàng bị dọn ngay lúc đó. Không có dòng này thì người mua bị chuyển đi mà
+   * không biết mình vừa rời site.
+   */
+  payosHint: "Bạn sẽ được chuyển sang PayOS để thanh toán. Chỗ học được giữ 2 giờ.",
   openPendingOrder: (code: number) => `Mở đơn #${code} để hủy hoặc thanh toán tiếp.`,
   paying: "Đang kết nối PayOS…",
   checkout: "Thanh toán",
@@ -33,11 +41,14 @@ export const cartModal = {
 /**
  * Ô mời và bảng nhập thành viên cho thanh toán nhóm.
  *
- * Dòng mời (`invite`) luôn hiển thị chứ không nằm sau một nút "xem thêm": ưu đãi
- * mà người mua không nhìn thấy trước khi bấm thanh toán thì không phải ưu đãi.
+ * `invite` là nhãn của checkbox bật ưu đãi nhóm, luôn hiển thị ngay trong phần
+ * tóm tắt chứ không nằm sau một nút "xem thêm": ưu đãi mà người mua không nhìn
+ * thấy trước khi bấm thanh toán thì không phải ưu đãi. `dealBadge` đi kèm giá
+ * nhóm in trên từng khóa trong danh sách để nói rõ giá đó có điều kiện.
  */
 export const groupPanel = {
-  invite: "Học cùng nhóm từ 03 bạn — tiết kiệm tới 10%",
+  invite: "Mua cùng nhóm từ 03 người — tiết kiệm tới 10%",
+  dealBadge: "nhóm từ 03 bạn",
   title: "Thanh toán theo nhóm",
   intro:
     "Bạn thanh toán một lần cho cả nhóm. Mỗi bạn nhận quyền học liệu vào email của chính mình.",
