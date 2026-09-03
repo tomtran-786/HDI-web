@@ -1299,6 +1299,145 @@ export async function syncPayosOrderStatus(
 }
 
 /**
+ * Trạng thái link PayOS nghĩa là "tiền đã về đủ".
+ *
+ * Tách khỏi `PAYOS_MONEY_STATES` (còn gồm PROCESSING/UNDERPAID): đây là trạng
+ * thái DUY NHẤT mà `reclaimPaidPayosOrder` được phép tự dựng lại một sự kiện.
+ * Webhook đã ký vẫn làm chủ mọi trạng thái tiền khác.
+ */
+export const PAYOS_PAID_STATE = "PAID";
+
+/**
+ * Chọn một dòng giao dịch để dựng lại sự kiện, từ danh sách PayOS trả về.
+ *
+ * Ưu tiên dòng đúng số tiền đơn, và trong nhóm đó lấy dòng SỚM NHẤT. Không có
+ * dòng nào khớp thì lấy dòng số tiền lớn nhất và truyền nguyên xi:
+ * `classifyPayosPayment` sẽ trả `requires_review` vì lệch số tiền — đúng kết quả
+ * cần một người xem, và đúng cách webhook cũng xử lý. Dòng không đọc được thời
+ * điểm giao dịch bị loại.
+ */
+export function pickPaidTransaction(
+  transactions: {
+    reference: string;
+    amount: number;
+    transactionDateTime: string;
+  }[],
+  expectedAmount: number,
+) {
+  const usable = transactions.filter(
+    (t) => t.reference && payosTransactionTime(t.transactionDateTime) !== null,
+  );
+  if (usable.length === 0) return null;
+
+  const exact = usable
+    .filter((t) => t.amount === expectedAmount)
+    .sort(
+      (a, b) =>
+        payosTransactionTime(a.transactionDateTime)!.getTime() -
+        payosTransactionTime(b.transactionDateTime)!.getTime(),
+    );
+  if (exact.length > 0) return exact[0];
+
+  return usable.reduce((max, t) => (t.amount > max.amount ? t : max));
+}
+
+/**
+ * Đường tự chữa khi PayOS KHÔNG gửi webhook: hỏi thẳng trạng thái link, và nếu
+ * đã PAID thì dựng lại một `PayosPaymentEvent` từ dòng giao dịch tốt nhất rồi
+ * đẩy qua `processPayosPayment` — KHÔNG mở đường ghi thứ hai tới `paid`.
+ *
+ * CHỈ ĐỌC ở phía PayOS (`paymentRequests.get`), không bao giờ `.cancel`. An toàn
+ * để gọi từ bất kỳ đâu `syncPayosOrderStatus` gọi được. Chống trùng thừa hưởng
+ * nguyên vẹn từ `processPayosPayment`: khóa unique `(provider, providerRef)` trên
+ * `payments` cộng `SELECT … FOR UPDATE` trên hàng `orders`, với `reference` là mã
+ * giao dịch ngân hàng thật. Phần giao hàng (Drive + thư) do NƠI GỌI lo, y hệt
+ * route webhook — xem `runOrderFulfillment`.
+ */
+export async function reclaimPaidPayosOrder(
+  orderId: string,
+  options: { userId?: string } = {},
+): Promise<
+  | { confirmed: false; reason: string }
+  | {
+      confirmed: true;
+      outcome: Awaited<ReturnType<typeof processPayosPayment>>["outcome"];
+      orderId: string;
+      fulfill: boolean;
+      reclaimed: boolean;
+      review?: PaymentReview;
+    }
+> {
+  const order = await prisma.order.findFirst({
+    where: {
+      id: orderId,
+      status: "pending",
+      provider: "payos",
+      ...(options.userId ? { userId: options.userId } : {}),
+    },
+    select: {
+      id: true,
+      code: true,
+      amountVnd: true,
+      providerRef: true,
+      checkoutUrl: true,
+    },
+  });
+  if (!order) return { confirmed: false as const, reason: "not_pending" };
+  // Cùng bằng chứng `syncPayosOrderStatus` dùng: hai cột null nghĩa là không có
+  // link nào ngoài kia để hỏi.
+  if (order.providerRef === null && order.checkoutUrl === null) {
+    return { confirmed: false as const, reason: "no_remote_link" };
+  }
+
+  let remote;
+  try {
+    remote = await payosClient().paymentRequests.get(order.code);
+  } catch (error) {
+    if (!isPayosNotFound(error)) {
+      console.error(`[payos] Không đọc được trạng thái đơn #${order.code}:`, error);
+    }
+    return { confirmed: false as const, reason: "gateway_unavailable" };
+  }
+
+  if (remote.status !== PAYOS_PAID_STATE) {
+    // PROCESSING/UNDERPAID vẫn thuộc webhook. Chỉ PAID (đủ tiền) mới được tự dựng.
+    return { confirmed: false as const, reason: remote.status };
+  }
+
+  const chosen = pickPaidTransaction(remote.transactions ?? [], order.amountVnd);
+  if (!chosen) {
+    // Link PAID mà không có dòng giao dịch dùng được: bất thường, đáng nhìn.
+    // KHÔNG bịa `reference` — một webhook thật về sau mang mã ngân hàng thật vẫn
+    // phải chèn được dòng `payments` của nó.
+    console.error(
+      `[payos] Đơn #${order.code} ở trạng thái PAID nhưng không có giao dịch dùng được:`,
+      remote.transactions,
+    );
+    return { confirmed: false as const, reason: "paid_no_transaction" };
+  }
+
+  const event: PayosPaymentEvent = {
+    orderCode: order.code,
+    amount: chosen.amount,
+    currency: "VND", // Transaction của `.get()` không mang currency; checkout khóa học chỉ VND.
+    reference: chosen.reference, // Mã giao dịch ngân hàng — khóa chống trùng.
+    paymentLinkId: remote.id, // Cùng namespace với `order.providerRef`.
+    transactionDateTime: chosen.transactionDateTime,
+    code: "00", // `.get()` không có code theo sự kiện; status === PAID ⇒ thành công.
+    payload: { source: "reclaimPaidPayosOrder", remote },
+  };
+  const result = await processPayosPayment(event);
+  return {
+    confirmed: true as const,
+    outcome: result.outcome,
+    orderId: order.id,
+    fulfill: "fulfill" in result && Boolean(result.fulfill),
+    reclaimed: "reclaimed" in result && Boolean(result.reclaimed),
+    review: "review" in result ? result.review : undefined,
+  };
+}
+
+/**
  * Đóng một danh sách đơn quá hạn, dừng lại khi hết ngân sách thời gian.
  *
  * Mỗi lượt `cancelOrder` có thể là hai lượt gọi PayOS, và client được cấu hình

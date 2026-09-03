@@ -2,16 +2,25 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { allowUserAction } from "@/lib/auth-throttle";
 import { clearCheckoutHandoff } from "@/lib/checkout-handoff";
-import { syncPayosOrderStatus } from "@/lib/orders";
+import { runOrderFulfillment } from "@/lib/fulfillment";
+import { reclaimPaidPayosOrder, syncPayosOrderStatus } from "@/lib/orders";
+import { notifyPaymentReview } from "@/lib/payment-review";
 import { prisma } from "@/lib/prisma";
 import {
   findServiceOrder,
+  reclaimPaidPayosServiceOrder,
   serviceOrderView,
   syncPayosServiceOrderStatus,
 } from "@/lib/service-orders";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+/**
+ * Một `paymentRequests.get` thêm cho đường đối soát-kéo (`reclaimPaidPayosOrder`)
+ * có thể mất tới ~20s khi PayOS chậm — dài hơn mặc định 10s của Hobby. Cho đủ
+ * giờ để nhánh này chạy xong thay vì bị cắt giữa chừng.
+ */
+export const maxDuration = 30;
 
 const noStore = { "Cache-Control": "private, no-store, max-age=0" };
 
@@ -72,7 +81,28 @@ export async function GET(request: Request) {
       const synced = await syncPayosServiceOrderStatus(order.id, {
         userId: session.user.id,
       });
-      if (synced.closed) order = { ...order, status: synced.as };
+      if (synced.closed) {
+        order = { ...order, status: synced.as };
+      } else {
+        // Link chưa chết mà đơn vẫn `pending`: có thể webhook không tới. Hỏi
+        // thẳng PayOS và đẩy qua `processServicePayment` nếu đã PAID. Bọc
+        // try/catch để một lỗi ở đây không thành 500 cho <PaymentPoll />.
+        try {
+          const paid = await reclaimPaidPayosServiceOrder(order.id, {
+            userId: session.user.id,
+          });
+          if (paid.confirmed && paid.outcome === "succeeded") {
+            order = { ...order, status: "paid" };
+          } else if (paid.confirmed && paid.review) {
+            await notifyPaymentReview(paid.review);
+          }
+        } catch (error) {
+          console.error(
+            `[trang-thai-don] Đối soát PAID đơn dịch vụ ${dichVu} hỏng:`,
+            error,
+          );
+        }
+      }
     }
     if (order.status !== "pending") await clearCheckoutHandoff();
     // `cancelledCheckout` là một cờ trên URL của trình duyệt, không phải trạng
@@ -107,6 +137,21 @@ export async function GET(request: Request) {
     if (synced.closed) {
       await clearCheckoutHandoff();
       return NextResponse.json({ trangThai: synced.as }, { headers: noStore });
+    }
+    // Link chưa chết mà đơn vẫn `pending` → có thể tiền đã về nhưng webhook
+    // không tới. Hỏi thẳng: PayOS báo PAID thì đẩy qua đúng đường
+    // `processPayosPayment` rồi chạy phần giao hàng. Cùng token rate-limit với
+    // lượt sync ở trên; try/catch để không thành 500 cho <PaymentPoll />.
+    try {
+      const paid = await reclaimPaidPayosOrder(order.id, { userId: session.user.id });
+      if (paid.confirmed && paid.outcome === "succeeded") {
+        if (paid.fulfill) await runOrderFulfillment(paid.orderId);
+        await clearCheckoutHandoff();
+        return NextResponse.json({ trangThai: "paid" }, { headers: noStore });
+      }
+      if (paid.confirmed && paid.review) await notifyPaymentReview(paid.review);
+    } catch (error) {
+      console.error(`[trang-thai-don] Đối soát PAID đơn #${code} hỏng:`, error);
     }
   }
   // Đơn đã chốt thì phiên thanh toán không còn gì để thu hồi. Xóa dấu ở ĐÂY,

@@ -24,8 +24,12 @@ export function AdminActionButton({
   confirm,
   className = "rounded-full border border-line px-4 py-2 text-sm font-bold text-fg-muted transition hover:border-primary hover:text-primary",
 }: {
-  /** Server action nhận một id và trả về kết quả có lời nhắn. */
-  action: (id: unknown) => Promise<AdminActionResult>;
+  /**
+   * Server action trả về kết quả có lời nhắn. Thường nhận một id (mã đơn, mã
+   * giao dịch…); action không cần id thì bỏ tham số — `id` bên dưới vẫn được
+   * truyền vào nhưng bị bỏ qua.
+   */
+  action: (id?: unknown) => Promise<AdminActionResult>;
   id: string;
   label: string;
   /** Câu hỏi xác nhận, cho các thao tác không lùi lại được. */

@@ -1,18 +1,9 @@
 import { NextResponse } from "next/server";
-import { adminEmails } from "@/lib/admin-emails";
-import { sendPaymentReviewEmail } from "@/lib/email";
-import {
-  processPayosPayment,
-  type PaymentReview,
-  type PayosPaymentEvent,
-} from "@/lib/orders";
+import { processPayosPayment, type PayosPaymentEvent } from "@/lib/orders";
 import { PayosConfigurationError, verifyPayosWebhook } from "@/lib/payos";
+import { notifyPaymentReview } from "@/lib/payment-review";
 import { processServicePayment } from "@/lib/service-orders";
-import {
-  fulfillOrderDrive,
-  notifyGroupMembers,
-  notifyReferralCommission,
-} from "@/lib/fulfillment";
+import { runOrderFulfillment } from "@/lib/fulfillment";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -24,47 +15,6 @@ export const dynamic = "force-dynamic";
  * nó biến một lần thanh toán thành một lần chờ, nên cứ cho đủ giờ ngay từ đầu.
  */
 export const maxDuration = 60;
-
-/**
- * Đưa một khoản tiền treo tới tay người có thể xử lý nó.
- *
- * Trước đây chỗ này chỉ có `console.error`. Trên Vercel Hobby log runtime giữ
- * khoảng một giờ, nên trong thực tế một giao dịch `requires_review` biến mất
- * không dấu vết: tiền đã vào tài khoản, học viên không có quyền truy cập, và
- * bề mặt duy nhất còn lại là một hàng chờ trong /quan-tri mà không có gì thúc
- * ai đó mở ra.
- *
- * ĐỌC `result.sent`, không chỉ `await`: `sendEmail` báo Resend từ chối bằng
- * `{ sent: false }` chứ không ném, nên `catch` sẽ không bao giờ chạy cho trường
- * hợp đó — đúng cái bẫy đã làm mọi thư xác thực biến mất trong im lặng.
- *
- * Gửi thư không bao giờ được làm hỏng phản hồi webhook: PayOS coi mọi phản hồi
- * khác 2xx là lý do giao lại, và giao lại một sự kiện đã ghi xong chỉ tạo thêm
- * việc. Vì vậy mọi lỗi ở đây đều bị nuốt sau khi log.
- */
-async function alertAdmins(review: PaymentReview) {
-  const recipients = adminEmails();
-  if (recipients.length === 0) {
-    console.error(
-      "[payos-webhook] Có giao dịch cần đối soát nhưng ADMIN_EMAILS trống:",
-      review,
-    );
-    return;
-  }
-
-  for (const to of recipients) {
-    try {
-      const sent = await sendPaymentReviewEmail({ to, ...review });
-      if (!sent.sent) {
-        console.error(
-          `[payos-webhook] Thư đối soát tới ${to} bị từ chối: ${sent.error}`,
-        );
-      }
-    } catch (error) {
-      console.error(`[payos-webhook] Không gửi được thư đối soát tới ${to}:`, error);
-    }
-  }
-}
 
 export async function POST(request: Request) {
   let payload: unknown;
@@ -120,7 +70,7 @@ export async function POST(request: Request) {
         console.error("[payos-webhook] Đơn dịch vụ cần kiểm tra thủ công:", service);
       }
       if ("review" in service && service.review) {
-        await alertAdmins(service.review);
+        await notifyPaymentReview(service.review);
       }
       return NextResponse.json({
         ok: true,
@@ -136,7 +86,7 @@ export async function POST(request: Request) {
     // giao lại đi vào nhánh `existing` và không mang cờ này, nên một sự kiện
     // sinh đúng một lá thư dù nó được gửi lại bao nhiêu lần.
     if ("review" in result && result.review) {
-      await alertAdmins(result.review);
+      await notifyPaymentReview(result.review);
     }
     // Đơn quá hạn được cứu vì tiền về muộn nhưng khóa vẫn còn ghế. Không phải
     // lỗi — chỉ ghi một dòng để đối soát về sau lần ra được cái khoảng trễ.
@@ -146,21 +96,11 @@ export async function POST(request: Request) {
       );
     }
     if ("fulfill" in result && result.fulfill && result.orderId) {
-      const orderId = result.orderId;
-      await fulfillOrderDrive(orderId).catch((error) =>
-        console.error(`[payos-webhook] Đơn ${orderId} đã paid nhưng Drive lỗi:`, error),
-      );
-      // Sau khi cấp quyền, vì thư báo với thành viên rằng quyền đã sẵn sàng.
-      // `await` chứ không bắn-rồi-quên: trên serverless, lambda bị đóng băng
-      // ngay khi handler trả về và thư chưa gửi xong sẽ biến mất.
-      await notifyGroupMembers(orderId).catch((error) =>
-        console.error(`[payos-webhook] Đơn ${orderId} không báo được cho thành viên:`, error),
-      );
-      // Credits chỉ tồn tại ở một trang người giới thiệu không có lý do gì để
-      // mở, nên không có lá thư này thì phần thưởng coi như vô hình.
-      await notifyReferralCommission(orderId).catch((error) =>
-        console.error(`[payos-webhook] Đơn ${orderId} không báo được credits:`, error),
-      );
+      // Cấp quyền Drive rồi báo cho thành viên và người giới thiệu. `await` chứ
+      // không bắn-rồi-quên: trên serverless lambda bị đóng băng ngay khi handler
+      // trả về. Xem `runOrderFulfillment` — cùng bộ bước mà đường đối soát-kéo
+      // (`reclaimPaidPayosOrder`, cron, poller) chạy.
+      await runOrderFulfillment(result.orderId);
     }
 
     // PayOS treats every 2xx as acknowledged. Business mismatches are persisted

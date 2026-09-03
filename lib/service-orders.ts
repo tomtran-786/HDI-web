@@ -5,9 +5,11 @@ import {
   classifyPayosPayment,
   PAYOS_DEAD_STATES,
   PAYOS_MONEY_STATES,
+  PAYOS_PAID_STATE,
   payosPaymentLinkMatches,
   payosReviewReason,
   payosTransactionTime,
+  pickPaidTransaction,
   type PaymentReview,
   type PayosPaymentEvent,
 } from "./orders";
@@ -486,6 +488,93 @@ export async function syncPayosServiceOrderStatus(
     data: { status: as, closedAt: new Date() },
   });
   return flipped.count === 1 ? { closed: true as const, as } : { closed: false as const };
+}
+
+/**
+ * Bản dịch vụ của `reclaimPaidPayosOrder`: đường tự chữa khi PayOS không gửi
+ * webhook. Hỏi thẳng trạng thái link, và nếu đã PAID thì dựng lại sự kiện từ
+ * dòng giao dịch tốt nhất rồi đẩy qua `processServicePayment` — đường ghi DUY
+ * NHẤT tới `paid` cho đơn dịch vụ.
+ *
+ * CHỈ ĐỌC ở phía PayOS. Đơn dịch vụ không sinh ghi danh và không có bước giao
+ * hàng nào, nên không có `runOrderFulfillment` đi kèm — chỉ chuyển `review` ra
+ * cho nơi gọi báo động khi lệch.
+ */
+export async function reclaimPaidPayosServiceOrder(
+  orderId: string,
+  options: { userId?: string } = {},
+): Promise<
+  | { confirmed: false; reason: string }
+  | {
+      confirmed: true;
+      outcome: Awaited<ReturnType<typeof processServicePayment>>["outcome"];
+      serviceOrderId: string;
+      review?: PaymentReview;
+    }
+> {
+  const order = await prisma.serviceOrder.findFirst({
+    where: {
+      id: orderId,
+      status: "pending",
+      provider: "payos",
+      ...(options.userId ? { userId: options.userId } : {}),
+    },
+    select: {
+      id: true,
+      code: true,
+      amountVnd: true,
+      providerRef: true,
+      checkoutUrl: true,
+    },
+  });
+  if (!order) return { confirmed: false as const, reason: "not_pending" };
+  if (order.providerRef === null && order.checkoutUrl === null) {
+    return { confirmed: false as const, reason: "no_remote_link" };
+  }
+
+  let remote;
+  try {
+    remote = await payosClient().paymentRequests.get(order.code);
+  } catch (error) {
+    if (!isPayosNotFound(error)) {
+      console.error(
+        `[payos] Không đọc được trạng thái đơn dịch vụ #${order.code}:`,
+        error,
+      );
+    }
+    return { confirmed: false as const, reason: "gateway_unavailable" };
+  }
+
+  if (remote.status !== PAYOS_PAID_STATE) {
+    return { confirmed: false as const, reason: remote.status };
+  }
+
+  const chosen = pickPaidTransaction(remote.transactions ?? [], order.amountVnd);
+  if (!chosen) {
+    console.error(
+      `[payos] Đơn dịch vụ #${order.code} ở trạng thái PAID nhưng không có giao dịch dùng được:`,
+      remote.transactions,
+    );
+    return { confirmed: false as const, reason: "paid_no_transaction" };
+  }
+
+  const event: PayosPaymentEvent = {
+    orderCode: order.code,
+    amount: chosen.amount,
+    currency: "VND",
+    reference: chosen.reference,
+    paymentLinkId: remote.id,
+    transactionDateTime: chosen.transactionDateTime,
+    code: "00",
+    payload: { source: "reclaimPaidPayosServiceOrder", remote },
+  };
+  const result = await processServicePayment(event);
+  return {
+    confirmed: true as const,
+    outcome: result.outcome,
+    serviceOrderId: order.id,
+    review: "review" in result ? result.review : undefined,
+  };
 }
 
 /**

@@ -293,6 +293,31 @@ export async function notifyReferralCommission(orderId: string) {
   }
 }
 
+/**
+ * Phần giao hàng chạy SAU khi transaction thanh toán đã commit: cấp quyền Drive
+ * cho từng ghế, rồi báo cho thành viên nhóm và người giới thiệu.
+ *
+ * Nhấc ra khỏi app/api/webhooks/payos/route.ts để đường webhook và đường đối
+ * soát-kéo (`reclaimPaidPayosOrder`, cron, poller) chạy đúng cùng một bộ bước.
+ *
+ * `await` chứ không bắn-rồi-quên: trên serverless lambda bị đóng băng ngay khi
+ * handler trả về, nên một lượt gửi chưa xong sẽ biến mất. Mỗi bước tự nuốt lỗi
+ * của mình sau khi log — một đơn đã `paid` không bao giờ được để Drive hay thư
+ * làm hỏng phản hồi. Cả ba đều chạy lại được (bỏ qua ghi danh đã có
+ * `drivePermissionId`, dòng đơn đã có `notifiedAt`, sổ đã có `notifiedAt`).
+ */
+export async function runOrderFulfillment(orderId: string): Promise<void> {
+  await fulfillOrderDrive(orderId).catch((error) =>
+    console.error(`[fulfillment] Đơn ${orderId} đã paid nhưng Drive lỗi:`, error),
+  );
+  await notifyGroupMembers(orderId).catch((error) =>
+    console.error(`[fulfillment] Đơn ${orderId} không báo được cho thành viên:`, error),
+  );
+  await notifyReferralCommission(orderId).catch((error) =>
+    console.error(`[fulfillment] Đơn ${orderId} không báo được credits:`, error),
+  );
+}
+
 export async function reconcileMissingDriveGrants(limit = 50) {
   const budget = Math.max(1, Math.min(limit, 50));
   const candidates = await prisma.enrollment.findMany({

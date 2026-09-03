@@ -4,13 +4,10 @@ import { revalidatePath, revalidateTag } from "next/cache";
 import { COURSES_TAG, REVIEWS_TAG } from "@/lib/cache-tags";
 import { parseId } from "@/lib/action-input";
 import { requireAdmin } from "@/lib/admin";
-import {
-  fulfillOrderDrive,
-  notifyGroupMembers,
-  notifyReferralCommission,
-  reconcileDriveFolder,
-} from "@/lib/fulfillment";
+import { reconcileDriveFolder, runOrderFulfillment } from "@/lib/fulfillment";
+import { appUrl } from "@/lib/app-url";
 import { cancelOrder, grantReviewedPayment } from "@/lib/orders";
+import { payosClient } from "@/lib/payos";
 import { prisma } from "@/lib/prisma";
 import { sendFeedbackResolvedEmail } from "@/lib/email";
 import type { CourseStatus, ReviewStatus } from "@/lib/generated/prisma/enums";
@@ -154,22 +151,41 @@ export async function grantPendingPayment(paymentId: unknown) {
     return { ok: false, message: result.message };
   }
 
-  // Phần giao hàng chạy NGOÀI transaction, y hệt route webhook: cấp quyền Drive
-  // rồi báo cho thành viên và người giới thiệu. Lỗi ở đây được log và nuốt —
-  // đơn đã `paid`, cron ngày và các nút cấp lại quyền là lưới đỡ.
-  await fulfillOrderDrive(result.orderId).catch((error) =>
-    console.error(`[quan-tri] Đơn ${result.orderId} đã paid nhưng Drive lỗi:`, error),
-  );
-  await notifyGroupMembers(result.orderId).catch((error) =>
-    console.error(`[quan-tri] Đơn ${result.orderId} không báo được cho thành viên:`, error),
-  );
-  await notifyReferralCommission(result.orderId).catch((error) =>
-    console.error(`[quan-tri] Đơn ${result.orderId} không báo được credits:`, error),
-  );
+  // Phần giao hàng chạy NGOÀI transaction, y hệt route webhook và đường đối
+  // soát-kéo: cấp quyền Drive rồi báo cho thành viên và người giới thiệu. Lỗi ở
+  // đây được log và nuốt bên trong `runOrderFulfillment` — đơn đã `paid`, cron
+  // ngày và các nút cấp lại quyền là lưới đỡ.
+  await runOrderFulfillment(result.orderId);
 
   revalidatePath("/quan-tri");
   revalidateTag(COURSES_TAG, { expire: 0 });
   return { ok: true, message: "Đã cấp quyền và xác nhận thanh toán." };
+}
+
+/**
+ * Đăng ký lại webhook URL với PayOS.
+ *
+ * Sự cố 100032 / 100039: PayOS ngừng giao webhook (URL chưa xác nhận, hoặc bị
+ * PayOS tự tắt sau nhiều lần trả non-2xx) và đơn đã trả tiền treo ở `pending`.
+ * `webhooks.confirm` bắt PayOS ping thử endpoint rồi mới ghi nhận, nên bấm xong
+ * là biết webhook đã sống lại chưa. URL suy ra từ `appUrl()` — không nhận input.
+ */
+export async function confirmPayosWebhook() {
+  await requireAdmin();
+  const url = `${appUrl()}/api/webhooks/payos`;
+  try {
+    const res = await payosClient().webhooks.confirm(url);
+    return {
+      ok: true,
+      message: `Đã đăng ký webhook cho ${res.shortName || res.name || url}.`,
+    };
+  } catch (error) {
+    console.error("[quan-tri] Đăng ký webhook PayOS hỏng:", error);
+    return {
+      ok: false,
+      message: "PayOS từ chối đăng ký webhook. Xem log để biết lý do.",
+    };
+  }
 }
 
 /**

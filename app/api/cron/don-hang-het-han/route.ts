@@ -11,6 +11,11 @@ import {
   reconcileMissingDriveGrants,
   revokeExpiredDriveAccess,
 } from "@/lib/fulfillment";
+import {
+  checkPayosWebhookHealth,
+  reconcilePaidPayosOrders,
+  reconcilePaidPayosServiceOrders,
+} from "@/lib/payos-reconcile";
 import { COURSES_TAG } from "@/lib/cache-tags";
 
 // Prisma, PayOS and Google SDKs need Node, not the edge runtime.
@@ -34,7 +39,15 @@ export const maxDuration = 60;
  * PayOS nay đóng được bằng một transaction thuần database, nên một lượt xử lý
  * được nhiều hơn hẳn.
  */
-const ORDER_EXPIRY_BUDGET_MS = 25_000;
+const ORDER_EXPIRY_BUDGET_MS = 20_000;
+
+/**
+ * Ngân sách cho bước đối soát-kéo chạy TRƯỚC khi đóng đơn. Cùng lý lẽ trần thời
+ * gian như trên: mỗi đơn là một `paymentRequests.get` (~tối đa 20s khi PayOS
+ * chậm). 15s + 8s + 20s (đóng đơn) + hai bước Drive vẫn nằm dưới `maxDuration`.
+ */
+const RECONCILE_PAID_BUDGET_MS = 15_000;
+const RECONCILE_PAID_SERVICE_BUDGET_MS = 8_000;
 
 function authorized(request: Request) {
   const secret = process.env.CRON_SECRET;
@@ -65,6 +78,25 @@ export async function GET(request: Request) {
     return new NextResponse("Not found", { status: 404 });
   }
 
+  // Đối soát-kéo TRƯỚC khi hết hạn: một khoản tiền về muộn mà webhook không tới,
+  // trên đơn sắp quá hạn, phải được xác nhận chứ không bị `expireStaleOrders`
+  // quét đi. Mỗi hàm đã tự nuốt lỗi từng đơn; `.catch` ở đây là lớp cuối để một
+  // sự cố ngoài dự tính không làm hỏng cả lượt cron.
+  const reclaimedOrders = await reconcilePaidPayosOrders(
+    new Date(),
+    RECONCILE_PAID_BUDGET_MS,
+  ).catch((error) => {
+    console.error("[cron] reconcilePaidPayosOrders lỗi:", error);
+    return { scanned: 0, confirmed: 0, review: 0 };
+  });
+  const reclaimedServices = await reconcilePaidPayosServiceOrders(
+    new Date(),
+    RECONCILE_PAID_SERVICE_BUDGET_MS,
+  ).catch((error) => {
+    console.error("[cron] reconcilePaidPayosServiceOrders lỗi:", error);
+    return { scanned: 0, confirmed: 0, review: 0 };
+  });
+
   const result = await expireStaleOrders(new Date(), ORDER_EXPIRY_BUDGET_MS);
   // Permission mutations for one folder must not run concurrently. Keep grant
   // then revoke deterministic even though each operation also has a DB lease.
@@ -88,7 +120,20 @@ export async function GET(request: Request) {
       pruneExpiredAuthTokens(),
       pruneExpiredLeases(),
     ]);
-  if (result.released > 0 || driveRevokes.revoked > 0 || driveRevokes.kept > 0) {
+  // Sau khi đối soát xong: nếu vẫn "im" bất thường thì webhook có thể đã chết.
+  // Gọi ở đây, không trước bước đối soát, để không báo động vì chính lượt vừa
+  // dọn xong.
+  const webhookHealth = await checkPayosWebhookHealth(new Date()).catch((error) => {
+    console.error("[cron] checkPayosWebhookHealth lỗi:", error);
+    return null;
+  });
+
+  if (
+    result.released > 0 ||
+    reclaimedOrders.confirmed > 0 ||
+    driveRevokes.revoked > 0 ||
+    driveRevokes.kept > 0
+  ) {
     revalidateTag(COURSES_TAG, { expire: 0 });
   }
   if (result.expired > 0) {
@@ -96,9 +141,17 @@ export async function GET(request: Request) {
       `[cron] Đóng ${result.expired} đơn quá hạn, trả lại ${result.released} chỗ.`,
     );
   }
+  if (reclaimedOrders.confirmed > 0 || reclaimedServices.confirmed > 0) {
+    console.log(
+      `[cron] Đối soát-kéo xác nhận ${reclaimedOrders.confirmed} đơn khóa học, ${reclaimedServices.confirmed} đơn dịch vụ.`,
+    );
+  }
   return NextResponse.json({
     ok: true,
     orders: result,
+    reclaimedOrders,
+    reclaimedServices,
+    webhookHealth,
     services,
     referralRepairs,
     expiredCredits,

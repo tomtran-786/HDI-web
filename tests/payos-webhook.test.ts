@@ -5,8 +5,6 @@ const mocks = vi.hoisted(() => ({
   process: vi.fn(),
   processService: vi.fn(),
   fulfill: vi.fn(),
-  notifyGroup: vi.fn(),
-  notifyReferral: vi.fn(),
   sendReview: vi.fn(),
 }));
 
@@ -18,11 +16,9 @@ vi.mock("@/lib/orders", () => ({ processPayosPayment: mocks.process }));
 vi.mock("@/lib/service-orders", () => ({
   processServicePayment: mocks.processService,
 }));
-vi.mock("@/lib/fulfillment", () => ({
-  fulfillOrderDrive: mocks.fulfill,
-  notifyGroupMembers: mocks.notifyGroup,
-  notifyReferralCommission: mocks.notifyReferral,
-}));
+// Route gọi một helper duy nhất — `runOrderFulfillment` gói cả ba bước Drive/
+// thư, và cùng helper đó cũng chạy trên đường webhook, đối soát-kéo và nút admin.
+vi.mock("@/lib/fulfillment", () => ({ runOrderFulfillment: mocks.fulfill }));
 vi.mock("@/lib/email", () => ({ sendPaymentReviewEmail: mocks.sendReview }));
 
 import { POST } from "@/app/api/webhooks/payos/route";
@@ -79,9 +75,7 @@ describe("PayOS webhook route", () => {
       orderId: "order-1",
       fulfill: true,
     });
-    mocks.fulfill.mockResolvedValue({ folders: 1, granted: 1 });
-    mocks.notifyGroup.mockResolvedValue({ notified: 0 });
-    mocks.notifyReferral.mockResolvedValue({ notified: 0 });
+    mocks.fulfill.mockResolvedValue(undefined);
     const response = await POST(request({ signed: true }));
     expect(response.status).toBe(200);
     expect(mocks.fulfill).toHaveBeenCalledWith("order-1");
@@ -100,15 +94,11 @@ describe("PayOS webhook route", () => {
       orderId: "order-1",
       fulfill: true,
     });
-    mocks.fulfill.mockResolvedValue({ folders: 1, granted: 0 });
-    mocks.notifyGroup.mockResolvedValue({ notified: 1 });
-    mocks.notifyReferral.mockResolvedValue({ notified: 1 });
+    mocks.fulfill.mockResolvedValue(undefined);
 
     const response = await POST(request({ signed: true }));
     expect(response.status).toBe(200);
     expect(mocks.fulfill).toHaveBeenCalledWith("order-1");
-    expect(mocks.notifyGroup).toHaveBeenCalledWith("order-1");
-    expect(mocks.notifyReferral).toHaveBeenCalledWith("order-1");
   });
 
   it("falls through to the service ledger when the code is not a course order", async () => {

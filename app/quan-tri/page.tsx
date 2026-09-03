@@ -21,6 +21,7 @@ import { Stars } from "@/components/ui/stars";
 import { renderMarkdown } from "@/lib/markdown-lite";
 import {
   cancelPendingOrder,
+  confirmPayosWebhook,
   dismissFeedback,
   flagPaymentForRefund,
   grantPendingPayment,
@@ -383,6 +384,22 @@ export default async function AdminPage({
           </ul>
         </div>
       )}
+
+      <div className="mb-10 flex flex-col gap-3 rounded-card border border-line bg-card p-5 sm:flex-row sm:items-center sm:justify-between">
+        <div className="min-w-0">
+          <p className="text-sm font-bold text-fg">Webhook PayOS</p>
+          <p className="mt-1 text-[13px] text-fg-subtle">
+            Bấm khi có đơn đã trả tiền mà vẫn treo — đăng ký lại URL nhận thông
+            báo với PayOS. PayOS sẽ gửi một request thử để xác nhận.
+          </p>
+        </div>
+        <AdminActionButton
+          action={confirmPayosWebhook}
+          id="payos-webhook"
+          label="Đăng ký lại webhook"
+          confirm="Đăng ký lại webhook URL với PayOS?"
+        />
+      </div>
 
       <h3 className="mb-4 text-sm font-bold uppercase tracking-[0.16em] text-fg-subtle">
         Đơn hàng
