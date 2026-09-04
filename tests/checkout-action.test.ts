@@ -60,7 +60,14 @@ describe("one-step cart checkout action", () => {
       user: { id: "user-1", email: "leader@hdi.test" },
     });
     mocks.resolveGroupMembers.mockResolvedValue({ members: [], unregistered: [] });
-    mocks.findUnique.mockResolvedValue({ phone: "0900000000", stage: "other" });
+    // Cùng một `prisma.user.findUnique` phục vụ hai việc: `currentProfile` tra
+    // theo id, còn nhánh mã giới thiệu tra theo `referralCode`.
+    mocks.findUnique.mockImplementation(
+      async ({ where }: { where: Record<string, unknown> }) =>
+        "referralCode" in where
+          ? { id: "user-referrer" }
+          : { phone: "0900000000", stage: "other" },
+    );
     mocks.readCartIds.mockResolvedValue(["course-b", "course-a"]);
     mocks.allowUserAction.mockResolvedValue(true);
   });
@@ -88,7 +95,7 @@ describe("one-step cart checkout action", () => {
     expect(mocks.createOrder).toHaveBeenCalledWith(
       "user-1",
       ["course-b", "course-a"],
-      { members: [], useCredit: false },
+      { members: [], useCredit: false, referrerId: undefined },
     );
     expect(mocks.writeCartIds).toHaveBeenCalledWith([]);
     // Dấu bàn giao phải được đặt TRƯỚC khi rời đi: sau `redirect` không còn
@@ -223,8 +230,95 @@ describe("one-step cart checkout action", () => {
           { id: "user-3", email: "c@hdi.test" },
         ],
         useCredit: false,
+        referrerId: undefined,
       },
     );
+  });
+
+  describe("mã giới thiệu nhập ở giỏ hàng", () => {
+    beforeEach(() => {
+      mocks.createOrder.mockResolvedValue({
+        ok: true,
+        orderId: "order-1",
+        code: 100001,
+        amountVnd: 900_000,
+        expiresAt: new Date(),
+      });
+      mocks.ensurePayosCheckout.mockResolvedValue({
+        ok: true,
+        state: "ready",
+        checkoutUrl: "https://payos.test/checkout",
+      });
+    });
+
+    it("phân giải mã hợp lệ và truyền referrerId xuống createOrder", async () => {
+      const form = new FormData();
+      form.set("maGioiThieu", "skgaxbzr");
+
+      await expect(checkout({}, form)).rejects.toMatchObject({
+        url: "https://payos.test/checkout",
+      });
+      expect(mocks.findUnique).toHaveBeenCalledWith({
+        where: { referralCode: "SKGAXBZR" },
+        select: { id: true },
+      });
+      expect(mocks.createOrder).toHaveBeenCalledWith(
+        "user-1",
+        ["course-b", "course-a"],
+        { members: [], useCredit: false, referrerId: "user-referrer" },
+      );
+    });
+
+    it("trả lỗi và KHÔNG tạo đơn khi mã không tồn tại", async () => {
+      mocks.findUnique.mockImplementation(
+        async ({ where }: { where: Record<string, unknown> }) =>
+          "referralCode" in where
+            ? null
+            : { phone: "0900000000", stage: "other" },
+      );
+      const form = new FormData();
+      form.set("maGioiThieu", "KHONGCO");
+
+      const result = await checkout({}, form);
+      expect(result).toEqual({
+        error: expect.stringContaining("Mã giới thiệu không tồn tại"),
+        refreshCatalog: false,
+      });
+      expect(mocks.createOrder).not.toHaveBeenCalled();
+    });
+
+    it("trả lỗi khi người mua nhập mã của chính mình", async () => {
+      mocks.findUnique.mockImplementation(
+        async ({ where }: { where: Record<string, unknown> }) =>
+          "referralCode" in where
+            ? { id: "user-1" }
+            : { phone: "0900000000", stage: "other" },
+      );
+      const form = new FormData();
+      form.set("maGioiThieu", "TUCHINHMINH");
+
+      const result = await checkout({}, form);
+      expect(result.error).toContain("của chính mình");
+      expect(mocks.createOrder).not.toHaveBeenCalled();
+    });
+
+    it("bỏ qua ô mã để trống — createOrder nhận referrerId undefined", async () => {
+      const form = new FormData();
+      form.set("maGioiThieu", "   ");
+
+      await expect(checkout({}, form)).rejects.toMatchObject({
+        url: "https://payos.test/checkout",
+      });
+      // Không có lượt tra nào theo referralCode.
+      for (const call of mocks.findUnique.mock.calls) {
+        expect("referralCode" in call[0].where).toBe(false);
+      }
+      expect(mocks.createOrder).toHaveBeenCalledWith(
+        "user-1",
+        ["course-b", "course-a"],
+        { members: [], useCredit: false, referrerId: undefined },
+      );
+    });
   });
 
   it("từ chối trước khi giữ chỗ khi có email chưa có tài khoản", async () => {

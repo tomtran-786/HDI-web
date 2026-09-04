@@ -4,6 +4,13 @@ import { creditBalanceVnd } from "./referral-ledger";
 export type ReferralQuote = {
   /** Người này còn quyền dùng khoản giảm 10% cho đơn đầu tiên hay không. */
   eligible: boolean;
+  /**
+   * Người này CHƯA có người giới thiệu và CHƯA có đơn nào chốt quyền ưu đãi —
+   * tức giỏ hàng nên hiện ô nhập mã giới thiệu. Loại trừ lẫn nhau với `eligible`
+   * theo đúng cách dựng: chưa gán thì thấy ô nhập mã, đã gán (đơn đầu) thì thấy
+   * dòng giảm giá.
+   */
+  canEnterCode: boolean;
   /** Số dư credits, tính bằng đồng. */
   creditBalanceVnd: number;
 };
@@ -42,6 +49,7 @@ export async function referralQuoteFor(userId: string): Promise<ReferralQuote> {
 
   return {
     eligible: user?.referredById != null && claimed === null,
+    canEnterCode: user?.referredById == null && claimed === null,
     // Số dư âm là chuyện bất thường (một `adjustment` tay quá tay), nhưng đưa
     // số âm ra giỏ hàng thì chỉ làm người mua hoang mang.
     creditBalanceVnd: Math.max(0, balance),

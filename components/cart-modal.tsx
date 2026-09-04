@@ -18,7 +18,11 @@ import { addMemberEmails, groupApplies, MAX_MEMBERS } from "@/lib/group-invite";
 import { Badge } from "./ui/badge";
 import { IconCart, IconClose } from "./ui/icons";
 
-type ReferralQuote = { eligible: boolean; creditBalanceVnd: number };
+type ReferralQuote = {
+  eligible: boolean;
+  canEnterCode: boolean;
+  creditBalanceVnd: number;
+};
 
 type CatalogResponse = {
   email: string;
@@ -27,7 +31,11 @@ type CatalogResponse = {
   referral: ReferralQuote;
 };
 
-const NO_REFERRAL: ReferralQuote = { eligible: false, creditBalanceVnd: 0 };
+const NO_REFERRAL: ReferralQuote = {
+  eligible: false,
+  canEnterCode: false,
+  creditBalanceVnd: 0,
+};
 
 type GroupPreview = {
   groupSize: number;
@@ -85,6 +93,9 @@ export function CartModal({
   const [groupWasEligible, setGroupWasEligible] = useState(false);
   const [draft, setDraft] = useState("");
   const [referral, setReferral] = useState<ReferralQuote>(NO_REFERRAL);
+  // Mã giới thiệu gõ ở giỏ hàng. KHÔNG reset khi `refreshCatalog` — một lỗi
+  // không liên quan không được bắt người mua gõ lại mã.
+  const [referralCodeDraft, setReferralCodeDraft] = useState("");
   // Ý muốn tiêu credits. Chỉ MỘT bit này đi lên server; số tiền được trừ do
   // `createOrder` tự tính lại bên trong transaction đã khóa hàng user.
   const [useCredit, setUseCredit] = useState(false);
@@ -190,11 +201,19 @@ export function CartModal({
    * `tongTienDuKien` với `amountVnd` bằng phép so bằng tuyệt đối rồi HỦY đơn
    * nếu lệch. Viết lại phép tính ở đây — dù chỉ đổi thứ tự trừ — là làm mọi đơn
    * của người được giới thiệu không thanh toán được.
+   *
+   * `referralActive`: đã có người giới thiệu (`eligible`), HOẶC đang gõ một mã ở
+   * ô nhập tại giỏ hàng. Vế thứ hai bắt buộc phải tính vào đây — server sẽ áp
+   * 10% ngay khi nhận mã, nên `tongTienDuKien` phải phản ánh sẵn con số đó,
+   * bằng không nhánh chốt giá sẽ hủy đơn vừa tạo.
    */
+  const referralActive =
+    referral.eligible ||
+    (referral.canEnterCode && referralCodeDraft.trim().length > 0);
   const referralDiscount = referralDiscountVnd({
     listSubtotalVnd: listTotalVnd,
     subtotalVnd,
-    eligible: referral.eligible,
+    eligible: referralActive,
   });
   const creditApplied = creditToApply({
     balanceVnd: referral.creditBalanceVnd,
@@ -208,7 +227,7 @@ export function CartModal({
    * cộng dồn và họ đang hưởng mức cao hơn.
    */
   const referralSuperseded =
-    referral.eligible && referralDiscount === 0 && listTotalVnd > subtotalVnd;
+    referralActive && referralDiscount === 0 && listTotalVnd > subtotalVnd;
   /** Số dư còn nhưng bị trần 30% học phí chặn lại. */
   const creditCapped =
     useCredit &&
@@ -644,7 +663,7 @@ export function CartModal({
               người mua không thấy credits của chính mình vừa bị tiêu bao nhiêu —
               đó là tiền của họ, không phải một khuyến mãi. */}
           {selected.length > 0 &&
-            (referral.eligible || referral.creditBalanceVnd > 0) && (
+            (referralActive || referral.creditBalanceVnd > 0) && (
               <div className="mb-3 space-y-1.5 text-sm text-fg-muted">
                 {referralDiscount > 0 && (
                   <p className="flex items-baseline justify-between gap-4">
@@ -721,6 +740,32 @@ export function CartModal({
               ))}
               <input type="hidden" name="tongTienDuKien" value={String(totalVnd)} />
               <input type="hidden" name="duNgCredit" value={useCredit ? "1" : "0"} />
+              {/* Ô mã giới thiệu chỉ hiện cho người chưa có người giới thiệu và
+                  chưa chốt đơn nào — server dựng cờ này trong `referralQuoteFor`.
+                  Vắng ô này thì `maGioiThieu` không được gửi và checkout bỏ qua. */}
+              {referral.canEnterCode && (
+                <label className="mb-3 block text-left">
+                  <span className="text-xs font-semibold text-fg-muted">
+                    {referralPanel.codeLabel}
+                  </span>
+                  <input
+                    type="text"
+                    name="maGioiThieu"
+                    value={referralCodeDraft}
+                    onChange={(event) =>
+                      setReferralCodeDraft(event.target.value.toUpperCase())
+                    }
+                    autoComplete="off"
+                    spellCheck={false}
+                    maxLength={12}
+                    placeholder={referralPanel.codePlaceholder}
+                    className="mt-1 w-full rounded-full border border-line bg-card px-3 py-2 text-sm uppercase tracking-wide text-fg outline-none transition placeholder:normal-case placeholder:tracking-normal placeholder:text-fg-subtle focus:border-primary sm:w-56"
+                  />
+                  <span className="mt-1 block text-xs leading-relaxed text-fg-subtle">
+                    {referralPanel.codeHint}
+                  </span>
+                </label>
+              )}
               <button
                 type="submit"
                 disabled={

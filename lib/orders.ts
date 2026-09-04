@@ -96,7 +96,19 @@ type LockedCourse = GroupPricedCourse & {
 export async function createOrder(
   payerUserId: string,
   courseIds: string[],
-  options: { members?: OrderBuyer[]; useCredit?: boolean } = {},
+  options: {
+    members?: OrderBuyer[];
+    useCredit?: boolean;
+    /**
+     * Người giới thiệu do người trả tiền nhập ở màn checkout. Chỉ có tác dụng
+     * khi người trả tiền CHƯA có `referredById` và CHƯA có đơn `paid` nào —
+     * lúc đó cột được ghi lười ngay trong transaction đã khóa hàng user, và
+     * khoản giảm 10% "đơn đầu" cùng hoa hồng sau này đọc lại cột đó như thường.
+     * Đã có người giới thiệu, hoặc đã có đơn paid → bỏ qua, giữ luật "mỗi người
+     * chỉ sinh hoa hồng một lần cho đơn paid đầu tiên".
+     */
+    referrerId?: string;
+  } = {},
 ): Promise<OrderResult> {
   if (courseIds.length === 0) {
     return { ok: false, reason: "empty", message: "Giỏ hàng đang trống." };
@@ -362,10 +374,39 @@ export async function createOrder(
       select: { id: true },
     });
 
+    /**
+     * Gán người giới thiệu LƯỜI, từ mã nhập ở checkout.
+     *
+     * `referredById` được thiết kế để ghi đúng một lần lúc xác thực email; đây
+     * là con đường thứ hai, có chủ đích, cho những ai lỡ đăng ký không kèm mã.
+     * Bốn điều kiện: có mã, người này chưa có người giới thiệu, mã không phải
+     * của chính họ, và chưa có đơn nào chốt quyền ưu đãi (`claimed === null`) —
+     * điều kiện cuối chính là thứ giữ luật "chỉ đơn paid đầu tiên": người đã
+     * từng trả một đơn không bao giờ được gán người giới thiệu ở lần mua sau,
+     * nên webhook về sau đọc `referredById = null` và không ghi hoa hồng nào.
+     *
+     * `AND referred_by_id IS NULL` trong câu UPDATE là lớp idempotent thứ hai,
+     * dù hàng user đã bị khóa `FOR UPDATE` ở đầu transaction.
+     */
+    const canAttribute =
+      options.referrerId != null &&
+      payer?.referredById == null &&
+      options.referrerId !== payerUserId &&
+      claimed === null;
+    if (canAttribute) {
+      await tx.$executeRaw`
+        UPDATE users
+           SET referred_by_id = ${options.referrerId}
+         WHERE id = ${payerUserId}
+           AND referred_by_id IS NULL`;
+    }
+    const effectiveReferredById =
+      payer?.referredById ?? (canAttribute ? options.referrerId! : null);
+
     const referralDiscount = referralDiscountVnd({
       listSubtotalVnd,
       subtotalVnd,
-      eligible: payer?.referredById != null && claimed === null,
+      eligible: effectiveReferredById != null && claimed === null,
     });
 
     const creditApplied = creditToApply({

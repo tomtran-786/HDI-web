@@ -12,8 +12,10 @@ import { markCheckoutHandoff } from "@/lib/checkout-handoff";
 import { prisma } from "@/lib/prisma";
 import { normalizeMemberEmails, resolveGroupMembers } from "@/lib/group-members";
 import { cancelOrder, createOrder } from "@/lib/orders";
+import { normalizeReferralCode } from "@/lib/referral-code";
 import { ensurePayosCheckout } from "@/lib/payment-checkout";
 import { COURSES_TAG } from "@/lib/cache-tags";
+import { referralPanel } from "@/content/checkout";
 
 export type CheckoutState = {
   error?: string;
@@ -75,11 +77,35 @@ export async function checkout(
     };
   }
 
+  // Mã giới thiệu nhập ở giỏ hàng. Chốt người giới thiệu ở đây — TRƯỚC khi tạo
+  // đơn — nên một mã sai/tự-giới-thiệu chỉ trả lỗi chứ không để lại một đơn vừa
+  // tạo rồi bị nhánh chốt giá `tongTienDuKien` hủy đi. `createOrder` mới là nơi
+  // ghi `users.referred_by_id` (lười, trong transaction đã khóa hàng user).
+  let referrerId: string | undefined;
+  const referralCode = normalizeReferralCode(formData.get("maGioiThieu"));
+  if (referralCode) {
+    const referrer = await prisma.user.findUnique({
+      where: { referralCode },
+      select: { id: true },
+    });
+    if (!referrer) {
+      return { error: referralPanel.codeUnknownError, refreshCatalog: false };
+    }
+    if (referrer.id === session.user.id) {
+      return { error: referralPanel.codeSelfError, refreshCatalog: false };
+    }
+    referrerId = referrer.id;
+  }
+
   const ids = await readCartIds();
   // Trình duyệt gửi lên đúng một bit: "có muốn tiêu credits không". Số dư, số
   // tiền được trừ và tổng cuối cùng đều do server tự tính lại (BR-02).
   const useCredit = formData.get("duNgCredit") === "1";
-  const result = await createOrder(session.user.id, ids, { members, useCredit });
+  const result = await createOrder(session.user.id, ids, {
+    members,
+    useCredit,
+    referrerId,
+  });
   if (!result.ok) {
     return {
       error: result.message,

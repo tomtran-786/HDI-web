@@ -4,6 +4,7 @@ import { MIN_CHARGE_VND } from "@/lib/referral-pricing";
 const mocks = vi.hoisted(() => ({
   transaction: vi.fn(),
   queryRaw: vi.fn(),
+  executeRaw: vi.fn(),
   enrollmentFindMany: vi.fn(),
   enrollmentCreateMany: vi.fn(),
   orderCreate: vi.fn(),
@@ -73,9 +74,11 @@ beforeEach(() => {
       amountVnd: data.amountVnd,
     }),
   );
+  mocks.executeRaw.mockResolvedValue(1);
   mocks.transaction.mockImplementation(async (callback: (tx: unknown) => unknown) =>
     callback({
       $queryRaw: mocks.queryRaw,
+      $executeRaw: mocks.executeRaw,
       enrollment: {
         findMany: mocks.enrollmentFindMany,
         createManyAndReturn: mocks.enrollmentCreateMany,
@@ -148,6 +151,74 @@ describe("giảm giá đơn đầu tiên của người được giới thiệu"
       },
       select: { id: true },
     });
+  });
+});
+
+describe("gán người giới thiệu lười từ mã nhập ở checkout", () => {
+  function attributeSql() {
+    return (mocks.executeRaw.mock.calls[0][0] as unknown as string[])
+      .join(" ")
+      .replace(/\s+/g, " ");
+  }
+
+  it("ghi referred_by_id khi người này chưa có và chưa từng có đơn", async () => {
+    lockRows(null); // referredById = null
+    mocks.orderFindFirst.mockResolvedValue(null); // chưa có đơn paid
+
+    const result = await createOrder("user-1", ["course-1"], {
+      referrerId: "user-referrer",
+    });
+
+    expect(mocks.executeRaw).toHaveBeenCalledTimes(1);
+    expect(attributeSql()).toContain("UPDATE users");
+    expect(attributeSql()).toContain("referred_by_id");
+    expect(attributeSql()).toContain("referred_by_id IS NULL");
+    const params = mocks.executeRaw.mock.calls[0].slice(1);
+    expect(params).toEqual(["user-referrer", "user-1"]);
+    // Cột vừa được gán phải kích hoạt luôn khoản giảm 10% của đơn này.
+    expect(result).toMatchObject({ ok: true, referralDiscountVnd: 100_000 });
+  });
+
+  it("bỏ qua mã khi người này đã có người giới thiệu", async () => {
+    lockRows("user-cu"); // đã có referredById
+
+    const result = await createOrder("user-1", ["course-1"], {
+      referrerId: "user-referrer",
+    });
+
+    expect(mocks.executeRaw).not.toHaveBeenCalled();
+    // Vẫn giảm 10%, nhưng theo người giới thiệu CŨ, không phải mã vừa nhập.
+    expect(result).toMatchObject({ ok: true, referralDiscountVnd: 100_000 });
+  });
+
+  it("bỏ qua mã khi người này đã từng có đơn đã thanh toán (luật một lần)", async () => {
+    lockRows(null);
+    mocks.orderFindFirst.mockResolvedValue({ id: "order-cu" });
+
+    await createOrder("user-1", ["course-1"], { referrerId: "user-referrer" });
+
+    expect(mocks.executeRaw).not.toHaveBeenCalled();
+    expect(orderData().referralDiscountVnd).toBe(0);
+  });
+
+  it("từ chối mã của chính mình ngay ở tầng createOrder", async () => {
+    lockRows(null);
+
+    const result = await createOrder("user-1", ["course-1"], {
+      referrerId: "user-1",
+    });
+
+    expect(mocks.executeRaw).not.toHaveBeenCalled();
+    expect(result).toMatchObject({ ok: true });
+    expect(orderData().referralDiscountVnd).toBe(0);
+  });
+
+  it("không đụng tới users khi không có mã", async () => {
+    lockRows(null);
+
+    await createOrder("user-1", ["course-1"]);
+
+    expect(mocks.executeRaw).not.toHaveBeenCalled();
   });
 });
 

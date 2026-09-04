@@ -6,6 +6,8 @@
  * bank details or treats return-page query parameters as proof of payment.
  */
 
+import { REFERRAL_DISCOUNT_PCT } from "@/lib/referral-pricing";
+
 export const cartModal = {
   eyebrow: "Đăng ký học",
   title: "Chọn khóa học",
@@ -102,6 +104,17 @@ export const referralPanel = {
   subtotal: "Tạm tính",
   useCredit: "Dùng credits giới thiệu",
   balance: (amount: string) => `Số dư ${amount}`,
+  /**
+   * Ô nhập mã ở giỏ hàng, chỉ hiện cho người chưa có người giới thiệu và chưa
+   * chốt đơn nào. Trước đây mã chỉ nhập được lúc đăng ký tài khoản, nên ai lỡ
+   * đăng ký không kèm mã thì người giới thiệu mất phần vĩnh viễn.
+   */
+  codeLabel: "Mã giới thiệu (nếu có)",
+  codePlaceholder: "Nhập mã",
+  codeHint: `Nhập mã của người giới thiệu để được giảm ${REFERRAL_DISCOUNT_PCT}% cho khóa học đầu tiên của bạn.`,
+  codeUnknownError:
+    "Mã giới thiệu không tồn tại. Hãy kiểm tra lại mã bạn được gửi, hoặc bỏ trống ô đó để thanh toán không kèm mã.",
+  codeSelfError: "Bạn không thể dùng mã giới thiệu của chính mình.",
   /**
    * Nói ngay khi phần dư không tiêu hết được, thay vì để người mua tự hỏi vì
    * sao số dư còn mà đơn vẫn phải trả tiền.

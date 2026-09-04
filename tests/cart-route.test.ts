@@ -33,6 +33,7 @@ describe("GET /api/gio-hang", () => {
     for (const mock of Object.values(mocks)) mock.mockReset();
     mocks.referralQuoteFor.mockResolvedValue({
       eligible: false,
+      canEnterCode: false,
       creditBalanceVnd: 0,
     });
     mocks.reconcile.mockResolvedValue({ scanned: 0, expired: 0, released: 0 });
@@ -107,7 +108,7 @@ describe("GET /api/gio-hang", () => {
       // Chỉ hai dữ kiện, không phải số tiền: giỏ hàng tự tính khoản trừ bằng
       // đúng các hàm mà `createOrder` gọi, nên không có phép tính thứ hai nào
       // để đi lệch với hóa đơn.
-      referral: { eligible: false, creditBalanceVnd: 0 },
+      referral: { eligible: false, canEnterCode: false, creditBalanceVnd: 0 },
     });
     expect(JSON.stringify(body)).not.toContain("SECRET");
   });
