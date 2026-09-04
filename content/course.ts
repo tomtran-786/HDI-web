@@ -24,9 +24,11 @@
  *    five courses above, these details do not come from `reference/`.
  *
  * D. `nckh-ung-dung-ai-xuat-ban-quoc-te` is transcribed from the owner-supplied
- *    `HDI class.md` on 2026-08-25. The owner explicitly overrides its original
- *    opening date with 07/09/2026 and asks us not to publish a weekday schedule
- *    until the detailed timetable is ready.
+ *    `HDI class.md` on 2026-08-25. The owner first overrode its original opening
+ *    date with 07/09/2026 with no weekday schedule; on 2026-09-04 the owner
+ *    confirmed the detailed timetable — six sessions on Tuesdays and Saturdays,
+ *    22/09/2026 – 10/10/2026, 19:00 – 21:00 — and the opening date moved to
+ *    22/09/2026 to match the first session.
  *
  * E. `training-tieu-luan-nckh-kltn` was re-authored on 2026-08-27 from an
  *    owner-supplied outline ("Viet tieu luan, Luan van va NCKH.md"). It is no
@@ -141,10 +143,10 @@ export type CoursePhase = {
 /**
  * Ngày khai giảng ĐÃ CHỐT của một khóa, ở dạng máy đọc được.
  *
- * Ô `facts` nhãn "Lịch học" mang câu tiếng Việt dành cho người đọc — "Khai giảng
- * 07/09/2026 · lịch chi tiết sẽ được thông báo" — còn trường này mang đúng cái
- * ngày đó ở dạng ISO, để dải lịch khai giảng ngoài trang chủ sắp xếp và định
- * dạng được mà không phải bóc chuỗi tiếng Việt bằng regex.
+ * Ô `facts` nhãn "Lịch học" mang câu tiếng Việt dành cho người đọc — "Thứ Ba và
+ * thứ Bảy hằng tuần, 22/09 – 10/10/2026 · 19:00 – 21:00" — còn trường này mang
+ * đúng ngày bắt đầu đó ở dạng ISO, để dải lịch khai giảng ngoài trang chủ sắp
+ * xếp và định dạng được mà không phải bóc chuỗi tiếng Việt bằng regex.
  *
  * `null` KHÔNG phải "quên điền": nó là lời khai rằng khóa chưa có ngày công bố
  * được, đúng với ô "Lịch học" đang để `FACT_TBA` hoặc chỉ có khung giờ. Trường
@@ -357,7 +359,7 @@ export const courses = [
   {
     code: "AIQT",
     slug: "nckh-ung-dung-ai-xuat-ban-quoc-te",
-    eyebrow: "Khóa mới · Khai giảng 07/09/2026",
+    eyebrow: "Khóa mới · Khai giảng 22/09/2026",
     title: "Nghiên cứu khoa học ứng dụng AI & xuất bản quốc tế",
     audience:
       "Dành cho người đang thực hiện nghiên cứu và muốn ứng dụng AI có kiểm soát, chuẩn bị bài báo quốc tế hoặc phân tích dữ liệu bảng",
@@ -370,13 +372,13 @@ export const courses = [
       noteLabel: "Quyền lợi",
       vnd: 3000000,
     },
-    opening: { startDate: "2026-09-07" },
+    opening: { startDate: "2026-09-22" },
     facts: [
       { label: "Hình thức", value: "Trực tuyến qua Zoom" },
       { label: "Thời lượng", value: "06 buổi" },
       {
         label: "Lịch học",
-        value: "Khai giảng 07/09/2026 · lịch chi tiết sẽ được thông báo",
+        value: "Thứ Ba và thứ Bảy hằng tuần, 22/09 – 10/10/2026 · 19:00 – 21:00",
       },
       { label: "Sĩ số", value: "Tối đa 15 học viên/lớp" },
       { label: "Học liệu", value: "Recording và dữ liệu thực hành" },

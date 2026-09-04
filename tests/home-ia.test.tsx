@@ -63,9 +63,9 @@ describe("kiến trúc nội dung homepage và Về HDI", () => {
       html.indexOf('id="khoa-hoc"'),
     );
     // Khẳng định theo ngày máy đọc được, KHÔNG theo chuỗi hiển thị: hero cũng
-    // đang in tay "07/09/2026" (components/sections/hero.tsx:27), nên bám vào
+    // đang in tay "22/09/2026" (components/sections/hero.tsx:27), nên bám vào
     // chuỗi đó sẽ xanh kể cả khi dải hỏng hoàn toàn.
-    expect(html).toMatch(/datetime="2026-09-07"/i);
+    expect(html).toMatch(/datetime="2026-09-22"/i);
     // TIEULUAN `not_open` trong mock: đã chốt ngày cũng không được lên dải.
     expect(html).not.toMatch(/datetime="2026-10-05"/i);
     expect(html).not.toContain("05/10/2026");

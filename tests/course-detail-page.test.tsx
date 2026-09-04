@@ -78,14 +78,11 @@ describe("trang chi tiết khóa học", () => {
 
     expect(course.slug).toBe("nckh-ung-dung-ai-xuat-ban-quoc-te");
     expect(html).toContain("Nghiên cứu khoa học ứng dụng AI &amp; xuất bản quốc tế");
-    expect(html).toContain("07/09/2026");
-    // Chủ khóa yêu cầu chưa công bố lịch theo thứ cho tới khi có thời khóa biểu
-    // chi tiết (xem ghi chú D ở đầu content/course.ts). Dòng "Lịch học" mang cả
-    // ngày khai giảng lẫn lời hẹn, nên khẳng định phần lời hẹn thay vì cả câu:
-    // gộp hai ý vào một dòng là chuyện trình bày, còn "chưa có lịch theo thứ"
-    // mới là điều test này canh.
-    expect(html).toContain("lịch chi tiết sẽ được thông báo");
-    expect(html).not.toContain("Thứ Bảy");
+    expect(html).toContain("22/09/2026");
+    // Thời khóa biểu chi tiết đã chốt (xem ghi chú D ở đầu content/course.ts):
+    // sáu buổi thứ Ba và thứ Bảy, 22/09 – 10/10/2026, 19:00 – 21:00. Dòng
+    // "Lịch học" mang đúng câu đó.
+    expect(html).toContain("Thứ Ba và thứ Bảy hằng tuần, 22/09 – 10/10/2026");
     expect(html).not.toContain("Chủ Nhật");
     expect(html).toContain("Tiến sĩ Trịnh Công Tâm");
     expect(html).toContain("System GMM");

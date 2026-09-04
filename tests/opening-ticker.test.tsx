@@ -22,8 +22,8 @@ describe("openingAnnouncements", () => {
       {
         slug: AIQT,
         title: bySlug(AIQT).title,
-        startDate: "2026-09-07",
-        dateLabel: "07/09/2026",
+        startDate: "2026-09-22",
+        dateLabel: "22/09/2026",
       },
       {
         slug: TIEULUAN,
@@ -98,8 +98,8 @@ describe("<OpeningTicker>", () => {
     // Khớp không phân biệt hoa thường: React phát ra `dateTime`, còn trình duyệt
     // đọc thuộc tính HTML không phân biệt hoa thường. Bám vào cách viết của
     // React là để test gãy khi React đổi cách in, dù trang vẫn đúng.
-    expect(html).toMatch(/datetime="2026-09-07"/i);
-    expect(html).toContain("07/09/2026");
+    expect(html).toMatch(/datetime="2026-09-22"/i);
+    expect(html).toContain("22/09/2026");
   });
 
   it("không có mục nào thì không dựng dải rỗng", () => {

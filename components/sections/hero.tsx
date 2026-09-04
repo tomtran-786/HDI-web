@@ -24,7 +24,7 @@ export function Hero() {
         <Reveal>
           <p className="inline-flex items-center gap-2 rounded-full bg-tint px-3 py-1.5 text-xs font-semibold text-success">
             <span className="h-1.5 w-1.5 rounded-full bg-success" />
-            Khóa mới khai giảng 07/09/2026
+            Khóa mới khai giảng 22/09/2026
           </p>
 
           <h1 className="mt-6 text-4xl font-bold leading-[1.08] tracking-tight sm:text-5xl lg:text-6xl">

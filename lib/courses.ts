@@ -39,7 +39,7 @@ export type OpeningAnnouncement = {
   title: string;
   /** ISO `YYYY-MM-DD` — đi thẳng vào `dateTime` của <time>. */
   startDate: string;
-  /** `07/09/2026`, giờ Việt Nam — bản in ra cho người đọc. */
+  /** `22/09/2026`, giờ Việt Nam — bản in ra cho người đọc. */
   dateLabel: string;
 };
 

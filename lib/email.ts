@@ -231,6 +231,41 @@ export function sendGroupMemberEnrolledEmail(input: {
 }
 
 /**
+ * Nhắc học viên của một khóa vào (lại) nhóm Zalo lớp học.
+ *
+ * Dùng khi link nhóm đổi — nhóm cũ bị bỏ, một nhóm mới thay chỗ — và mọi người
+ * đã trả tiền cần biết để chuyển sang. Gửi cho tất cả ai còn quyền truy cập
+ * khóa, bất kể mua lẻ hay theo nhóm: `communityUrl` là học liệu, nên chỉ những
+ * người đó mới được thấy.
+ *
+ * KHÔNG dùng `emailShell`'s `cta` vì nó kèm dòng "nếu bạn không thực hiện yêu
+ * cầu này, hãy bỏ qua email" — hợp cho liên kết xác thực, sai cho một lời nhắc.
+ */
+export function sendCourseCommunityReminderEmail(input: {
+  to: string;
+  name: string;
+  courseTitle: string;
+  communityUrl: string;
+}) {
+  const title = escapeHtml(input.courseTitle);
+  const href = input.communityUrl;
+  return sendEmail({
+    to: input.to,
+    subject: `Nhóm Zalo lớp học khóa "${input.courseTitle}" — HDI Research Center`,
+    html: emailShell(
+      input.name?.trim() || "bạn",
+      `<p>Khóa <strong>${title}</strong> có nhóm Zalo lớp học mới. Đây là kênh chính thức ` +
+        `để nhận thông báo lịch học, tài liệu và hỏi đáp trong suốt khóa.</p>` +
+        `<p>Nếu bạn chưa vào, hãy tham gia bằng nút bên dưới. Nhóm cũ sẽ ngừng dùng cho việc ` +
+        `trao đổi lớp học.</p>` +
+        `<p style="margin:28px 0"><a href="${href}" style="background:#0c498f;color:#ffffff;padding:12px 20px;border-radius:999px;text-decoration:none;font-weight:700">Vào nhóm Zalo</a></p>` +
+        `<p style="font-size:13px;color:#6b7785">Nếu nút không bấm được, sao chép liên kết này vào trình duyệt: ` +
+        `<br>${escapeHtml(href)}</p>`,
+    ),
+  });
+}
+
+/**
  * Báo cho người giới thiệu biết họ vừa được cộng credits.
  *
  * Không có lá thư này thì credits chỉ tồn tại ở một trang họ không có lý do gì

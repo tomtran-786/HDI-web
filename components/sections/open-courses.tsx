@@ -58,8 +58,9 @@ export async function OpenCourses() {
             // Nhãn là "Lịch học" — "Khai giảng" là nhãn đã bị khai tử khi gộp bộ
             // nhãn, và vì chỗ này không được sửa theo nên ô ngày ở thẻ trang chủ
             // đã im lặng không hiện suốt từ đó. Giữ cách tra `facts` chứ không
-            // đọc `course.opening`: câu prose mang được vế "· lịch chi tiết sẽ
-            // được thông báo" mà khóa AIQT bắt buộc phải có.
+            // đọc `course.opening`: câu prose mang được lịch theo thứ và khung
+            // giờ ("Thứ Ba và thứ Bảy hằng tuần… · 19:00 – 21:00") mà ngày ISO
+            // trong `course.opening` không chứa.
             const schedule = course.facts.find(
               (fact) => fact.label === "Lịch học",
             );
