@@ -116,6 +116,13 @@ export const referralPanel = {
     "Mã giới thiệu không tồn tại. Hãy kiểm tra lại mã bạn được gửi, hoặc bỏ trống ô đó để thanh toán không kèm mã.",
   codeSelfError: "Bạn không thể dùng mã giới thiệu của chính mình.",
   /**
+   * Cổng hạn mức RIÊNG của ô mã, rộng hơn hẳn cổng `checkout` — xem chú thích
+   * thứ tự trong app/actions/checkout.ts. Câu này chỉ nói về ô mã, không kéo
+   * người mua sang nghĩ rằng họ đã đặt quá nhiều đơn.
+   */
+  codeThrottledError:
+    "Bạn vừa thử mã giới thiệu quá nhiều lần. Hãy đợi ít phút, hoặc bỏ trống ô đó để thanh toán không kèm mã.",
+  /**
    * Nói ngay khi phần dư không tiêu hết được, thay vì để người mua tự hỏi vì
    * sao số dư còn mà đơn vẫn phải trả tiền.
    */

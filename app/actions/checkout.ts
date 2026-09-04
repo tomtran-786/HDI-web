@@ -47,6 +47,47 @@ export async function checkout(
     redirect(`/hoan-tat-ho-so?tiep=${encodeURIComponent(LANDING_CART)}`);
   }
 
+  /**
+   * Mã giới thiệu nhập ở giỏ hàng, phân giải TRƯỚC cổng hạn mức `checkout` và
+   * dưới một cổng riêng rộng hơn.
+   *
+   * Gõ sai mã là kiểu hỏng được dự liệu sẵn: `lib/referral-code.ts` bỏ hẳn
+   * `0 O 1 I L` khỏi bảng chữ cái vì mã này được đọc qua điện thoại và chép tay
+   * từ ảnh chụp màn hình. Cổng `checkout` thì TIÊU một lượt mỗi lần gọi, chỉ có
+   * mười lượt một giờ, và nó tồn tại để bảo vệ đúng hai thứ đắt tiền — khóa dòng
+   * courses và lượt gọi PayOS. Một mã gõ sai chưa chạm tới thứ nào trong hai thứ
+   * đó, nên nó không được phép đốt lượt: sai mười lần là người mua bị chặn khỏi
+   * thanh toán suốt một giờ, kèm một câu nói về "đặt đơn quá nhiều lần" không
+   * liên quan gì tới việc họ vừa làm.
+   *
+   * Cổng riêng vẫn chặn dò mã hàng loạt, chỉ ở một mức mà gõ tay không chạm tới.
+   * Nó đứng SAU `currentProfile`/`isProfileComplete`, nên không có tài khoản
+   * hoàn chỉnh thì không tra được mã nào.
+   *
+   * Chốt người giới thiệu ở đây — trước khi tạo đơn — nên một mã sai hoặc mã của
+   * chính mình chỉ trả lỗi chứ không để lại một đơn vừa tạo rồi bị nhánh chốt
+   * giá `tongTienDuKien` hủy đi. `createOrder` mới là nơi ghi
+   * `users.referred_by_id` (lười, trong transaction đã khóa hàng user).
+   */
+  let referrerId: string | undefined;
+  const referralCode = normalizeReferralCode(formData.get("maGioiThieu"));
+  if (referralCode) {
+    if (!(await allowUserAction("referral_code", session.user.id, 30))) {
+      return { error: referralPanel.codeThrottledError, refreshCatalog: false };
+    }
+    const referrer = await prisma.user.findUnique({
+      where: { referralCode },
+      select: { id: true },
+    });
+    if (!referrer) {
+      return { error: referralPanel.codeUnknownError, refreshCatalog: false };
+    }
+    if (referrer.id === session.user.id) {
+      return { error: referralPanel.codeSelfError, refreshCatalog: false };
+    }
+    referrerId = referrer.id;
+  }
+
   // Mỗi lần chạy tới đây đều khóa hàng courses, tạo enrolment và gọi PayOS tạo
   // payment link. Xác thực nói người gọi là ai, không nói họ gọi bao nhiêu lần.
   if (!(await allowUserAction("checkout", session.user.id, 10))) {
@@ -75,26 +116,6 @@ export async function checkout(
         "Mỗi bạn trong nhóm cần tự đăng ký và xác thực email trước khi nhóm trưởng thanh toán.",
       refreshCatalog: false,
     };
-  }
-
-  // Mã giới thiệu nhập ở giỏ hàng. Chốt người giới thiệu ở đây — TRƯỚC khi tạo
-  // đơn — nên một mã sai/tự-giới-thiệu chỉ trả lỗi chứ không để lại một đơn vừa
-  // tạo rồi bị nhánh chốt giá `tongTienDuKien` hủy đi. `createOrder` mới là nơi
-  // ghi `users.referred_by_id` (lười, trong transaction đã khóa hàng user).
-  let referrerId: string | undefined;
-  const referralCode = normalizeReferralCode(formData.get("maGioiThieu"));
-  if (referralCode) {
-    const referrer = await prisma.user.findUnique({
-      where: { referralCode },
-      select: { id: true },
-    });
-    if (!referrer) {
-      return { error: referralPanel.codeUnknownError, refreshCatalog: false };
-    }
-    if (referrer.id === session.user.id) {
-      return { error: referralPanel.codeSelfError, refreshCatalog: false };
-    }
-    referrerId = referrer.id;
   }
 
   const ids = await readCartIds();

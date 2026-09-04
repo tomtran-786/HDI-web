@@ -32,14 +32,14 @@ export const referralPage = {
         "Link mời đã kèm sẵn mã, người nhận chỉ việc bấm vào là ô mã được điền giúp.",
     },
     {
-      text: "Bạn của bạn đăng ký tài khoản và nhập mã",
+      text: "Bạn của bạn nhập mã — lúc đăng ký, hoặc ở giỏ hàng",
       detail:
-        "Mã phải được nhập NGAY lúc đăng ký. Sau khi tài khoản đã tạo thì không gắn lại được nữa.",
+        "Nhập ngay lúc đăng ký tài khoản là chắc chắn nhất. Lỡ đăng ký rồi mà chưa kịp điền thì vẫn còn một ô nữa ở giỏ hàng, dùng được cho tới trước lần thanh toán đầu tiên.",
     },
     {
       text: `Họ được giảm ${REFERRAL_DISCOUNT_PCT}% cho khóa học đầu tiên`,
       detail:
-        "Khoản giảm tự áp vào giỏ hàng ở lần thanh toán đầu tiên, không cần nhập thêm gì.",
+        "Mã đã gắn rồi thì khoản giảm tự áp vào giỏ hàng ở lần thanh toán đầu tiên, không cần nhập thêm gì.",
     },
     {
       text: `Sau ${COMMISSION_HOLD_DAYS} ngày, credits vào ví của bạn`,
@@ -56,6 +56,13 @@ export const referralPage = {
   guideTitle: "Bạn của bạn nhập mã ở đâu",
   guideIntro:
     "Ô này nằm ở bước điền thông tin trong trang đăng ký tài khoản. Nhập mã tại đây, hoặc mở link mời để ô được điền sẵn.",
+  /**
+   * Đường thứ hai, thêm cùng ô mã ở giỏ hàng. Nói ra ngay dưới khối minh họa vì
+   * đây là câu cứu được một lượt giới thiệu tưởng đã mất: người giới thiệu đọc
+   * trang này chính là người sẽ bảo bạn mình "trễ rồi" nếu trang không nói.
+   */
+  guideFallback:
+    "Bạn của bạn đã đăng ký xong mà quên điền? Vẫn kịp: ô mã còn xuất hiện ở giỏ hàng, chừng nào tài khoản đó chưa thanh toán đơn nào.",
   guideMarker: "TẠI ĐÂY",
   guideStepLabel: "Đăng ký tài khoản",
 
@@ -113,7 +120,7 @@ export const referralPage = {
       items: [
         `Được giảm ${REFERRAL_DISCOUNT_PCT}% cho khóa học đầu tiên đủ điều kiện.`,
         "Chỉ áp dụng cho học viên mới, ở lần thanh toán đầu tiên của tài khoản.",
-        "Mỗi người chỉ được sử dụng một mã, và mã phải nhập ngay lúc đăng ký tài khoản.",
+        "Mỗi người chỉ được sử dụng một mã, nhập lúc đăng ký tài khoản hoặc ở giỏ hàng, và chỉ gắn được cho tới trước lần thanh toán đầu tiên.",
         "Không cộng dồn với giảm giá nhóm, early bird, học bổng hoặc mã khác.",
         "Nếu đồng thời đủ điều kiện nhiều ưu đãi, đơn hàng được áp mức ưu đãi cao nhất.",
       ],

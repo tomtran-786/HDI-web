@@ -222,6 +222,64 @@ describe("gán người giới thiệu lười từ mã nhập ở checkout", ()
   });
 });
 
+/**
+ * Nửa phía server của bài parity ở tests/cart-modal-referral.test.tsx.
+ *
+ * Cùng khóa, cùng số người, cùng mã — hai con số phải bằng nhau, vì
+ * `app/actions/checkout.ts` so `tongTienDuKien` với `amountVnd` bằng phép so
+ * bằng tuyệt đối rồi HỦY đơn nếu lệch. Giá nhóm ở đây giảm 5%, ÍT hơn mức giới
+ * thiệu 10%, nên `referralDiscountVnd` phải trả về phần chênh chứ không phải 0
+ * (bậc nhóm mặc định giảm đúng 10% và sẽ nuốt trọn khoản giới thiệu).
+ */
+describe("đơn nhóm của người được giới thiệu", () => {
+  const GROUP = {
+    priceVnd: 1_000_000,
+    groupEligible: true,
+    groupPriceVnd: 950_000,
+  };
+
+  it("chỉ bù phần chênh, và ra đúng con số giỏ hàng đã hiện", async () => {
+    lockRows(null, GROUP);
+
+    const result = await createOrder("user-1", ["course-1"], {
+      members: [
+        { id: "user-2", email: "ban1@example.com" },
+        { id: "user-3", email: "ban2@example.com" },
+      ],
+      referrerId: "user-referrer",
+    });
+
+    expect(result).toMatchObject({
+      ok: true,
+      groupSize: 3,
+      // 3 × 950.000 = 2.850.000; mức cao nhất 10% × 3.000.000 = 300.000; nhóm đã
+      // giảm 150.000 → chỉ bù thêm 150.000.
+      referralDiscountVnd: 150_000,
+      amountVnd: 2_700_000,
+    });
+  });
+
+  it("không bù gì khi ưu đãi nhóm đã bằng hoặc hơn mức giới thiệu", async () => {
+    // Không có `groupPriceVnd` ghi đè → bậc nhóm giảm đúng 10%, bằng mức giới
+    // thiệu, nên hai ưu đãi không cộng dồn và phần bù là 0.
+    lockRows(null, { groupEligible: true, groupPriceVnd: null });
+
+    const result = await createOrder("user-1", ["course-1"], {
+      members: [
+        { id: "user-2", email: "ban1@example.com" },
+        { id: "user-3", email: "ban2@example.com" },
+      ],
+      referrerId: "user-referrer",
+    });
+
+    expect(result).toMatchObject({
+      ok: true,
+      referralDiscountVnd: 0,
+      amountVnd: 2_700_000,
+    });
+  });
+});
+
 describe("tiêu credits khi đặt đơn", () => {
   it("không trừ gì khi học viên không bật", async () => {
     lockRows(null);

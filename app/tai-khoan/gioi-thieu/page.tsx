@@ -72,8 +72,11 @@ export default async function ReferralPage() {
       creditBalanceVnd(prisma, userId, now),
       pendingCreditVnd(prisma, userId, now),
       prisma.user.count({
-        // Chỉ đếm tài khoản đã xác thực email: quan hệ giới thiệu được gắn đúng
-        // lúc xác thực, nên một hàng chưa xác thực không thể trỏ về ai cả.
+        // Chỉ đếm tài khoản đã xác thực email. Hai đường gắn quan hệ giới thiệu
+        // đều nằm sau cửa xác thực: một ở chính lúc xác thực email
+        // (app/xac-thuc-email/actions.ts), một ở checkout của người đã có hồ sơ
+        // hoàn chỉnh (lib/orders.ts) — nên một hàng chưa xác thực không thể trỏ
+        // về ai cả.
         where: { referredById: userId },
       }),
       rewardedReferralsInWindow(prisma, userId, now),
@@ -146,6 +149,12 @@ export default async function ReferralPage() {
               {referralPage.guideIntro}
             </p>
             <ReferralGuide code={code} />
+            {/* Đường thứ hai, đứng dưới khối minh họa chứ không thay nó: nhập
+                lúc đăng ký vẫn là đường tốt nhất, còn đây là lối cứu cho lượt
+                giới thiệu tưởng đã mất. */}
+            <p className="mt-3 text-sm leading-relaxed text-fg-muted">
+              {referralPage.guideFallback}
+            </p>
           </div>
         </Card>
 

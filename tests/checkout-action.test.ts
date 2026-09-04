@@ -302,6 +302,93 @@ describe("one-step cart checkout action", () => {
       expect(mocks.createOrder).not.toHaveBeenCalled();
     });
 
+    /**
+     * BÀI KIỂM QUYẾT ĐỊNH của thứ tự hai cổng hạn mức.
+     *
+     * Cổng `checkout` TIÊU một lượt mỗi lần gọi và chỉ có mười lượt một giờ; nó
+     * tồn tại để bảo vệ việc khóa dòng courses và lượt gọi PayOS. Một mã gõ sai
+     * chưa chạm tới thứ nào trong hai thứ đó. Để nó đốt lượt thì mười lần chép
+     * nhầm một ký tự — đúng kiểu hỏng mà bảng chữ cái của `lib/referral-code.ts`
+     * được thiết kế quanh nó — sẽ chặn người mua khỏi thanh toán suốt một giờ.
+     */
+    it("mã sai KHÔNG đốt lượt của cổng hạn mức checkout", async () => {
+      mocks.findUnique.mockImplementation(
+        async ({ where }: { where: Record<string, unknown> }) =>
+          "referralCode" in where
+            ? null
+            : { phone: "0900000000", stage: "other" },
+      );
+      const form = new FormData();
+      form.set("maGioiThieu", "KHONGCO");
+
+      await checkout({}, form);
+
+      const actions = mocks.allowUserAction.mock.calls.map((call) => call[0]);
+      expect(actions).toContain("referral_code");
+      expect(actions).not.toContain("checkout");
+    });
+
+    it("mã hợp lệ mới tiêu lượt checkout, và tiêu sau cổng riêng của ô mã", async () => {
+      const form = new FormData();
+      form.set("maGioiThieu", "SKGAXBZR");
+
+      await expect(checkout({}, form)).rejects.toMatchObject({
+        url: "https://payos.test/checkout",
+      });
+
+      const actions = mocks.allowUserAction.mock.calls.map((call) => call[0]);
+      expect(actions).toEqual(["referral_code", "checkout"]);
+    });
+
+    it("nói riêng về ô mã khi cổng hạn mức của chính ô đó chặn", async () => {
+      mocks.allowUserAction.mockImplementation(async (action: string) =>
+        action !== "referral_code",
+      );
+      const form = new FormData();
+      form.set("maGioiThieu", "SKGAXBZR");
+
+      const result = await checkout({}, form);
+
+      // KHÔNG được mượn câu "đặt đơn quá nhiều lần": người mua chưa đặt đơn nào,
+      // họ chỉ đang gõ lại một mã chép tay.
+      expect(result.error).toContain("mã giới thiệu quá nhiều lần");
+      expect(result.error).not.toContain("đặt đơn");
+      expect(mocks.createOrder).not.toHaveBeenCalled();
+    });
+
+    /**
+     * Báo giá của giỏ hàng đã cũ: `claimed` vừa khác null ở một tab khác, nên
+     * `createOrder` lặng lẽ KHÔNG gắn người giới thiệu và không giảm giá. Chốt
+     * giá bắt được phần lệch và hủy đơn vừa tạo — người mua nhận câu "số tiền
+     * vừa thay đổi" chứ không phải một câu về mã, và luồng tự lành sau một lần
+     * tải lại (`refreshCatalog` → `canEnterCode` thành false → ô mã biến mất).
+     */
+    it("hủy đơn khi mã hợp lệ nhưng server từ chối gắn, và mời xem lại giỏ", async () => {
+      mocks.createOrder.mockResolvedValue({
+        ok: true,
+        orderId: "order-1",
+        code: 100001,
+        // Không có khoản giảm nào: người này đã chốt quyền ưu đãi từ trước.
+        amountVnd: 1_000_000,
+        expiresAt: new Date(),
+      });
+      mocks.cancelOrder.mockResolvedValue({ cancelled: true });
+
+      const form = new FormData();
+      form.set("maGioiThieu", "SKGAXBZR");
+      // Giỏ hàng đã lạc quan trừ sẵn 10% vì nó còn thấy `canEnterCode`.
+      form.set("tongTienDuKien", "900000");
+
+      const result = await checkout({}, form);
+
+      expect(mocks.cancelOrder).toHaveBeenCalledWith("order-1", {
+        userId: "user-1",
+      });
+      expect(result.error).toContain("Số tiền vừa thay đổi");
+      expect(result.refreshCatalog).toBe(true);
+      expect(mocks.ensurePayosCheckout).not.toHaveBeenCalled();
+    });
+
     it("bỏ qua ô mã để trống — createOrder nhận referrerId undefined", async () => {
       const form = new FormData();
       form.set("maGioiThieu", "   ");

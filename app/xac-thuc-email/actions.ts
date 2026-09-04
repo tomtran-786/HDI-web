@@ -46,16 +46,23 @@ export async function verifyEmail(formData: FormData) {
           ? { passwordHash: found.pendingPasswordHash }
           : {}),
         /**
-         * Quan hệ giới thiệu được gắn ĐÚNG Ở ĐÂY và đúng một lần.
+         * Quan hệ giới thiệu được gắn ở đây, từ mã khai lúc đăng ký.
          *
-         * Bộ lọc `emailVerified: null` ở trên chính là cái khóa: nó chỉ khớp
-         * một lần trong đời một tài khoản, nên không có đường nào ghi đè quan
-         * hệ này về sau — và không có code path nào khác trong repo cập nhật
-         * `referredById`. Bất biến đó là thứ khiến mọi dòng hoa hồng đã ghi
-         * còn căn cứ để kiểm toán.
+         * Bộ lọc `emailVerified: null` ở trên là cái khóa của ĐƯỜNG NÀY: nó chỉ
+         * khớp một lần trong đời một tài khoản, nên lượt xác thực không bao giờ
+         * ghi đè được một quan hệ đã có.
+         *
+         * ĐÂY KHÔNG PHẢI ĐƯỜNG DUY NHẤT nữa. `lib/orders.ts` ghi cùng cột khi
+         * người mua khai mã ở giỏ hàng — lối cứu cho ai lỡ đăng ký không kèm mã.
+         * Bất biến "ghi đúng một lần" vẫn đứng, nhưng giờ do hai lớp khác giữ:
+         * câu UPDATE bên đó có `AND referred_by_id IS NULL`, và nó chạy trong
+         * transaction đã khóa hàng `users` FOR UPDATE. Ai đi kiểm toán một dòng
+         * hoa hồng phải biết cả hai đường, vì cả hai đều dẫn tới cùng một cột.
          *
          * Gắn lúc xác thực chứ không lúc đăng ký cũng có nghĩa là chỉ tài khoản
-         * có người thật sở hữu hộp thư mới sinh ra được hoa hồng.
+         * có người thật sở hữu hộp thư mới sinh ra được hoa hồng. Đường ở giỏ
+         * hàng thỏa điều kiện đó theo cách khác: nó đứng sau `currentProfile` và
+         * `isProfileComplete`, tức sau cửa xác thực.
          */
         ...(found.pendingReferrerId
           ? { referredById: found.pendingReferrerId }

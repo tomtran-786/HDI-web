@@ -742,8 +742,11 @@ export function CartModal({
               <input type="hidden" name="duNgCredit" value={useCredit ? "1" : "0"} />
               {/* Ô mã giới thiệu chỉ hiện cho người chưa có người giới thiệu và
                   chưa chốt đơn nào — server dựng cờ này trong `referralQuoteFor`.
-                  Vắng ô này thì `maGioiThieu` không được gửi và checkout bỏ qua. */}
-              {referral.canEnterCode && (
+                  Vắng ô này thì `maGioiThieu` không được gửi và checkout bỏ qua.
+                  `selected.length` đi kèm vì cùng lý do với bảng ưu đãi ở trên:
+                  giỏ trống thì lời mời "nhập mã để được giảm 10%" đứng ngay trên
+                  một cái nút đã tắt. */}
+              {selected.length > 0 && referral.canEnterCode && (
                 <label className="mb-3 block text-left">
                   <span className="text-xs font-semibold text-fg-muted">
                     {referralPanel.codeLabel}

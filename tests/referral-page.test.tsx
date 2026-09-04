@@ -62,8 +62,11 @@ describe("trang giới thiệu bạn bè", () => {
   });
 
   /**
-   * Người bạn được mời phải nhập mã NGAY lúc đăng ký — sau đó không gắn lại
-   * được. Khối minh họa tồn tại chỉ vì điều đó, nên nó phải luôn có mặt.
+   * Nhập lúc đăng ký vẫn là đường tốt nhất, nên khối minh họa phải luôn có mặt.
+   * Nhưng nó không còn là đường DUY NHẤT: `lib/orders.ts` gắn được người giới
+   * thiệu từ mã khai ở giỏ hàng, chừng nào tài khoản chưa thanh toán đơn nào.
+   * Trang này là nơi người giới thiệu tra cứu trước khi nhắn cho bạn mình, nên
+   * thiếu câu về đường thứ hai là chính họ đi bảo bạn "trễ rồi, mất phần".
    */
   it("chỉ đúng ô nhập mã trên form đăng ký, kèm mã thật của người dùng", async () => {
     const html = await render();
@@ -71,6 +74,16 @@ describe("trang giới thiệu bạn bè", () => {
     expect(html).toContain("Bạn của bạn nhập mã ở đâu");
     expect(html).toContain("TẠI ĐÂY");
     expect(html).toContain("Mã giới thiệu (nếu có)");
+  });
+
+  it("nói cả đường nhập mã thứ hai ở giỏ hàng", async () => {
+    const html = await render();
+
+    expect(html).toContain("ô mã còn xuất hiện ở giỏ hàng");
+    // Điều khoản không được nói ngược lại code: từ commit thêm ô mã ở checkout,
+    // "phải nhập ngay lúc đăng ký" là một luật không còn chỗ nào thực thi.
+    expect(html).not.toContain("mã phải nhập ngay lúc đăng ký tài khoản");
+    expect(html).not.toContain("Sau khi tài khoản đã tạo thì không gắn lại được");
   });
 
   it("tách credits khả dụng khỏi phần đang chờ", async () => {

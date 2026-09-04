@@ -1,10 +1,26 @@
 import "../prisma/load-env";
 import { prisma } from "@/lib/prisma";
 
-/** Đọc-only: soi vì sao một người giới thiệu chưa được ghi hoa hồng. */
+/**
+ * Đọc-only: soi vì sao một người giới thiệu chưa được ghi hoa hồng.
+ *
+ *   npx tsx scripts/referral-debug.ts <userId người giới thiệu> [mã khóa]
+ *
+ * Không có giá trị mặc định nào. Một script chẩn đoán mang sẵn id của một người
+ * thật là hai chuyện cùng lúc: dữ liệu cá nhân nằm vĩnh viễn trong repo, và một
+ * lần chạy quên tham số sẽ in ra hồ sơ của người không liên quan.
+ */
 
-const REFERRER_ID = process.argv[2] ?? "cmtimpzqo000004kzz0n9dp0o";
-const COURSE_CODE = "TIEULUAN";
+const REFERRER_ID = process.argv[2];
+const COURSE_CODE = process.argv[3] ?? "TIEULUAN";
+
+if (!REFERRER_ID) {
+  console.error(
+    "Thiếu tham số.\n" +
+      "  npx tsx scripts/referral-debug.ts <userId người giới thiệu> [mã khóa]",
+  );
+  process.exit(1);
+}
 
 const vnd = (n: number | null | undefined) =>
   n == null ? "—" : n.toLocaleString("vi-VN") + " đ";

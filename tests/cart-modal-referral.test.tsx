@@ -18,6 +18,7 @@ vi.mock("@/lib/analytics", () => ({
 }));
 
 import { CartModal } from "@/components/cart-modal";
+import { groupPanel } from "@/content/checkout";
 
 const soloCourse = {
   id: "course-solo",
@@ -31,11 +32,31 @@ const soloCourse = {
   seatsLeft: 10,
 };
 
+/**
+ * Giá nhóm giảm ÍT hơn 10% (950k/1.000k = 5%), cố ý.
+ *
+ * Bậc nhóm mặc định giảm đúng 10%, tức bằng khoản giới thiệu, và
+ * `referralDiscountVnd` sẽ trả về 0 — một con số 0 không phân biệt được "hai ưu
+ * đãi không cộng dồn" với "cờ eligible bị tắt nhầm". Mức 5% ép hàm phải trả về
+ * PHẦN CHÊNH, tức nhánh mà chỉ đơn nhóm của người được giới thiệu mới đi qua.
+ */
+const groupCourse = {
+  id: "course-group",
+  code: "AIQT",
+  slug: "nckh-ung-dung-ai-xuat-ban-quoc-te",
+  title: "NCKH ứng dụng AI",
+  priceVnd: 1_000_000,
+  groupEligible: true,
+  groupPriceVnd: 950_000,
+  availability: "buyable" as const,
+  seatsLeft: 15,
+};
+
 let host: HTMLDivElement;
 let root: Root;
 
-function CartHarness() {
-  const [ids, setIds] = useState([soloCourse.id]);
+function CartHarness({ courseId = soloCourse.id }: { courseId?: string }) {
+  const [ids, setIds] = useState([courseId]);
   return (
     <CartModal
       open
@@ -68,13 +89,16 @@ async function flush() {
   });
 }
 
-async function renderWith(referral: Record<string, unknown>) {
+async function renderWith(
+  referral: Record<string, unknown>,
+  course: typeof soloCourse | typeof groupCourse = soloCourse,
+) {
   mocks.fetch.mockResolvedValue({
     ok: true,
     status: 200,
     json: async () => ({
       email: "mua@example.com",
-      catalog: [soloCourse],
+      catalog: [course],
       staleIds: [],
       referral,
     }),
@@ -82,7 +106,30 @@ async function renderWith(referral: Record<string, unknown>) {
   host = document.createElement("div");
   document.body.append(host);
   root = createRoot(host);
-  await act(async () => root.render(<CartHarness />));
+  await act(async () => root.render(<CartHarness courseId={course.id} />));
+  await flush();
+}
+
+function emailInput() {
+  const input = host.querySelector<HTMLInputElement>('input[type="email"]');
+  if (!input) throw new Error("Không tìm thấy ô email nhóm.");
+  return input;
+}
+
+async function inviteMembers(...emails: string[]) {
+  const toggle = [...host.querySelectorAll("label")]
+    .find((item) => item.textContent?.includes(groupPanel.invite))
+    ?.querySelector<HTMLInputElement>('input[type="checkbox"]');
+  if (!toggle) throw new Error("Không tìm thấy công tắc mời nhóm.");
+  await act(async () => toggle.click());
+  for (const email of emails) {
+    await act(async () => setNativeValue(emailInput(), email));
+    await act(async () => {
+      emailInput().dispatchEvent(
+        new KeyboardEvent("keydown", { key: "Enter", bubbles: true, cancelable: true }),
+      );
+    });
+  }
   await flush();
 }
 
@@ -122,6 +169,51 @@ describe("giỏ hàng — ô mã giới thiệu ở checkout", () => {
     // server sắp áp — nếu không nhánh chốt giá sẽ hủy đơn vừa tạo.
     expect(input!.value).toBe("SKGAXBZR");
     expect(hiddenTotal()).toBe("270000");
+  });
+
+  /**
+   * ĐÂY LÀ BÀI GIỮ CHO ĐƠN NHÓM CỦA NGƯỜI ĐƯỢC GIỚI THIỆU THANH TOÁN ĐƯỢC.
+   *
+   * `app/actions/checkout.ts` so `tongTienDuKien` với `amountVnd` bằng phép so
+   * bằng tuyệt đối rồi HỦY đơn nếu lệch. Với đơn nhóm, khoản giảm giới thiệu
+   * không phải 10% phẳng mà là phần chênh so với ưu đãi nhóm — nhánh dễ viết
+   * lệch nhất giữa hai phía. Con số dưới đây được suy ra từ chính luật, không
+   * chép từ một lần chạy:
+   *
+   *   giá niêm yết  3 × 1.000.000 = 3.000.000
+   *   giá ghế nhóm  3 ×   950.000 = 2.850.000  (nhóm đã giảm 150.000)
+   *   mức cao nhất  10% × 3.000.000 = 300.000
+   *   phần chênh    300.000 − 150.000 = 150.000
+   *   phải trả      2.850.000 − 150.000 = 2.700.000
+   *
+   * `tests/referral-order-creation.test.ts` chạy cùng bộ dữ liệu này ở phía
+   * server; hai con số phải bằng nhau.
+   */
+  it("khớp con số server ở đơn nhóm, nơi khoản giảm chỉ là phần chênh", async () => {
+    await renderWith(
+      { eligible: false, canEnterCode: true, creditBalanceVnd: 0 },
+      groupCourse,
+    );
+
+    await inviteMembers("ban1@example.com", "ban2@example.com");
+    // Chưa có preview của server (debounce 350ms chưa chạy), nên giỏ đang dùng
+    // đúng nhánh tự tính của mình — cũng là con số đi theo form nếu người mua
+    // bấm ngay lúc này.
+    expect(hiddenTotal()).toBe("2850000");
+
+    await act(async () => setNativeValue(codeInput()!, "SKGAXBZR"));
+    await flush();
+
+    expect(hiddenTotal()).toBe("2700000");
+  });
+
+  it("không hiện ô nhập mã khi giỏ không còn khóa nào mua được", async () => {
+    await renderWith(
+      { eligible: false, canEnterCode: true, creditBalanceVnd: 0 },
+      { ...soloCourse, availability: "sold_out" as unknown as "buyable" },
+    );
+
+    expect(codeInput()).toBeNull();
   });
 
   it("ẩn ô nhập mã khi không canEnterCode", async () => {

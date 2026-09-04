@@ -56,4 +56,29 @@ describe("referralQuoteFor", () => {
       canEnterCode: false,
     });
   });
+
+  /**
+   * Chương trình được tính theo ĐƠN và theo NGƯỜI TRẢ TIỀN, không theo ghế.
+   *
+   * Ngồi ghế trong đơn nhóm của người khác không tiêu mất suất giảm 10% của
+   * chính mình: người đó chưa thanh toán gì cả. Nên câu hỏi "đã chốt quyền ưu
+   * đãi chưa" chỉ được phép hỏi `orders` nơi họ là `user_id` — chạm vào
+   * `enrollments` hay `order_items` là lặng lẽ tước mất một khoản giảm của
+   * người chưa từng mua gì, và luật này không có index nào ở database đỡ.
+   */
+  it("chỉ hỏi orders của chính người đó, không hỏi ghế họ đang ngồi", async () => {
+    mocks.userFindUnique.mockResolvedValue({ referredById: null });
+    mocks.orderFindFirst.mockResolvedValue(null);
+
+    await expect(referralQuoteFor("user-1")).resolves.toMatchObject({
+      canEnterCode: true,
+    });
+
+    const where = mocks.orderFindFirst.mock.calls[0][0].where;
+    expect(where.userId).toBe("user-1");
+    const asText = JSON.stringify(where);
+    expect(asText).not.toContain("items");
+    expect(asText).not.toContain("memberUserId");
+    expect(asText).not.toContain("enrollment");
+  });
 });
