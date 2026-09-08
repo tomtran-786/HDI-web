@@ -57,6 +57,17 @@ describe("kiến trúc nội dung homepage và Về HDI", () => {
       html.indexOf('id="ve-chung-toi"'),
     );
 
+    // Teaser hội thảo quốc tế đứng giữa khối khóa học và About, và link sang
+    // trang chi tiết riêng — không kéo bảng/quy trình vào trang chủ.
+    expect(html).toContain('id="hoi-thao-quoc-te"');
+    expect(html).toContain('href="/hoi-thao-quoc-te"');
+    expect(html.indexOf('id="khoa-hoc"')).toBeLessThan(
+      html.indexOf('id="hoi-thao-quoc-te"'),
+    );
+    expect(html.indexOf('id="hoi-thao-quoc-te"')).toBeLessThan(
+      html.indexOf('id="ve-chung-toi"'),
+    );
+
     // Dải lịch khai giảng đứng giữa hero và mục khóa đang mở.
     expect(html.indexOf('id="top"')).toBeLessThan(html.indexOf("data-ticker"));
     expect(html.indexOf("data-ticker")).toBeLessThan(
@@ -99,6 +110,9 @@ describe("kiến trúc nội dung homepage và Về HDI", () => {
     // Dải và mục khóa dùng chung một cái cổng: mất mục thì cũng phải mất dải,
     // không để lại một dải trơ trọi phía trên khoảng trống.
     expect(html).not.toContain("data-ticker");
+    // Teaser hội thảo quốc tế không đi qua cổng đó — vẫn hiển thị khi không có
+    // khóa nào đang mở, để mạch trang chủ không gãy.
+    expect(html).toContain('id="hoi-thao-quoc-te"');
   });
 
   it("không dựng số ghế giả khi database lỗi", async () => {

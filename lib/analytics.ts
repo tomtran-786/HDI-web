@@ -38,6 +38,7 @@ export type CtaSource =
   | "khoa-hoc-detail"
   | "dich-vu-hub"
   | "dich-vu-detail"
+  | "hoi-thao-quoc-te"
   | "lien-he"
   | "bubble-lien-he"
   | "bubble-gop-y"

@@ -36,6 +36,13 @@ describe("breadcrumb toàn site", () => {
     ]);
   });
 
+  it("nhận ra trang hội thảo quốc tế", () => {
+    expect(breadcrumbsForPathname("/hoi-thao-quoc-te")).toEqual([
+      { label: "Trang chủ", href: "/" },
+      { label: "Hội thảo quốc tế" },
+    ]);
+  });
+
   it("không làm lộ mã đơn hoặc mã kết quả cá nhân", () => {
     const order = breadcrumbsForPathname("/tai-khoan/don-hang/HDI-SECRET-123");
     const result = breadcrumbsForPathname(

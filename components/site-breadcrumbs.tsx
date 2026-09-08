@@ -14,6 +14,7 @@ const HOME: BreadcrumbItem = { label: "Trang chủ", href: "/" };
 const staticLabels: Record<string, string> = {
   "/ve-hdi": "Về HDI",
   "/cong-bo": "Hồ sơ học thuật",
+  "/hoi-thao-quoc-te": "Hội thảo quốc tế",
   "/dang-nhap": "Đăng nhập",
   "/dang-ky-tai-khoan": "Đăng ký tài khoản",
   "/quen-mat-khau": "Quên mật khẩu",

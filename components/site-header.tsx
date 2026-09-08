@@ -97,10 +97,15 @@ export function SiteHeader({
     if (item.href === "/dich-vu") {
       return pathname === "/dich-vu" || pathname.startsWith("/dich-vu/");
     }
-    // "Hồ sơ học thuật" (/cong-bo) sống dưới mục "Về HDI" nhưng không nằm trên
-    // path /ve-hdi/, nên nhánh chung không bắt được — phải nêu tên riêng.
+    // "Hồ sơ học thuật" (/cong-bo) và "Hội thảo quốc tế" (/hoi-thao-quoc-te) sống
+    // dưới mục "Về HDI" nhưng không nằm trên path /ve-hdi/, nên nhánh chung không
+    // bắt được — phải nêu tên riêng.
     if (item.href === "/ve-hdi") {
-      return pathname === "/ve-hdi" || pathname === "/cong-bo";
+      return (
+        pathname === "/ve-hdi" ||
+        pathname === "/cong-bo" ||
+        pathname === "/hoi-thao-quoc-te"
+      );
     }
     return pathname === item.href || pathname.startsWith(`${item.href}/`);
   };

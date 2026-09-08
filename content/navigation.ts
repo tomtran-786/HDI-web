@@ -28,7 +28,10 @@ export const nav: readonly NavItem[] = [
     groups: [
       {
         label: "Giới thiệu",
-        children: [{ label: "Hồ sơ học thuật", href: "/cong-bo" }],
+        children: [
+          { label: "Hồ sơ học thuật", href: "/cong-bo" },
+          { label: "Hội thảo quốc tế", href: "/hoi-thao-quoc-te" },
+        ],
       },
     ],
   },

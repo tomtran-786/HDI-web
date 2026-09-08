@@ -15,6 +15,14 @@ describe("sitemap công khai", () => {
     );
   });
 
+  it("liệt kê các trang nội dung tĩnh dưới 'Về HDI'", () => {
+    const urls = sitemap().map((entry) => entry.url);
+    const base = appUrl();
+
+    expect(urls).toContain(`${base}/cong-bo`);
+    expect(urls).toContain(`${base}/hoi-thao-quoc-te`);
+  });
+
   it("liệt kê hub, năm landing dịch vụ và giữ route AI chuyên biệt", () => {
     const urls = sitemap().map((entry) => entry.url);
     const base = appUrl();
