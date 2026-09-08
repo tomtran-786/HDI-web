@@ -5,8 +5,9 @@ import { prisma } from "@/lib/prisma";
 import { isProfileComplete } from "@/lib/profile";
 import { safeNext } from "@/lib/safe-path";
 import { profileIntro } from "@/content/account";
+import { AuthShell } from "@/components/auth-shell";
 import { Avatar } from "@/components/ui/avatar";
-import { Section, SectionHeading } from "@/components/ui/section";
+import { SectionHeading } from "@/components/ui/section";
 import { ProfileForm } from "./form";
 
 export const metadata: Metadata = {
@@ -35,7 +36,7 @@ export default async function ProfilePage({
   if (isProfileComplete(user)) redirect(next);
 
   return (
-    <Section soft>
+    <AuthShell>
       <div className="mx-auto max-w-md">
         <SectionHeading
           align="center"
@@ -74,6 +75,6 @@ export default async function ProfilePage({
           next={next}
         />
       </div>
-    </Section>
+    </AuthShell>
   );
 }

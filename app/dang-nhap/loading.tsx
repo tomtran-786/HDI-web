@@ -1,4 +1,4 @@
-import { Section } from "@/components/ui/section";
+import { AuthShell } from "@/components/auth-shell";
 import { Skeleton } from "@/components/ui/skeleton";
 
 /**
@@ -9,7 +9,7 @@ import { Skeleton } from "@/components/ui/skeleton";
  */
 export default function SignInLoading() {
   return (
-    <Section soft>
+    <AuthShell>
       <div className="mx-auto max-w-md">
         <Skeleton className="mx-auto mb-3 h-3 w-24" />
         <Skeleton className="mx-auto mb-8 h-8 w-48" />
@@ -19,6 +19,6 @@ export default function SignInLoading() {
           <Skeleton className="h-11 w-full" />
         </div>
       </div>
-    </Section>
+    </AuthShell>
   );
 }

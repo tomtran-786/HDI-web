@@ -2,7 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { forgotPage } from "@/content/auth";
 import { safeNext } from "@/lib/safe-path";
-import { Section, SectionHeading } from "@/components/ui/section";
+import { AuthShell } from "@/components/auth-shell";
+import { SectionHeading } from "@/components/ui/section";
 import { Card } from "@/components/ui/card";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { IconCheck } from "@/components/ui/icons";
@@ -22,7 +23,7 @@ export default async function ForgotPasswordPage({
     next === "/tai-khoan" ? "" : `?tiep=${encodeURIComponent(next)}`;
 
   return (
-    <Section soft>
+    <AuthShell>
       <div className="mx-auto max-w-md">
         <SectionHeading
           align="center"
@@ -90,6 +91,6 @@ export default async function ForgotPasswordPage({
           )}
         </Card>
       </div>
-    </Section>
+    </AuthShell>
   );
 }

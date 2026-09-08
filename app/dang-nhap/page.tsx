@@ -6,7 +6,8 @@ import { signIn } from "@/lib/auth";
 import { currentSession } from "@/lib/current-session";
 import { safeNext } from "@/lib/safe-path";
 import { signInPage } from "@/content/auth";
-import { Section, SectionHeading } from "@/components/ui/section";
+import { AuthShell } from "@/components/auth-shell";
+import { SectionHeading } from "@/components/ui/section";
 import { Card } from "@/components/ui/card";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { IconCheck, IconGoogle } from "@/components/ui/icons";
@@ -51,7 +52,7 @@ export default async function SignInPage({
   if (session?.user) redirect(next);
 
   return (
-    <Section soft>
+    <AuthShell>
       <div className="mx-auto max-w-md">
         <SectionHeading
           align="center"
@@ -160,6 +161,6 @@ export default async function SignInPage({
           </div>
         </Card>
       </div>
-    </Section>
+    </AuthShell>
   );
 }

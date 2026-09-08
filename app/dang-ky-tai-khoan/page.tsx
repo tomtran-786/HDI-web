@@ -6,7 +6,8 @@ import { normalizeReferralCode } from "@/lib/referral-code";
 import { safeNext } from "@/lib/safe-path";
 import { registerPage } from "@/content/auth";
 import { registerAccount } from "./actions";
-import { Section, SectionHeading } from "@/components/ui/section";
+import { AuthShell } from "@/components/auth-shell";
+import { SectionHeading } from "@/components/ui/section";
 import { Card } from "@/components/ui/card";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { IconMail } from "@/components/ui/icons";
@@ -43,7 +44,7 @@ export default async function RegisterPage({
     : null;
 
   return (
-    <Section soft>
+    <AuthShell>
       <div className="mx-auto max-w-md">
         <SectionHeading
           align="center"
@@ -161,6 +162,6 @@ export default async function RegisterPage({
           )}
         </Card>
       </div>
-    </Section>
+    </AuthShell>
   );
 }
