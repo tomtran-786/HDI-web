@@ -87,6 +87,14 @@ export const groupPanel = {
   add: "Thêm",
   remove: "Bỏ khỏi nhóm",
   checking: "Đang kiểm tra…",
+  /**
+   * Không xác nhận được danh sách nhóm.
+   *
+   * Nút Thanh toán bị khóa trong lúc này, nên câu chữ phải chỉ ra lối đi tiếp:
+   * bỏ tick thanh toán nhóm là mua một mình được ngay, không phải chờ.
+   */
+  checkFailed:
+    "Chưa xác nhận được danh sách nhóm. Thử lại sau giây lát, hoặc bỏ tick thanh toán nhóm để mua một mình.",
   unregistered: "Chưa có tài khoản đã xác thực",
   conflict: "Đã có quyền hoặc đơn chờ cho khóa trong giỏ",
   close: "Bỏ thanh toán nhóm",
@@ -158,6 +166,11 @@ export const orderPage = {
   eyebrow: "Đơn hàng",
   listTitle: "Đơn hàng của bạn",
   listEmpty: "Bạn chưa có đơn hàng nào.",
+  listEmptyNote:
+    "Trang này liệt kê đơn còn hiệu lực, cùng mọi đơn đã có giao dịch chuyển khoản.",
+  listScope:
+    "Đơn đã hủy hoặc quá hạn không hiển thị ở đây, trừ đơn đã có giao dịch chuyển khoản.",
+  reconciling: "Đã ghi nhận chuyển khoản — HDI đang đối soát.",
   codeLabel: "Mã đơn",
   holdUntil: "Giữ chỗ đến",
   cancel: "Hủy đơn",

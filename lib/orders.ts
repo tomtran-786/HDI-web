@@ -1411,8 +1411,16 @@ export async function reclaimPaidPayosOrder(
   const order = await prisma.order.findFirst({
     where: {
       id: orderId,
-      status: "pending",
+      // `expired` cũng nhận, không chỉ `pending`. Một khoản tiền về sau lượt
+      // quét 03:00 là đúng trường hợp `reclaimLatePayment` sinh ra để cứu, mà
+      // lúc đó đơn đã bị đóng — chặn ở đây thì cổng cứu đơn không bao giờ chạy
+      // và tiền nằm lại `requires_review` vĩnh viễn. Chốt chặn ghế vẫn nằm
+      // nguyên ở `reclaimLatePayment` bên trong `processPayosPayment`.
+      status: { in: ["pending", "expired"] },
       provider: "payos",
+      // Đã có một giao dịch được ghi nhận thành công thì không còn gì để kéo:
+      // hỏi lại PayOS chỉ tốn một round-trip cho một kết quả đã biết.
+      payments: { none: { status: "succeeded" } },
       ...(options.userId ? { userId: options.userId } : {}),
     },
     select: {
@@ -1423,7 +1431,7 @@ export async function reclaimPaidPayosOrder(
       checkoutUrl: true,
     },
   });
-  if (!order) return { confirmed: false as const, reason: "not_pending" };
+  if (!order) return { confirmed: false as const, reason: "not_open" };
   // Cùng bằng chứng `syncPayosOrderStatus` dùng: hai cột null nghĩa là không có
   // link nào ngoài kia để hỏi.
   if (order.providerRef === null && order.checkoutUrl === null) {

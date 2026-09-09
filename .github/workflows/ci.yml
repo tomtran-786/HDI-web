@@ -1,0 +1,30 @@
+# Cổng tự động duy nhất của repo.
+#
+# Trước đây không có gì chạy `eslint`, `tsc` hay `vitest` ngoài máy người viết:
+# `vercel.json` chỉ chạy `check-migrations` rồi `next build`, nên một test đỏ vẫn
+# lên production được.
+#
+# CỐ Ý không có `prisma migrate deploy` ở đây. Migration là một bước riêng chạy
+# trước khi push, không phải một tác dụng phụ của việc build hay của CI.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      # `postinstall` chạy `prisma generate`; không có nó thì `tsc` không thấy
+      # các kiểu sinh ra từ schema.
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm test

@@ -195,12 +195,30 @@ describe("reclaimPaidPayosOrder", () => {
     expect(mocks.transaction).not.toHaveBeenCalled();
   });
 
-  it("đơn không còn `pending` → trả sớm, không hỏi PayOS", async () => {
+  it("đơn không còn mở → trả sớm, không hỏi PayOS", async () => {
     mocks.orderFindFirst.mockResolvedValue(null);
 
     const result = await reclaimPaidPayosOrder("order-1");
-    expect(result).toEqual({ confirmed: false, reason: "not_pending" });
+    expect(result).toEqual({ confirmed: false, reason: "not_open" });
     expect(mocks.payosGet).not.toHaveBeenCalled();
+  });
+
+  /**
+   * `expired` cũng phải nằm trong tầm với.
+   *
+   * Lượt quét 03:00 đóng đơn quá hạn trước khi tiền về là chuyện thường; chặn ở
+   * `pending` nghĩa là không lượt đối soát nào sau đó hỏi lại đơn đó nữa, cổng
+   * `reclaimLatePayment` không bao giờ chạy, và một khoản chuyển khoản thật nằm
+   * lại `requires_review` vĩnh viễn. Chốt chặn ghế vẫn ở `reclaimLatePayment`,
+   * không ở đây.
+   */
+  it("nhận cả đơn đã quá hạn, và bỏ qua đơn đã có giao dịch thành công", async () => {
+    mocks.orderFindFirst.mockResolvedValue(null);
+    await reclaimPaidPayosOrder("order-1");
+
+    const where = mocks.orderFindFirst.mock.calls[0][0].where;
+    expect(where.status).toEqual({ in: ["pending", "expired"] });
+    expect(where.payments).toEqual({ none: { status: "succeeded" } });
   });
 
   it("đơn chưa từng có link PayOS → trả sớm, không hỏi PayOS", async () => {

@@ -6,9 +6,9 @@ import { Reveal } from "../ui/reveal";
 import { Section, SectionHeading } from "../ui/section";
 
 /** Homepage chỉ giới thiệu hai nhóm; sáu dịch vụ đầy đủ nằm ở /dich-vu. */
-export function Services() {
+export function Services({ soft }: { soft?: boolean }) {
   return (
-    <Section id="dich-vu" soft>
+    <Section id="dich-vu" soft={soft}>
       <SectionHeading
         eyebrow={serviceCatalog.eyebrow}
         title={serviceCatalog.title}

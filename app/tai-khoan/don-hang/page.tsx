@@ -29,7 +29,24 @@ export default async function OrderListPage() {
     // Chỉ đơn còn "sống": đang chờ thanh toán hoặc đã thanh toán. Đơn đã hủy /
     // quá hạn / hoàn tiền không liệt kê ở đây nữa (vẫn mở được bằng link trực
     // tiếp /tai-khoan/don-hang/<mã>).
-    where: { userId: session.user.id, status: { in: ["pending", "paid"] } },
+    //
+    // NGOẠI TRỪ đơn đã có tiền chạm vào. Một khoản chuyển khoản về sau khi lượt
+    // quét 03:00 đã đóng đơn sẽ ghi `payments` rồi dừng ở `requires_review` mà
+    // KHÔNG mở lại đơn — và `reconcilePaidPayosOrders` không quét đơn đã đóng
+    // (xem lib/payos-reconcile.ts). Lọc thẳng theo `status` ở đây nghĩa là một
+    // người vừa chuyển tiền thật mở trang này ra và không thấy gì cả, kể cả mã
+    // đơn để đọc cho HDI. Bằng chứng tiền không được biến mất.
+    where: {
+      userId: session.user.id,
+      OR: [
+        { status: { in: ["pending", "paid"] } },
+        {
+          payments: {
+            some: { status: { in: ["succeeded", "requires_review"] } },
+          },
+        },
+      ],
+    },
     orderBy: { createdAt: "desc" },
     select: {
       id: true,
@@ -55,16 +72,18 @@ export default async function OrderListPage() {
         subtitle="Lịch sử đặt chỗ và trạng thái thanh toán."
       />
 
-      {orders.length > 0 && (
-        <p className="mb-6 text-xs text-fg-subtle">
-          Đơn đã hủy hoặc quá hạn không hiển thị ở đây.
-        </p>
-      )}
+      {/* Ngoài điều kiện `orders.length`: đúng lúc danh sách rỗng thì câu này
+          cần nhất, vì nếu không thì người có toàn đơn đã đóng đọc được
+          "chưa có đơn hàng nào" — một câu sai. */}
+      <p className="mb-6 text-xs text-fg-subtle">{orderPage.listScope}</p>
 
       {orders.length === 0 ? (
         <div className="rounded-card border border-line bg-card p-8 text-center sm:p-10">
           <p className="text-lg font-bold tracking-tight">
             {orderPage.listEmpty}
+          </p>
+          <p className="mt-2 text-sm leading-relaxed text-fg-muted">
+            {orderPage.listEmptyNote}
           </p>
           <Link
             href="/khoa-hoc"
@@ -112,6 +131,15 @@ export default async function OrderListPage() {
                       {order.status === "pending" &&
                         ` · ${orderPage.holdUntil} ${formatDateTime(order.expiresAt)}`}
                     </p>
+                    {/* Đơn đã đóng chỉ lọt vào danh sách này qua nhánh
+                        `payments.some` ở trên, nên nó luôn là đơn có giao dịch.
+                        Nói ra, bằng không một hàng "Quá hạn" nằm giữa danh sách
+                        đơn còn sống trông như một lỗi hiển thị. */}
+                    {order.status !== "pending" && order.status !== "paid" && (
+                      <p className="mt-1 text-[13px] font-semibold text-warning">
+                        {orderPage.reconciling}
+                      </p>
+                    )}
                   </div>
                   <p className="shrink-0 text-lg font-bold tracking-tight text-primary">
                     {formatVnd(order.amountVnd)}

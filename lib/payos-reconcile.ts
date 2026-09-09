@@ -21,6 +21,19 @@ import { reclaimPaidPayosServiceOrder } from "./service-orders";
  */
 const RECONCILE_GRACE_MS = ORDER_LATE_GRACE_MINUTES * 60_000;
 
+/**
+ * Chặn dưới cho tầm quét, và nó BẮT BUỘC phải có.
+ *
+ * Đơn `pending` tự rời khỏi danh sách ứng viên vì `expireStaleOrders` đóng chúng
+ * mỗi đêm, nên chỉ cần chặn trên là đủ. Đơn `expired` thì không rời đi bao giờ:
+ * không có chặn dưới, `take: 30` xếp theo `expiresAt` tăng dần sẽ hỏi PayOS về
+ * đúng 30 đơn chết cũ nhất mỗi đêm và không bao giờ chạm tới đơn mới.
+ *
+ * Bảy ngày: link PayOS đã chết từ lâu trước mốc đó, và một khoản tiền về muộn
+ * hơn thế thì không còn là chuyện tự chữa được nữa — nó cần một người nhìn.
+ */
+const RECONCILE_LOOKBACK_MS = 7 * 24 * 60 * 60_000;
+
 /** Đơn từng chạm tới PayOS: một trong hai cột này khác null. */
 const HAS_REMOTE_LINK = [
   { providerRef: { not: null } },
@@ -38,9 +51,17 @@ export async function reconcilePaidPayosOrders(
 ): Promise<{ scanned: number; confirmed: number; review: number }> {
   const candidates = await prisma.order.findMany({
     where: {
-      status: "pending",
+      // `expired` nằm trong tầm quét cùng `pending`: lượt cron trước đã đóng đơn
+      // rồi mới tới tiền, và nếu chỉ quét `pending` thì không lượt nào sau đó
+      // hỏi lại đơn đó nữa. `reclaimPaidPayosOrder` tự loại đơn đã có giao dịch
+      // `succeeded`, nên đơn đã trả tiền xong không bị hỏi lại mỗi đêm.
+      status: { in: ["pending", "expired"] },
       provider: "payos",
-      expiresAt: { lt: new Date(now.getTime() + RECONCILE_GRACE_MS) },
+      expiresAt: {
+        gte: new Date(now.getTime() - RECONCILE_LOOKBACK_MS),
+        lt: new Date(now.getTime() + RECONCILE_GRACE_MS),
+      },
+      payments: { none: { status: "succeeded" } },
       OR: HAS_REMOTE_LINK,
     },
     select: { id: true },
@@ -80,9 +101,16 @@ export async function reconcilePaidPayosServiceOrders(
 ): Promise<{ scanned: number; confirmed: number; review: number }> {
   const candidates = await prisma.serviceOrder.findMany({
     where: {
+      // CỐ Ý chỉ `pending`, khác với đơn khóa học ở trên: đường ghi của đơn dịch
+      // vụ không có cổng cứu-tiền-về-muộn, `updateMany` của nó vẫn khóa cứng
+      // `status: "pending"` (lib/service-orders.ts:375). Nới ở đây chỉ đổi một
+      // đơn bị bỏ qua thành một transaction ném lỗi.
       status: "pending",
       provider: "payos",
-      expiresAt: { lt: new Date(now.getTime() + RECONCILE_GRACE_MS) },
+      expiresAt: {
+        gte: new Date(now.getTime() - RECONCILE_LOOKBACK_MS),
+        lt: new Date(now.getTime() + RECONCILE_GRACE_MS),
+      },
       OR: HAS_REMOTE_LINK,
     },
     select: { id: true },

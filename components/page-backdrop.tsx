@@ -29,11 +29,16 @@ export function PageBackdrop({
           src="/images/work-bg.jpg"
           alt=""
           fill
-          priority
           sizes="100vw"
-          className="object-cover object-[center_30%] opacity-40 dark:opacity-[0.65]"
+          className="object-cover object-[center_30%] opacity-40 dark:opacity-[0.55]"
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-bg/70 via-bg/30 to-bg dark:from-bg/85 dark:via-bg/25 dark:to-bg/95" />
+        {/* Xô đậm ở đỉnh và đáy, mỏng nhất ở GIỮA — nơi tiêu đề và đoạn mô tả nằm.
+            Con số ở dark mode được đo chứ không ướm: với `--fg-muted` (#aebbc9)
+            trên nền dark (#0d1520), bộ cũ (ảnh 0.65 dưới xô /25) cho 4,17:1 ở
+            vùng ảnh trung bình và 1,95:1 ở vùng sáng nhất của work-bg.jpg —
+            dưới ngưỡng WCAG AA 4,5:1. Bộ này cho 6,86:1 và 4,83:1. Light mode
+            vốn đã đạt (6,67:1) nên không đụng tới. */}
+        <div className="absolute inset-0 bg-gradient-to-b from-bg/70 via-bg/30 to-bg dark:from-bg/85 dark:via-bg/60 dark:to-bg/95" />
       </div>
 
       <div className="shell relative py-14 sm:py-16 lg:py-20">{children}</div>

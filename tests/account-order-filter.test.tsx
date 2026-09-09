@@ -25,8 +25,32 @@ vi.mock("@/app/tai-khoan/review-form", () => ({ ReviewForm: () => null }));
 
 import AccountPage from "@/app/tai-khoan/page";
 import OrderListPage from "@/app/tai-khoan/don-hang/page";
+import { orderPage } from "@/content/checkout";
 
 const OPEN_STATUSES = { in: ["pending", "paid"] };
+/**
+ * Ngoại lệ cho bộ lọc "chỉ đơn còn sống": đơn đã đóng nhưng đã có tiền chạm vào.
+ * Một khoản chuyển khoản về sau lượt quét 03:00 dừng ở `requires_review` mà
+ * KHÔNG mở lại đơn, nên lọc thuần theo `status` sẽ giấu mất chính đơn của người
+ * vừa trả tiền thật.
+ */
+const HAS_PAYMENT = {
+  payments: { some: { status: { in: ["succeeded", "requires_review"] } } },
+};
+
+function order(overrides: Record<string, unknown> = {}): Record<string, unknown> {
+  return {
+    id: "order-1",
+    code: 1001,
+    status: "paid",
+    amountVnd: 3_000_000,
+    createdAt: new Date("2026-08-25T04:00:00Z"),
+    expiresAt: new Date("2026-08-25T10:00:00Z"),
+    groupSize: 1,
+    items: [{ id: "item-1", course: { code: "AIQT", slug: "aiqt" } }],
+    ...overrides,
+  };
+}
 
 function enrollment(
   overrides: Record<string, unknown> = {},
@@ -70,9 +94,32 @@ describe("khu vực học viên chỉ giữ đơn còn sống", () => {
     );
     expect(mocks.serviceOrderFindMany).toHaveBeenCalledWith(
       expect.objectContaining({
-        where: expect.objectContaining({ status: OPEN_STATUSES }),
+        where: expect.objectContaining({
+          OR: [{ status: OPEN_STATUSES }, HAS_PAYMENT],
+        }),
       }),
     );
+  });
+
+  /**
+   * `hasLiveAccess` có ba vế; `accessRevokedAt` chỉ là một. Một ghi danh `paid`
+   * chưa bị thu hồi nhưng đã qua `accessExpiresAt` cũng phải biến mất, và trước
+   * đây không test nào chạm vào nhánh đó.
+   */
+  it("ghi danh paid nhưng đã hết hạn truy cập thì không hiện", async () => {
+    mocks.enrollmentFindMany.mockResolvedValue([
+      enrollment({
+        id: "expired-access",
+        accessExpiresAt: new Date("2020-01-01T00:00:00Z"),
+        accessRevokedAt: null,
+        course: { id: "course-gone", code: "EXPIREDCODE", slug: "expired-slug" },
+      }),
+    ]);
+
+    const html = renderToStaticMarkup(await AccountPage());
+
+    expect(html).not.toContain("EXPIREDCODE");
+    expect(html).toContain("Bạn chưa mua khóa học nào");
   });
 
   it("ghi danh paid nhưng đã thu hồi quyền thì không hiện, pending thì hiện", async () => {
@@ -97,16 +144,47 @@ describe("khu vực học viên chỉ giữ đơn còn sống", () => {
     expect(html).toContain("PENDINGCODE");
   });
 
-  it("danh sách đơn hàng lọc theo status pending/paid", async () => {
+  it("danh sách đơn hàng lọc đơn còn sống, cộng đơn đã có giao dịch", async () => {
     await OrderListPage();
 
     expect(mocks.orderFindMany).toHaveBeenCalledWith(
       expect.objectContaining({
-        where: expect.objectContaining({
+        where: {
           userId: "user-1",
-          status: OPEN_STATUSES,
-        }),
+          OR: [{ status: OPEN_STATUSES }, HAS_PAYMENT],
+        },
       }),
     );
+  });
+
+  it("đơn quá hạn lọt qua nhánh giao dịch thì hiện kèm ghi chú đối soát", async () => {
+    mocks.orderFindMany.mockResolvedValue([
+      order({ code: 1042, status: "expired" }),
+    ]);
+
+    const html = renderToStaticMarkup(await OrderListPage());
+
+    expect(html).toContain("1042");
+    expect(html).toContain(orderPage.reconciling);
+  });
+
+  it("đơn còn sống không mang ghi chú đối soát", async () => {
+    mocks.orderFindMany.mockResolvedValue([order({ status: "paid" })]);
+
+    const html = renderToStaticMarkup(await OrderListPage());
+
+    expect(html).not.toContain(orderPage.reconciling);
+  });
+
+  /**
+   * Câu "đơn đã đóng không hiển thị" từng bị gate bằng `orders.length > 0`, tức
+   * ẩn đi đúng lúc cần nhất: người có toàn đơn đã hủy chỉ đọc được "chưa có đơn
+   * hàng nào" — một câu sai.
+   */
+  it("danh sách rỗng vẫn nói rõ trang này chỉ liệt kê đơn nào", async () => {
+    const html = renderToStaticMarkup(await OrderListPage());
+
+    expect(html).toContain(orderPage.listScope);
+    expect(html).toContain(orderPage.listEmptyNote);
   });
 });
