@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
 import { CourseList } from "@/components/course-list";
+import { PageBackdrop } from "@/components/page-backdrop";
 import { CtaLink } from "@/components/ui/cta-link";
 import { IconArrow, IconMessage } from "@/components/ui/icons";
 import { Reveal } from "@/components/ui/reveal";
-import { Section, SectionHeading } from "@/components/ui/section";
+import { Section } from "@/components/ui/section";
 import { courses, coursesIntro } from "@/content/course";
 import { site } from "@/content/site";
 import { landingCourseData } from "@/lib/course-sales";
@@ -33,12 +34,19 @@ export default async function CoursesPage() {
 
   return (
     <>
+      <PageBackdrop>
+        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-fg-muted">
+          {coursesIntro.eyebrow}
+        </p>
+        <h1 className="mt-3 max-w-4xl text-3xl font-bold tracking-tight text-primary sm:text-4xl lg:text-[2.75rem] lg:leading-[1.1]">
+          {coursesIntro.title}
+        </h1>
+        <p className="mt-3 max-w-3xl text-base text-fg-muted sm:text-lg">
+          {coursesIntro.subtitle}
+        </p>
+      </PageBackdrop>
+
       <Section>
-        <SectionHeading
-          eyebrow={coursesIntro.eyebrow}
-          title={coursesIntro.title}
-          subtitle={coursesIntro.subtitle}
-        />
         <Reveal>
           <p className="max-w-3xl text-base leading-relaxed text-fg-muted sm:text-lg">
             {coursesIntro.intro}

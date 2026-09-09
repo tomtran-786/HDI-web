@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { programIcons, IconArrow } from "@/components/ui/icons";
+import { PageBackdrop } from "@/components/page-backdrop";
 import { Card } from "@/components/ui/card";
 import { CtaLink } from "@/components/ui/cta-link";
 import { Reveal } from "@/components/ui/reveal";
@@ -18,19 +19,17 @@ export const metadata: Metadata = {
 export default function ServicesPage() {
   return (
     <>
-      <section className="border-b border-line bg-bg">
-        <div className="shell py-14 sm:py-16 lg:py-20">
-          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-fg-muted">
-            {serviceCatalog.eyebrow}
-          </p>
-          <h1 className="mt-3 max-w-4xl text-3xl font-bold tracking-tight text-primary sm:text-4xl lg:text-[2.75rem] lg:leading-[1.1]">
-            {serviceCatalog.title}
-          </h1>
-          <p className="mt-3 max-w-3xl text-base text-fg-muted sm:text-lg">
-            {serviceCatalog.subtitle}
-          </p>
-        </div>
-      </section>
+      <PageBackdrop>
+        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-fg-muted">
+          {serviceCatalog.eyebrow}
+        </p>
+        <h1 className="mt-3 max-w-4xl text-3xl font-bold tracking-tight text-primary sm:text-4xl lg:text-[2.75rem] lg:leading-[1.1]">
+          {serviceCatalog.title}
+        </h1>
+        <p className="mt-3 max-w-3xl text-base text-fg-muted sm:text-lg">
+          {serviceCatalog.subtitle}
+        </p>
+      </PageBackdrop>
 
       {serviceCatalog.groups.map((group, groupIndex) => (
         <Section key={group.id} id={group.id} soft={groupIndex % 2 === 0}>
