@@ -14,8 +14,9 @@ import {
   orderStatusTone,
 } from "@/content/checkout";
 import { formatVnd } from "@/lib/format";
+import { AuthShell } from "@/components/auth-shell";
 import { Avatar } from "@/components/ui/avatar";
-import { Section, SectionHeading } from "@/components/ui/section";
+import { SectionHeading } from "@/components/ui/section";
 import { Badge } from "@/components/ui/badge";
 import {
   IconArrow,
@@ -158,7 +159,7 @@ export default async function AccountPage() {
   }
 
   return (
-    <Section soft>
+    <AuthShell>
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div className="flex items-start gap-4">
           <Avatar
@@ -415,6 +416,6 @@ export default async function AccountPage() {
           </ul>
         </>
       )}
-    </Section>
+    </AuthShell>
   );
 }

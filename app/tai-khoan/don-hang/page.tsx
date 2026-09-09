@@ -10,7 +10,8 @@ import {
   orderStatusLabel,
   orderStatusTone,
 } from "@/content/checkout";
-import { Section, SectionHeading } from "@/components/ui/section";
+import { AuthShell } from "@/components/auth-shell";
+import { SectionHeading } from "@/components/ui/section";
 import { Badge } from "@/components/ui/badge";
 import { IconArrow } from "@/components/ui/icons";
 
@@ -44,7 +45,7 @@ export default async function OrderListPage() {
   });
 
   return (
-    <Section soft>
+    <AuthShell>
       <SectionHeading
         eyebrow={orderPage.eyebrow}
         title={orderPage.listTitle}
@@ -104,6 +105,6 @@ export default async function OrderListPage() {
           ))}
         </ul>
       )}
-    </Section>
+    </AuthShell>
   );
 }

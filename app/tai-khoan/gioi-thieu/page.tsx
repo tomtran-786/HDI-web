@@ -13,9 +13,10 @@ import {
   rewardedReferralsInWindow,
 } from "@/lib/referral-ledger";
 import { REWARDED_REFERRALS_MAX } from "@/lib/referral-pricing";
+import { AuthShell } from "@/components/auth-shell";
 import { ReferralGuide } from "@/components/referral-guide";
 import { Card } from "@/components/ui/card";
-import { Section, SectionHeading } from "@/components/ui/section";
+import { SectionHeading } from "@/components/ui/section";
 import { CopyField } from "./copy-field";
 
 export const metadata: Metadata = {
@@ -100,7 +101,7 @@ export default async function ReferralPage() {
   const rewardsLeft = Math.max(0, REWARDED_REFERRALS_MAX - rewarded);
 
   return (
-    <Section soft>
+    <AuthShell>
       <div className="mx-auto max-w-2xl">
         <SectionHeading
           eyebrow={referralPage.eyebrow}
@@ -280,6 +281,6 @@ export default async function ReferralPage() {
           </Link>
         </p>
       </div>
-    </Section>
+    </AuthShell>
   );
 }

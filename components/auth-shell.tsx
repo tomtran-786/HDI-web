@@ -2,9 +2,10 @@ import type { ReactNode } from "react";
 import Image from "next/image";
 
 /**
- * Khung dùng chung cho toàn bộ luồng xác thực — sáu trang page.tsx (đăng nhập,
- * đăng ký, quên/đặt lại mật khẩu, xác thực email, hoàn tất hồ sơ) và sáu
- * loading.tsx của chúng.
+ * Khung dùng chung cho các màn thuộc "khu vực học viên" — luồng xác thực (đăng
+ * nhập, đăng ký, quên/đặt lại mật khẩu, xác thực email, hoàn tất hồ sơ) và khu
+ * vực tài khoản đã đăng nhập (/tai-khoan, /tai-khoan/don-hang[/…],
+ * /tai-khoan/gioi-thieu), cùng các loading.tsx của chúng.
  *
  * Nó sao lại đúng lớp nền của `<Section soft>` (components/ui/section.tsx) —
  * `border-t border-line bg-bg-soft` + `shell py-16 sm:py-20 lg:py-24` — rồi đặt
@@ -25,10 +26,11 @@ export function AuthShell({ children }: { children: ReactNode }) {
           fill
           priority
           sizes="100vw"
-          className="object-cover object-center opacity-40 dark:opacity-[0.15]"
+          className="object-cover object-center opacity-40 dark:opacity-[0.55]"
         />
-        {/* Xô nền: giữ chữ tiêu đề luôn đọc rõ và cho mép dưới hoà vào bg-bg-soft. */}
-        <div className="absolute inset-0 bg-gradient-to-b from-bg-soft/60 via-bg-soft/25 to-bg-soft dark:from-bg/75 dark:via-bg/85 dark:to-bg" />
+        {/* Xô nền: đậm ở đỉnh để chữ tiêu đề luôn đọc rõ, nhạt ở giữa cho ảnh hiện
+            lên, rồi đậm lại ở đáy để hoà vào nền trước khi tới thẻ form. */}
+        <div className="absolute inset-0 bg-gradient-to-b from-bg-soft/70 via-bg-soft/25 to-bg-soft dark:from-bg/80 dark:via-bg/45 dark:to-bg/95" />
       </div>
 
       <div className="shell relative py-16 sm:py-20 lg:py-24">{children}</div>

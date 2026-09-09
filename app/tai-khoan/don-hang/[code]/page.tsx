@@ -14,9 +14,10 @@ import {
   referralPanel,
 } from "@/content/checkout";
 import { composeEmailHref, links } from "@/content/site";
+import { AuthShell } from "@/components/auth-shell";
 import { HoldCountdown } from "@/components/hold-countdown";
 import { PayosLink } from "@/components/payos-link";
-import { Section, SectionHeading } from "@/components/ui/section";
+import { SectionHeading } from "@/components/ui/section";
 import { Badge } from "@/components/ui/badge";
 import { IconArrow, IconMail, IconMessage } from "@/components/ui/icons";
 import { CancelOrder } from "./cancel";
@@ -92,7 +93,7 @@ export default async function OrderDetailPage({
   const isGroup = order.groupSize > 1;
 
   return (
-    <Section soft>
+    <AuthShell>
       <SectionHeading
         eyebrow={orderPage.eyebrow}
         title={`${orderPage.codeLabel} #${order.code}`}
@@ -261,6 +262,6 @@ export default async function OrderDetailPage({
           </div>
         )}
       </div>
-    </Section>
+    </AuthShell>
   );
 }
