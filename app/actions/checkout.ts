@@ -24,7 +24,7 @@ export type CheckoutState = {
   pendingOrderCode?: number;
 };
 
-const LANDING_CART = "/?cart=1";
+const LANDING_CART = "/gio-hang";
 
 /**
  * Turn the whole cookie cart into one server-priced order. There is no client

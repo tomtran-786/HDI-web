@@ -22,6 +22,7 @@ const staticLabels: Record<string, string> = {
   "/xac-thuc-email": "Xác thực email",
   "/hoan-tat-ho-so": "Hoàn tất hồ sơ",
   "/quan-tri": "Quản trị",
+  "/gio-hang": "Giỏ hàng",
 };
 
 const serviceNav = nav.find((item) => item.href === "/dich-vu");

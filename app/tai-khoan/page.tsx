@@ -42,18 +42,6 @@ const dateFmt = new Intl.DateTimeFormat("vi-VN", {
   timeZone: "Asia/Ho_Chi_Minh",
 });
 
-function enrollmentLabel(e: {
-  status: string;
-  accessRevokedAt: Date | null;
-  accessExpiresAt: Date | null;
-}, now: Date) {
-  if (e.status === "paid" && e.accessRevokedAt) return "Đã thu hồi quyền";
-  if (e.status === "paid" && e.accessExpiresAt && e.accessExpiresAt <= now) {
-    return "Đã hết hạn truy cập";
-  }
-  return enrollmentStatusLabel[e.status] ?? e.status;
-}
-
 export default async function AccountPage() {
   const session = await currentSession();
   // The layout already redirected, so this is only for TypeScript.
@@ -66,7 +54,10 @@ export default async function AccountPage() {
   // the UI" secret ends up in view-source.
   const [enrollments, serviceOrders, reviewRows] = await Promise.all([
     prisma.enrollment.findMany({
-    where: { userId },
+    // Khu vực học viên chỉ giữ những gì còn "sống": ghi danh đang chờ xác nhận
+    // hoặc đã thanh toán. Đơn đã hủy / hoàn tiền không hiện ở đây nữa — lịch sử
+    // đầy đủ vẫn tra được ở /tai-khoan/don-hang.
+    where: { userId, status: { in: ["pending", "paid"] } },
     orderBy: { createdAt: "desc" },
     select: {
       id: true,
@@ -95,7 +86,7 @@ export default async function AccountPage() {
   // Đơn dịch vụ của chính người này. Sau khi thanh toán, trang kết quả là nơi
   // có mã đơn để gửi bài qua Zalo — đóng tab xong thì đây là đường quay lại.
     prisma.serviceOrder.findMany({
-    where: { userId },
+    where: { userId, status: { in: ["pending", "paid"] } },
     orderBy: { createdAt: "desc" },
     take: 10,
     select: {
@@ -125,9 +116,16 @@ export default async function AccountPage() {
   // hai form cùng ghi vào một hàng là hai form ghi đè lẫn nhau.
   const reviewFormShown = new Set<string>();
 
-  // Second query, only for courses this student currently has access to.
   const now = new Date();
-  const liveCourseIds = enrollments
+  // `status: paid` chưa đủ: một ghi danh đã bị thu hồi hoặc hết hạn truy cập
+  // vẫn là `paid`. Chỉ giữ thẻ còn quyền truy cập, cộng thẻ đang chờ thanh toán.
+  const visibleEnrollments = enrollments.filter(
+    (enrollment) =>
+      enrollment.status === "pending" || hasLiveAccess(enrollment, now),
+  );
+
+  // Second query, only for courses this student currently has access to.
+  const liveCourseIds = visibleEnrollments
     .filter((enrollment) => hasLiveAccess(enrollment, now))
     .map((e) => e.course.id);
 
@@ -194,7 +192,7 @@ export default async function AccountPage() {
         </div>
       </div>
 
-      {enrollments.length === 0 ? (
+      {visibleEnrollments.length === 0 ? (
         <div className="rounded-card border border-line bg-card p-8 text-center sm:p-10">
           <p className="text-lg font-bold tracking-tight">
             Bạn chưa mua khóa học nào
@@ -224,7 +222,7 @@ export default async function AccountPage() {
         </div>
       ) : (
         <div className="grid gap-5 md:grid-cols-2">
-          {enrollments.map((e) => {
+          {visibleEnrollments.map((e) => {
             const course = findCourse(e.course.slug);
             const live = hasLiveAccess(e, now);
             const secret = secrets.get(e.course.id);
@@ -242,12 +240,18 @@ export default async function AccountPage() {
                 key={e.id}
                 className="flex flex-col rounded-card border border-line bg-card p-6 sm:p-7"
               >
-                <div className="flex items-start justify-between gap-3">
-                  <div>
+                <div className="flex items-start gap-3">
+                  <span
+                    aria-hidden
+                    className="grid h-12 w-12 shrink-0 place-items-center rounded-card bg-tint text-xs font-bold tracking-tight text-primary"
+                  >
+                    {e.course.code}
+                  </span>
+                  <div className="min-w-0 flex-1">
                     <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-fg-subtle">
                       Mã khóa {e.course.code}
                     </p>
-                    <h3 className="mt-1.5 text-lg font-bold leading-snug tracking-tight">
+                    <h3 className="mt-1 text-lg font-bold leading-snug tracking-tight">
                       {/* An orphan slug must not blank the card — show the raw
                           slug so the problem is visible instead of silent. */}
                       {course?.title ?? e.course.slug}
@@ -256,7 +260,7 @@ export default async function AccountPage() {
                   <div className="flex shrink-0 flex-wrap justify-end gap-1.5">
                     {payer && <Badge tone="cool">{groupOrderLabel.badge}</Badge>}
                     <Badge tone={live ? "success" : "cool"}>
-                      {enrollmentLabel(e, now)}
+                      {enrollmentStatusLabel[e.status] ?? e.status}
                     </Badge>
                   </div>
                 </div>
@@ -349,11 +353,12 @@ export default async function AccountPage() {
                         )}
                     </div>
                   ) : (
+                    // Không "live" mà vẫn hiện ở đây thì chỉ có thể là đơn đang
+                    // chờ thanh toán — các trạng thái đã đóng đã bị lọc từ query.
                     <div className="rounded-card border border-line bg-bg-soft px-4 py-3">
                       <p className="text-sm leading-relaxed text-fg-muted">
-                        {e.status === "pending"
-                          ? "Link vào lớp và kho tài liệu sẽ mở ngay khi học phí được xác nhận."
-                          : "Lần mua này hiện không còn quyền truy cập. Lịch sử vẫn được giữ để bạn đối chiếu."}
+                        Link vào lớp và kho tài liệu sẽ mở ngay khi học phí được
+                        xác nhận.
                       </p>
                     </div>
                   )}

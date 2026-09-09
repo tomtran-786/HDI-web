@@ -12,7 +12,6 @@ export const cartModal = {
   eyebrow: "Đăng ký học",
   title: "Chọn khóa học",
   intro: "Chọn các khóa còn chỗ, kiểm tra tổng tiền rồi thanh toán một lần.",
-  close: "Đóng giỏ hàng",
   loading: "Đang tải khóa học",
   loadError: "Chưa tải được khóa học. Vui lòng thử lại.",
   pruned:
@@ -49,6 +48,22 @@ export const cartModal = {
     pending: "Đang chờ thanh toán",
     already_enrolled: "Bạn đang có quyền truy cập",
   },
+} as const;
+
+/**
+ * Chữ cho trang giỏ hàng `/gio-hang` — bản dựng lại từ modal cũ thành một trang
+ * hai cột: danh sách khóa bên trái, thanh tóm tắt đơn dính bên phải (thu gọn
+ * xuống đáy màn hình trên mobile).
+ */
+export const cartPage = {
+  eyebrow: cartModal.eyebrow,
+  title: "Giỏ hàng",
+  intro: cartModal.intro,
+  /** Nhãn dòng tổng giá gốc trong khối "Chi tiết đơn". */
+  listTotal: "Tổng giá",
+  /** Nhãn dòng tổng đã giảm — chênh giữa giá gốc và số phải trả sau ưu đãi. */
+  discountTotal: "Tổng giảm",
+  backToCourses: "Xem thêm khóa học",
 } as const;
 
 /**

@@ -103,10 +103,9 @@ export function CheckoutReclaim() {
               startRestore(async () => {
                 const result = await restoreCartFromOrder(orderId);
                 setReclaimed(null);
-                // `/?cart=1` là đường mà các trang đăng nhập và hoàn tất hồ sơ
-                // đã dùng để mở lại giỏ; CartProvider đọc cookie mới ở đúng lần
-                // điều hướng này.
-                if (result.ok) router.push("/?cart=1");
+                // Trang giỏ hàng đọc lại cookie vừa được `restoreCartFromOrder`
+                // ghi ở đúng lần điều hướng này.
+                if (result.ok) router.push("/gio-hang");
               });
             }}
             className="inline-flex items-center rounded-full bg-primary px-5 py-2.5 text-sm font-bold text-primary-fg transition hover:bg-primary-deep disabled:opacity-60"

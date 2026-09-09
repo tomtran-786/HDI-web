@@ -13,7 +13,7 @@ import {
 import { AuthShell } from "@/components/auth-shell";
 import { SectionHeading } from "@/components/ui/section";
 import { Badge } from "@/components/ui/badge";
-import { IconArrow } from "@/components/ui/icons";
+import { IconArrow, IconReceipt } from "@/components/ui/icons";
 
 export const metadata: Metadata = {
   title: "Đơn hàng — HDI Research Center",
@@ -26,7 +26,10 @@ export default async function OrderListPage() {
   if (!session?.user?.id) return null;
 
   const orders = await prisma.order.findMany({
-    where: { userId: session.user.id },
+    // Chỉ đơn còn "sống": đang chờ thanh toán hoặc đã thanh toán. Đơn đã hủy /
+    // quá hạn / hoàn tiền không liệt kê ở đây nữa (vẫn mở được bằng link trực
+    // tiếp /tai-khoan/don-hang/<mã>).
+    where: { userId: session.user.id, status: { in: ["pending", "paid"] } },
     orderBy: { createdAt: "desc" },
     select: {
       id: true,
@@ -52,6 +55,12 @@ export default async function OrderListPage() {
         subtitle="Lịch sử đặt chỗ và trạng thái thanh toán."
       />
 
+      {orders.length > 0 && (
+        <p className="mb-6 text-xs text-fg-subtle">
+          Đơn đã hủy hoặc quá hạn không hiển thị ở đây.
+        </p>
+      )}
+
       {orders.length === 0 ? (
         <div className="rounded-card border border-line bg-card p-8 text-center sm:p-10">
           <p className="text-lg font-bold tracking-tight">
@@ -71,35 +80,43 @@ export default async function OrderListPage() {
             <li key={order.id}>
               <Link
                 href={`/tai-khoan/don-hang/${order.code}`}
-                className="flex flex-col gap-4 rounded-card border border-line bg-card p-5 transition hover:border-primary sm:flex-row sm:items-center sm:justify-between sm:p-6"
+                className="flex gap-3 rounded-card border border-line bg-card p-4 transition hover:border-primary sm:gap-4 sm:p-5"
               >
-                <div className="min-w-0">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <p className="font-bold tabular-nums tracking-tight">
-                      #{order.code}
+                <span
+                  aria-hidden
+                  className="grid h-12 w-12 shrink-0 place-items-center rounded-card bg-tint text-primary"
+                >
+                  <IconReceipt size={20} />
+                </span>
+                <div className="flex min-w-0 flex-1 flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+                  <div className="min-w-0">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <p className="font-bold tabular-nums tracking-tight">
+                        #{order.code}
+                      </p>
+                      <Badge tone={orderStatusTone[order.status] ?? "cool"}>
+                        {orderStatusLabel[order.status] ?? order.status}
+                      </Badge>
+                      {/* Đơn nhóm có một dòng item cho mỗi người, nên nếu không
+                          nói ra số người thì tổng tiền trông như gấp mấy lần
+                          giá khóa mà không có gì giải thích. */}
+                      {order.groupSize > 1 && (
+                        <Badge tone="cool">{groupPanel.size(order.groupSize)}</Badge>
+                      )}
+                    </div>
+                    <p className="mt-1.5 text-[13px] text-fg-muted">
+                      {courseSummaryLine(order.items)}
                     </p>
-                    <Badge tone={orderStatusTone[order.status] ?? "cool"}>
-                      {orderStatusLabel[order.status] ?? order.status}
-                    </Badge>
-                    {/* Đơn nhóm có một dòng item cho mỗi người, nên nếu không
-                        nói ra số người thì tổng tiền trông như gấp mấy lần giá
-                        khóa mà không có gì giải thích. */}
-                    {order.groupSize > 1 && (
-                      <Badge tone="cool">{groupPanel.size(order.groupSize)}</Badge>
-                    )}
+                    <p className="mt-1 text-[13px] text-fg-subtle">
+                      Đặt ngày {formatDate(order.createdAt)}
+                      {order.status === "pending" &&
+                        ` · ${orderPage.holdUntil} ${formatDateTime(order.expiresAt)}`}
+                    </p>
                   </div>
-                  <p className="mt-1.5 text-[13px] text-fg-muted">
-                    {courseSummaryLine(order.items)}
-                  </p>
-                  <p className="mt-1 text-[13px] text-fg-subtle">
-                    Đặt ngày {formatDate(order.createdAt)}
-                    {order.status === "pending" &&
-                      ` · ${orderPage.holdUntil} ${formatDateTime(order.expiresAt)}`}
+                  <p className="shrink-0 text-lg font-bold tracking-tight text-primary">
+                    {formatVnd(order.amountVnd)}
                   </p>
                 </div>
-                <p className="shrink-0 text-lg font-bold tracking-tight text-primary">
-                  {formatVnd(order.amountVnd)}
-                </p>
               </Link>
             </li>
           ))}

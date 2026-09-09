@@ -1,23 +1,76 @@
 // @vitest-environment jsdom
 
-import { act, useState } from "react";
+import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-const mocks = vi.hoisted(() => ({
-  fetch: vi.fn(),
-  push: vi.fn(),
-}));
+const mocks = vi.hoisted(() => {
+  const store = {
+    ids: [] as string[],
+    listeners: new Set<() => void>(),
+    emit() {
+      for (const listener of store.listeners) listener();
+    },
+    subscribe(listener: () => void) {
+      store.listeners.add(listener);
+      return () => store.listeners.delete(listener);
+    },
+    getIds: () => store.ids,
+    setIds(next: string[]) {
+      store.ids = next;
+      store.emit();
+    },
+  };
+  return {
+    fetch: vi.fn(),
+    push: vi.fn(),
+    store,
+    // Module-stable identities: the cart page threads `remove` through a
+    // useCallback dependency list, so a fresh function each render loops.
+    add: (id: string) => {
+      if (!store.ids.includes(id)) store.setIds([...store.ids, id]);
+    },
+    remove: (id: string) => store.setIds(store.ids.filter((value) => value !== id)),
+    clear: () => store.setIds([]),
+  };
+});
 
-vi.mock("next/navigation", () => ({ useRouter: () => ({ push: mocks.push }) }));
+vi.mock("next/navigation", () => {
+  const router = { push: mocks.push };
+  const params = new URLSearchParams();
+  return { useRouter: () => router, useSearchParams: () => params };
+});
 vi.mock("@/app/actions/checkout", () => ({ checkout: vi.fn() }));
 vi.mock("@/lib/analytics", () => ({
   trackCartAdd: vi.fn(),
   trackCartRemove: vi.fn(),
   trackCheckout: vi.fn(),
 }));
+// The cart page reads its selection from CartProvider's context.
+vi.mock("@/components/cart-provider", async () => {
+  const react = await import("react");
+  return {
+    useCart: () => {
+      const ids = react.useSyncExternalStore(
+        mocks.store.subscribe,
+        mocks.store.getIds,
+        mocks.store.getIds,
+      );
+      return {
+        ids,
+        count: ids.length,
+        full: false,
+        has: (id: string) => ids.includes(id),
+        add: mocks.add,
+        remove: mocks.remove,
+        clear: mocks.clear,
+        openCart: () => undefined,
+      };
+    },
+  };
+});
 
-import { CartModal } from "@/components/cart-modal";
+import { CartClient } from "@/app/gio-hang/cart-client";
 import { groupPanel } from "@/content/checkout";
 
 const groupCourse = {
@@ -34,21 +87,6 @@ const groupCourse = {
 
 let host: HTMLDivElement;
 let root: Root;
-
-function CartHarness() {
-  const [ids, setIds] = useState([groupCourse.id]);
-  return (
-    <CartModal
-      open
-      focusSlug={null}
-      ids={ids}
-      full={false}
-      add={(id) => setIds((current) => [...current, id])}
-      remove={(id) => setIds((current) => current.filter((value) => value !== id))}
-      onClose={() => undefined}
-    />
-  );
-}
 
 function emailInput() {
   const input = host.querySelector<HTMLInputElement>('input[type="email"]');
@@ -94,18 +132,8 @@ async function enterMember(email: string) {
 
 beforeEach(async () => {
   (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
-  Object.defineProperty(HTMLDialogElement.prototype, "showModal", {
-    configurable: true,
-    value() {
-      this.open = true;
-    },
-  });
-  Object.defineProperty(HTMLDialogElement.prototype, "close", {
-    configurable: true,
-    value() {
-      this.open = false;
-    },
-  });
+  mocks.store.listeners.clear();
+  mocks.store.ids = [groupCourse.id];
   mocks.fetch.mockReset();
   mocks.push.mockReset();
   mocks.fetch.mockResolvedValue({
@@ -121,7 +149,7 @@ beforeEach(async () => {
   host = document.createElement("div");
   document.body.append(host);
   root = createRoot(host);
-  await act(async () => root.render(<CartHarness />));
+  await act(async () => root.render(<CartClient />));
   await flush();
 });
 

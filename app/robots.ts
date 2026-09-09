@@ -17,6 +17,7 @@ export default function robots(): MetadataRoute.Robots {
         "/api/",
         "/quan-tri",
         "/tai-khoan",
+        "/gio-hang",
         "/hoan-tat-ho-so",
         "/thanh-toan",
         "/xac-thuc-email",
