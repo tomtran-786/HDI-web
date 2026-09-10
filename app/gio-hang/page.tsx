@@ -5,6 +5,7 @@ import { currentProfile } from "@/lib/current-profile";
 import { currentSession } from "@/lib/current-session";
 import { isProfileComplete } from "@/lib/profile";
 import { safeNext } from "@/lib/safe-path";
+import { cartReturnTo } from "@/lib/cart-return";
 import { cartPage } from "@/content/checkout";
 import { PageBackdrop } from "@/components/page-backdrop";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -23,16 +24,28 @@ export const metadata: Metadata = {
  * chưa có hồ sơ, hồ sơ chưa đủ. `safeNext` cho `/gio-hang` đi qua nguyên vẹn
  * nên hai trang cổng biết đường quay lại.
  */
-export default async function CartPage() {
+export default async function CartPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ course?: string | string[] }>;
+}) {
+  // Cùng đích quay về mà `CartClient` dựng cho đường 401/409 của nó
+  // (`returnTo`). Không giữ slug ở đây thì người bấm "Đăng ký học khóa này" lúc
+  // chưa đăng nhập quay lại một giỏ hàng không cuộn tới khóa họ vừa chọn — hai
+  // cổng cho cùng một trang mà hai hành vi khác nhau.
+  const raw = (await searchParams).course;
+  const focusSlug = Array.isArray(raw) ? raw[0] : raw;
+  const back = safeNext(cartReturnTo(focusSlug ?? null));
+
   const session = await currentSession();
   if (!session?.user?.id) {
-    redirect(`/dang-nhap?tiep=${encodeURIComponent(safeNext("/gio-hang"))}`);
+    redirect(`/dang-nhap?tiep=${encodeURIComponent(back)}`);
   }
 
   const user = await currentProfile(session.user.id);
   if (!user) redirect("/dang-nhap");
   if (!isProfileComplete(user)) {
-    redirect(`/hoan-tat-ho-so?tiep=${encodeURIComponent(safeNext("/gio-hang"))}`);
+    redirect(`/hoan-tat-ho-so?tiep=${encodeURIComponent(back)}`);
   }
 
   return (

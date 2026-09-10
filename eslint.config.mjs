@@ -15,6 +15,10 @@ const eslintConfig = defineConfig([
     // research inputs, not application code
     "reference/**",
     "web-forge/**",
+    // Bản sao cây làm việc do Claude Code tạo ra. Nằm ngoài git
+    // (.git/info/exclude) nên trước giờ không ai thấy, nhưng eslint vẫn quét và
+    // nó là nguồn của toàn bộ lỗi lint hiện có.
+    ".claude/worktrees/**",
   ]),
 ]);
 

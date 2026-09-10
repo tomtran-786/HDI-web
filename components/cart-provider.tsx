@@ -68,6 +68,15 @@ type CartContext = {
   add: (id: string) => void;
   remove: (id: string) => void;
   clear: () => void;
+  /**
+   * Đọc lại cookie giỏ hàng ngay bây giờ.
+   *
+   * Dành cho những lần server ghi cookie ở nơi store này không quan sát được —
+   * `restoreCartFromOrder` là ca duy nhất hiện tại. Điều hướng thường tự lo việc
+   * này (xem effect theo `pathname`), nhưng điều hướng sang CHÍNH route đang mở
+   * thì không đổi `pathname` và effect đó không chạy.
+   */
+  refresh: () => void;
   /** Điều hướng tới trang giỏ hàng; `courseSlug` để cuộn tới đúng khóa. */
   openCart: (courseSlug?: string) => void;
 };
@@ -99,6 +108,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const clear = useCallback(() => writeCookie([]), []);
+  const refresh = useCallback(() => emit(), []);
   // Giỏ hàng giờ là trang `/gio-hang`. `emit()` trước khi đi để badge trên
   // header đọc lại cookie ở đúng lần điều hướng này.
   const openCart = useCallback(
@@ -122,9 +132,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
       add,
       remove,
       clear,
+      refresh,
       openCart,
     }),
-    [ids, add, remove, clear, openCart],
+    [ids, add, remove, clear, refresh, openCart],
   );
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;

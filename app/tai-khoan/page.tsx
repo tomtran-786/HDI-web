@@ -86,7 +86,20 @@ export default async function AccountPage() {
   // Đơn dịch vụ của chính người này. Sau khi thanh toán, trang kết quả là nơi
   // có mã đơn để gửi bài qua Zalo — đóng tab xong thì đây là đường quay lại.
     prisma.serviceOrder.findMany({
-    where: { userId, status: { in: ["pending", "paid"] } },
+    // Cùng ngoại lệ như trang đơn khóa học: đơn đã đóng vẫn phải hiện nếu đã có
+    // tiền chạm vào, vì `ref` là chuỗi 32 hex không đoán được và đây là chỉ mục
+    // DUY NHẤT trong app dẫn tới trang kết quả.
+    where: {
+      userId,
+      OR: [
+        { status: { in: ["pending", "paid"] } },
+        {
+          payments: {
+            some: { status: { in: ["succeeded", "requires_review"] } },
+          },
+        },
+      ],
+    },
     orderBy: { createdAt: "desc" },
     take: 10,
     select: {
