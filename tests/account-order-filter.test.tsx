@@ -48,6 +48,8 @@ function order(overrides: Record<string, unknown> = {}): Record<string, unknown>
     expiresAt: new Date("2026-08-25T10:00:00Z"),
     groupSize: 1,
     items: [{ id: "item-1", course: { code: "AIQT", slug: "aiqt" } }],
+    // Chỉ chứa hàng `requires_review`; query đã lọc sẵn ở tầng Prisma.
+    payments: [],
     ...overrides,
   };
 }
@@ -157,15 +159,42 @@ describe("khu vực học viên chỉ giữ đơn còn sống", () => {
     );
   });
 
-  it("đơn quá hạn lọt qua nhánh giao dịch thì hiện kèm ghi chú đối soát", async () => {
+  it("chỉ hỏi những hàng payments còn treo, không kéo theo payload thô", async () => {
+    await OrderListPage();
+
+    expect(mocks.orderFindMany.mock.calls[0][0].select.payments).toEqual({
+      where: { status: "requires_review" },
+      select: { id: true },
+      take: 1,
+    });
+  });
+
+  it("đơn quá hạn còn khoản tiền treo thì hiện kèm ghi chú đối soát", async () => {
     mocks.orderFindMany.mockResolvedValue([
-      order({ code: 1042, status: "expired" }),
+      order({ code: 1042, status: "expired", payments: [{ id: "pay-1" }] }),
     ]);
 
     const html = renderToStaticMarkup(await OrderListPage());
 
     expect(html).toContain("1042");
     expect(html).toContain(orderPage.reconciling);
+  });
+
+  /**
+   * Đơn đã hoàn tiền cũng lọt vào danh sách qua nhánh `payments.some` — nó có
+   * một giao dịch `succeeded`. Nhưng tiền của nó đã được xử lý xong, và dán
+   * "đang đối soát" lên đó là nói sai với chính người vừa nhận lại tiền.
+   */
+  it("đơn đã hoàn tiền hiện ra nhưng KHÔNG mang ghi chú đối soát", async () => {
+    mocks.orderFindMany.mockResolvedValue([
+      order({ code: 1043, status: "refunded", payments: [] }),
+    ]);
+
+    const html = renderToStaticMarkup(await OrderListPage());
+
+    expect(html).toContain("1043");
+    expect(html).toContain("Đã hoàn tiền");
+    expect(html).not.toContain(orderPage.reconciling);
   });
 
   it("đơn còn sống không mang ghi chú đối soát", async () => {

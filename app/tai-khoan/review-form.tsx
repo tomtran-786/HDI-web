@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect, useRef, useState } from "react";
+import { useActionState, useCallback, useEffect, useRef, useState } from "react";
 import { IconStar } from "@/components/ui/icons";
 import { COMMENT_MAX, RATING_VALUES } from "@/lib/review-input";
 import { review } from "@/content/review";
@@ -47,6 +47,10 @@ export function ReviewForm({
   const [opened, setOpened] = useState(0);
   /** Đã gửi ít nhất một lần trong phiên này, để nhãn ngoài thẻ nói đúng. */
   const [justSaved, setJustSaved] = useState(false);
+  // `useCallback`: prop này nằm trong mảng phụ thuộc của một effect bên trong
+  // `ReviewDialogBody`, nên một hàm mới mỗi lượt render là một lượt chạy effect
+  // thừa mỗi lượt render.
+  const markSaved = useCallback(() => setJustSaved(true), []);
 
   // Sau khi gửi thành công, trạng thái luôn quay về chờ duyệt — kể cả khi lần
   // trước đã được đăng — nên nhãn phải nói đúng điều đó thay vì đọc lại
@@ -58,7 +62,10 @@ export function ReviewForm({
       <button
         type="button"
         onClick={() => {
-          setOpened((n) => n + 1);
+          // CHỈ dựng lại thân hộp thoại khi lần trước đã gửi xong — đó là lúc
+          // duy nhất cần dọn `state.saved`. Dựng lại vô điều kiện sẽ reset cả
+          // ô nhận xét, tức nuốt mất bản nháp của người bấm "Hủy" rồi mở lại.
+          if (justSaved) setOpened((n) => n + 1);
           dialogRef.current?.showModal();
         }}
         className="inline-flex items-center gap-2 rounded-full border border-line px-5 py-2.5 text-sm font-bold text-fg transition hover:border-primary hover:text-primary"
@@ -85,7 +92,7 @@ export function ReviewForm({
           defaultComment={defaultComment}
           status={status}
           shown={shown}
-          onSaved={() => setJustSaved(true)}
+          onSaved={markSaved}
           onClose={() => dialogRef.current?.close()}
         />
       </dialog>

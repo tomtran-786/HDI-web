@@ -54,22 +54,55 @@ beforeEach(() => {
 });
 
 describe("tầm quét đối soát-kéo", () => {
-  it("đơn khóa học: nhận cả `expired`, bỏ đơn đã có giao dịch thành công", async () => {
+  it("đơn khóa học: bỏ đơn đã có giao dịch thành công, giữ trần 30 đơn/lượt", async () => {
     await reconcilePaidPayosOrders(NOW);
 
     const { where, take } = mocks.orderFindMany.mock.calls[0][0];
-    expect(where.status).toEqual({ in: ["pending", "expired"] });
     expect(where.payments).toEqual({ none: { status: "succeeded" } });
     expect(take).toBe(30);
   });
 
-  it("đơn khóa học: tầm quét có cả chặn trên lẫn chặn dưới", async () => {
+  /**
+   * Hai nhóm ứng viên, hai tầm khác nhau — và sự khác nhau đó là toàn bộ vấn đề.
+   *
+   * `pending` chỉ có chặn trên: bình thường chúng tự drain vì cron đóng chúng
+   * mỗi đêm, nhưng nếu cron ngừng chạy vài ngày thì một chặn dưới sẽ đẩy đúng
+   * những đơn đó ra khỏi tầm với vĩnh viễn.
+   *
+   * `expired` bắt buộc có chặn dưới: chúng không bao giờ tự rời danh sách, nên
+   * `take: 30` xếp theo `expiresAt` tăng dần sẽ quét lại đúng 30 xác chết cũ
+   * nhất mỗi đêm và không chạm tới đơn mới.
+   */
+  it("đơn khóa học: `pending` không chặn dưới, `expired` có", async () => {
     await reconcilePaidPayosOrders(NOW);
 
     const { where } = mocks.orderFindMany.mock.calls[0][0];
-    expect(where.expiresAt).toEqual({
-      gte: new Date(NOW.getTime() - LOOKBACK_MS),
-      lt: new Date(NOW.getTime() + GRACE_MS),
+    const branches = where.AND.find(
+      (clause: { OR?: { status?: string }[] }) =>
+        clause.OR?.some((item) => item.status === "pending"),
+    ).OR;
+
+    expect(branches).toEqual([
+      {
+        status: "pending",
+        expiresAt: { lt: new Date(NOW.getTime() + GRACE_MS) },
+      },
+      {
+        status: "expired",
+        expiresAt: {
+          gte: new Date(NOW.getTime() - LOOKBACK_MS),
+          lt: new Date(NOW.getTime() + GRACE_MS),
+        },
+      },
+    ]);
+  });
+
+  it("đơn khóa học: vẫn chỉ hỏi đơn từng có link PayOS", async () => {
+    await reconcilePaidPayosOrders(NOW);
+
+    const { where } = mocks.orderFindMany.mock.calls[0][0];
+    expect(where.AND).toContainEqual({
+      OR: [{ providerRef: { not: null } }, { checkoutUrl: { not: null } }],
     });
   });
 
@@ -78,13 +111,12 @@ describe("tầm quét đối soát-kéo", () => {
    * và `updateMany` vẫn khóa cứng `status: "pending"` — nới ở đây chỉ đổi một
    * đơn bị bỏ qua thành một transaction ném lỗi.
    */
-  it("đơn dịch vụ: vẫn chỉ `pending`, nhưng cũng có chặn dưới", async () => {
+  it("đơn dịch vụ: vẫn chỉ `pending`, và cũng không có chặn dưới", async () => {
     await reconcilePaidPayosServiceOrders(NOW);
 
     const { where } = mocks.serviceOrderFindMany.mock.calls[0][0];
     expect(where.status).toBe("pending");
     expect(where.expiresAt).toEqual({
-      gte: new Date(NOW.getTime() - LOOKBACK_MS),
       lt: new Date(NOW.getTime() + GRACE_MS),
     });
   });

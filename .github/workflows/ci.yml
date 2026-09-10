@@ -16,6 +16,12 @@ on:
 jobs:
   check:
     runs-on: ubuntu-latest
+    # Cùng chuỗi giả mà tests/setup-env.ts dùng, vì cùng một lý do: `schema.prisma`
+    # tham chiếu `env("DATABASE_URL")` và `lib/prisma.ts` ném lỗi khi thiếu, còn
+    # runner thì không có `.env.local`. Cổng 1 và tên database nói rõ nó không
+    # nối đi đâu cả — lint, typecheck và unit test đều không chạm tới database.
+    env:
+      DATABASE_URL: postgresql://ci:ci@127.0.0.1:1/hdi_ci_never_connected
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4

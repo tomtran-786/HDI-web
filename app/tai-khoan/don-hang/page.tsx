@@ -61,6 +61,14 @@ export default async function OrderListPage() {
         // the payload of a page anyone with a pending order can load.
         select: { id: true, course: { select: { code: true, slug: true } } },
       },
+      // CHỈ để biết có khoản tiền nào còn treo hay không, nên `take: 1` và
+      // không lấy gì ngoài `id`: `payments.payload` là bản ghi thô của PayOS,
+      // có thể mang dữ liệu cá nhân, và không có gì ngoài /quan-tri được đọc nó.
+      payments: {
+        where: { status: "requires_review" },
+        select: { id: true },
+        take: 1,
+      },
     },
   });
 
@@ -131,11 +139,14 @@ export default async function OrderListPage() {
                       {order.status === "pending" &&
                         ` · ${orderPage.holdUntil} ${formatDateTime(order.expiresAt)}`}
                     </p>
-                    {/* Đơn đã đóng chỉ lọt vào danh sách này qua nhánh
-                        `payments.some` ở trên, nên nó luôn là đơn có giao dịch.
-                        Nói ra, bằng không một hàng "Quá hạn" nằm giữa danh sách
-                        đơn còn sống trông như một lỗi hiển thị. */}
-                    {order.status !== "pending" && order.status !== "paid" && (
+                    {/* Theo `requires_review` chứ KHÔNG theo "đơn đã đóng".
+                        Đơn đã đóng lọt vào danh sách này qua nhánh
+                        `payments.some`, nhưng phần lớn trong số đó là tiền đã
+                        được xử lý xong — dán "đang đối soát" lên một đơn đã
+                        hoàn tiền là nói sai với chính người đã nhận lại tiền.
+                        Nhãn trạng thái đã nói "Đã hủy" / "Quá hạn" / "Đã hoàn
+                        tiền" rồi; dòng này chỉ dành cho khoản còn thật sự treo. */}
+                    {order.payments.length > 0 && (
                       <p className="mt-1 text-[13px] font-semibold text-warning">
                         {orderPage.reconciling}
                       </p>

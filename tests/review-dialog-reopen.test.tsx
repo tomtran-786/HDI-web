@@ -91,4 +91,37 @@ describe("hộp thoại đánh giá khóa học", () => {
     // Nhãn ngoài thẻ vẫn phải nhớ là vừa gửi, dù thân hộp thoại đã được dựng lại.
     expect(host.textContent).toContain(review.statusHint.pending);
   });
+
+  /**
+   * Dựng lại thân hộp thoại là để dọn `state.saved`, KHÔNG phải để dọn ô nhận
+   * xét. Bấm "Hủy" rồi mở lại là thao tác của người đang cân nhắc câu chữ; nuốt
+   * mất bản nháp của họ là một cách sửa lỗi này thành một lỗi khác.
+   */
+  it("giữ bản nháp khi đóng rồi mở lại, chừng nào chưa gửi", async () => {
+    await act(async () => openButton().click());
+
+    const box = host.querySelector<HTMLTextAreaElement>('textarea[name="comment"]');
+    if (!box) throw new Error("Không tìm thấy ô nhận xét.");
+    const setter = Object.getOwnPropertyDescriptor(
+      HTMLTextAreaElement.prototype,
+      "value",
+    )?.set;
+    await act(async () => {
+      setter!.call(box, "Đang viết dở");
+      box.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+
+    await act(async () => {
+      const cancel = [...host.querySelectorAll("button")].find(
+        (item) => item.textContent === review.cancel,
+      );
+      cancel?.click();
+    });
+    await act(async () => openButton().click());
+    await flush();
+
+    expect(
+      host.querySelector<HTMLTextAreaElement>('textarea[name="comment"]')?.value,
+    ).toBe("Đang viết dở");
+  });
 });
