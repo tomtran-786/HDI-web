@@ -29,7 +29,10 @@ jobs:
           node-version: 22
           cache: npm
       # `postinstall` chạy `prisma generate`; không có nó thì `tsc` không thấy
-      # các kiểu sinh ra từ schema.
+      # các kiểu sinh ra từ schema. Còn `PageProps` / `LayoutProps` là kiểu do
+      # `next typegen` sinh vào `.next/dev/types` (xem `next-env.d.ts`) — trên
+      # máy dev chúng có sẵn vì đã chạy `next dev`, trên runner sạch thì không,
+      # nên script `typecheck` tự gọi typegen trước khi gọi `tsc`.
       - run: npm ci
       - run: npm run lint
       - run: npm run typecheck
