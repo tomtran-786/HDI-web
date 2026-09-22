@@ -20,18 +20,15 @@ export type NavItem = {
 };
 
 export const nav: readonly NavItem[] = [
-  // "Hồ sơ học thuật" gộp vào đây làm mục con thay vì đứng riêng — hai mục cùng
-  // nói về trung tâm, tách ra chỉ làm thanh nav dài thêm.
+  // "Hồ sơ học thuật" gộp vào đây làm mục con thay vì đứng riêng — mục này
+  // cùng nói về trung tâm, tách ra chỉ làm thanh nav dài thêm.
   {
     label: "Về HDI",
     href: "/ve-hdi",
     groups: [
       {
         label: "Giới thiệu",
-        children: [
-          { label: "Hồ sơ học thuật", href: "/cong-bo" },
-          { label: "Hội thảo quốc tế", href: "/hoi-thao-quoc-te" },
-        ],
+        children: [{ label: "Hồ sơ học thuật", href: "/cong-bo" }],
       },
     ],
   },
@@ -63,6 +60,7 @@ export const nav: readonly NavItem[] = [
       {
         label: "Hỗ trợ bản thảo",
         children: [
+          { label: "Kiểm tra AI & Đạo văn", href: "/kiem-tra-ai-dao-van" },
           {
             label: "Humanizing & Proofreading",
             href: "/dich-vu/humanizing-proofreading",
@@ -71,9 +69,6 @@ export const nav: readonly NavItem[] = [
       },
     ],
   },
-  // Tách riêng khỏi dropdown "Dịch vụ": đây là dịch vụ có bảng giá công khai,
-  // thanh toán trực tuyến ngay, nên nó đứng một mục để khách vào thẳng.
-  { label: "Kiểm tra AI & Đạo văn", href: "/kiem-tra-ai-dao-van" },
   {
     label: "Khóa học",
     href: "/khoa-hoc",
@@ -132,6 +127,7 @@ export const nav: readonly NavItem[] = [
       },
     ],
   },
+  { label: "Hội thảo quốc tế", href: "/hoi-thao-quoc-te" },
   // Hiện cho mọi người, kể cả khách chưa đăng nhập: chương trình chỉ chạy được
   // khi người ta biết nó tồn tại, và `/gioi-thieu-ban-be` lo phần đưa khách qua
   // màn đăng nhập rồi trả về đúng chỗ.

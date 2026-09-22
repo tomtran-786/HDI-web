@@ -94,18 +94,19 @@ export function SiteHeader({
     if (item.href.startsWith("/#")) {
       return pathname === "/" && activeHref === item.href;
     }
+    // "Kiểm tra AI & Đạo văn" (/kiem-tra-ai-dao-van) sống dưới mục "Dịch vụ"
+    // nhưng không nằm trên path /dich-vu/, nên nhánh chung không bắt được.
     if (item.href === "/dich-vu") {
-      return pathname === "/dich-vu" || pathname.startsWith("/dich-vu/");
-    }
-    // "Hồ sơ học thuật" (/cong-bo) và "Hội thảo quốc tế" (/hoi-thao-quoc-te) sống
-    // dưới mục "Về HDI" nhưng không nằm trên path /ve-hdi/, nên nhánh chung không
-    // bắt được — phải nêu tên riêng.
-    if (item.href === "/ve-hdi") {
       return (
-        pathname === "/ve-hdi" ||
-        pathname === "/cong-bo" ||
-        pathname === "/hoi-thao-quoc-te"
+        pathname === "/dich-vu" ||
+        pathname.startsWith("/dich-vu/") ||
+        pathname === "/kiem-tra-ai-dao-van"
       );
+    }
+    // "Hồ sơ học thuật" (/cong-bo) sống dưới mục "Về HDI" nhưng không nằm trên
+    // path /ve-hdi/, nên nhánh chung không bắt được — phải nêu tên riêng.
+    if (item.href === "/ve-hdi") {
+      return pathname === "/ve-hdi" || pathname === "/cong-bo";
     }
     return pathname === item.href || pathname.startsWith(`${item.href}/`);
   };
