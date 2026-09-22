@@ -96,7 +96,7 @@
  * NGÀY KHAI GIẢNG đi kèm nhưng KHÔNG nằm trong `facts`: ô "Lịch học" là một câu
  * tiếng Việt cho người đọc, còn `opening.startDate` là cùng cái ngày đó ở dạng
  * ISO cho máy. Chốt được ngày thì phải sửa CẢ BA — `opening`, ô "Lịch học" và
- * `eyebrow` — và tests/opening-ticker.test.tsx canh đúng chuyện đó.
+ * `eyebrow` — và tests/course-schedule-dates.test.ts canh đúng chuyện đó.
  *
  * "Kho record" cũ nay nằm dưới "Học liệu" chứ không dưới "Thời lượng", và đó là
  * chỗ duy nhất nó được phép nằm — xem đoạn ngay dưới đây.

@@ -1,9 +1,8 @@
 import Link from "next/link";
 import { courses } from "@/content/course";
 import { landingCourseData } from "@/lib/course-sales";
-import { openingAnnouncements } from "@/lib/courses";
 import { OpenCourseEnrollButton } from "../open-course-enroll-button";
-import { OpeningTicker } from "./opening-ticker";
+import { OpeningPoster } from "./opening-poster";
 import { Card } from "../ui/card";
 import { IconArrow } from "../ui/icons";
 import { PriceTag } from "../ui/price-tag";
@@ -30,12 +29,12 @@ async function readOpenCourses() {
 /**
  * Chỉ hiện các khóa thực sự đang nhận đăng ký và còn ít nhất một chỗ.
  *
- * Trả về HAI khối: dải lịch khai giảng chạy ngang, rồi mới tới danh sách thẻ.
- * Cùng một `openCourses` nuôi cả hai, nên không có trạng thái nào mà dải quảng
- * cáo một ngày khai giảng còn bên dưới không có thẻ nào — kể cả khi Supabase lỗi
- * và `readOpenCourses` trả về mảng rỗng. Tách dải ra `app/page.tsx` thì nó phải
- * tự đọc dữ liệu lần nữa và tự bắt lỗi lần nữa, và hai nhánh catch sẽ có ngày
- * lệch nhau.
+ * Trả về HAI khối: poster lịch khai giảng, rồi mới tới danh sách thẻ. Cùng một
+ * `openCourses` nuôi cả hai, nên không có trạng thái nào mà poster quảng cáo
+ * một khóa còn bên dưới không có thẻ nào — kể cả khi Supabase lỗi và
+ * `readOpenCourses` trả về mảng rỗng. Tách poster ra `app/page.tsx` thì nó
+ * phải tự đọc dữ liệu lần nữa và tự bắt lỗi lần nữa, và hai nhánh catch sẽ có
+ * ngày lệch nhau.
  */
 export async function OpenCourses() {
   const openCourses = await readOpenCourses();
@@ -43,9 +42,7 @@ export async function OpenCourses() {
 
   return (
     <>
-      <OpeningTicker
-        items={openingAnnouncements(openCourses.map(({ course }) => course))}
-      />
+      <OpeningPoster openCourses={openCourses} />
       <Section id="khoa-hoc" soft>
         <SectionHeading
           eyebrow="Đang mở đăng ký"

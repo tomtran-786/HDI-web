@@ -68,18 +68,18 @@ describe("kiến trúc nội dung homepage và Về HDI", () => {
       html.indexOf('id="ve-chung-toi"'),
     );
 
-    // Dải lịch khai giảng đứng giữa hero và mục khóa đang mở.
-    expect(html.indexOf('id="top"')).toBeLessThan(html.indexOf("data-ticker"));
-    expect(html.indexOf("data-ticker")).toBeLessThan(
+    // Poster lịch khai giảng đứng giữa hero và mục khóa đang mở.
+    expect(html.indexOf('id="top"')).toBeLessThan(
+      html.indexOf("data-opening-poster"),
+    );
+    expect(html.indexOf("data-opening-poster")).toBeLessThan(
       html.indexOf('id="khoa-hoc"'),
     );
-    // Khẳng định theo ngày máy đọc được, KHÔNG theo chuỗi hiển thị: hero cũng
-    // đang in tay "22/09/2026" (components/sections/hero.tsx:27), nên bám vào
-    // chuỗi đó sẽ xanh kể cả khi dải hỏng hoàn toàn.
-    expect(html).toMatch(/datetime="2026-09-22"/i);
-    // TIEULUAN `not_open` trong mock: đã chốt ngày cũng không được lên dải.
-    expect(html).not.toMatch(/datetime="2026-10-05"/i);
-    expect(html).not.toContain("05/10/2026");
+    // Poster là MỘT ảnh tĩnh cố định (public/images/lich-khai-giang-09-10-2026.png):
+    // hễ còn ít nhất một khóa đang bán thì cả ảnh hiện nguyên vẹn, kể cả phần
+    // nói về TIEULUAN dù mock này đánh dấu khóa đó `not_open` — khác với mục
+    // "Khóa học đang nhận học viên" ngay dưới, nơi từng thẻ vẫn lọc theo
+    // `availability` thật nên link ghi danh của TIEULUAN phải vắng mặt.
     expect(html).not.toContain("/khoa-hoc/training-tieu-luan-nckh-kltn");
     expect(html).not.toContain("/khoa-hoc/stata-kinh-te-luong");
     expect(html).not.toContain("220.000 đ");
@@ -107,9 +107,9 @@ describe("kiến trúc nội dung homepage và Về HDI", () => {
     const html = renderToStaticMarkup(await Home());
     expect(html).not.toContain('id="khoa-hoc"');
     expect(html).not.toContain("Còn 0 chỗ");
-    // Dải và mục khóa dùng chung một cái cổng: mất mục thì cũng phải mất dải,
-    // không để lại một dải trơ trọi phía trên khoảng trống.
-    expect(html).not.toContain("data-ticker");
+    // Poster và mục khóa dùng chung một cái cổng: mất mục thì cũng phải mất
+    // poster, không để lại một khối trơ trọi phía trên khoảng trống.
+    expect(html).not.toContain("data-opening-poster");
     // Teaser hội thảo quốc tế không đi qua cổng đó — vẫn hiển thị khi không có
     // khóa nào đang mở, để mạch trang chủ không gãy.
     expect(html).toContain('id="hoi-thao-quoc-te"');
@@ -122,9 +122,9 @@ describe("kiến trúc nội dung homepage và Về HDI", () => {
     const html = renderToStaticMarkup(await Home());
     expect(html).not.toContain('id="khoa-hoc"');
     expect(html).not.toMatch(/Còn \d+ chỗ/);
-    // Gãy ngay nếu sau này ai đó tách dải ra app/page.tsx với lần đọc dữ liệu
-    // và nhánh catch riêng của nó.
-    expect(html).not.toContain("data-ticker");
+    // Gãy ngay nếu sau này ai đó tách poster ra app/page.tsx với lần đọc dữ
+    // liệu và nhánh catch riêng của nó.
+    expect(html).not.toContain("data-opening-poster");
     consoleError.mockRestore();
   });
 

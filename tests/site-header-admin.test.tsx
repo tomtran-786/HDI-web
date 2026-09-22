@@ -90,12 +90,14 @@ describe("lối vào trang quản trị trên navbar", () => {
     for (const child of children) expect(html).toContain(`href="${child.href}"`);
   });
 
-  it("đánh dấu mục Kiểm tra AI & Đạo văn active trên route của nó, không phải Dịch vụ", () => {
+  it("đánh dấu mục Dịch vụ active trên route Kiểm tra AI & Đạo văn — mục con này sống trong dropdown Dịch vụ", () => {
     mocks.pathname = "/kiem-tra-ai-dao-van";
     const html = render({ signedIn: false });
 
-    expect(html).toMatch(/aria-current="page"[^>]*href="\/kiem-tra-ai-dao-van"/);
-    expect(html).not.toMatch(/aria-current="page"[^>]*href="\/dich-vu"/);
+    // "Kiểm tra AI & Đạo văn" nằm trong dropdown "Dịch vụ" (content/navigation.ts),
+    // không còn là mục top-level riêng — chỉ mục cha mới mang `aria-current`.
+    expect(html).toMatch(/aria-current="page"[^>]*href="\/dich-vu"/);
+    expect(html).not.toMatch(/aria-current="page"[^>]*href="\/kiem-tra-ai-dao-van"/);
   });
 
   it("footer chỉ dùng link cha và không bung item dropdown", () => {
