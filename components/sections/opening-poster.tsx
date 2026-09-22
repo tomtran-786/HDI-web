@@ -25,7 +25,7 @@ export function OpeningPoster({
   if (openCourses.length === 0) return null;
 
   return (
-    <section data-opening-poster className="border-t border-line bg-bg">
+    <section data-opening-poster className="border-t border-line bg-tint">
       <div className="shell py-12 sm:py-16">
         <Reveal>
           <div className="overflow-hidden rounded-card border border-line bg-card shadow-[0_1px_2px_rgba(23,38,56,0.04),0_16px_32px_-16px_rgba(23,38,56,0.18)]">
