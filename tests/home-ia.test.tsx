@@ -20,6 +20,24 @@ vi.mock("@/components/cart-provider", () => ({
 import Home from "@/app/page";
 import AboutHdiPage from "@/app/ve-hdi/page";
 
+/**
+ * Nền của từng `<section>` cấp trang, theo đúng thứ tự xuất hiện.
+ *
+ * `Section` chỉ in ra `bg-bg-soft` hoặc `bg-bg`, và Hero cũng là một `<section>`
+ * mang `bg-bg`, nên đọc thẳng từ HTML là cách kiểm nhịp nền mà không phải tin
+ * vào cờ `soft` cắm trong từng component.
+ */
+function sectionSurfaces(html: string) {
+  return [...html.matchAll(/<section[^>]*class="([^"]*)"/g)]
+    .map(([, className]) => className)
+    .filter((className) => /\bbg-bg(-soft)?\b/.test(className))
+    .map((className) => (className.includes("bg-bg-soft") ? "soft" : "plain"));
+}
+
+function adjacentDuplicates(surfaces: string[]) {
+  return surfaces.filter((value, index) => index > 0 && value === surfaces[index - 1]);
+}
+
 describe("kiến trúc nội dung homepage và Về HDI", () => {
   beforeEach(() => {
     mocks.landingCourseData.mockReset();
@@ -146,5 +164,34 @@ describe("kiến trúc nội dung homepage và Về HDI", () => {
     expect(html).not.toContain('href="/#ve-chung-toi"');
     expect(html.match(/href="\/cong-bo"/g)).toHaveLength(1);
     expect(html.match(/href="\/#lien-he"/g)).toHaveLength(1);
+  });
+
+  /**
+   * Nhịp nền so le phải đúng ở CẢ HAI trạng thái của khối khóa học.
+   *
+   * `OpenCourses` tự ẩn khi không có khóa nào đang mở, nên không bộ cờ `soft`
+   * cắm cứng nào đúng cho cả hai: trước đây khối khóa học (`soft`) và teaser
+   * hội thảo (`soft`) dính liền nhau ngay ở trạng thái thường — đúng thứ mà
+   * nhịp so le sinh ra để tránh.
+   */
+  it("không có hai dải nền giống nhau dính liền, khi có khóa đang mở", async () => {
+    const surfaces = sectionSurfaces(renderToStaticMarkup(await Home()));
+
+    expect(surfaces.length).toBeGreaterThan(4);
+    expect(adjacentDuplicates(surfaces)).toEqual([]);
+  });
+
+  it("không có hai dải nền giống nhau dính liền, khi không khóa nào mở", async () => {
+    mocks.landingCourseData.mockResolvedValue({
+      summaries: {},
+      reviews: {},
+      availability: {},
+      seatsLeft: {},
+    });
+
+    const html = renderToStaticMarkup(await Home());
+
+    expect(html).not.toContain('id="khoa-hoc"');
+    expect(adjacentDuplicates(sectionSurfaces(html))).toEqual([]);
   });
 });

@@ -24,13 +24,16 @@ export function AuthShell({ children }: { children: ReactNode }) {
           src="/images/auth-bg.jpg"
           alt=""
           fill
-          priority
           sizes="100vw"
           className="object-cover object-center opacity-40 dark:opacity-[0.55]"
         />
         {/* Xô nền: đậm ở đỉnh để chữ tiêu đề luôn đọc rõ, nhạt ở giữa cho ảnh hiện
             lên, rồi đậm lại ở đáy để hoà vào nền trước khi tới thẻ form. */}
-        <div className="absolute inset-0 bg-gradient-to-b from-bg-soft/70 via-bg-soft/25 to-bg-soft dark:from-bg/80 dark:via-bg/45 dark:to-bg/95" />
+        {/* Cùng phép đo như PageBackdrop: `--fg-muted` trên vùng sáng nhất của
+            auth-bg.jpg dưới xô /45 chỉ được 3,82:1. Thẻ form có nền đục nên chữ
+            trong form không sao, nhưng tiêu đề các trang /tai-khoan nằm thẳng
+            trên dải này. Xô /55 đưa lên 4,52:1. */}
+        <div className="absolute inset-0 bg-gradient-to-b from-bg-soft/70 via-bg-soft/25 to-bg-soft dark:from-bg/80 dark:via-bg/55 dark:to-bg/95" />
       </div>
 
       <div className="shell relative py-16 sm:py-20 lg:py-24">{children}</div>

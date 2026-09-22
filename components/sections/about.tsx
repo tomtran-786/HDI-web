@@ -6,9 +6,9 @@ import { Reveal } from "../ui/reveal";
 import { Section, SectionHeading } from "../ui/section";
 
 /** Bản giới thiệu ngắn; toàn bộ mô hình và đội ngũ nằm tại /ve-hdi. */
-export function About() {
+export function About({ soft }: { soft?: boolean }) {
   return (
-    <Section id="ve-chung-toi">
+    <Section id="ve-chung-toi" soft={soft}>
       <SectionHeading
         eyebrow={about.eyebrow}
         title={about.title}

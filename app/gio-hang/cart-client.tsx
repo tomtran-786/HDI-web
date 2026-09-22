@@ -9,6 +9,7 @@ import type { CatalogCourse, CourseAvailability } from "@/lib/cart";
 import { formatVnd } from "@/lib/format";
 import { trackCartAdd, trackCartRemove, trackCheckout } from "@/lib/analytics";
 import { cartModal, cartPage, groupPanel, referralPanel } from "@/content/checkout";
+import { cartReturnTo } from "@/lib/cart-return";
 import { GROUP_MIN_SIZE, seatPriceVnd } from "@/lib/group-pricing";
 import {
   CREDIT_MAX_SHARE_PCT,
@@ -41,6 +42,10 @@ const NO_REFERRAL: ReferralQuote = {
 
 type GroupPreview = {
   groupSize: number;
+  /** Số email đã gõ mà báo giá này trả lời, kể cả email chưa có tài khoản. */
+  requestedSize: number;
+  /** Các course id (đã sắp xếp) mà `totalVnd` được tính trên đó. */
+  cartKey: string;
   discountApplies: boolean;
   members: { email: string; registered: boolean; conflict: boolean }[];
   totalVnd: number;
@@ -50,11 +55,6 @@ type GroupPreview = {
 const availabilityLabel: Record<CourseAvailability, string> = {
   ...cartModal.availability,
 };
-
-/** Nơi quay lại sau khi qua cổng đăng nhập / hoàn tất hồ sơ giữa chừng. */
-function returnTo(focusSlug: string | null) {
-  return focusSlug ? `/gio-hang?course=${encodeURIComponent(focusSlug)}` : "/gio-hang";
-}
 
 export function CartClient() {
   const router = useRouter();
@@ -88,6 +88,10 @@ export function CartClient() {
   const [useCredit, setUseCredit] = useState(false);
   const [preview, setPreview] = useState<GroupPreview | null>(null);
   const [previewLoading, setPreviewLoading] = useState(false);
+  // Báo giá nhóm hỏng (mạng chớp, hoặc chạm rate limit 60 lượt/giờ của
+  // /api/gio-hang/nhom). Phải nói ra: nút Thanh toán bị khóa khi nhóm chưa được
+  // xác nhận, và một nút xám không lời giải thích là một ngõ cụt.
+  const [previewError, setPreviewError] = useState(false);
   // Mỗi lượt gọi mang một số thứ tự. Người dùng gõ nhanh hơn mạng trả lời, nên
   // không có nó thì một phản hồi cũ về muộn sẽ ghi đè lên báo giá mới nhất.
   const previewSeq = useRef(0);
@@ -108,7 +112,7 @@ export function CartClient() {
     try {
       const response = await fetch("/api/gio-hang", { cache: "no-store" });
       if (response.status === 401 || response.status === 409) {
-        const destination = returnTo(focusSlug);
+        const destination = cartReturnTo(focusSlug);
         const gate = response.status === 401 ? "/dang-nhap" : "/hoan-tat-ho-so";
         router.push(`${gate}?tiep=${encodeURIComponent(destination)}`);
         return;
@@ -172,10 +176,29 @@ export function CartClient() {
     (sum, course) => sum + seatPriceVnd(course, groupSize) * groupSize,
     0,
   );
-  // Ưu tiên con số server vừa trả, nhưng chỉ khi nó còn ứng với đúng nhóm hiện
-  // tại — nếu không, một preview cũ sẽ hiện giá của nhóm ít người hơn.
-  const subtotalVnd =
-    preview && preview.groupSize === groupSize ? preview.totalVnd : localTotalVnd;
+  /**
+   * Báo giá đang cầm có còn trả lời đúng câu hỏi trên màn hình không.
+   *
+   * Hai vế, và cả hai đều cần thiết:
+   *
+   * `requestedSize` chứ KHÔNG phải `groupSize`. Server trả `groupSize` là số
+   * người phân giải được, còn client đếm số email đã gõ — hễ có một thành viên
+   * chưa có tài khoản thì hai con số lệch nhau vĩnh viễn, và mọi thứ gác sau
+   * phép so này (đáng kể nhất là `blocked`) tắt ngóm đúng lúc cần bật.
+   *
+   * `cartKey` vì effect báo giá debounce 350 ms và chỉ bật `previewLoading` bên
+   * trong callback. Trong quãng đó, tick thêm một khóa không đổi số người —
+   * preview cũ vẫn "khớp nhóm" trong khi `totalVnd` của nó là tổng của giỏ
+   * trước. `tongTienDuKien` đi lên server với con số đó là một đơn bị tạo rồi
+   * hủy ngay ở nhánh chốt giá của app/actions/checkout.ts.
+   */
+  const cartKey = [...ids].sort().join(",");
+  const previewFresh = Boolean(
+    preview && preview.requestedSize === groupSize && preview.cartKey === cartKey,
+  );
+  // Ưu tiên con số server vừa trả, nhưng chỉ khi nó còn ứng với đúng nhóm và
+  // đúng giỏ hàng hiện tại.
+  const subtotalVnd = previewFresh ? preview!.totalVnd : localTotalVnd;
 
   /**
    * Hai khoản trừ cuối cùng, tính bằng CHÍNH các hàm mà `createOrder` gọi.
@@ -220,7 +243,7 @@ export function CartClient() {
   const totalVnd = subtotalVnd - referralDiscount - creditApplied;
   const discounted = listTotalVnd > totalVnd;
   const anyGroupEligible = selected.some((course) => course.groupEligible);
-  const blocked = Boolean(preview && preview.groupSize === groupSize && preview.blocked);
+  const blocked = previewFresh && preview!.blocked;
   /**
    * Đơn đang chờ của chính người này, gom từ các dòng bị khóa.
    *
@@ -263,6 +286,7 @@ export function CartClient() {
       setMemberEmails([]);
       setGroupOpen(false);
       setPreview(null);
+      setPreviewError(false);
       setDraft("");
       setDroppedGroup(true);
     }
@@ -277,6 +301,7 @@ export function CartClient() {
       if (seq !== previewSeq.current) return;
       if (emails.length === 0) {
         setPreview(null);
+        setPreviewError(false);
         setPreviewLoading(false);
         return;
       }
@@ -291,13 +316,16 @@ export function CartClient() {
         if (seq !== previewSeq.current) return;
         if (!response.ok) {
           setPreview(null);
+          setPreviewError(true);
           return;
         }
         setPreview((await response.json()) as GroupPreview);
+        setPreviewError(false);
       } catch (error) {
         if (seq !== previewSeq.current) return;
         console.error("[cart] Không báo giá được cho nhóm:", error);
         setPreview(null);
+        setPreviewError(true);
       } finally {
         if (seq === previewSeq.current) setPreviewLoading(false);
       }
@@ -310,6 +338,10 @@ export function CartClient() {
     loading ||
     checkoutPending ||
     previewLoading ||
+    // Có nhóm mà báo giá chưa ứng với nhóm/giỏ hiện tại thì chưa được đi tiếp.
+    // Bao trọn cả quãng debounce 350 ms lẫn trường hợp báo giá hỏng — hai chỗ
+    // mà trước đây `blocked` là `false` chỉ vì không có gì để so.
+    (memberEmails.length > 0 && !previewFresh) ||
     blocked;
   const checkoutLabel = checkoutPending
     ? cartModal.paying
@@ -519,6 +551,7 @@ export function CartClient() {
                       setMemberEmails([]);
                       setDraft("");
                       setPreview(null);
+                      setPreviewError(false);
                     }
                   }}
                   className="mt-0.5 h-4 w-4 shrink-0 accent-[var(--primary)]"
@@ -613,6 +646,14 @@ export function CartClient() {
                         ? groupPanel.needMore(GROUP_MIN_SIZE - groupSize)
                         : groupPanel.size(groupSize)}
                   </p>
+                  {previewError && !previewLoading && (
+                    <p
+                      role="alert"
+                      className="mt-2 rounded-card border border-danger/40 bg-danger/5 px-2.5 py-2 text-xs leading-relaxed text-danger"
+                    >
+                      {groupPanel.checkFailed}
+                    </p>
+                  )}
                 </div>
               )}
             </div>

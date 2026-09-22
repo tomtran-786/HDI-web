@@ -61,8 +61,14 @@ export async function POST(request: Request) {
 
   const { members, unregistered } = await resolveGroupMembers(normalized.emails);
   const groupSize = members.length + 1;
+  // Số người nhóm trưởng GÕ VÀO, khác `groupSize` là số người phân giải được.
+  // Giỏ hàng đếm theo con số này, nên nếu không trả nó về thì client không có
+  // cách nào biết một báo giá còn ứng với những gì họ đang nhìn: xem chú thích
+  // ở `blocked` trong app/gio-hang/cart-client.tsx.
+  const requestedSize = normalized.emails.length + 1;
 
-  const cart = await loadCart(await readCartIds(), session.user.id, groupSize);
+  const cartIds = await readCartIds();
+  const cart = await loadCart(cartIds, session.user.id, groupSize);
   const buyable = cart.selected.filter((course) => course.availability === "buyable");
 
   // Thành viên đã có quyền hoặc đơn chờ cho một khóa trong giỏ sẽ làm cả đơn bị
@@ -85,6 +91,12 @@ export async function POST(request: Request) {
   return NextResponse.json(
     {
       groupSize,
+      requestedSize,
+      // Dấu của giỏ hàng mà báo giá này được tính trên đó. Giỏ đổi giữa lúc chờ
+      // debounce thì `totalVnd` bên dưới là tổng của một giỏ khác — so dấu là
+      // cách duy nhất phát hiện, vì `groupSize` không đổi khi chỉ có khóa
+      // thay đổi.
+      cartKey: [...cartIds].sort().join(","),
       minSize: GROUP_MIN_SIZE,
       discountApplies: groupSize >= GROUP_MIN_SIZE,
       members: [

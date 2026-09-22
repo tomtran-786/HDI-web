@@ -36,6 +36,18 @@ describe("breadcrumb toàn site", () => {
     ]);
   });
 
+  /**
+   * Không có dòng `/gio-hang` trong `staticLabels`, breadcrumb rơi về nhãn
+   * "Không tìm thấy trang" — đúng loại lỗi mà chú thích trong
+   * components/site-breadcrumbs.tsx ghi lại cho `/tai-khoan/gioi-thieu`.
+   */
+  it("nhận ra trang giỏ hàng", () => {
+    expect(breadcrumbsForPathname("/gio-hang")).toEqual([
+      { label: "Trang chủ", href: "/" },
+      { label: "Giỏ hàng" },
+    ]);
+  });
+
   it("nhận ra trang hội thảo quốc tế", () => {
     expect(breadcrumbsForPathname("/hoi-thao-quoc-te")).toEqual([
       { label: "Trang chủ", href: "/" },

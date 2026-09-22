@@ -4,9 +4,9 @@ import { IconChevronDown } from "../ui/icons";
 import { Reveal } from "../ui/reveal";
 import { Section, SectionHeading } from "../ui/section";
 
-export function Faq() {
+export function Faq({ soft }: { soft?: boolean }) {
   return (
-    <Section id="faq">
+    <Section id="faq" soft={soft}>
       <SectionHeading
         eyebrow="Câu hỏi thường gặp"
         title="Những điều bạn có thể muốn biết trước khi bắt đầu"

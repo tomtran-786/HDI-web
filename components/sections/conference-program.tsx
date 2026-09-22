@@ -10,9 +10,9 @@ import { Reveal } from "../ui/reveal";
 import { Section, SectionHeading } from "../ui/section";
 
 /** Teaser trên trang chủ; toàn bộ bảng và quy trình nằm ở /hoi-thao-quoc-te. */
-export function ConferenceProgram() {
+export function ConferenceProgram({ soft }: { soft?: boolean }) {
   return (
-    <Section id="hoi-thao-quoc-te" soft>
+    <Section id="hoi-thao-quoc-te" soft={soft}>
       <SectionHeading
         eyebrow={conferenceProgramIntro.eyebrow}
         title={conferenceProgramIntro.title}

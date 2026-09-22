@@ -4,9 +4,9 @@ import { Reveal } from "../ui/reveal";
 import { Section, SectionHeading } from "../ui/section";
 import { IconMail, IconMessage, IconPhone } from "../ui/icons";
 
-export function Contact() {
+export function Contact({ soft }: { soft?: boolean }) {
   return (
-    <Section id="lien-he" soft>
+    <Section id="lien-he" soft={soft}>
       <SectionHeading
         eyebrow="Liên hệ"
         title="Đặt lịch tư vấn"

@@ -23,6 +23,13 @@ vi.mock("@/app/gio-hang/cart-client", () => ({
 
 import CartPage from "@/app/gio-hang/page";
 
+/** Trang nhận `searchParams` là một Promise; mọi test đi qua đúng cửa này. */
+function render(course?: string) {
+  return CartPage({
+    searchParams: Promise.resolve(course === undefined ? {} : { course }),
+  });
+}
+
 beforeEach(() => {
   mocks.currentSession.mockReset();
   mocks.currentProfile.mockReset();
@@ -32,14 +39,14 @@ beforeEach(() => {
 describe("trang /gio-hang", () => {
   it("chưa đăng nhập → chuyển sang /dang-nhap kèm tiep=/gio-hang", async () => {
     mocks.currentSession.mockResolvedValue(null);
-    await expect(CartPage()).rejects.toThrow("redirect:/dang-nhap?tiep=%2Fgio-hang");
+    await expect(render()).rejects.toThrow("redirect:/dang-nhap?tiep=%2Fgio-hang");
   });
 
   it("hồ sơ chưa đủ → chuyển sang /hoan-tat-ho-so kèm tiep=/gio-hang", async () => {
     mocks.currentSession.mockResolvedValue({ user: { id: "user-1" } });
     mocks.currentProfile.mockResolvedValue({ id: "user-1" });
     mocks.isProfileComplete.mockReturnValue(false);
-    await expect(CartPage()).rejects.toThrow(
+    await expect(render()).rejects.toThrow(
       "redirect:/hoan-tat-ho-so?tiep=%2Fgio-hang",
     );
   });
@@ -49,9 +56,42 @@ describe("trang /gio-hang", () => {
     mocks.currentProfile.mockResolvedValue({ id: "user-1" });
     mocks.isProfileComplete.mockReturnValue(true);
 
-    const html = renderToStaticMarkup(await CartPage());
+    const html = renderToStaticMarkup(await render());
 
     expect(html).toContain("Giỏ hàng");
     expect(html).toContain("CART_CLIENT_SENTINEL");
+  });
+
+  it("không có hồ sơ → chuyển thẳng về /dang-nhap", async () => {
+    mocks.currentSession.mockResolvedValue({ user: { id: "user-1" } });
+    mocks.currentProfile.mockResolvedValue(null);
+
+    await expect(render()).rejects.toThrow("redirect:/dang-nhap");
+    expect(mocks.isProfileComplete).not.toHaveBeenCalled();
+  });
+
+  /**
+   * `?course=` phải sống sót qua cả hai cổng.
+   *
+   * Đường 401/409 phía client (`cartReturnTo` trong cart-client.tsx) vẫn giữ
+   * slug; cổng server ở đây từng vứt nó đi, nên cùng một trang có hai hành vi
+   * và người bấm "Đăng ký học khóa này" lúc chưa đăng nhập quay lại một giỏ
+   * hàng không cuộn tới khóa họ vừa chọn.
+   */
+  it("giữ ?course= khi đẩy qua cổng đăng nhập", async () => {
+    mocks.currentSession.mockResolvedValue(null);
+    await expect(render("tieu-luan")).rejects.toThrow(
+      "redirect:/dang-nhap?tiep=%2Fgio-hang%3Fcourse%3Dtieu-luan",
+    );
+  });
+
+  it("giữ ?course= khi đẩy qua cổng hoàn tất hồ sơ", async () => {
+    mocks.currentSession.mockResolvedValue({ user: { id: "user-1" } });
+    mocks.currentProfile.mockResolvedValue({ id: "user-1" });
+    mocks.isProfileComplete.mockReturnValue(false);
+
+    await expect(render("tieu-luan")).rejects.toThrow(
+      "redirect:/hoan-tat-ho-so?tiep=%2Fgio-hang%3Fcourse%3Dtieu-luan",
+    );
   });
 });

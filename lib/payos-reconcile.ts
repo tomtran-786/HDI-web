@@ -21,6 +21,24 @@ import { reclaimPaidPayosServiceOrder } from "./service-orders";
  */
 const RECONCILE_GRACE_MS = ORDER_LATE_GRACE_MINUTES * 60_000;
 
+/**
+ * Chặn dưới, và nó CHỈ áp cho đơn đã `expired`.
+ *
+ * Đơn `expired` không bao giờ tự rời khỏi danh sách ứng viên: không có chặn
+ * dưới, `take: 30` xếp theo `expiresAt` tăng dần sẽ hỏi PayOS về đúng 30 đơn
+ * chết cũ nhất mỗi đêm và không bao giờ chạm tới đơn mới.
+ *
+ * Đơn `pending` thì KHÔNG được chặn dưới. Bình thường chúng tự drain vì
+ * `expireStaleOrders` đóng chúng mỗi đêm, nên chặn dưới trông như vô hại — cho
+ * tới lúc cron ngừng chạy vài ngày (dự án bị pause, cron cấu hình sai). Đúng
+ * lúc đó, chặn dưới sẽ đẩy những đơn `pending` cũ ra khỏi tầm với vĩnh viễn,
+ * tức tạo ra đúng cái hố tiền-nằm-lơ-lửng mà file này sinh ra để lấp.
+ *
+ * Bảy ngày: link PayOS đã chết từ lâu trước mốc đó, và một khoản tiền về muộn
+ * hơn thế thì không còn là chuyện tự chữa được nữa — nó cần một người nhìn.
+ */
+const RECONCILE_LOOKBACK_MS = 7 * 24 * 60 * 60_000;
+
 /** Đơn từng chạm tới PayOS: một trong hai cột này khác null. */
 const HAS_REMOTE_LINK = [
   { providerRef: { not: null } },
@@ -38,10 +56,34 @@ export async function reconcilePaidPayosOrders(
 ): Promise<{ scanned: number; confirmed: number; review: number }> {
   const candidates = await prisma.order.findMany({
     where: {
-      status: "pending",
       provider: "payos",
-      expiresAt: { lt: new Date(now.getTime() + RECONCILE_GRACE_MS) },
-      OR: HAS_REMOTE_LINK,
+      // Đã có một giao dịch thành công thì không còn gì để kéo.
+      payments: { none: { status: "succeeded" } },
+      // Hai nhóm ứng viên với hai tầm khác nhau, nên phải viết thành hai nhánh
+      // `OR` lồng trong `AND` — gộp thành một `status: { in: [...] }` dùng chung
+      // một khoảng `expiresAt` là áp chặn dưới cho cả `pending`. Xem
+      // `RECONCILE_LOOKBACK_MS`.
+      AND: [
+        { OR: HAS_REMOTE_LINK },
+        {
+          OR: [
+            // Sắp/vừa quá hạn, chưa ai đóng: chỉ chặn trên.
+            {
+              status: "pending" as const,
+              expiresAt: { lt: new Date(now.getTime() + RECONCILE_GRACE_MS) },
+            },
+            // Lượt cron trước đã đóng rồi mới tới tiền. Không có nhánh này thì
+            // không lượt nào sau đó hỏi lại đơn đó nữa.
+            {
+              status: "expired" as const,
+              expiresAt: {
+                gte: new Date(now.getTime() - RECONCILE_LOOKBACK_MS),
+                lt: new Date(now.getTime() + RECONCILE_GRACE_MS),
+              },
+            },
+          ],
+        },
+      ],
     },
     select: { id: true },
     orderBy: { expiresAt: "asc" },
@@ -80,6 +122,10 @@ export async function reconcilePaidPayosServiceOrders(
 ): Promise<{ scanned: number; confirmed: number; review: number }> {
   const candidates = await prisma.serviceOrder.findMany({
     where: {
+      // CỐ Ý chỉ `pending`, khác với đơn khóa học ở trên: đường ghi của đơn dịch
+      // vụ không có cổng cứu-tiền-về-muộn, `updateMany` của nó vẫn khóa cứng
+      // `status: "pending"` (lib/service-orders.ts:375). Nới ở đây chỉ đổi một
+      // đơn bị bỏ qua thành một transaction ném lỗi.
       status: "pending",
       provider: "payos",
       expiresAt: { lt: new Date(now.getTime() + RECONCILE_GRACE_MS) },

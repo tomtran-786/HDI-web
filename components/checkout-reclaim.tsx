@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, useTransition } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { restoreCartFromOrder } from "@/app/actions/checkout";
+import { useCart } from "@/components/cart-provider";
 import { checkoutReclaim } from "@/content/checkout";
 import { HANDOFF_COOKIE } from "@/lib/checkout-handoff-cookie";
 
@@ -43,6 +44,7 @@ type Reclaimed = { code: number; orderId?: string };
 export function CheckoutReclaim() {
   const pathname = usePathname();
   const router = useRouter();
+  const { refresh } = useCart();
   const fired = useRef(false);
   const [reclaimed, setReclaimed] = useState<Reclaimed | null>(null);
   const [restoring, startRestore] = useTransition();
@@ -103,9 +105,15 @@ export function CheckoutReclaim() {
               startRestore(async () => {
                 const result = await restoreCartFromOrder(orderId);
                 setReclaimed(null);
-                // Trang giỏ hàng đọc lại cookie vừa được `restoreCartFromOrder`
-                // ghi ở đúng lần điều hướng này.
-                if (result.ok) router.push("/gio-hang");
+                if (!result.ok) return;
+                // `refresh()` chứ không dựa vào lần điều hướng. Cookie vừa được
+                // `restoreCartFromOrder` ghi từ server, và `CartProvider` chỉ
+                // đọc lại nó khi `pathname` đổi — mà đường đi phổ biến nhất tới
+                // cái nút này là bấm Back từ PayOS về ĐÚNG /gio-hang, nơi
+                // `router.push("/gio-hang")` không đổi `pathname` và giỏ hàng
+                // đứng nguyên như chưa có gì xảy ra.
+                refresh();
+                router.push("/gio-hang");
               });
             }}
             className="inline-flex items-center rounded-full bg-primary px-5 py-2.5 text-sm font-bold text-primary-fg transition hover:bg-primary-deep disabled:opacity-60"
