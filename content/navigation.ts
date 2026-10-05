@@ -94,7 +94,7 @@ export const nav: readonly NavItem[] = [
             href: "/khoa-hoc/spss-smartpls-ai",
           },
           {
-            label: "Kinh tế lượng ứng dụng với Stata",
+            label: "Stata trong nghiên cứu định lượng",
             href: "/khoa-hoc/kinh-te-luong-stata-ai",
           },
           {

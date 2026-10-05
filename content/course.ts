@@ -2,8 +2,8 @@
  * The courses listed in #khoa-hoc.
  *
  * SOURCES — most published facts below are transcribed from the sources noted
- * here. The merged SPSS & Stata course is the authored exception documented in
- * F.
+ * here. The merged SPSS & Stata course and the Stata econometrics course are
+ * the authored exceptions documented in F and G.
  *
  * A. `viet-bao-cao-khoa-hoc` — the eight session titles, the tuition, the group
  *    discount, the format, the duration and the class hours all come from the
@@ -53,6 +53,17 @@
  * public content still matches its existing commercial record; the syllabus
  * states neither. The old Stata slug is retained only as a public redirect; no
  * database record is changed.
+ *
+ * G. `kinh-te-luong-stata-ai` was re-authored on 2026-10-05 from the
+ * owner-supplied syllabus "Stata course.docx" ("Stata trong nghiên cứu định
+ * lượng"). The title, audience groups, five sessions (each split into
+ * "Nội dung chuyên môn" and "Ứng dụng ChatGPT"), per-session products and the
+ * six outcomes are that document's own text. The owner gave the opening month
+ * (tháng 11/2026), the weekly slot (19:00 – 21:00, Tuesday and Saturday, giờ
+ * Việt Nam) and the tuition (1.100.000 đ) in chat; the syllabus states none of
+ * them. Instructor, class size, materials and the replay policy keep the
+ * existing catalog values because neither source mentions them. The slug and
+ * code are unchanged: orders, carts and the seed key on them.
  *
  * HISTORICAL ATTRIBUTION — recorded here because the page does not show it.
  * Before the merge, the edubit courses were taught by:
@@ -1033,154 +1044,238 @@ export const courses = [
   {
     code: "STATA",
     slug: "kinh-te-luong-stata-ai",
-    eyebrow: "Khóa chuyên sâu · 05 buổi",
-    title: "Kinh tế lượng ứng dụng với Stata",
+    eyebrow: "Khóa chuyên sâu · Khai giảng tháng 11/2026",
+    title: "Stata trong nghiên cứu định lượng",
     audience:
-      "Dành cho người đã có kiến thức thống kê hoặc hồi quy cơ bản và muốn học kinh tế lượng ứng dụng trên Stata",
+      "Dành cho người làm nghiên cứu định lượng, đã có kiến thức cơ bản về thống kê và hồi quy, muốn dùng Stata theo quy trình nghiên cứu, khai thác ChatGPT có kiểm chứng và định hướng công bố quốc tế",
     audienceProfiles: [
       {
-        name: "Sinh viên năm 3–4",
-        detail:
-          "Đang thực hiện nghiên cứu khoa học hoặc khóa luận tốt nghiệp.",
+        name: "Sinh viên",
+        detail: "Đang thực hiện khóa luận hoặc đề tài nghiên cứu định lượng.",
       },
       {
         name: "Học viên cao học & nghiên cứu sinh",
-        detail: "Sử dụng dữ liệu định lượng trong luận văn, luận án.",
+        detail: "Sử dụng dữ liệu kinh tế, tài chính, kinh doanh hoặc quản lý.",
       },
       {
-        name: "Giảng viên",
-        detail:
-          "Thuộc các ngành kinh tế, tài chính, kinh doanh và quản lý.",
+        name: "Giảng viên & người làm nghiên cứu",
+        detail: "Muốn củng cố kỹ năng kinh tế lượng ứng dụng.",
       },
       {
         name: "Chuyên viên phân tích",
         detail:
-          "Phân tích dữ liệu, nghiên cứu thị trường và phân tích chính sách.",
+          "Phân tích dữ liệu, nghiên cứu thị trường hoặc phân tích chính sách.",
       },
       {
-        name: "Người đã có nền tảng",
+        name: "Điều kiện tham gia",
         detail:
-          "Đã có kiến thức thống kê hoặc hồi quy cơ bản và muốn học kinh tế lượng ứng dụng trên Stata một cách bài bản.",
+          "Nên có kiến thức cơ bản về thống kê và hồi quy. Những nội dung nâng cao được triển khai qua giải thích nguyên lý và thực hành có hướng dẫn.",
       },
     ],
     intro:
-      "Khóa học hướng dẫn xây dựng và thực hiện một quy trình nghiên cứu kinh tế lượng hoàn chỉnh bằng Stata, từ tổ chức dữ liệu, lựa chọn mô hình, kiểm định các vấn đề kỹ thuật đến ước lượng và trình bày kết quả. Nội dung tập trung vào OLS, FE/RE, FGLS, IV/2SLS, GMM và Panel ARDL–PMG tuyến tính, phi tuyến.",
+      "Phân tích định lượng đòi hỏi người nghiên cứu hiểu dữ liệu, lựa chọn phương pháp phù hợp và giải thích kết quả có căn cứ; thực hiện thành công một câu lệnh trên phần mềm chỉ là một bước trong quá trình đó. Khóa học hướng dẫn sử dụng Stata theo quy trình nghiên cứu, từ chuẩn bị dữ liệu, xây dựng mô hình và kiểm tra các vấn đề kinh tế lượng đến ước lượng, trình bày bảng và diễn giải kết quả, kết hợp giải thích phương pháp với thực hành trên dữ liệu kinh tế, tài chính và quản trị. ChatGPT được lồng ghép ở buổi 1–4 như công cụ hỗ trợ xây dựng câu lệnh, hoàn thiện do-file, xử lý lỗi và đề xuất cách trình bày kết quả; mọi đề xuất đều được đối chiếu với dữ liệu, tài liệu hướng dẫn Stata và kết quả chạy thực tế. Buổi cuối tập trung vào những vướng mắc trong nghiên cứu hiện tại của học viên và tư vấn lựa chọn kênh công bố quốc tế phù hợp.",
     curriculum: "modules",
     price: {
-      amount: "1.000.000 đ",
+      amount: "1.100.000 đ",
       note: "Giảm 10% cho nhóm từ 03 người",
       group: true,
-      vnd: 1000000,
+      vnd: 1100000,
     },
+    // Mới chốt tháng khai giảng, chưa có ngày: `null` là lời khai "chưa công bố
+    // ngày". Khi có ngày thì sửa cả ba chỗ — `opening`, ô "Lịch học", `eyebrow`.
     opening: null,
     facts: [
       {
         label: "Hình thức",
-        value: "Lý thuyết cô đọng kết hợp thực hành trên dữ liệu thực tế",
+        value:
+          "Giải thích nguyên lý, trình diễn trên Stata, thực hành và trao đổi tình huống nghiên cứu",
       },
       {
         label: "Thời lượng",
-        value: "05 buổi — 05 module, có buổi Research Clinic góp ý đề tài",
+        value:
+          "05 buổi — 05 module, buổi cuối giải đáp nghiên cứu và tư vấn công bố quốc tế",
       },
-      { label: "Lịch học", value: FACT_TBA },
+      {
+        label: "Lịch học",
+        value:
+          "Tối thứ Ba và thứ Bảy hằng tuần · 19:00 – 21:00 (giờ Việt Nam) · Khai giảng tháng 11/2026",
+      },
       { label: "Sĩ số", value: FACT_TBA },
       { label: "Học liệu", value: "Recording, do-file và bộ dữ liệu thực hành" },
       { label: "Xem lại", value: "02 năm kể từ ngày đăng ký" },
     ],
     phases: [
       {
-        name: "Quy trình nghiên cứu kinh tế lượng và nền tảng Stata",
+        name: "Xây dựng quy trình nghiên cứu và thực hành Stata",
         summary:
-          "Sản phẩm: do-file có cấu trúc, dữ liệu sạch, bảng thống kê mô tả và kết quả OLS.",
+          "Sản phẩm: một do-file gồm các bước nhập dữ liệu, xử lý ban đầu, thống kê mô tả và ước lượng OLS.",
         sessions: [
-          "Xây dựng câu hỏi, giả thuyết và mô hình kinh tế lượng từ vấn đề nghiên cứu",
-          "Phân biệt dữ liệu cắt ngang, chuỗi thời gian và dữ liệu bảng",
-          "Lựa chọn biến phụ thuộc, biến giải thích, biến kiểm soát và dạng hàm",
-          "Làm quen với giao diện, command, do-file, log-file và help trong Stata",
-          "Nhập, nối, chuyển đổi và tổ chức dữ liệu nghiên cứu",
-          "Làm sạch dữ liệu, xử lý dữ liệu thiếu, ngoại lệ và mã hóa biến",
-          "Thống kê mô tả, tương quan và trực quan hóa dữ liệu",
-          "Ước lượng OLS; đọc hệ số, sai số chuẩn, p-value, khoảng tin cậy và R²",
-          "Thực hành quy trình từ dữ liệu thô đến mô hình OLS và xuất bảng kết quả",
+          {
+            text: "Nội dung chuyên môn",
+            points: [
+              "Vai trò của kinh tế lượng trong việc trả lời câu hỏi nghiên cứu thuộc lĩnh vực kinh tế và quản trị.",
+              "Phân biệt dữ liệu cắt ngang, chuỗi thời gian và dữ liệu bảng; liên hệ cấu trúc dữ liệu với phương án phân tích.",
+              "Kết nối cơ sở lý thuyết, giả thuyết, biến nghiên cứu và mô hình thực nghiệm.",
+              "Làm quen với giao diện Stata, cửa sổ lệnh, kết quả và thông tin biến.",
+              "Tổ chức thư mục nghiên cứu; sử dụng do-file và log-file để lưu lại quá trình xử lý.",
+              "Nhập dữ liệu từ Excel hoặc CSV; đặt nhãn, mã hóa và tạo biến bằng các thao tác như encode, generate và replace.",
+              "Khảo sát dữ liệu bằng thống kê mô tả, bảng tần số và đồ thị.",
+              "Thực hành hồi quy OLS bằng reg; đọc hệ số, sai số chuẩn, thống kê t, F và R².",
+              "Lưu kết quả, tạo giá trị dự báo bằng predict và làm quen với việc xuất bảng.",
+            ],
+          },
+          {
+            text: "Ứng dụng ChatGPT",
+            points: [
+              "Viết yêu cầu có đủ thông tin về cấu trúc dữ liệu, tên biến và mục tiêu phân tích.",
+              "Nhờ ChatGPT đề xuất câu lệnh nhập dữ liệu, tạo biến, thống kê mô tả và hồi quy cơ bản.",
+              "Kiểm tra từng câu lệnh trên Stata và sử dụng thông báo lỗi để điều chỉnh.",
+            ],
+          },
         ],
       },
       {
-        name: "Phân tích dữ liệu bảng và xử lý các vấn đề mô hình",
+        name: "Chẩn đoán mô hình và lựa chọn cách xử lý",
         summary:
-          "Sản phẩm: bảng so sánh Pooled OLS, FE, RE và mô hình hiệu chỉnh phù hợp.",
+          "Sản phẩm: một bảng tổng hợp vấn đề mô hình, bằng chứng kiểm định và phương án xử lý; kèm bảng so sánh kết quả ước lượng.",
         sessions: [
-          "Cấu trúc dữ liệu bảng, nhận diện panel cân bằng và không cân bằng",
-          "Khai báo, kiểm tra và tổ chức dữ liệu bảng bằng xtset",
-          "Ước lượng Pooled OLS, Fixed Effects và Random Effects",
-          "Lựa chọn mô hình bằng F-test, Breusch–Pagan LM và Hausman test",
-          "Phát hiện đa cộng tuyến và đánh giá VIF",
-          "Kiểm định phương sai sai số thay đổi và tự tương quan trong dữ liệu bảng",
-          "Kiểm định phụ thuộc chéo giữa các đơn vị bảng",
-          "Lựa chọn robust/clustered standard errors, Driscoll–Kraay và FGLS phù hợp",
-          "Thực hành lựa chọn estimator, kiểm tra độ vững và trình bày kết quả panel",
+          {
+            text: "Nội dung chuyên môn",
+            points: [
+              "Phương sai thay đổi: biểu hiện, ảnh hưởng đến suy luận thống kê và cách kiểm tra bằng Breusch–Pagan, White hoặc đồ thị phần dư.",
+              "Xem xét sai số chuẩn robust, biến đổi dữ liệu và FGLS trong những điều kiện phù hợp.",
+              "Đa cộng tuyến: nhận diện qua quan hệ giữa các biến và chỉ số VIF.",
+              "Thảo luận việc lựa chọn biến, gộp biến hoặc xây dựng chỉ số tổng hợp dựa trên cơ sở lý thuyết.",
+              "Tự tương quan trong chuỗi thời gian: nhận diện và kiểm tra bằng Durbin–Watson, Breusch–Godfrey.",
+              "Giới thiệu cách xử lý bằng sai số chuẩn Newey–West HAC, cấu trúc AR và FGLS phù hợp.",
+              "Thực hành so sánh OLS thông thường, OLS với sai số chuẩn robust và FGLS.",
+            ],
+          },
+          {
+            text: "Ứng dụng ChatGPT",
+            points: [
+              "Xây dựng câu lệnh kiểm định dựa trên mô hình và loại dữ liệu đã xác định.",
+              "Phân tích lỗi cú pháp, điều kiện sử dụng lệnh và các bước kiểm tra bổ sung.",
+              "Đối chiếu nhận xét do ChatGPT đề xuất với kết quả kiểm định thực tế.",
+            ],
+          },
         ],
       },
       {
-        name: "Nội sinh, biến công cụ và GMM động",
+        name: "Nội sinh, biến công cụ và hệ phương trình",
         summary:
-          "Sản phẩm: mô hình IV/2SLS hoặc GMM, kết quả kiểm định công cụ và đoạn diễn giải học thuật.",
+          "Sản phẩm: một do-file ước lượng mô hình có nội sinh hoặc hệ phương trình, cùng bảng kết quả và phần diễn giải ngắn.",
         sessions: [
-          "Nhận diện nội sinh do biến bỏ sót, quan hệ đồng thời, sai số đo lường và quan hệ động",
-          "Phân biệt tương quan, quan hệ nhân quả và vấn đề nhận dạng mô hình",
-          "Điều kiện relevance và exogeneity của biến công cụ",
-          "Ước lượng IV/2SLS và so sánh với OLS",
-          "Kiểm định nội sinh, công cụ yếu và các hạn chế quá xác định",
-          "Xây dựng mô hình dữ liệu bảng động",
-          "Phân biệt Difference GMM và System GMM",
-          "Kiểm soát số lượng công cụ; diễn giải Hansen test, AR(1) và AR(2)",
-          "Thực hành IV/2SLS hoặc System GMM và lập bảng kiểm tra độ tin cậy của mô hình",
+          {
+            text: "Nội dung chuyên môn",
+            points: [
+              "Nhận diện các nguồn nội sinh: biến bị bỏ sót, sai số đo lường, quan hệ đồng thời và lựa chọn mẫu.",
+              "Giải thích ảnh hưởng của nội sinh đến độ tin cậy của ước lượng OLS.",
+              "Điều kiện lựa chọn biến công cụ: tính liên quan và điều kiện loại trừ.",
+              "Thực hành IV/2SLS bằng ivregress.",
+              "Đánh giá công cụ yếu và thực hiện kiểm định quá xác định khi mô hình đáp ứng điều kiện.",
+              "Xây dựng hệ phương trình đồng thời qua các tình huống kinh tế và tài chính.",
+              "Thực hành 2SLS và 3SLS bằng reg3.",
+              "So sánh OLS, IV/2SLS và 3SLS về giả định, phạm vi áp dụng và cách diễn giải.",
+            ],
+          },
+          {
+            text: "Ứng dụng ChatGPT",
+            points: [
+              "Chuyển mô tả mô hình thành cấu trúc câu lệnh IV/2SLS hoặc hệ phương trình.",
+              "Kiểm tra cách khai báo biến nội sinh, biến ngoại sinh và biến công cụ.",
+              "Hỗ trợ bố trí bảng kết quả, đặt tên biến và viết ghi chú phương pháp.",
+              "Phân biệt bằng chứng kiểm định với lập luận lý thuyết về tính hợp lệ của biến công cụ.",
+            ],
+          },
         ],
       },
       {
-        name: "Linear và Nonlinear Panel ARDL–PMG",
+        name: "Dữ liệu bảng, GMM động và PMG",
         summary:
-          "Sản phẩm: hai mô hình Linear và Nonlinear PMG, bảng kết quả ngắn hạn–dài hạn và kiểm định bất đối xứng.",
+          "Sản phẩm: một bảng kết quả dữ liệu bảng có ghi chú đầy đủ, kèm danh sách các bước kiểm tra trước khi sử dụng trong bản thảo.",
         sessions: [
-          "Nhận diện dữ liệu bảng động và điều kiện sử dụng Panel ARDL–PMG",
-          "Kiểm định phụ thuộc chéo và lựa chọn thế hệ kiểm định nghiệm đơn vị phù hợp",
-          "Kiểm định tính dừng và bảo đảm không có biến tích hợp bậc hai, I(2)",
-          "Xây dựng Panel ARDL và lựa chọn cấu trúc độ trễ",
-          "Phân biệt Mean Group, Dynamic Fixed Effects và Pooled Mean Group",
-          "Ước lượng Linear PMG; diễn giải quan hệ dài hạn, ngắn hạn và hệ số hiệu chỉnh sai số",
-          "Kiểm định lựa chọn giữa PMG, MG và DFE; thực hiện các kiểm tra độ vững",
-          "Xây dựng Nonlinear PMG bằng phân rã biến thành các thay đổi dương và âm; kiểm định bất đối xứng",
-          "Thực hành so sánh Linear PMG và Nonlinear PMG trên dữ liệu bảng thực tế",
+          {
+            text: "Nội dung chuyên môn",
+            points: [
+              "Đọc cấu trúc dữ liệu bảng theo số đơn vị quan sát và số thời kỳ; khai báo dữ liệu bằng xtset.",
+              "Ước lượng mô hình tác động cố định và tác động ngẫu nhiên bằng xtreg.",
+              "Sử dụng kiểm định Hausman trong điều kiện phù hợp và thảo luận cơ sở lựa chọn FE/RE.",
+              "Kiểm tra phương sai thay đổi, tự tương quan và phụ thuộc chéo trong dữ liệu bảng.",
+              "Giới thiệu kiểm định Pesaran CD và các phương án phân tích liên quan đến xtgls, xtscc.",
+              "Mô hình bảng động: tiếp cận Arellano–Bond và System GMM.",
+              "Thực hành GMM bằng xtabond hoặc xtabond2; xem xét cách xây dựng và kiểm soát số lượng công cụ.",
+              "Đọc kiểm định Hansen, AR(1), AR(2) và đánh giá kết quả trong bối cảnh mô hình.",
+              "Giới thiệu PMG trong mô hình panel ARDL; phân biệt quan hệ ngắn hạn và dài hạn.",
+              "Thực hành xtpmg, đọc hệ số dài hạn, động học ngắn hạn và hệ số hiệu chỉnh sai số.",
+            ],
+          },
+          {
+            text: "Ứng dụng ChatGPT",
+            points: [
+              "Hỗ trợ xây dựng câu lệnh dữ liệu bảng, độ trễ và cấu trúc công cụ theo phương án phân tích đã lựa chọn.",
+              "Đề xuất câu lệnh xuất bảng và định dạng bảng cho Word hoặc Excel.",
+              "Đối chiếu bảng xuất với output gốc: hệ số, sai số chuẩn, p-value, số quan sát, mẫu ước lượng và ghi chú.",
+              "Kiểm tra sự nhất quán giữa kết quả thống kê và phần diễn giải; nhận diện những kết luận vượt quá bằng chứng.",
+            ],
+          },
         ],
       },
       {
-        name: "Ôn tập và Research Clinic – góp ý đề tài học viên",
+        name: "Giải đáp nghiên cứu hiện tại và tư vấn công bố quốc tế",
         summary:
-          "Sản phẩm: phiếu góp ý, mô hình đề xuất, danh mục kiểm định và kế hoạch hành động riêng cho từng học viên.",
+          "Sản phẩm cuối khóa: học viên hoàn thiện một bộ sản phẩm thực hành gồm do-file, bảng kết quả và phần diễn giải; đồng thời xác định kế hoạch cải thiện nghiên cứu và hướng công bố phù hợp.",
         sessions: [
-          "Hệ thống hóa quy trình từ câu hỏi nghiên cứu đến lựa chọn estimator",
-          "Ôn tập OLS, FE/RE, FGLS, IV/2SLS, GMM và Panel ARDL–PMG",
-          "Học viên trình bày đề tài, dữ liệu, mô hình và tiến độ hiện tại",
-          "Góp ý câu hỏi, giả thuyết và đặc tả mô hình kinh tế lượng",
-          "Đánh giá cấu trúc dữ liệu, biến số, nguồn dữ liệu và thời gian nghiên cứu",
-          "Tư vấn lựa chọn estimator và hệ thống kiểm định phù hợp",
-          "Góp ý do-file, kết quả ước lượng và các kiểm tra độ vững",
-          "Rà soát cách lập bảng, diễn giải kết quả và mức độ phù hợp của kết luận",
-          "Đề xuất hướng nghiên cứu và lập kế hoạch triển khai tiếp theo cho từng đề tài",
+          {
+            text: "Rà soát quy trình phân tích",
+            points: [
+              "Hệ thống lại các bước: nhập dữ liệu, làm sạch, mô tả, kiểm định, ước lượng, lưu và trình bày kết quả.",
+              "Rà soát do-file để bảo đảm người nghiên cứu có thể chạy lại và đối chiếu quá trình phân tích.",
+            ],
+          },
+          {
+            text: "Trao đổi trực tiếp về nghiên cứu của học viên",
+            points: [
+              "Thảo luận câu hỏi nghiên cứu, cấu trúc dữ liệu, cách đo lường biến và mô hình đang sử dụng.",
+              "Giải đáp vướng mắc về lựa chọn phương pháp, kiểm định, lỗi Stata và diễn giải kết quả.",
+              "Xem xét sản phẩm thực hành sử dụng một hoặc hai phương pháp đã học trên dữ liệu mẫu hoặc dữ liệu của học viên.",
+              "Góp ý bảng kết quả và đoạn trình bày theo hình thức luận văn hoặc bài báo.",
+              "Xác định những vấn đề cần xử lý tiếp và các kiểm tra độ vững phù hợp với nghiên cứu.",
+            ],
+          },
+          {
+            text: "Định hướng lựa chọn tạp chí quốc tế",
+            points: [
+              "Đánh giá mức độ phù hợp giữa chủ đề, phương pháp, đóng góp nghiên cứu và phạm vi của tạp chí.",
+              "Hướng dẫn tìm kiếm, đối chiếu thông tin về tạp chí, tình trạng lập chỉ mục và yêu cầu gửi bài.",
+              "Thảo luận các lựa chọn công bố dựa trên chất lượng bản thảo, nhóm độc giả, chi phí và mục tiêu của tác giả.",
+              "Góp ý những phần cần hoàn thiện trước khi nộp bài: lập luận đóng góp, phương pháp, kết quả, thảo luận và tài liệu tham khảo.",
+              "Giới thiệu quy trình chuẩn bị hồ sơ gửi bài và phản hồi nhận xét của biên tập viên, phản biện.",
+              "Định hướng tiếp tục tự học Stata và phát triển nghiên cứu sau khóa học.",
+            ],
+          },
+          {
+            // Đoạn cuối "Cách thức tổ chức học tập" của giáo trình gốc: không
+            // phải một mục đánh số của buổi 5, nhưng chỉ có nghĩa khi gắn với
+            // buổi tư vấn này. Giáo trình nói "khuyến khích", không phải bắt buộc.
+            text: "Học viên được khuyến khích gửi trước",
+            points: [
+              "Câu hỏi nghiên cứu",
+              "Mô tả dữ liệu",
+              "Do-file",
+              "Kết quả cần trao đổi",
+            ],
+          },
         ],
       },
     ],
     outcomes: [
-      "Xây dựng mô hình kinh tế lượng phù hợp với câu hỏi nghiên cứu.",
-      "Tổ chức dữ liệu và viết do-file có cấu trúc.",
-      "Ước lượng, kiểm định và diễn giải mô hình OLS.",
-      "Phân tích dữ liệu bảng bằng Pooled OLS, FE và RE.",
-      "Phát hiện và xử lý các vấn đề kỹ thuật của mô hình.",
-      "Lựa chọn giữa robust SE, clustered SE, Driscoll–Kraay và FGLS.",
-      "Nhận diện nội sinh và thực hiện IV/2SLS hoặc GMM.",
-      "Ước lượng Linear Panel ARDL–PMG.",
-      "Xây dựng và diễn giải Nonlinear PMG.",
-      "Xuất bảng và trình bày kết quả theo chuẩn luận văn, bài báo.",
-      "Xác định những điều chỉnh và hướng phát triển tiếp theo cho đề tài.",
+      "Tổ chức quy trình phân tích trên Stata, từ nhập và xử lý dữ liệu đến lưu trữ, kiểm tra và báo cáo kết quả.",
+      "Nhận diện các vấn đề thường gặp trong mô hình: phương sai thay đổi, đa cộng tuyến, tự tương quan, phụ thuộc chéo và nội sinh.",
+      "Hiểu nguyên tắc lựa chọn và thực hành các phương pháp OLS, FGLS, IV/2SLS, 3SLS, FE/RE, GMM động và PMG.",
+      "Xây dựng do-file có cấu trúc, lưu lại quá trình phân tích và xuất bảng phục vụ luận văn, luận án hoặc bài báo.",
+      "Sử dụng ChatGPT để hỗ trợ công việc trên Stata, đồng thời kiểm tra tính phù hợp của câu lệnh và tính nhất quán của kết quả.",
+      "Xác định những bước cần hoàn thiện trong nghiên cứu và xây dựng định hướng gửi bài đến tạp chí quốc tế.",
     ],
     instructor: INSTRUCTOR_TAM,
     registerNote: REGISTER_NOTE_GENERIC,
