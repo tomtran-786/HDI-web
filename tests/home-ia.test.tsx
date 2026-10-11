@@ -17,6 +17,8 @@ vi.mock("@/components/cart-provider", () => ({
   useCart: () => ({ openCart: mocks.openCart }),
 }));
 
+import { enrolledCount, enrolledLabel } from "@/content/course-hype";
+import { formatCount } from "@/lib/format";
 import Home from "@/app/page";
 import AboutHdiPage from "@/app/ve-hdi/page";
 
@@ -70,6 +72,13 @@ describe("kiến trúc nội dung homepage và Về HDI", () => {
     );
     expect(html).toContain("Còn 15 chỗ");
     expect(html).toContain("3.000.000 đ");
+    // Thẻ khóa ở trang chủ mang cùng số "học viên đã đăng ký" với thẻ ở
+    // /khoa-hoc; chỉ khóa đang mở có thẻ nên khóa `not_open` không có số.
+    const openSection = html.slice(html.indexOf('id="khoa-hoc"'));
+    const pill = (slug: keyof typeof enrolledCount) =>
+      `>${formatCount(enrolledCount[slug])}</span> ${enrolledLabel}`;
+    expect(openSection).toContain(pill("nckh-ung-dung-ai-xuat-ban-quoc-te"));
+    expect(html).not.toContain(pill("training-tieu-luan-nckh-kltn"));
     expect(html.indexOf('id="top"')).toBeLessThan(html.indexOf('id="khoa-hoc"'));
     expect(html.indexOf('id="khoa-hoc"')).toBeLessThan(
       html.indexOf('id="ve-chung-toi"'),

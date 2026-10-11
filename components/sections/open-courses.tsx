@@ -4,6 +4,7 @@ import { landingCourseData } from "@/lib/course-sales";
 import { OpenCourseEnrollButton } from "../open-course-enroll-button";
 import { OpeningPoster } from "./opening-poster";
 import { Card } from "../ui/card";
+import { EnrolledPill } from "../ui/enrolled-pill";
 import { IconArrow } from "../ui/icons";
 import { PriceTag } from "../ui/price-tag";
 import { Reveal } from "../ui/reveal";
@@ -84,6 +85,10 @@ export async function OpenCourses() {
                   <p className="mt-4 text-sm leading-relaxed text-fg-muted sm:text-base">
                     {course.audience}
                   </p>
+
+                  <div className="mt-4">
+                    <EnrolledPill slug={course.slug} />
+                  </div>
 
                   <dl className="mt-6 grid gap-3 sm:grid-cols-2">
                     {schedule && (

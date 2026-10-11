@@ -1,6 +1,8 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { COURSE_SLUGS, courses } from "@/content/course";
+import { enrolledCount, enrolledLabel } from "@/content/course-hype";
+import { formatCount } from "@/lib/format";
 import { structuredDataForCourse } from "@/lib/structured-data";
 
 class NotFoundSignal extends Error {}
@@ -89,6 +91,29 @@ describe("trang chi tiết khóa học", () => {
     // Số marketing giờ có cho mọi khóa, nên badge "học viên đã đăng ký" cũng
     // xuất hiện ở khóa AI mới này (xem content/course-hype.ts).
     expect(html).toContain("học viên đã đăng ký");
+  });
+
+  it("thẻ \"Khóa học khác\" cũng hiện số học viên đã đăng ký của từng khóa", async () => {
+    const course = courses[0];
+    const html = renderToStaticMarkup(
+      await CourseDetailPage({
+        params: Promise.resolve({ slug: course.slug }),
+      }),
+    );
+
+    // Hero và sidebar đã có số của chính khóa này; chỉ xét phần sau tiêu đề
+    // "Khóa học khác" để biết các thẻ liên quan có tự mang số của mình.
+    const related = html.slice(html.lastIndexOf("Khóa học khác"));
+    const others = courses
+      .filter((item) => item.slug !== course.slug)
+      .slice(0, 3);
+
+    expect(others).toHaveLength(3);
+    for (const item of others) {
+      expect(related).toContain(
+        `>${formatCount(enrolledCount[item.slug])}</span> ${enrolledLabel}`,
+      );
+    }
   });
 
   it("render đủ các block theo đúng thứ tự và chỉ dùng dữ liệu thật", async () => {

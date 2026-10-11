@@ -354,6 +354,9 @@ export default async function CourseDetailPage({ params }: CoursePageProps) {
                   <p className="mt-3 text-sm leading-relaxed text-fg-muted">
                     {item.audience}
                   </p>
+                  <div className="mt-4">
+                    <EnrolledPill slug={item.slug} />
+                  </div>
                   <div className="mt-auto flex items-center justify-between gap-3 pt-6">
                     <span className="font-bold text-primary">{item.price.amount}</span>
                     <span className="inline-flex items-center gap-1 text-sm font-bold text-primary">

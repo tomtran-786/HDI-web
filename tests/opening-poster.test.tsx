@@ -27,6 +27,19 @@ describe("<OpeningPoster>", () => {
     expect(html).toContain("Lịch khai giảng các khóa đang mở đăng ký");
   });
 
+  it("alt text gọi khóa Stata đúng tên khóa trong content/course.ts", () => {
+    const stata = bySlug("kinh-te-luong-stata-ai");
+    const html = renderToStaticMarkup(
+      <OpeningPoster
+        openCourses={[{ course: bySlug(AIQT), remaining: 15 }]}
+      />,
+    );
+
+    // Lấy `title` từ nguồn thật để lần đổi tên khóa sau không làm alt lệch nữa.
+    expect(html).toContain(`${stata.code} — ${stata.title}`);
+    expect(html).not.toContain("Phân tích định lượng với Stata");
+  });
+
   it("không có khóa nào đang mở thì không dựng gì cả", () => {
     expect(renderToStaticMarkup(<OpeningPoster openCourses={[]} />)).toBe("");
   });
