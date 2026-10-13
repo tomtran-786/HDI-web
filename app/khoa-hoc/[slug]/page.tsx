@@ -1,41 +1,28 @@
 import type { Metadata } from "next";
 import Image from "next/image";
-import Link from "next/link";
 import Script from "next/script";
 import { notFound, redirect } from "next/navigation";
+import { CourseCard } from "@/components/course-card";
 import { CourseEnroll } from "@/components/course-enroll";
+import { CourseFactList } from "@/components/course-facts";
 import { CourseRoadmap } from "@/components/course-roadmap";
 import { CourseStickyBar } from "@/components/course-sticky-bar";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { EnrolledPill } from "@/components/ui/enrolled-pill";
-import {
-  IconArrow,
-  IconCalendar,
-  IconCheck,
-  IconClock,
-  IconFolder,
-  IconPlay,
-  IconUsers,
-  IconVideo,
-} from "@/components/ui/icons";
+import { CheckDot } from "@/components/ui/check-dot";
+import { IconArrow } from "@/components/ui/icons";
 import { PriceTag } from "@/components/ui/price-tag";
 import { Reveal } from "@/components/ui/reveal";
 import { Section, SectionHeading } from "@/components/ui/section";
 import { CourseCover } from "@/components/course-cover";
 import { Stars } from "@/components/ui/stars";
 import { cartModal } from "@/content/checkout";
-import {
-  COURSE_SLUGS,
-  courses,
-  type Course,
-  type FactLabel,
-} from "@/content/course";
-import { enrolledCount, enrolledLabel } from "@/content/course-hype";
+import { COURSE_SLUGS, courses, type Course } from "@/content/course";
 import { site } from "@/content/site";
 import { cardPresentation } from "@/lib/course-availability";
 import { landingCourseData } from "@/lib/course-sales";
-import { formatCount, formatDate } from "@/lib/format";
+import { formatDate } from "@/lib/format";
 import type { PublicReview, ReviewSummary } from "@/lib/reviews";
 import { structuredDataForCourse } from "@/lib/structured-data";
 
@@ -52,7 +39,8 @@ import { structuredDataForCourse } from "@/lib/structured-data";
  *   3. "Dành cho ai".
  *   4. "Lộ trình học": module gập được bên trái, giảng viên bên phải — bản của
  *      "Your Course Outline" + "About the Instructor".
- *   5. Đánh giá học viên, rồi "Khóa học khác".
+ *   5. Đánh giá học viên, rồi "Khóa học khác" — cùng thẻ CourseCard với trang
+ *      chủ và /khoa-hoc, bấm vào mở modal xem nhanh.
  *
  * Bảng "Thông tin khóa học" riêng ở cuối trang đã bỏ: sáu dòng `facts` và học
  * phí giờ nằm trong card đầu trang, chỗ người đọc cần chúng khi bấm đăng ký.
@@ -69,25 +57,12 @@ const MERGED_SPSS_SLUG = "nckh-chuyen-sau-spss";
 const PRICE_CARD_ID = "hoc-phi";
 const ROADMAP_ID = "lo-trinh";
 
-const factIcons: Record<FactLabel, typeof IconVideo> = {
-  "Hình thức": IconVideo,
-  "Thời lượng": IconClock,
-  "Lịch học": IconCalendar,
-  "Sĩ số": IconUsers,
-  "Học liệu": IconFolder,
-  "Xem lại": IconPlay,
-};
-
 function redirectLegacyCourse(slug: string): void {
   if (slug === LEGACY_STATA_SLUG) redirect(`/khoa-hoc/${MERGED_SPSS_SLUG}`);
 }
 
 function courseForSlug(slug: string): Course | undefined {
   return courses.find((course) => course.slug === slug);
-}
-
-function factValue(course: Course, label: FactLabel) {
-  return course.facts.find((fact) => fact.label === label)?.value;
 }
 
 export function generateStaticParams() {
@@ -133,84 +108,6 @@ function StructuredData({ course }: { course: Course }) {
         __html: JSON.stringify(data).replace(/</g, "\\u003c"),
       }}
     />
-  );
-}
-
-/** Dấu tích trong vòng tròn, dùng cho lưới kết quả và danh sách giảng viên. */
-function CheckDot() {
-  return (
-    <span
-      aria-hidden
-      className="mt-0.5 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-tint text-success"
-    >
-      <IconCheck size={14} />
-    </span>
-  );
-}
-
-/**
- * Thẻ "Khóa học khác" — theo thẻ "Other Popular Courses": ảnh bìa, dòng meta
- * (thời lượng · số học viên), mô tả, hàng giảng viên + đánh giá, chân thẻ là học
- * phí và nút xem chi tiết.
- */
-function RelatedCourseCard({
-  course,
-  summary,
-}: {
-  course: Course;
-  summary?: ReviewSummary;
-}) {
-  const duration = factValue(course, "Thời lượng");
-
-  return (
-    <Link href={`/khoa-hoc/${course.slug}`} className="block h-full">
-      <Card className="group flex h-full flex-col overflow-hidden">
-        <CourseCover
-          cover={course.cover}
-          variant="card"
-          sizes="(min-width: 768px) 24rem, 100vw"
-        />
-        <div className="flex flex-1 flex-col px-5 pt-5">
-          <p className="text-xs font-semibold text-primary">
-            {duration && <>{duration} · </>}
-            <span className="font-bold tabular-nums text-primary">
-              {formatCount(enrolledCount[course.slug])}
-            </span>{" "}
-            {enrolledLabel}
-          </p>
-          <h3 className="mt-2 text-lg font-bold leading-snug text-fg">
-            {course.title}
-          </h3>
-          <p className="mt-2 line-clamp-3 text-sm leading-relaxed text-fg-muted">
-            {course.audience}
-          </p>
-        </div>
-        {course.instructor && (
-          <div className="mx-5 mt-5 flex items-end justify-between gap-3 border-t border-line py-3">
-            <div className="min-w-0">
-              <p className="text-[11px] text-fg-subtle">Giảng viên</p>
-              <p className="truncate text-sm font-bold text-primary">
-                {course.instructor.credential} {course.instructor.name}
-              </p>
-            </div>
-            {summary && (
-              <span className="flex shrink-0 flex-col items-end gap-0.5">
-                <Stars value={summary.average} size={13} />
-                <span className="text-xs font-semibold text-fg-muted">
-                  {summary.average.toFixed(1)}/5
-                </span>
-              </span>
-            )}
-          </div>
-        )}
-        <div className="mt-auto flex items-center justify-between gap-3 border-t border-line px-5 py-4">
-          <span className="font-bold text-fg-muted">{course.price.amount}</span>
-          <span className="inline-flex items-center gap-1 rounded-full bg-primary px-4 py-2 text-sm font-bold text-primary-fg transition group-hover:bg-primary-deep">
-            Chi tiết <IconArrow size={14} />
-          </span>
-        </div>
-      </Card>
-    </Link>
   );
 }
 
@@ -301,23 +198,7 @@ export default async function CourseDetailPage({ params }: CoursePageProps) {
               <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-fg-subtle">
                 Khóa học gồm
               </p>
-              <ul className="mt-4 space-y-3">
-                {course.facts.map((fact) => {
-                  const Icon = factIcons[fact.label];
-                  return (
-                    <li
-                      key={fact.label}
-                      className="flex gap-3 text-[15px] leading-snug text-fg"
-                    >
-                      <Icon className="shrink-0 text-primary" size={19} />
-                      <p className="min-w-0">
-                        <span className="text-fg-subtle">{fact.label}: </span>
-                        {fact.value}
-                      </p>
-                    </li>
-                  );
-                })}
-              </ul>
+              <CourseFactList course={course} className="mt-4" />
 
               <div className="mt-5 border-t border-line pt-5">
                 <div className="flex flex-wrap items-center justify-between gap-3">
@@ -498,7 +379,14 @@ export default async function CourseDetailPage({ params }: CoursePageProps) {
         <div className="grid gap-5 md:grid-cols-3">
           {related.map((item, index) => (
             <Reveal key={item.slug} delay={index * 60} className="h-full">
-              <RelatedCourseCard course={item} summary={summaries[item.slug]} />
+              <CourseCard
+                course={item}
+                summary={summaries[item.slug]}
+                availability={
+                  availability ? (availability[item.slug] ?? "not_open") : undefined
+                }
+                sizes="(min-width: 768px) 24rem, 100vw"
+              />
             </Reveal>
           ))}
         </div>

@@ -1,7 +1,7 @@
 "use client";
 
 import type { Course } from "@/content/course";
-import { trackCta } from "@/lib/analytics";
+import { trackCta, type CtaSource } from "@/lib/analytics";
 import {
   cardPresentation,
   type PublicAvailability,
@@ -15,12 +15,15 @@ export function CourseEnroll({
   availability,
   className = "",
   stacked = false,
+  source = "khoa-hoc-detail",
 }: {
   course: Course;
   availability?: PublicAvailability;
   className?: string;
   /** Xếp dọc, nút đầy bề ngang — cho card học phí hẹp ở đầu trang chi tiết. */
   stacked?: boolean;
+  /** Nơi đặt cụm nút, cho analytics: trang chi tiết hay modal xem nhanh. */
+  source?: CtaSource;
 }) {
   const { openCart } = useCart();
   const { buyable } = cardPresentation(availability);
@@ -33,7 +36,7 @@ export function CourseEnroll({
         <button
           type="button"
           onClick={() => {
-            trackCta("khoa-hoc-detail", "dang-ky", course.slug);
+            trackCta(source, "dang-ky", course.slug);
             openCart(course.slug);
           }}
           className="inline-flex flex-1 items-center justify-center gap-2 rounded-full bg-primary px-6 py-3 text-sm font-bold text-primary-fg transition hover:bg-primary-deep"
@@ -43,7 +46,7 @@ export function CourseEnroll({
         </button>
       )}
       <CtaLink
-        source="khoa-hoc-detail"
+        source={source}
         target="zalo"
         course={course.slug}
         className="inline-flex items-center justify-center gap-2 rounded-full border border-line px-6 py-3 text-sm font-bold text-fg transition hover:border-primary hover:text-primary"

@@ -37,6 +37,7 @@ export type CtaSource =
   | "khoa-hoc-modal"
   | "khoa-hoc-detail"
   | "khoa-hoc-sticky"
+  | "khoa-hoc-card"
   | "dich-vu-hub"
   | "dich-vu-detail"
   | "hoi-thao-quoc-te"
@@ -78,6 +79,11 @@ export function trackCta(
 /** Fired when a course card opens its full roadmap page. */
 export function trackCourseModal(course: string) {
   track("mo-lo-trinh", { khoa: course });
+}
+
+/** Fired when a course card opens its quick-view modal. */
+export function trackCourseQuickView(course: string) {
+  track("xem-nhanh-khoa", { khoa: course });
 }
 
 /** Fired when the sort control changes — not when the active pill is re-clicked. */

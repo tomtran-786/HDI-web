@@ -10,12 +10,12 @@ function phaseOffset(phases: Course["phases"], index: number) {
 }
 
 /** A module is a teaching unit; session-based courses group classes by phase. */
-function phaseKind(course: Course) {
+export function phaseKind(course: Course) {
   return course.curriculum === "modules" ? "Module" : "Giai đoạn";
 }
 
 /** "10 chủ đề" cho một module; "Buổi 3–5" cho một giai đoạn gồm nhiều buổi. */
-function phaseMeta(course: Course, index: number) {
+export function phaseMeta(course: Course, index: number) {
   const count = course.phases[index].sessions.length;
   if (course.curriculum === "modules") return `${count} chủ đề`;
   const first = phaseOffset(course.phases, index) + 1;
