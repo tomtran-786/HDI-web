@@ -6,7 +6,9 @@ import {
   conferenceProgramIntro,
   type ConferenceForum,
 } from "@/content/conference-program";
+import { about } from "@/content/about";
 import { site } from "@/content/site";
+import { ActivityGallery, PhotoFigure } from "@/components/activity-gallery";
 import { Badge } from "@/components/ui/badge";
 import { CtaLink } from "@/components/ui/cta-link";
 import { IconArrow, IconCheck } from "@/components/ui/icons";
@@ -25,6 +27,11 @@ export const metadata: Metadata = {
  */
 export default function ConferenceProgramPage() {
   const { lead, benefits, forums, advisor, process, images } = conferenceProgram;
+  // Ảnh AGBA 2024 đứng cạnh phần giới thiệu người hướng dẫn; ba ảnh còn lại
+  // (gặp Chủ tịch AGBA, hội thảo và gặp giáo sư Feng Chia) thành dải bên dưới.
+  const photos = about.advisor.activityPhotos;
+  const featuredPhoto = photos.find((photo) => photo.id === "agba-2024") ?? photos[0];
+  const networkPhotos = photos.filter((photo) => photo !== featuredPhoto);
 
   return (
     <>
@@ -97,16 +104,19 @@ export default function ConferenceProgramPage() {
             </Link>
           </Reveal>
           <Reveal delay={100}>
-            <Image
-              src={images.advisor.src}
-              alt={images.advisor.alt}
-              width={1600}
-              height={1067}
-              sizes="(min-width: 1024px) 480px, 100vw"
-              className="h-auto w-full rounded-card border border-line object-cover"
+            <PhotoFigure
+              photo={featuredPhoto}
+              sizes="(min-width: 1024px) 36rem, 100vw"
             />
           </Reveal>
         </div>
+
+        <Reveal>
+          <h3 className="mt-14 text-lg font-bold text-fg">
+            Kết nối học thuật quốc tế
+          </h3>
+        </Reveal>
+        <ActivityGallery photos={networkPhotos} columns={3} className="mt-5" />
       </Section>
 
       <Section>

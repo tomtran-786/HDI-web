@@ -1,8 +1,10 @@
 import Link from "next/link";
+import { about } from "@/content/about";
 import {
   conferenceProgram,
   conferenceProgramIntro,
 } from "@/content/conference-program";
+import { PhotoFigure } from "../activity-gallery";
 import { Badge } from "../ui/badge";
 import { Card } from "../ui/card";
 import { IconArrow } from "../ui/icons";
@@ -11,21 +13,41 @@ import { Section, SectionHeading } from "../ui/section";
 
 /** Teaser trên trang chủ; toàn bộ bảng và quy trình nằm ở /hoi-thao-quoc-te. */
 export function ConferenceProgram({ soft }: { soft?: boolean }) {
+  // Một ảnh thật duy nhất trên trang chủ, gallery đầy đủ nằm ở /hoi-thao-quoc-te
+  // và /ve-hdi để trang chủ vẫn gọn.
+  const featuredPhoto = about.advisor.activityPhotos.find(
+    (photo) => photo.id === "agba-2024",
+  );
+
   return (
     <Section id="hoi-thao-quoc-te" soft={soft}>
-      <SectionHeading
-        eyebrow={conferenceProgramIntro.eyebrow}
-        title={conferenceProgramIntro.title}
-        subtitle={conferenceProgramIntro.subtitle}
-      />
+      {/* Tiêu đề và lead chung một cột cạnh ảnh, để cột chữ đủ cao cân với ảnh
+          thay vì để lead lơ lửng giữa khoảng trống. */}
+      <div className="grid gap-8 lg:grid-cols-[1.4fr_1fr] lg:items-center lg:gap-12">
+        <div>
+          <SectionHeading
+            eyebrow={conferenceProgramIntro.eyebrow}
+            title={conferenceProgramIntro.title}
+            subtitle={conferenceProgramIntro.subtitle}
+          />
+          <Reveal>
+            <p className="max-w-2xl text-base leading-relaxed text-fg-muted sm:text-[17px]">
+              {conferenceProgram.lead}
+            </p>
+          </Reveal>
+        </div>
+        {featuredPhoto && (
+          <Reveal delay={100}>
+            <PhotoFigure
+              photo={featuredPhoto}
+              sizes="(min-width: 1024px) 26rem, 100vw"
+              className="mx-auto max-w-md lg:max-w-none"
+            />
+          </Reveal>
+        )}
+      </div>
 
-      <Reveal>
-        <p className="max-w-2xl text-base leading-relaxed text-fg-muted sm:text-[17px]">
-          {conferenceProgram.lead}
-        </p>
-      </Reveal>
-
-      <div className="mt-8 grid gap-5 md:grid-cols-2">
+      <div className="mt-10 grid gap-5 md:grid-cols-2 sm:mt-12">
         {conferenceProgram.forums.map((forum, index) => (
           <Reveal key={forum.id} delay={index * 80} className="h-full">
             <Card className="flex h-full flex-col p-6 sm:p-8" hover={false}>

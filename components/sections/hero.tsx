@@ -1,9 +1,10 @@
 import Image from "next/image";
 import Link from "next/link";
+import { about } from "@/content/about";
 import { site } from "@/content/site";
 import { CtaLink } from "../ui/cta-link";
 import { Reveal } from "../ui/reveal";
-import { IconArrow, IconCheck, IconClock, IconMessage, IconUser } from "../ui/icons";
+import { IconArrow, IconCheck, IconClock, IconMessage } from "../ui/icons";
 
 /** Hàng cam kết dịch vụ, khớp với dải cam kết in trong ảnh promo bên phải. */
 const promises = [
@@ -79,9 +80,14 @@ export function Hero() {
           </ul>
 
           <div className="mt-6 flex items-center gap-4 border-t border-line pt-6">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-tint text-primary">
-              <IconUser size={20} />
-            </div>
+            <Image
+              src={about.advisor.portrait.src}
+              alt={about.advisor.portrait.alt}
+              width={960}
+              height={1280}
+              sizes="40px"
+              className="h-10 w-10 shrink-0 rounded-full border border-line object-cover object-[center_72%]"
+            />
             <div className="text-sm">
               <p className="font-bold text-fg">
                 {site.lead.role}: {site.lead.name}

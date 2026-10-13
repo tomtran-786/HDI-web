@@ -1,6 +1,7 @@
 import Image from "next/image";
 import { about } from "@/content/about";
 import { links } from "@/content/site";
+import { ActivityGallery } from "./activity-gallery";
 import { Badge } from "./ui/badge";
 import { Card } from "./ui/card";
 import { IconCheck, IconDownload } from "./ui/icons";
@@ -134,6 +135,18 @@ export function TeamProfiles() {
             </Card>
           </div>
         </Reveal>
+      </div>
+
+      <div className="mt-12">
+        <Reveal>
+          <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-fg-subtle">
+            Hoạt động học thuật
+          </p>
+          <h3 className="mt-2 text-xl font-bold text-fg">
+            Trao đổi và kết nối cùng học giả quốc tế
+          </h3>
+        </Reveal>
+        <ActivityGallery photos={advisor.activityPhotos} className="mt-6" />
       </div>
 
       <Reveal delay={120}>
