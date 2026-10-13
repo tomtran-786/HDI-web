@@ -9,10 +9,6 @@ vi.mock("@/lib/analytics", () => ({
   trackCourseQuickView: vi.fn(),
   trackCta: vi.fn(),
 }));
-vi.mock("@/components/cart-provider", () => ({
-  useCart: () => ({ openCart: vi.fn() }),
-}));
-
 import { CourseCard } from "@/components/course-card";
 
 const foundation = courses.find(
@@ -29,8 +25,8 @@ describe("badge availability của thẻ khóa học", () => {
     expect(html).toContain(
       `>${formatCount(enrolledCount[foundation.slug])}</span> ${enrolledLabel}`,
     );
-    // Không đọc được thì vẫn cho bấm đăng ký — createOrder mới là chốt chặn.
-    expect(html).toContain("Đăng ký ngay");
+    // Không đọc được thì không gắn nhãn trạng thái nào lên banner.
+    expect(html).not.toContain("Đã hết chỗ");
   });
 
   it("vẫn hiển thị trạng thái hết chỗ khi database trả về rõ ràng", () => {
@@ -39,22 +35,21 @@ describe("badge availability của thẻ khóa học", () => {
     );
 
     expect(html).toContain("Đã hết chỗ");
-    expect(html).toContain("Xem nhanh");
-    expect(html).not.toContain("Đăng ký ngay");
   });
 });
 
 describe("thẻ khóa học dùng chung", () => {
-  it("link thật tới trang chi tiết và không render modal trước khi bấm", () => {
+  it("thẻ gọn: tên trên banner, một nút \"Tìm hiểu thêm\", link thật, chưa có modal", () => {
     const html = renderToStaticMarkup(
       <CourseCard course={foundation} availability="buyable" />,
     );
 
     expect(html).toContain(`href="/khoa-hoc/${foundation.slug}"`);
+    expect(html).toContain(foundation.title.replace("&", "&amp;"));
+    expect(html).toContain("Tìm hiểu thêm");
+    // Đăng ký nằm trong modal, không nằm trên thẻ.
+    expect(html).not.toContain("Đăng ký ngay");
     expect(html).not.toContain("<dialog");
-    // Lịch học luôn có trên thẻ, kể cả khi ô đó là "Sẽ thông báo".
-    const schedule = foundation.facts.find((fact) => fact.label === "Lịch học")!;
-    expect(html).toContain(schedule.value);
   });
 
   it("có số chỗ thật thì in \"Còn N chỗ\" thay cho badge trạng thái", () => {
@@ -63,7 +58,7 @@ describe("thẻ khóa học dùng chung", () => {
     );
 
     expect(html).toContain("Còn 7 chỗ");
-    expect(html).not.toContain("Còn chỗ<");
+    expect(html).not.toContain(">Còn chỗ<");
   });
 
   it("giá ưu đãi trên thẻ vẫn đứng trước giá gốc gạch ngang, kèm điều kiện", () => {

@@ -131,7 +131,7 @@ export function CourseQuickView({
                 availability={availability}
                 className="mt-4"
                 source="khoa-hoc-modal"
-                stacked
+                layout="pills"
               />
             </div>
           </div>

@@ -221,7 +221,7 @@ export default async function CourseDetailPage({ params }: CoursePageProps) {
                   course={course}
                   availability={publicAvailability}
                   className="mt-5"
-                  stacked
+                  layout="stack"
                 />
                 <p className="mt-3 text-center text-xs leading-relaxed text-fg-subtle">
                   {course.registerNote}

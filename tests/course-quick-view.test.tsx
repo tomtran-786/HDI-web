@@ -40,14 +40,17 @@ describe("modal xem nhanh khóa học", () => {
 
     expect(html).toContain(`href="/khoa-hoc/${course.slug}"`);
     expect(html).toContain("Xem trang chi tiết");
-    expect(html).toContain("Đăng ký học khóa này");
+    // Hai CTA của modal là hai pill gọn, không phải nút đầy bề ngang.
+    expect(html).toContain("Đăng ký ngay");
+    expect(html).toContain("Nhắn Zalo");
+    expect(html).not.toContain("flex-1");
   });
 
   it("không có nút đăng ký chết khi khóa chưa mở", () => {
     const { html } = render("nckh-chuyen-sau-spss", "not_open");
 
     expect(html).toContain("Chưa mở đăng ký");
-    expect(html).not.toContain("Đăng ký học khóa này");
+    expect(html).not.toContain("Đăng ký ngay");
     expect(html).toContain("Nhắn Zalo");
   });
 
