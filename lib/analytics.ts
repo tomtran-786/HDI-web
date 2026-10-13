@@ -36,6 +36,7 @@ export type CtaSource =
   | "chuong-trinh"
   | "khoa-hoc-modal"
   | "khoa-hoc-detail"
+  | "khoa-hoc-sticky"
   | "dich-vu-hub"
   | "dich-vu-detail"
   | "hoi-thao-quoc-te"

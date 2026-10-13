@@ -5,8 +5,10 @@ import { ExternalLink } from "./ui/external-link";
 /**
  * Ảnh bìa của khóa: ảnh Unsplash hoặc panel logo phần mềm. Một component cho
  * cả thẻ ở /khoa-hoc, thẻ "Khóa học khác" (`variant="card"`, khung 16:9 nằm
- * trong thẻ có `group` + `overflow-hidden`) và banner đầu trang chi tiết
- * (`variant="banner"`, tràn ngang, có dòng credit).
+ * trong thẻ có `group` + `overflow-hidden`), banner tràn ngang
+ * (`variant="banner"`) và khung media đầu trang chi tiết (`variant="hero"`,
+ * 16:9 bo góc cạnh card học phí). Hai biến thể sau là ảnh chính của trang nên
+ * có alt và dòng credit.
  */
 export function CourseCover({
   cover,
@@ -15,17 +17,21 @@ export function CourseCover({
   eager = false,
 }: {
   cover: CourseCoverData;
-  variant: "card" | "banner";
+  variant: "card" | "banner" | "hero";
   sizes: string;
   /** Banner nằm trong màn hình đầu: tải ngay, ưu tiên cao (Next 16 bỏ `priority`). */
   eager?: boolean;
 }) {
-  const banner = variant === "banner";
+  const banner = variant !== "card";
 
   return (
     <div
-      className={`@container relative overflow-hidden border-b border-line ${
-        banner ? "h-[200px] sm:h-[280px] lg:h-[340px]" : "aspect-[16/9]"
+      className={`@container relative overflow-hidden ${
+        variant === "banner"
+          ? "h-[200px] border-b border-line sm:h-[280px] lg:h-[340px]"
+          : variant === "hero"
+            ? "aspect-[16/9] rounded-card border border-line shadow-[0_18px_40px_-24px_rgba(12,73,143,0.45)]"
+            : "aspect-[16/9] border-b border-line"
       }`}
     >
       {cover.kind === "photo" ? (

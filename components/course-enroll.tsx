@@ -14,16 +14,21 @@ export function CourseEnroll({
   course,
   availability,
   className = "",
+  stacked = false,
 }: {
   course: Course;
   availability?: PublicAvailability;
   className?: string;
+  /** Xếp dọc, nút đầy bề ngang — cho card học phí hẹp ở đầu trang chi tiết. */
+  stacked?: boolean;
 }) {
   const { openCart } = useCart();
   const { buyable } = cardPresentation(availability);
 
   return (
-    <div className={`flex flex-col gap-3 sm:flex-row ${className}`}>
+    <div
+      className={`flex flex-col gap-3 ${stacked ? "" : "sm:flex-row"} ${className}`}
+    >
       {buyable && (
         <button
           type="button"

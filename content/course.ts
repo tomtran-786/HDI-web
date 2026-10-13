@@ -340,6 +340,8 @@ export type Course = {
   instructor?: {
     name: string;
     credential: string;
+    /** Cùng ảnh chân dung với khối cố vấn ở content/about.ts. */
+    portrait: { src: string; alt: string };
     highlights: string[];
     links: { label: string; href: string }[];
   };
@@ -379,6 +381,10 @@ const FACT_TBA = "Sẽ thông báo";
 const INSTRUCTOR_TAM = {
   name: "Trịnh Công Tâm",
   credential: "Tiến sĩ",
+  portrait: {
+    src: "/images/portrait.jpg",
+    alt: "Chân dung Tiến sĩ Trịnh Công Tâm",
+  },
   highlights: [
     "Thành viên Ban Biên tập của Eurasian Economic Review (xếp hạng C theo ABDC; ESCI Q1).",
     "Session Chair tại các hội thảo quốc tế EBES và AGBA.",

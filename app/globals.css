@@ -182,3 +182,27 @@ dialog[open] {
   dialog[open] { animation: none; }
   .hype-live { animation: none; }
 }
+
+/* Thanh học phí cố định ở đáy trang chi tiết khóa (components/course-sticky-bar.tsx).
+   Khi nó hiện, nút liên hệ nổi đứng lên trên nó và cuối trang chừa chỗ để thanh
+   không che footer. */
+html[data-course-bar] body {
+  padding-bottom: 5rem;
+}
+
+html[data-course-bar] [data-contact-dock] {
+  bottom: 5.5rem;
+}
+
+.course-bar-in {
+  animation: course-bar-in 0.2s ease both;
+}
+
+@keyframes course-bar-in {
+  from { transform: translateY(100%); }
+  to { transform: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .course-bar-in { animation: none; }
+}
