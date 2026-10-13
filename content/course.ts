@@ -202,6 +202,56 @@ export const COURSE_SLUGS = [
 
 export type CourseSlug = (typeof COURSE_SLUGS)[number];
 
+/**
+ * Ảnh bìa của khóa, dùng chung cho thẻ ở /khoa-hoc, thẻ "Khóa học khác" và
+ * banner đầu trang chi tiết (components/course-cover.tsx).
+ *
+ * "photo" — ảnh Unsplash tự host trong public/images/khoa-hoc/, kèm credit tác
+ *   giả (giấy phép Unsplash không bắt buộc ghi nguồn, nhưng HDI vẫn ghi).
+ * "logos" — panel logo cho khóa dạy phần mềm. Logo chỉ để mô tả đúng phần mềm
+ *   được dạy, không ngụ ý hãng tài trợ hay hợp tác. `tile` đánh dấu logo vốn là
+ *   một khối màu (logo SPSS) nên không đặt trong thẻ trắng.
+ */
+export type CourseCover =
+  | {
+      kind: "photo";
+      src: string;
+      alt: string;
+      credit: { author: string; url: string };
+    }
+  | {
+      kind: "logos";
+      logos: {
+        src: string;
+        alt: string;
+        width: number;
+        height: number;
+        tile?: boolean;
+      }[];
+      /** Nhãn phụ dạng chip cạnh các logo, ví dụ "+ AI". */
+      extra?: string;
+    };
+
+const LOGO_SPSS = {
+  src: "/images/logos/spss.svg",
+  alt: "Logo SPSS",
+  width: 500,
+  height: 500,
+  tile: true,
+};
+const LOGO_STATA = {
+  src: "/images/logos/stata.svg",
+  alt: "Logo Stata",
+  width: 415,
+  height: 96,
+};
+const LOGO_SMARTPLS = {
+  src: "/images/logos/smartpls.png",
+  alt: "Logo SmartPLS",
+  width: 370,
+  height: 240,
+};
+
 export type Course = {
   /** Stable, human-readable identifier. Never renumber when display order changes. */
   code: string;
@@ -231,6 +281,7 @@ export type Course = {
    * hoa hơn một cách hợp lệ.
    */
   title: string;
+  cover: CourseCover;
   audience: string;
   /**
    * Cùng một câu `audience` nhưng tách theo từng nhóm người học, khi khóa phục
@@ -289,6 +340,8 @@ export type Course = {
   instructor?: {
     name: string;
     credential: string;
+    /** Cùng ảnh chân dung với khối cố vấn ở content/about.ts. */
+    portrait: { src: string; alt: string };
     highlights: string[];
     links: { label: string; href: string }[];
   };
@@ -328,6 +381,10 @@ const FACT_TBA = "Sẽ thông báo";
 const INSTRUCTOR_TAM = {
   name: "Trịnh Công Tâm",
   credential: "Tiến sĩ",
+  portrait: {
+    src: "/images/portrait.jpg",
+    alt: "Chân dung Tiến sĩ Trịnh Công Tâm",
+  },
   highlights: [
     "Thành viên Ban Biên tập của Eurasian Economic Review (xếp hạng C theo ABDC; ESCI Q1).",
     "Session Chair tại các hội thảo quốc tế EBES và AGBA.",
@@ -372,6 +429,15 @@ export const courses = [
     slug: "nckh-ung-dung-ai-xuat-ban-quoc-te",
     eyebrow: "Khóa mới · Khai giảng 22/09/2026",
     title: "Nghiên cứu khoa học ứng dụng AI & xuất bản quốc tế",
+    cover: {
+      kind: "photo",
+      src: "/images/khoa-hoc/nckh-ung-dung-ai-xuat-ban-quoc-te.jpg",
+      alt: "Mạng lưới chấm và đường nối phát sáng trên nền xanh dương đậm, gợi hình ảnh trí tuệ nhân tạo",
+      credit: {
+        author: "Conny Schneider",
+        url: "https://unsplash.com/photos/a-blue-background-with-lines-and-dots-xuTJZ7uD7PI",
+      },
+    },
     audience:
       "Dành cho người đang thực hiện nghiên cứu và muốn ứng dụng AI có kiểm soát, chuẩn bị bài báo quốc tế hoặc phân tích dữ liệu bảng",
     intro:
@@ -466,6 +532,15 @@ export const courses = [
     slug: "training-tieu-luan-nckh-kltn",
     eyebrow: "Khóa nền tảng · Khai giảng 05/10/2026",
     title: "Viết tiểu luận, nghiên cứu khoa học & khóa luận tốt nghiệp",
+    cover: {
+      kind: "photo",
+      src: "/images/khoa-hoc/training-tieu-luan-nckh-kltn.jpg",
+      alt: "Cận cảnh bàn tay cầm bút viết trên trang giấy trắng",
+      credit: {
+        author: "Quilia",
+        url: "https://unsplash.com/photos/person-writing-on-white-paper-Ak5c5VTch5E",
+      },
+    },
     audience:
       "Dành cho sinh viên năm 1–4 và người mới bắt đầu nghiên cứu",
     audienceProfiles: [
@@ -744,6 +819,7 @@ export const courses = [
     slug: "nckh-chuyen-sau-spss",
     eyebrow: "Khóa chuyên sâu · 06 module thực hành",
     title: "Phân tích định lượng với SPSS, Stata & AI",
+    cover: { kind: "logos", logos: [LOGO_SPSS, LOGO_STATA], extra: "+ AI" },
     audience:
       "Dành cho sinh viên năm 3–4, học viên cao học, nghiên cứu sinh, giảng viên và chuyên viên phân tích đang thực hiện nghiên cứu định lượng bằng dữ liệu khảo sát hoặc dữ liệu thống kê có sẵn",
     intro:
@@ -911,6 +987,7 @@ export const courses = [
     slug: "spss-smartpls-ai",
     eyebrow: "Khóa chuyên sâu · 06 module thực hành",
     title: "Thiết kế nghiên cứu và phân tích dữ liệu với SPSS & SmartPLS",
+    cover: { kind: "logos", logos: [LOGO_SPSS, LOGO_SMARTPLS] },
     audience:
       "Dành cho sinh viên đại học, học viên cao học và người đang thực hiện nghiên cứu định lượng",
     intro:
@@ -1046,6 +1123,7 @@ export const courses = [
     slug: "kinh-te-luong-stata-ai",
     eyebrow: "Khóa chuyên sâu · Khai giảng tháng 11/2026",
     title: "Stata trong nghiên cứu định lượng",
+    cover: { kind: "logos", logos: [LOGO_STATA] },
     audience:
       "Dành cho người làm nghiên cứu định lượng, đã có kiến thức cơ bản về thống kê và hồi quy, muốn dùng Stata theo quy trình nghiên cứu, khai thác ChatGPT có kiểm chứng và định hướng công bố quốc tế",
     audienceProfiles: [
@@ -1286,6 +1364,15 @@ export const courses = [
     slug: "viet-bai-tap-chi",
     eyebrow: "Khóa chuyên sâu",
     title: "Viết bài tạp chí khoa học trong nước và quốc tế",
+    cover: {
+      kind: "photo",
+      src: "/images/khoa-hoc/viet-bai-tap-chi.jpg",
+      alt: "Cuốn sách mở trên mặt bàn, tông sáng",
+      credit: {
+        author: "Aaron Burden",
+        url: "https://unsplash.com/photos/opened-book-QJDzYT_K8Xg",
+      },
+    },
     audience:
       "Dành cho người đang viết và muốn công bố bài báo khoa học lĩnh vực khoa học xã hội",
     intro:
@@ -1391,6 +1478,15 @@ export const courses = [
     slug: "viet-bao-cao-khoa-hoc",
     eyebrow: "Khóa đào tạo",
     title: "Viết báo cáo khoa học, luận văn chuẩn quốc tế",
+    cover: {
+      kind: "photo",
+      src: "/images/khoa-hoc/viet-bao-cao-khoa-hoc.jpg",
+      alt: "Người đang viết trên bàn gỗ cạnh cốc sứ trắng",
+      credit: {
+        author: "Unseen Studio",
+        url: "https://unsplash.com/photos/person-writing-on-brown-wooden-table-near-white-ceramic-mug-s9CC2SKySJM",
+      },
+    },
     audience: "Dành cho sinh viên và học viên cao học",
     intro:
       "Tám buổi đi từ việc chọn đề tài đến lúc bấm nút gửi bài — kèm ba tháng đồng hành sau khóa để bản thảo thật sự tới được tòa soạn.",
@@ -1455,6 +1551,15 @@ export const courses = [
     slug: "ung-dung-chatgpt-nckh",
     eyebrow: "Khóa công cụ AI",
     title: "Ứng dụng ChatGPT trong nghiên cứu khoa học",
+    cover: {
+      kind: "photo",
+      src: "/images/khoa-hoc/ung-dung-chatgpt-nckh.jpg",
+      alt: "Biểu tượng OpenAI màu trắng trên nền xanh lá",
+      credit: {
+        author: "ilgmyzin",
+        url: "https://unsplash.com/photos/a-green-square-with-a-white-knot-on-it-agFmImWyPso",
+      },
+    },
     audience:
       "Dành cho sinh viên, học viên cao học, nghiên cứu sinh và giảng viên muốn dùng AI có kiểm soát trong quy trình nghiên cứu",
     intro:

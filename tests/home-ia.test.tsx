@@ -8,6 +8,7 @@ const mocks = vi.hoisted(() => ({
 
 vi.mock("@/lib/analytics", () => ({
   trackCourseModal: vi.fn(),
+  trackCourseQuickView: vi.fn(),
   trackCta: vi.fn(),
 }));
 vi.mock("@/lib/course-sales", () => ({

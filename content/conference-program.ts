@@ -190,9 +190,5 @@ export const conferenceProgram = {
       src: "/images/hoi-thao-quoc-te-hero.jpg",
       alt: "Hai diễn giả trình bày trước hội trường đông kín tại một hội thảo quốc tế",
     },
-    advisor: {
-      src: "/images/hoi-thao-quoc-te-trinh-bay.jpg",
-      alt: "Một diễn giả cầm micro trình bày trước khán phòng hội thảo",
-    },
   },
 } as const;

@@ -20,6 +20,7 @@ vi.mock("@/lib/course-sales", () => ({
 }));
 vi.mock("@/lib/analytics", () => ({
   trackCourseModal: vi.fn(),
+  trackCourseQuickView: vi.fn(),
   trackCta: vi.fn(),
 }));
 vi.mock("@/components/cart-provider", () => ({
@@ -137,19 +138,30 @@ describe("trang chi tiết khóa học", () => {
       { "@type": "BreadcrumbList" },
     ]);
 
+    // Bố cục theo theanalystacademy.com (xem chú thích BỐ CỤC trong page.tsx):
+    // học phí và sáu dòng `facts` nằm trong card đầu trang, kết quả đạt được
+    // đi cùng phần giới thiệu, và không còn bảng "Thông tin khóa học" riêng.
     const headings = [
+      "Khóa học gồm",
+      "Học phí",
       "Giới thiệu khóa học",
+      "Sau khóa học, bạn có thể",
       "Dành cho ai",
       "Lộ trình học",
-      "Sau khóa học",
-      "Thông tin khóa học",
       "Đánh giá học viên",
       "Khóa học khác",
     ];
     const positions = headings.map((heading) => html.indexOf(heading));
     expect(positions.every((position) => position >= 0)).toBe(true);
     expect(positions).toEqual([...positions].sort((a, b) => a - b));
+    expect(html).not.toContain("Thông tin khóa học");
+    for (const fact of course.facts) {
+      expect(html.indexOf(fact.value)).toBeLessThan(html.indexOf("Giới thiệu khóa học"));
+    }
+    // Thanh học phí cố định chỉ mount sau khi cuộn qua card học phí, nên HTML
+    // tĩnh vẫn chỉ có một nút đăng ký.
     expect(html.match(/Đăng ký học khóa này/g)).toHaveLength(1);
+    expect(html).not.toContain("course-bar-in");
     expect(html.match(/Nhắn Zalo/g)).toHaveLength(1);
   });
 

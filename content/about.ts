@@ -11,6 +11,92 @@
  * the home page remains scannable.
  */
 
+/** A caption fragment: plain text, or a phrase linked to an external page. */
+export type CaptionPart = string | { text: string; href: string };
+
+export type AdvisorPhoto = {
+  id: string;
+  src: string;
+  width: number;
+  height: number;
+  alt: string;
+  caption: readonly CaptionPart[];
+  /** CSS object-position when the frame crops the photo. */
+  position?: string;
+};
+
+// Link đã đối chiếu trực tiếp: tên và đơn vị trên profile Google Scholar khớp
+// với người trong ảnh. Hội thảo Feng Chia 2023 không có trang riêng nên dẫn về
+// Khoa Kinh tế ĐH Feng Chia, đơn vị tổ chức.
+const SCHOLAR_CHI_CHUR_CHAO = "https://scholar.google.com/citations?user=0MH8OOoAAAAJ";
+const SCHOLAR_ZAFAR_AHMED = "https://scholar.google.com/citations?user=3hR4EOkAAAAJ";
+const AGBA_URL = "https://agba.us/";
+const FCU_URL = "https://www.fcu.edu.tw/en/";
+const FCU_ECON_URL = "https://econ.fcu.edu.tw/";
+
+/**
+ * Ảnh hoạt động học thuật của cố vấn, caption theo lời chủ site. Thứ tự là
+ * từng cặp hội thảo + gặp gỡ (AGBA rồi Feng Chia) để lưới 2×2 ở /ve-hdi đọc
+ * thành hai hàng có nghĩa.
+ */
+const activityPhotos: readonly AdvisorPhoto[] = [
+  {
+    id: "agba-2024",
+    src: "/images/hoat-dong/tam-trinh-agba-2024-bangkok.jpg",
+    width: 1280,
+    height: 960,
+    alt: "TS. Tam Trinh (thứ hai từ trái) đứng cùng ba đồng nghiệp đeo thẻ hội thảo tại sảnh khách sạn tổ chức AGBA 2024",
+    caption: [
+      "TS. Tam Trinh cùng các đồng nghiệp và nhà nghiên cứu tham dự ",
+      { text: "hội thảo quốc tế AGBA 2024", href: AGBA_URL },
+      " tại Thái Lan.",
+    ],
+  },
+  {
+    id: "gs-zafar",
+    src: "/images/hoat-dong/tam-trinh-gs-zafar-agba.jpg",
+    width: 1280,
+    height: 960,
+    alt: "TS. Tam Trinh (bên trái) và GS. Zafar U. Ahmed ngồi trò chuyện bên bàn ăn trong nhà hàng",
+    caption: [
+      "TS. Tam Trinh gặp gỡ và trao đổi nghiên cứu cùng ",
+      { text: "GS. Zafar U. Ahmed", href: SCHOLAR_ZAFAR_AHMED },
+      ", Chủ tịch ",
+      { text: "AGBA", href: AGBA_URL },
+      ".",
+    ],
+  },
+  {
+    id: "feng-chia-2023",
+    src: "/images/hoat-dong/feng-chia-conference-2023.jpg",
+    width: 900,
+    height: 600,
+    alt: "Ảnh tập thể các đại biểu trước phông nền 2023 Feng Chia Conference tại Đại học Feng Chia",
+    caption: [
+      "TS. Tam Trinh tham dự ",
+      {
+        text: "2023 Feng Chia Conference on Regional Cooperation, Sustainable Development, and Green Finance",
+        href: FCU_ECON_URL,
+      },
+      " tại Đại học Feng Chia, Đài Loan, giao lưu học thuật và trao đổi nghiên cứu cùng các học giả quốc tế.",
+    ],
+  },
+  {
+    id: "gs-chao",
+    src: "/images/hoat-dong/tam-trinh-chi-chur-chao-feng-chia.jpg",
+    width: 1280,
+    height: 960,
+    alt: "TS. Tam Trinh (bên phải) và GS. Chi-Chur Chao ngồi trò chuyện bên bàn cà phê cạnh cửa kính",
+    caption: [
+      "TS. Tam Trinh gặp gỡ và trao đổi học thuật cùng ",
+      { text: "GS. Chi-Chur Chao", href: SCHOLAR_CHI_CHUR_CHAO },
+      ", Chair Professor tại ",
+      { text: "Đại học Feng Chia", href: FCU_URL },
+      ", Đài Loan.",
+    ],
+  },
+];
+
 export const about = {
   eyebrow: "Về chúng tôi",
   title: "Về HDI Research Center",
@@ -131,6 +217,7 @@ export const about = {
       src: "/images/portrait.jpg",
       alt: "Chân dung Dr. Tam Trinh",
     },
+    activityPhotos,
     paragraphs: [
       "Dr. Tam Trinh có hơn 10 năm kinh nghiệm nghiên cứu, giảng dạy và hướng dẫn học thuật. Tại HDI Research Center, ông phụ trách định hướng chuyên môn, thiết kế chương trình, cố vấn phương pháp và giám sát chất lượng học thuật.",
       "Ông đã công bố hơn 25 công trình quốc tế, trong đó có các nghiên cứu trên Energy Economics (ABDC A*), Economic Modelling, International Review of Financial Analysis và Applied Economics (ABDC A), cùng nhiều tạp chí quốc tế uy tín khác. Các nghiên cứu của ông tập trung vào kinh tế học ứng dụng, bất bình đẳng, năng lượng xanh, tài chính bền vững, bảo hiểm, thương mại quốc tế và phát triển kinh tế.",

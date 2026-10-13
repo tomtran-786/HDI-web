@@ -79,7 +79,7 @@ export function CourseList({
         </div>
       </Reveal>
 
-      <div className="grid gap-5 md:grid-cols-2">
+      <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
         {shown.map((course, i) => (
           <Reveal key={course.slug} delay={110 + i * 70} className="h-full">
             <CourseCard

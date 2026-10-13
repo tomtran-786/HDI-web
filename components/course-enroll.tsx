@@ -1,7 +1,7 @@
 "use client";
 
 import type { Course } from "@/content/course";
-import { trackCta } from "@/lib/analytics";
+import { trackCta, type CtaSource } from "@/lib/analytics";
 import {
   cardPresentation,
   type PublicAvailability,
@@ -14,36 +14,56 @@ export function CourseEnroll({
   course,
   availability,
   className = "",
+  layout = "row",
+  source = "khoa-hoc-detail",
 }: {
   course: Course;
   availability?: PublicAvailability;
   className?: string;
+  /**
+   * `row`   — hai nút cạnh nhau từ `sm` (mặc định).
+   * `stack` — xếp dọc, nút đầy bề ngang: card học phí hẹp ở đầu trang chi tiết.
+   * `pills` — hai pill nhỏ vừa chữ, nằm cùng hàng: modal xem nhanh.
+   */
+  layout?: "row" | "stack" | "pills";
+  /** Nơi đặt cụm nút, cho analytics: trang chi tiết hay modal xem nhanh. */
+  source?: CtaSource;
 }) {
   const { openCart } = useCart();
   const { buyable } = cardPresentation(availability);
+  const pills = layout === "pills";
+  const size = pills ? "px-3.5 py-2" : "px-6 py-3";
 
   return (
-    <div className={`flex flex-col gap-3 sm:flex-row ${className}`}>
+    <div
+      className={`flex ${
+        pills
+          ? "flex-wrap items-center gap-2"
+          : `flex-col gap-3 ${layout === "row" ? "sm:flex-row" : ""}`
+      } ${className}`}
+    >
       {buyable && (
         <button
           type="button"
           onClick={() => {
-            trackCta("khoa-hoc-detail", "dang-ky", course.slug);
+            trackCta(source, "dang-ky", course.slug);
             openCart(course.slug);
           }}
-          className="inline-flex flex-1 items-center justify-center gap-2 rounded-full bg-primary px-6 py-3 text-sm font-bold text-primary-fg transition hover:bg-primary-deep"
+          className={`inline-flex items-center justify-center gap-2 rounded-full bg-primary ${size} text-sm font-bold text-primary-fg transition hover:bg-primary-deep ${
+            pills ? "" : "flex-1"
+          }`}
         >
-          Đăng ký học khóa này
-          <IconArrow size={16} />
+          {pills ? "Đăng ký ngay" : "Đăng ký học khóa này"}
+          <IconArrow size={pills ? 14 : 16} />
         </button>
       )}
       <CtaLink
-        source="khoa-hoc-detail"
+        source={source}
         target="zalo"
         course={course.slug}
-        className="inline-flex items-center justify-center gap-2 rounded-full border border-line px-6 py-3 text-sm font-bold text-fg transition hover:border-primary hover:text-primary"
+        className={`inline-flex items-center justify-center gap-2 rounded-full border border-line ${size} text-sm font-bold text-fg transition hover:border-primary hover:text-primary`}
       >
-        <IconMessage size={16} />
+        <IconMessage size={pills ? 14 : 16} />
         Nhắn Zalo
       </CtaLink>
     </div>
