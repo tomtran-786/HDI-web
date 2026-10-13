@@ -11,6 +11,7 @@ import { IconArrow, IconCheck } from "@/components/ui/icons";
 import { PriceTag } from "@/components/ui/price-tag";
 import { Reveal } from "@/components/ui/reveal";
 import { Section, SectionHeading } from "@/components/ui/section";
+import { CourseCover } from "@/components/course-cover";
 import { Stars } from "@/components/ui/stars";
 import { cartModal } from "@/content/checkout";
 import {
@@ -162,6 +163,8 @@ export default async function CourseDetailPage({ params }: CoursePageProps) {
           </div>
         </div>
       </section>
+
+      <CourseCover cover={course.cover} variant="banner" sizes="100vw" eager />
 
       <Section>
         <SectionHeading eyebrow="Tổng quan" title="Giới thiệu khóa học" />
@@ -344,24 +347,31 @@ export default async function CourseDetailPage({ params }: CoursePageProps) {
                 href={`/khoa-hoc/${item.slug}`}
                 className="block h-full"
               >
-                <Card className="flex h-full flex-col p-6">
-                  <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-fg-subtle">
-                    Mã khóa {item.code} · {item.eyebrow}
-                  </p>
-                  <h3 className="mt-2 text-lg font-bold leading-snug text-fg">
-                    {item.title}
-                  </h3>
-                  <p className="mt-3 text-sm leading-relaxed text-fg-muted">
-                    {item.audience}
-                  </p>
-                  <div className="mt-4">
-                    <EnrolledPill slug={item.slug} />
-                  </div>
-                  <div className="mt-auto flex items-center justify-between gap-3 pt-6">
-                    <span className="font-bold text-primary">{item.price.amount}</span>
-                    <span className="inline-flex items-center gap-1 text-sm font-bold text-primary">
-                      Chi tiết <IconArrow size={14} />
-                    </span>
+                <Card className="group flex h-full flex-col overflow-hidden">
+                  <CourseCover
+                    cover={item.cover}
+                    variant="card"
+                    sizes="(min-width: 768px) 24rem, 100vw"
+                  />
+                  <div className="flex flex-1 flex-col p-6">
+                    <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-fg-subtle">
+                      Mã khóa {item.code} · {item.eyebrow}
+                    </p>
+                    <h3 className="mt-2 text-lg font-bold leading-snug text-fg">
+                      {item.title}
+                    </h3>
+                    <p className="mt-3 text-sm leading-relaxed text-fg-muted">
+                      {item.audience}
+                    </p>
+                    <div className="mt-4">
+                      <EnrolledPill slug={item.slug} />
+                    </div>
+                    <div className="mt-auto flex items-center justify-between gap-3 pt-6">
+                      <span className="font-bold text-primary">{item.price.amount}</span>
+                      <span className="inline-flex items-center gap-1 text-sm font-bold text-primary">
+                        Chi tiết <IconArrow size={14} />
+                      </span>
+                    </div>
                   </div>
                 </Card>
               </Link>
