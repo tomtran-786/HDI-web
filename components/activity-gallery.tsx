@@ -1,6 +1,7 @@
 import { Fragment } from "react";
 import Image from "next/image";
 import type { AdvisorPhoto, CaptionPart } from "@/content/about";
+import { ExternalLink } from "./ui/external-link";
 import { Reveal } from "./ui/reveal";
 
 /**
@@ -83,7 +84,7 @@ export function PhotoFigure({
   );
 }
 
-/** Caption có link ngoài: gạch chân để không phân biệt chỉ bằng màu. */
+/** Caption có link ngoài tới profile giáo sư và trang hội thảo. */
 export function PhotoCaption({ parts }: { parts: readonly CaptionPart[] }) {
   return (
     <>
@@ -91,17 +92,13 @@ export function PhotoCaption({ parts }: { parts: readonly CaptionPart[] }) {
         typeof part === "string" ? (
           <Fragment key={index}>{part}</Fragment>
         ) : (
-          <a
+          <ExternalLink
             key={index}
             href={part.href}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="font-semibold text-primary underline decoration-primary/30 underline-offset-2 transition-colors hover:decoration-primary"
+            className="font-semibold text-primary decoration-primary/30 hover:decoration-primary"
           >
             {part.text}
-            <span aria-hidden> ↗</span>
-            <span className="sr-only"> (mở tab mới)</span>
-          </a>
+          </ExternalLink>
         ),
       )}
     </>

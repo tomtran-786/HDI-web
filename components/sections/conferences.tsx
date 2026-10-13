@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { conferences, conferencesIntro } from "@/content/conferences";
 import { Badge } from "../ui/badge";
+import { ExternalLink } from "../ui/external-link";
 import { Section, SectionHeading } from "../ui/section";
 
 const INITIAL = 6;
@@ -31,7 +32,18 @@ export function Conferences() {
             </span>
             <div>
               <p className="text-[15px] font-semibold leading-snug text-fg">
-                {c.name}
+                {c.url ? (
+                  // Giữ màu chữ thường cho cả danh sách dài; gạch chân mảnh báo
+                  // hiệu link, hover mới chuyển sang màu primary.
+                  <ExternalLink
+                    href={c.url}
+                    className="text-fg decoration-fg-subtle/40 hover:text-primary hover:decoration-primary"
+                  >
+                    {c.name}
+                  </ExternalLink>
+                ) : (
+                  c.name
+                )}
               </p>
               <p className="mt-1 text-sm text-fg-muted">
                 {c.where} · {c.when}
