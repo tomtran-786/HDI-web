@@ -9,6 +9,10 @@ vi.mock("@/lib/analytics", () => ({
   trackCourseQuickView: vi.fn(),
   trackCta: vi.fn(),
 }));
+vi.mock("@/components/cart-provider", () => ({
+  useCart: () => ({ openCart: vi.fn() }),
+}));
+
 import { CourseCard } from "@/components/course-card";
 
 const foundation = courses.find(
@@ -25,8 +29,10 @@ describe("badge availability của thẻ khóa học", () => {
     expect(html).toContain(
       `>${formatCount(enrolledCount[foundation.slug])}</span> ${enrolledLabel}`,
     );
-    // Không đọc được thì không gắn nhãn trạng thái nào lên banner.
+    // Không đọc được thì không gắn nhãn trạng thái nào lên banner, và vẫn cho
+    // bấm đăng ký — createOrder mới là chốt chặn.
     expect(html).not.toContain("Đã hết chỗ");
+    expect(html).toContain("Đăng ký ngay");
   });
 
   it("vẫn hiển thị trạng thái hết chỗ khi database trả về rõ ràng", () => {
@@ -35,20 +41,22 @@ describe("badge availability của thẻ khóa học", () => {
     );
 
     expect(html).toContain("Đã hết chỗ");
+    // Hết chỗ thì không có nút đăng ký chết; nút chân thẻ mở xem nhanh.
+    expect(html).toContain("Xem nhanh");
+    expect(html).not.toContain("Đăng ký ngay");
   });
 });
 
 describe("thẻ khóa học dùng chung", () => {
-  it("thẻ gọn: tên trên banner, một nút \"Tìm hiểu thêm\", link thật, chưa có modal", () => {
+  it("thẻ gọn: tên trên banner, nút \"Đăng ký ngay\", link thật, chưa có modal", () => {
     const html = renderToStaticMarkup(
       <CourseCard course={foundation} availability="buyable" />,
     );
 
     expect(html).toContain(`href="/khoa-hoc/${foundation.slug}"`);
     expect(html).toContain(foundation.title.replace("&", "&amp;"));
-    expect(html).toContain("Tìm hiểu thêm");
-    // Đăng ký nằm trong modal, không nằm trên thẻ.
-    expect(html).not.toContain("Đăng ký ngay");
+    expect(html).toContain("Đăng ký ngay");
+    expect(html).not.toContain("Tìm hiểu thêm");
     expect(html).not.toContain("<dialog");
   });
 

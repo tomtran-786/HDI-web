@@ -55,6 +55,7 @@ export async function OpenCourses() {
                 course={course}
                 availability="buyable"
                 seatsLeft={remaining}
+                ctaSource="home-open-courses"
               />
             </Reveal>
           ))}

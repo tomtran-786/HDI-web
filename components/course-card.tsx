@@ -6,13 +6,18 @@ import { useState, type MouseEvent } from "react";
 import { cartModal } from "@/content/checkout";
 import type { Course } from "@/content/course";
 import { enrolledCount, enrolledLabel } from "@/content/course-hype";
-import { trackCourseQuickView } from "@/lib/analytics";
+import {
+  trackCourseQuickView,
+  trackCta,
+  type CtaSource,
+} from "@/lib/analytics";
 import {
   cardPresentation,
   type PublicAvailability,
 } from "@/lib/course-availability";
 import { formatCount } from "@/lib/format";
 import type { ReviewSummary } from "@/lib/reviews";
+import { useCart } from "./cart-provider";
 import { factValue } from "./course-facts";
 import { CourseQuickView } from "./course-quick-view";
 import { IconArrow } from "./ui/icons";
@@ -131,10 +136,13 @@ function CourseBanner({
  * Thẻ khóa dùng chung cho trang chủ ("Khóa học đang nhận học viên"), /khoa-hoc
  * và "Khóa học khác" — theo thẻ khóa của theanalystacademy.com: banner mang tên
  * khóa, một dòng meta (thời lượng | số học viên), mô tả hai dòng, hàng giảng
- * viên + đánh giá, chân thẻ học phí + "Tìm hiểu thêm".
+ * viên + đánh giá, chân thẻ học phí + "Đăng ký ngay".
  *
- * Thẻ chỉ để lướt; bấm vào đâu trên thẻ cũng mở modal xem nhanh
- * (components/course-quick-view.tsx), nơi có đủ thông tin và nút đăng ký. Một
+ * Bấm vào đâu trên thẻ cũng mở modal xem nhanh
+ * (components/course-quick-view.tsx). Riêng nút chân thẻ: khóa đang bán thì
+ * "Đăng ký ngay" vào thẳng giỏ; khóa chưa mở / hết chỗ không đăng ký được nên
+ * nút là "Xem nhanh". `cardPresentation` fail-open khi không đọc được
+ * database, như mọi nơi khác. Một
  * link phủ cả thẻ (`absolute inset-0`) trỏ thật tới trang chi tiết, nên
  * Ctrl/⌘-click, chuột giữa và crawler vẫn đi tới đó; click trơn thì mở modal.
  */
@@ -143,6 +151,7 @@ export function CourseCard({
   summary,
   availability,
   seatsLeft,
+  ctaSource = "khoa-hoc-card",
   sizes = "(min-width: 1280px) 24rem, (min-width: 768px) 50vw, 100vw",
 }: {
   course: Course;
@@ -151,10 +160,13 @@ export function CourseCard({
   availability?: PublicAvailability;
   /** Số chỗ còn lại thật — chỉ trang chủ có, vì chỉ ở đó thẻ được lọc theo ghế. */
   seatsLeft?: number;
+  /** Nguồn của nút "Đăng ký ngay" cho analytics; trang chủ giữ nguồn cũ của nó. */
+  ctaSource?: CtaSource;
   sizes?: string;
 }) {
   const [open, setOpen] = useState(false);
-  const { badge } = cardPresentation(availability);
+  const { openCart } = useCart();
+  const { badge, buyable } = cardPresentation(availability);
   const duration = factValue(course, "Thời lượng");
   // Có số chỗ thật thì "Còn N chỗ" đã nói điều badge định nói.
   const status =
@@ -233,10 +245,17 @@ export function CourseCard({
           </div>
           <button
             type="button"
-            onClick={openQuickView}
+            onClick={() => {
+              if (buyable) {
+                trackCta(ctaSource, "dang-ky", course.slug);
+                openCart(course.slug);
+              } else {
+                openQuickView();
+              }
+            }}
             className="relative z-10 inline-flex shrink-0 items-center gap-1.5 rounded-full bg-primary px-4 py-2 text-sm font-bold text-primary-fg transition hover:bg-primary-deep"
           >
-            Tìm hiểu thêm
+            {buyable ? "Đăng ký ngay" : "Xem nhanh"}
             <IconArrow size={14} />
           </button>
         </div>
