@@ -2,8 +2,8 @@
  * The courses listed in #khoa-hoc.
  *
  * SOURCES — most published facts below are transcribed from the sources noted
- * here. The merged SPSS & Stata course and the Stata econometrics course are
- * the authored exceptions documented in F and G.
+ * here. The merged SPSS course and the Stata econometrics course are the
+ * authored exceptions documented in F and G.
  *
  * A. `viet-bao-cao-khoa-hoc` — the eight session titles, the tuition, the group
  *    discount, the format, the duration and the class hours all come from the
@@ -54,6 +54,17 @@
  * states neither. The old Stata slug is retained only as a public redirect; no
  * database record is changed.
  *
+ *    On 2026-10-14 the owner merged this course and the former
+ *    `spss-smartpls-ai` course ("Thiết kế nghiên cứu và phân tích dữ liệu với
+ *    SPSS & SmartPLS") into one SPSS-only course, "Phân tích định lượng với
+ *    SPSS". The owner supplied the title, the audience, the intro, the five
+ *    session titles, the format, the materials, the replay policy, the tuition
+ *    and the group discount in chat. The Stata and SmartPLS content was dropped.
+ *    The topics under each session are carried over from the two previous
+ *    syllabi at the owner's request, not new text from the owner. As with the
+ *    Stata merge, `spss-smartpls-ai` survives only as a public redirect and no
+ *    database record is changed.
+ *
  * G. `kinh-te-luong-stata-ai` was re-authored on 2026-10-05 from the
  * owner-supplied syllabus "Stata course.docx" ("Stata trong nghiên cứu định
  * lượng"). The title, audience groups, five sessions (each split into
@@ -90,7 +101,7 @@
  * in content/course-hype.ts, separate from both this sourced content and real
  * enrollment data.
  *
- * BỘ NHÃN `facts` — tám khóa dùng chung SÁU nhãn, đúng thứ tự này:
+ * BỘ NHÃN `facts` — bảy khóa dùng chung SÁU nhãn, đúng thứ tự này:
  *
  *    Hình thức · Thời lượng · Lịch học · Sĩ số · Học liệu · Xem lại
  *
@@ -161,7 +172,7 @@ export type CoursePhase = {
  *
  * `null` KHÔNG phải "quên điền": nó là lời khai rằng khóa chưa có ngày công bố
  * được, đúng với ô "Lịch học" đang để `FACT_TBA` hoặc chỉ có khung giờ. Trường
- * này BẮT BUỘC ở cả tám khóa — thêm một khóa mới mà quên khai báo thì TypeScript
+ * này BẮT BUỘC ở cả bảy khóa — thêm một khóa mới mà quên khai báo thì TypeScript
  * làm hỏng build, thay vì khóa đó im lặng biến mất khỏi dải.
  */
 export type CourseOpening = { startDate: string } | null;
@@ -193,7 +204,6 @@ export const COURSE_SLUGS = [
   "nckh-ung-dung-ai-xuat-ban-quoc-te",
   "training-tieu-luan-nckh-kltn",
   "nckh-chuyen-sau-spss",
-  "spss-smartpls-ai",
   "kinh-te-luong-stata-ai",
   "viet-bai-tap-chi",
   "viet-bao-cao-khoa-hoc",
@@ -210,7 +220,9 @@ export type CourseSlug = (typeof COURSE_SLUGS)[number];
  *   giả (giấy phép Unsplash không bắt buộc ghi nguồn, nhưng HDI vẫn ghi).
  * "logos" — panel logo cho khóa dạy phần mềm. Logo chỉ để mô tả đúng phần mềm
  *   được dạy, không ngụ ý hãng tài trợ hay hợp tác. `tile` đánh dấu logo vốn là
- *   một khối màu (logo SPSS) nên không đặt trong thẻ trắng.
+ *   một khối màu (logo SPSS) nên không đặt trong thẻ trắng. `background` là ảnh
+ *   Unsplash lót sau hàng logo (cùng thư mục, cùng cách ghi credit như "photo"),
+ *   mỗi khóa một ảnh để các thẻ đứng cạnh nhau không trùng.
  */
 export type CourseCover =
   | {
@@ -230,6 +242,7 @@ export type CourseCover =
       }[];
       /** Nhãn phụ dạng chip cạnh các logo, ví dụ "+ AI". */
       extra?: string;
+      background: { src: string; credit: { author: string; url: string } };
     };
 
 const LOGO_SPSS = {
@@ -244,12 +257,6 @@ const LOGO_STATA = {
   alt: "Logo Stata",
   width: 415,
   height: 96,
-};
-const LOGO_SMARTPLS = {
-  src: "/images/logos/smartpls.png",
-  alt: "Logo SmartPLS",
-  width: 370,
-  height: 240,
 };
 
 export type Course = {
@@ -358,9 +365,9 @@ const REGISTER_NOTE_GENERIC =
 /**
  * Ô `facts` chưa có dữ liệu thật.
  *
- * Tám khóa dùng chung MỘT bộ nhãn theo thứ tự cố định (xem khối "BỘ NHÃN
+ * Bảy khóa dùng chung MỘT bộ nhãn theo thứ tự cố định (xem khối "BỘ NHÃN
  * `facts`" ở đầu file), nên khóa nào chưa biết một con số vẫn phải có dòng đó —
- * bỏ dòng đi thì bảng thông tin của tám trang lại lệch nhau như trước.
+ * bỏ dòng đi thì bảng thông tin của bảy trang lại lệch nhau như trước.
  *
  * Một hằng số chứ không phải chuỗi gõ tay ở từng chỗ: đây là danh sách việc còn
  * nợ, và `grep FACT_TBA content/course.ts` phải liệt kê được đúng những ô đang
@@ -370,8 +377,8 @@ const REGISTER_NOTE_GENERIC =
 const FACT_TBA = "Sẽ thông báo";
 
 /**
- * Một giảng viên đứng CẢ TÁM khóa, nên hồ sơ được tách ra đây thay vì chép lại
- * — sửa một chỗ là cả tám trang cập nhật.
+ * Một giảng viên đứng CẢ BẢY khóa, nên hồ sơ được tách ra đây thay vì chép lại
+ * — sửa một chỗ là cả bảy trang cập nhật.
  *
  * Chủ dự án xác nhận điều này ngày 2026-08-31, và đó là nguồn duy nhất cho
  * việc gán giảng viên hiện nay. Khối "HISTORICAL ATTRIBUTION" ở đầu file ghi
@@ -414,8 +421,8 @@ export const coursesIntro = {
 
 /**
  * ORDER — the currently promoted intake comes first, followed by the existing
- * learning path: foundations (tiểu luận/NCKH/KLTN) → SPSS & Stata gộp → hai khóa
- * chuyên biệt SPSS–SmartPLS và kinh tế lượng Stata → viết bài tạp chí → viết
+ * learning path: foundations (tiểu luận/NCKH/KLTN) → phân tích định lượng với
+ * SPSS → kinh tế lượng Stata → viết bài tạp chí → viết
  * luận văn/báo cáo khoa học → công cụ ChatGPT. Nothing reads a course by index
  * (cart, seed and lookups all go by slug).
  *
@@ -817,26 +824,49 @@ export const courses = [
   {
     code: "SPSS",
     slug: "nckh-chuyen-sau-spss",
-    eyebrow: "Khóa chuyên sâu · 06 module thực hành",
-    title: "Phân tích định lượng với SPSS, Stata & AI",
-    cover: { kind: "logos", logos: [LOGO_SPSS, LOGO_STATA], extra: "+ AI" },
+    eyebrow: "Khóa chuyên sâu · Dự kiến khai giảng 02/11/2026",
+    title: "Phân tích định lượng với SPSS",
+    cover: {
+      kind: "logos",
+      logos: [LOGO_SPSS],
+      background: {
+        src: "/images/khoa-hoc/nckh-chuyen-sau-spss.jpg",
+        credit: {
+          author: "Carlos Muza",
+          url: "https://unsplash.com/photos/laptop-computer-on-glass-top-table-hpjSkU2UYSU",
+        },
+      },
+    },
     audience:
-      "Dành cho sinh viên năm 3–4, học viên cao học, nghiên cứu sinh, giảng viên và chuyên viên phân tích đang thực hiện nghiên cứu định lượng bằng dữ liệu khảo sát hoặc dữ liệu thống kê có sẵn",
+      "Dành cho sinh viên, học viên cao học, nghiên cứu sinh và người cần thực hiện nghiên cứu định lượng với SPSS",
     intro:
-      "Nghiên cứu định lượng thường đi theo một trong hai hướng dữ liệu: dữ liệu sơ cấp thu thập trực tiếp qua khảo sát, và dữ liệu thứ cấp khai thác từ báo cáo thống kê hoặc cơ sở dữ liệu doanh nghiệp, quốc gia và quốc tế. Khóa học đưa cả hai hướng vào một lộ trình thống nhất: SPSS cho dữ liệu khảo sát, Stata cho dữ liệu thứ cấp và dữ liệu bảng, từ xây dựng câu hỏi và mô hình, thiết kế dữ liệu, lựa chọn phương pháp đến phân tích và trình bày kết quả. AI được tích hợp có kiểm soát để hỗ trợ dựng mô hình, thiết kế bảng hỏi, viết câu lệnh, đọc kết quả và rà soát tính nhất quán. Buổi cuối là Research Clinic, nơi giảng viên góp ý trực tiếp đề tài của từng học viên. Người học nên có kiến thức cơ bản về thống kê hoặc phương pháp nghiên cứu; những nội dung cần thiết được ôn tập cô đọng ngay ở module đầu tiên.",
+      "Khóa học gồm 05 buổi, dành cho sinh viên, học viên cao học, nghiên cứu sinh và người cần thực hiện nghiên cứu định lượng với SPSS. Học viên được hướng dẫn từ thiết kế nghiên cứu, chuẩn bị dữ liệu đến phân tích và diễn giải kết quả. Buổi cuối dành cho ôn tập, giải đáp thắc mắc và tư vấn trực tiếp các đề tài nghiên cứu của học viên.",
     curriculum: "modules",
     price: {
       amount: "1.100.000 đ",
-      note: "Giảm 10% cho nhóm từ 03 người",
-      group: true,
+      note: "Đăng ký nhóm từ 03 người: 990.000 đ mỗi người",
       vnd: 1100000,
+      group: true,
+      // Đúng bằng bậc 10% chung của lib/group-pricing.ts (1.100.000 × 0,9), ghi
+      // ra đây để trang khóa học in được giá ưu đãi nổi bật. prisma/seed.ts nạp
+      // `deal.vnd` xuống courses.group_price_vnd; sửa con số thì chạy lại seed.
+      deal: {
+        amount: "990.000 đ",
+        vnd: 990000,
+        condition: "mỗi người · nhóm từ 03 bạn",
+      },
     },
-    // Chưa chốt ngày — ô "Lịch học" vẫn là FACT_TBA. Năm khóa dưới đây cũng vậy.
-    opening: null,
+    // Chủ khóa báo trong chat ngày 2026-10-14: tối thứ Hai hằng tuần, 19:00 –
+    // 21:00, dự kiến khai giảng 02/11/2026. Năm buổi 02/11 – 30/11/2026 khớp
+    // poster public/images/lich-khai-giang-09-11-2026.png.
+    opening: { startDate: "2026-11-02" },
     facts: [
       { label: "Hình thức", value: "Trực tuyến qua Zoom" },
-      { label: "Thời lượng", value: "06 buổi" },
-      { label: "Lịch học", value: FACT_TBA },
+      { label: "Thời lượng", value: "05 buổi" },
+      {
+        label: "Lịch học",
+        value: "Thứ Hai hằng tuần, 02/11 – 30/11/2026 · 19:00 – 21:00",
+      },
       { label: "Sĩ số", value: FACT_TBA },
       { label: "Học liệu", value: "Recording và bộ dữ liệu thực hành" },
       { label: "Xem lại", value: "02 năm kể từ ngày đăng ký" },
@@ -851,8 +881,6 @@ export const courses = [
           "Xây dựng mô hình và giả thuyết nghiên cứu định lượng",
           "Xác định biến phụ thuộc, độc lập, trung gian, điều tiết và kiểm soát",
           "Phân biệt dữ liệu sơ cấp và dữ liệu thứ cấp",
-          "Nhận diện dữ liệu cắt ngang, chuỗi thời gian và dữ liệu bảng",
-          "Lựa chọn giữa SPSS và Stata theo câu hỏi, dữ liệu và phương pháp",
           "Xây dựng kế hoạch thu thập, quản lý và phân tích dữ liệu",
           "Liên kết câu hỏi, giả thuyết, biến số, dữ liệu và kỹ thuật phân tích",
           "Ứng dụng AI để phát triển mô hình, kiểm tra logic và xây dựng kế hoạch phân tích",
@@ -894,67 +922,44 @@ export const courses = [
         ],
       },
       {
-        name: "Phân tích dữ liệu thứ cấp và dữ liệu bảng trên Stata",
+        name: "Thực hành tổng hợp trên SPSS và viết phần kết quả nghiên cứu",
         summary:
-          "Sản phẩm: do-file, dữ liệu sạch và bảng so sánh OLS, FE, RE, FGLS.",
+          "Sản phẩm: bộ bảng kết quả và phần kết quả nghiên cứu hoàn chỉnh.",
         sessions: [
-          "Tìm kiếm, đánh giá và tổ chức dữ liệu thứ cấp",
-          "Nhập, nối, chuyển đổi và làm sạch dữ liệu trên Stata",
-          "Xây dựng do-file, log-file và quy trình phân tích có thể tái lập",
-          "Thống kê mô tả, tương quan và trực quan hóa dữ liệu",
-          "Ước lượng OLS và diễn giải các chỉ số chính",
-          "Khai báo dữ liệu bảng và kiểm tra cấu trúc dữ liệu",
-          "Ước lượng Pooled OLS, Fixed Effects, Random Effects và FGLS",
-          "Kiểm định lựa chọn mô hình và xử lý các vấn đề sai số",
-          "Ứng dụng AI để xây dựng do-file, phát hiện lỗi và so sánh các estimator",
-          "Thực hành từ dữ liệu thứ cấp thô đến mô hình dữ liệu bảng hoàn chỉnh",
+          "Thực hành trọn vẹn quy trình phân tích trên một bộ dữ liệu khảo sát",
+          "Lập bảng thống kê mô tả, Cronbach’s Alpha, EFA và hồi quy theo chuẩn khóa luận, luận văn",
+          "Kiểm định giả thuyết và viết phần kết quả hồi quy",
+          "Phân biệt ý nghĩa thống kê và ý nghĩa thực tiễn của kết quả",
+          "Liên hệ kết quả với giả thuyết và các nghiên cứu trước",
+          "Ứng dụng AI để rà soát bảng kết quả và cách diễn giải",
         ],
       },
       {
-        name: "Các phương pháp mở rộng trên Stata",
-        summary:
-          "Sản phẩm: một mô hình nâng cao và bảng diễn giải các kiểm định cần thiết.",
-        sessions: [
-          "Nhận diện nội sinh và phân biệt tương quan với quan hệ nhân quả",
-          "Biến công cụ và ước lượng IV/2SLS",
-          "Kiểm định nội sinh, công cụ yếu và các hạn chế quá xác định",
-          "Mô hình dữ liệu bảng động: Difference GMM và System GMM",
-          "Lựa chọn công cụ và diễn giải Hansen test, AR(1), AR(2)",
-          "Điều kiện sử dụng và cấu trúc của Panel ARDL–PMG",
-          "Linear PMG: tác động ngắn hạn, dài hạn và hệ số hiệu chỉnh sai số",
-          "Nonlinear PMG: phân rã cú sốc dương–âm và kiểm định bất đối xứng",
-          "Ứng dụng AI để hỗ trợ viết lệnh, so sánh mô hình và rà soát kết luận kinh tế lượng",
-          "Thực hành lựa chọn và triển khai phương pháp phù hợp trên dữ liệu mẫu",
-        ],
-      },
-      {
-        name: "Ôn tập và Research Clinic — tư vấn đề tài học viên",
+        name: "Ôn tập, giải đáp thắc mắc và tư vấn đề tài nghiên cứu cho học viên",
         summary:
           "Sản phẩm: phiếu góp ý, phương pháp đề xuất và kế hoạch hành động riêng cho từng học viên.",
         sessions: [
-          "Hệ thống hóa quy trình nghiên cứu với dữ liệu sơ cấp và thứ cấp",
-          "Ôn tập cách lựa chọn SPSS, Stata và kỹ thuật phân tích phù hợp",
+          "Hệ thống hóa quy trình nghiên cứu định lượng với SPSS",
+          "Ôn tập cách lựa chọn kỹ thuật phân tích phù hợp",
           "Học viên trình bày đề tài, dữ liệu và tiến độ hiện tại",
           "Góp ý câu hỏi, mục tiêu, mô hình và giả thuyết nghiên cứu",
-          "Đánh giá thang đo, bảng hỏi hoặc nguồn dữ liệu thứ cấp",
+          "Đánh giá thang đo và bảng hỏi",
           "Tư vấn phương pháp chọn mẫu, cấu trúc dữ liệu và phạm vi nghiên cứu",
-          "Lựa chọn phương pháp ước lượng và hệ thống kiểm định phù hợp",
           "Góp ý output, bảng kết quả và cách diễn giải hiện có",
           "Ứng dụng AI để rà soát đề tài và xây dựng danh mục nội dung cần điều chỉnh",
           "Đề xuất hướng phát triển và lập kế hoạch triển khai tiếp theo",
           {
-            // Phần 5 của giáo trình gốc là một danh mục đứng riêng, không phải
-            // một module thứ bảy. Nó nằm ở đây vì nó chỉ có nghĩa khi gắn với
-            // buổi Research Clinic — học viên không gửi thì buổi đó không tư vấn
-            // được gì cụ thể.
-            text: "Tài liệu học viên gửi trước Module 6, ít nhất 3–5 ngày",
+            // Danh mục đứng riêng của giáo trình cũ, giữ lại vì nó chỉ có
+            // nghĩa khi gắn với buổi tư vấn — học viên không gửi thì buổi đó
+            // không góp ý được gì cụ thể.
+            text: "Tài liệu học viên gửi trước Buổi 5, ít nhất 3–5 ngày",
             points: [
               "Tên đề tài",
               "Bối cảnh, câu hỏi và mục tiêu nghiên cứu",
               "Mô hình và giả thuyết, nếu có",
               "Thang đo, bảng hỏi hoặc nguồn dữ liệu",
               "Mô tả cấu trúc dữ liệu",
-              "File SPSS, Stata hoặc do-file hiện có, nếu có",
+              "File dữ liệu SPSS hoặc Syntax hiện có, nếu có",
               "Kết quả phân tích hiện tại, nếu có",
               "Nội dung đã sử dụng AI hỗ trợ, nếu có",
               "Tối đa ba vấn đề cần giảng viên tư vấn",
@@ -964,155 +969,13 @@ export const courses = [
       },
     ],
     outcomes: [
-      "Phân biệt và lựa chọn dữ liệu sơ cấp hoặc thứ cấp phù hợp với đề tài.",
       "Xây dựng câu hỏi, giả thuyết và mô hình nghiên cứu định lượng.",
       "Thiết kế thang đo, bảng hỏi và kế hoạch chọn mẫu.",
-      "Chuẩn bị, làm sạch và quản lý dữ liệu nghiên cứu.",
-      "Phân tích dữ liệu khảo sát bằng SPSS.",
+      "Chuẩn bị, làm sạch và quản lý dữ liệu khảo sát trên SPSS.",
       "Thực hiện Cronbach’s Alpha, EFA, kiểm định khác biệt và hồi quy.",
-      "Phân tích dữ liệu thứ cấp và dữ liệu bảng bằng Stata.",
-      "Lựa chọn giữa OLS, FE, RE và phương pháp hiệu chỉnh phù hợp.",
-      "Nhận diện nội sinh và tiếp cận IV/2SLS, GMM.",
-      "Hiểu và triển khai Linear và Nonlinear Panel ARDL–PMG.",
-      "Xuất bảng và diễn giải kết quả theo chuẩn học thuật.",
+      "Lập bảng và viết phần kết quả nghiên cứu theo chuẩn học thuật.",
       "Sử dụng AI để hỗ trợ phân tích nhưng vẫn bảo đảm khả năng kiểm chứng.",
       "Xây dựng kế hoạch hoàn thiện đề tài sau buổi tư vấn trực tiếp.",
-    ],
-    instructor: INSTRUCTOR_TAM,
-    registerNote: REGISTER_NOTE_GENERIC,
-  },
-
-  {
-    code: "SMARTPLS",
-    slug: "spss-smartpls-ai",
-    eyebrow: "Khóa chuyên sâu · 06 module thực hành",
-    title: "Thiết kế nghiên cứu và phân tích dữ liệu với SPSS & SmartPLS",
-    cover: { kind: "logos", logos: [LOGO_SPSS, LOGO_SMARTPLS] },
-    audience:
-      "Dành cho sinh viên đại học, học viên cao học và người đang thực hiện nghiên cứu định lượng",
-    intro:
-      "Khóa học cung cấp quy trình thực hành toàn diện, từ xác định vấn đề, xây dựng mô hình, thiết kế bảng hỏi đến xử lý, phân tích và trình bày dữ liệu bằng SPSS và SmartPLS. Học viên được hướng dẫn kiểm chứng thông tin, bảo vệ dữ liệu và trình bày kết quả theo chuẩn mực liêm chính học thuật.",
-    curriculum: "modules",
-    price: {
-      amount: "1.000.000 đ",
-      note: "Giảm 10% cho nhóm từ 03 người",
-      group: true,
-      vnd: 1000000,
-    },
-    opening: null,
-    facts: [
-      { label: "Hình thức", value: "Lý thuyết cô đọng kết hợp thực hành" },
-      { label: "Thời lượng", value: "06 module, có buổi Research Clinic góp ý đề tài" },
-      { label: "Lịch học", value: FACT_TBA },
-      { label: "Sĩ số", value: FACT_TBA },
-      { label: "Học liệu", value: "Recording và bộ dữ liệu thực hành" },
-      { label: "Xem lại", value: "02 năm kể từ ngày đăng ký" },
-    ],
-    phases: [
-      {
-        name: "Thiết kế nghiên cứu và xây dựng mô hình",
-        summary:
-          "Sản phẩm: câu hỏi, mục tiêu, mô hình, giả thuyết và kế hoạch phân tích sơ bộ.",
-        sessions: [
-          "Xác định vấn đề và khoảng trống nghiên cứu",
-          "Xây dựng câu hỏi và mục tiêu nghiên cứu",
-          "Phân biệt nghiên cứu khám phá, mô tả, giải thích và dự báo",
-          "Lựa chọn phương pháp định tính, định lượng hoặc hỗn hợp",
-          "Xác định biến độc lập, phụ thuộc, trung gian, điều tiết và kiểm soát",
-          "Lựa chọn lý thuyết nền và xây dựng khung lý thuyết",
-          "Xây dựng mô hình và giả thuyết nghiên cứu",
-          "Lập kế hoạch thu thập và phân tích dữ liệu",
-          "Thực hành xây dựng mô hình và kế hoạch phân tích cho một đề tài cụ thể",
-        ],
-      },
-      {
-        name: "Thiết kế thang đo, bảng hỏi và chuẩn bị dữ liệu",
-        summary:
-          "Sản phẩm: bảng hỏi, codebook và file dữ liệu SPSS đã được làm sạch.",
-        sessions: [
-          "Phân biệt khái niệm nghiên cứu, biến quan sát và biến tiềm ẩn",
-          "Các loại thang đo và nguyên tắc mã hóa dữ liệu",
-          "Tìm kiếm, lựa chọn và điều chỉnh thang đo từ nghiên cứu trước",
-          "Thiết kế cấu trúc và nội dung bảng hỏi khoa học",
-          "Dịch thuật, hiệu chỉnh thang đo và thực hiện pilot test",
-          "Xác định tổng thể, phương pháp chọn mẫu và cỡ mẫu",
-          "Khởi tạo, đặt tên, mã hóa và gắn nhãn biến trên SPSS",
-          "Phát hiện và xử lý dữ liệu thiếu, ngoại lệ, biến đảo chiều và câu trả lời thiếu tin cậy",
-          "Thực hành thiết kế bảng hỏi và làm sạch bộ dữ liệu khảo sát",
-        ],
-      },
-      {
-        name: "Thống kê mô tả, kiểm định khác biệt và EFA trên SPSS",
-        summary:
-          "Sản phẩm: bảng thống kê mô tả, kiểm định khác biệt, Cronbach’s Alpha, EFA và phần diễn giải.",
-        sessions: [
-          "Thống kê mô tả đặc điểm mẫu và các biến nghiên cứu",
-          "Lựa chọn kỹ thuật kiểm định theo câu hỏi nghiên cứu và loại dữ liệu",
-          "Kiểm định sự khác biệt giữa hai nhóm bằng Independent-samples t-test",
-          "Kiểm định sự khác biệt giữa nhiều nhóm bằng One-way ANOVA",
-          "Đánh giá độ tin cậy thang đo bằng Cronbach’s Alpha và tương quan biến–tổng",
-          "Phân biệt Principal Component Analysis và Exploratory Factor Analysis",
-          "Đánh giá KMO, Bartlett’s Test, factor loading và tổng phương sai trích",
-          "Lựa chọn phép xoay, xác định số nhân tố và tạo biến đại diện",
-          "Thực hành phân tích và trình bày bảng kết quả theo chuẩn khóa luận, luận văn",
-        ],
-      },
-      {
-        name: "Phân tích hồi quy trên SPSS",
-        summary:
-          "Sản phẩm: mô hình hồi quy, kết quả kiểm tra giả định, bảng kiểm định giả thuyết và phần diễn giải.",
-        sessions: [
-          "Phân tích tương quan và lựa chọn mô hình hồi quy phù hợp",
-          "Thực hiện hồi quy tuyến tính OLS đơn biến và đa biến",
-          "Đưa biến kiểm soát, biến giả và biến tương tác vào mô hình",
-          "Kiểm tra đa cộng tuyến bằng VIF và Tolerance",
-          "Kiểm tra tính tuyến tính, phần dư, phương sai sai số và quan sát ảnh hưởng",
-          "Diễn giải R², Adjusted R², F-test, hệ số hồi quy và p-value",
-          "Phân biệt ý nghĩa thống kê và ý nghĩa thực tiễn của kết quả",
-          "Thực hiện Binary Logistic Regression và diễn giải odds ratio",
-          "Thực hành lập bảng, kiểm định giả thuyết và viết phần kết quả hồi quy",
-        ],
-      },
-      {
-        name: "Phân tích dữ liệu với SmartPLS",
-        summary:
-          "Sản phẩm: mô hình SmartPLS, bảng đánh giá thang đo, kết quả kiểm định giả thuyết và phần diễn giải.",
-        sessions: [
-          "Xác định trường hợp phù hợp và những lưu ý khi sử dụng SmartPLS",
-          "Chuẩn bị, kiểm tra và nhập dữ liệu vào SmartPLS",
-          "Khởi tạo dự án và xây dựng mô hình nghiên cứu trên phần mềm",
-          "Chạy mô hình và đánh giá outer loading của các biến quan sát",
-          "Đánh giá độ tin cậy bằng Cronbach’s Alpha, rho_A và Composite Reliability",
-          "Đánh giá giá trị hội tụ bằng AVE và giá trị phân biệt bằng HTMT",
-          "Kiểm tra VIF, path coefficient, R² và f²",
-          "Chạy bootstrapping, kiểm định giả thuyết và phân tích tác động trực tiếp, gián tiếp",
-          "Thực hành toàn bộ quy trình SmartPLS và giới thiệu phân tích trung gian, điều tiết",
-        ],
-      },
-      {
-        name: "Research Clinic – thảo luận và góp ý đề tài",
-        summary:
-          "Sản phẩm: phiếu góp ý, danh mục điều chỉnh và kế hoạch hành động dành riêng cho từng học viên.",
-        sessions: [
-          "Học viên trình bày đề tài, tiến độ và những khó khăn hiện tại",
-          "Góp ý tên đề tài, vấn đề, câu hỏi và mục tiêu nghiên cứu",
-          "Đánh giá cơ sở lý thuyết, mô hình và giả thuyết nghiên cứu",
-          "Góp ý thang đo, bảng hỏi và phương pháp thu thập dữ liệu",
-          "Tư vấn đối tượng khảo sát, phương pháp chọn mẫu và cỡ mẫu",
-          "Lựa chọn kỹ thuật phân tích phù hợp với câu hỏi và đặc điểm dữ liệu",
-          "Xác định phạm vi sử dụng SPSS, hồi quy hoặc SmartPLS",
-          "Góp ý dữ liệu, kết quả phân tích và cách diễn giải hiện có",
-          "Đề xuất hướng nghiên cứu và lập kế hoạch triển khai tiếp theo cho từng đề tài",
-        ],
-      },
-    ],
-    outcomes: [
-      "Xây dựng được câu hỏi, mục tiêu, mô hình và giả thuyết nghiên cứu kèm kế hoạch phân tích phù hợp.",
-      "Thiết kế thang đo, bảng hỏi khoa học và làm sạch bộ dữ liệu khảo sát trên SPSS.",
-      "Thực hiện và diễn giải thống kê mô tả, Independent-samples t-test, One-way ANOVA, Cronbach’s Alpha và EFA.",
-      "Chạy và kiểm định hồi quy OLS đơn biến, đa biến và Binary Logistic Regression với đầy đủ kiểm tra giả định.",
-      "Thực hiện quy trình SmartPLS: đánh giá mô hình đo lường, mô hình cấu trúc, bootstrapping và phân tích trung gian, điều tiết.",
-      "Trình bày bảng kết quả và phần diễn giải theo chuẩn khóa luận, luận văn.",
     ],
     instructor: INSTRUCTOR_TAM,
     registerNote: REGISTER_NOTE_GENERIC,
@@ -1123,7 +986,17 @@ export const courses = [
     slug: "kinh-te-luong-stata-ai",
     eyebrow: "Khóa chuyên sâu · Khai giảng tháng 11/2026",
     title: "Stata trong nghiên cứu định lượng",
-    cover: { kind: "logos", logos: [LOGO_STATA] },
+    cover: {
+      kind: "logos",
+      logos: [LOGO_STATA],
+      background: {
+        src: "/images/khoa-hoc/kinh-te-luong-stata-ai.jpg",
+        credit: {
+          author: "Mika Baumeister",
+          url: "https://unsplash.com/photos/white-printing-paper-with-numbers-Wpnoqo2plFA",
+        },
+      },
+    },
     audience:
       "Dành cho người làm nghiên cứu định lượng, đã có kiến thức cơ bản về thống kê và hồi quy, muốn dùng Stata theo quy trình nghiên cứu, khai thác ChatGPT có kiểm chứng và định hướng công bố quốc tế",
     audienceProfiles: [
@@ -1155,9 +1028,17 @@ export const courses = [
     curriculum: "modules",
     price: {
       amount: "1.100.000 đ",
-      note: "Giảm 10% cho nhóm từ 03 người",
-      group: true,
+      note: "Đăng ký nhóm từ 03 người: 990.000 đ mỗi người",
       vnd: 1100000,
+      group: true,
+      // Đúng bằng bậc 10% chung của lib/group-pricing.ts (1.100.000 × 0,9), ghi
+      // ra đây để trang khóa học in được giá ưu đãi nổi bật. prisma/seed.ts nạp
+      // `deal.vnd` xuống courses.group_price_vnd; sửa con số thì chạy lại seed.
+      deal: {
+        amount: "990.000 đ",
+        vnd: 990000,
+        condition: "mỗi người · nhóm từ 03 bạn",
+      },
     },
     // Mới chốt tháng khai giảng, chưa có ngày: `null` là lời khai "chưa công bố
     // ngày". Khi có ngày thì sửa cả ba chỗ — `opening`, ô "Lịch học", `eyebrow`.

@@ -23,12 +23,13 @@ describe("<OpeningPoster>", () => {
     expect(html).toContain("data-opening-poster");
     // `next/image` mã hóa `src` thành `/_next/image?url=%2Fimages%2F...`, nên
     // bám vào tên file trần thay vì nguyên đường dẫn có dấu `/`.
-    expect(html).toContain("lich-khai-giang-09-10-2026.png");
+    expect(html).toContain("lich-khai-giang-09-11-2026.png");
     expect(html).toContain("Lịch khai giảng các khóa đang mở đăng ký");
   });
 
-  it("alt text gọi khóa Stata đúng tên khóa trong content/course.ts", () => {
+  it("alt text gọi khóa Stata và SPSS đúng tên khóa trong content/course.ts", () => {
     const stata = bySlug("kinh-te-luong-stata-ai");
+    const spss = bySlug("nckh-chuyen-sau-spss");
     const html = renderToStaticMarkup(
       <OpeningPoster
         openCourses={[{ course: bySlug(AIQT), remaining: 15 }]}
@@ -37,6 +38,7 @@ describe("<OpeningPoster>", () => {
 
     // Lấy `title` từ nguồn thật để lần đổi tên khóa sau không làm alt lệch nữa.
     expect(html).toContain(`${stata.code} — ${stata.title}`);
+    expect(html).toContain(`${spss.code} — ${spss.title}`);
     expect(html).not.toContain("Phân tích định lượng với Stata");
   });
 

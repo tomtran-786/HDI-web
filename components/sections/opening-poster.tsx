@@ -7,7 +7,7 @@ import { Reveal } from "../ui/reveal";
  * (`OpeningTicker`) và cho bản dựng thẻ động trước đó của chính component này.
  *
  * Đây là MỘT ảnh tĩnh do chủ dự án tự thiết kế và cung cấp (public/images/
- * lich-khai-giang-09-10-2026.png), không phải markup dựng từ `content/course.ts`.
+ * lich-khai-giang-09-11-2026.png), không phải markup dựng từ `content/course.ts`.
  * Nội dung trong ảnh đã được đối chiếu khớp với dữ liệu khóa học thật tại thời
  * điểm tạo ảnh (lịch từng buổi, học phí, ảnh và chức danh cố vấn học thuật).
  * Vì là ảnh tĩnh, nó KHÔNG tự cập nhật khi lịch học, học phí hay số buổi đổi —
@@ -30,8 +30,8 @@ export function OpeningPoster({
         <Reveal>
           <div className="overflow-hidden rounded-card border border-line bg-card shadow-[0_1px_2px_rgba(23,38,56,0.04),0_16px_32px_-16px_rgba(23,38,56,0.18)]">
             <Image
-              src="/images/lich-khai-giang-09-10-2026.png"
-              alt="Lịch khai giảng các khóa đang mở đăng ký, tháng 09/2026 – 10/2026. AIQT — Nghiên cứu khoa học ứng dụng AI & xuất bản quốc tế: Buổi 1 Thứ Ba 22/09, Buổi 2 Thứ Bảy 26/09, Buổi 3 Thứ Ba 29/09, Buổi 4 Thứ Bảy 03/10, Buổi 5 Thứ Ba 06/10, Buổi 6 Thứ Bảy 10/10/2026. TIEULUAN — Viết tiểu luận, NCKH & khóa luận tốt nghiệp: Buổi 1 Thứ Hai 05/10, Buổi 2 Thứ Hai 12/10, Buổi 3 Thứ Hai 19/10/2026. STATA — Stata trong nghiên cứu định lượng: dự kiến khai giảng tháng 11/2026, đang tuyển sinh. Cả ba khóa học trực tuyến qua Zoom, học liệu xem lại trong 02 năm. Cố vấn học thuật: Dr. Tam Trinh, PhD in Economics, Deakin University. Zalo tư vấn: 0333443388 (HDI Admin)."
+              src="/images/lich-khai-giang-09-11-2026.png"
+              alt="Lịch khai giảng các khóa đang mở đăng ký, tháng 09/2026 – 11/2026. AIQT — Nghiên cứu khoa học ứng dụng AI & xuất bản quốc tế: Buổi 1 Thứ Ba 22/09, Buổi 2 Thứ Bảy 26/09, Buổi 3 Thứ Ba 29/09, Buổi 4 Thứ Bảy 03/10, Buổi 5 Thứ Ba 06/10, Buổi 6 Thứ Bảy 10/10/2026. TIEULUAN — Viết tiểu luận, NCKH & khóa luận tốt nghiệp: Buổi 1 Thứ Hai 05/10, Buổi 2 Thứ Hai 12/10, Buổi 3 Thứ Hai 19/10/2026. STATA — Stata trong nghiên cứu định lượng: dự kiến khai giảng tháng 11/2026, đang tuyển sinh. SPSS — Phân tích định lượng với SPSS: Buổi 1 Thứ Hai 02/11, Buổi 2 Thứ Hai 09/11, Buổi 3 Thứ Hai 16/11, Buổi 4 Thứ Hai 23/11, Buổi 5 Thứ Hai 30/11/2026. Cả bốn khóa học trực tuyến qua Zoom, học liệu xem lại trong 02 năm. Cố vấn học thuật: Dr. Tam Trinh, PhD in Economics, Deakin University. Zalo tư vấn: 0333443388 (HDI Admin)."
               width={1928}
               height={816}
               sizes="(min-width: 1024px) 72rem, 100vw"

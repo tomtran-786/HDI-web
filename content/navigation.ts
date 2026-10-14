@@ -86,12 +86,8 @@ export const nav: readonly NavItem[] = [
         label: "Chuyên sâu",
         children: [
           {
-            label: "Phân tích định lượng với SPSS & Stata",
+            label: "Phân tích định lượng với SPSS",
             href: "/khoa-hoc/nckh-chuyen-sau-spss",
-          },
-          {
-            label: "Nghiên cứu với SPSS & SmartPLS",
-            href: "/khoa-hoc/spss-smartpls-ai",
           },
           {
             label: "Stata trong nghiên cứu định lượng",
