@@ -849,16 +849,15 @@ export const courses = [
       vnd: 1100000,
     },
     // Chủ khóa báo trong chat ngày 2026-10-14: tối thứ Hai hằng tuần, 19:00 –
-    // 21:00, dự kiến khai giảng 02/11/2026. Chưa có ngày kết thúc nên ô "Lịch
-    // học" không ghi khoảng ngày.
+    // 21:00, dự kiến khai giảng 02/11/2026. Năm buổi 02/11 – 30/11/2026 khớp
+    // poster public/images/lich-khai-giang-09-11-2026.png.
     opening: { startDate: "2026-11-02" },
     facts: [
       { label: "Hình thức", value: "Trực tuyến qua Zoom" },
       { label: "Thời lượng", value: "05 buổi" },
       {
         label: "Lịch học",
-        value:
-          "Tối thứ Hai hằng tuần · 19:00 – 21:00 (giờ Việt Nam) · Dự kiến khai giảng 02/11/2026",
+        value: "Thứ Hai hằng tuần, 02/11 – 30/11/2026 · 19:00 – 21:00",
       },
       { label: "Sĩ số", value: FACT_TBA },
       { label: "Học liệu", value: "Recording và bộ dữ liệu thực hành" },
