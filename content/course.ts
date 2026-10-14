@@ -210,7 +210,9 @@ export type CourseSlug = (typeof COURSE_SLUGS)[number];
  *   giả (giấy phép Unsplash không bắt buộc ghi nguồn, nhưng HDI vẫn ghi).
  * "logos" — panel logo cho khóa dạy phần mềm. Logo chỉ để mô tả đúng phần mềm
  *   được dạy, không ngụ ý hãng tài trợ hay hợp tác. `tile` đánh dấu logo vốn là
- *   một khối màu (logo SPSS) nên không đặt trong thẻ trắng.
+ *   một khối màu (logo SPSS) nên không đặt trong thẻ trắng. `background` là ảnh
+ *   Unsplash lót sau hàng logo (cùng thư mục, cùng cách ghi credit như "photo"),
+ *   mỗi khóa một ảnh để các thẻ đứng cạnh nhau không trùng.
  */
 export type CourseCover =
   | {
@@ -230,6 +232,7 @@ export type CourseCover =
       }[];
       /** Nhãn phụ dạng chip cạnh các logo, ví dụ "+ AI". */
       extra?: string;
+      background: { src: string; credit: { author: string; url: string } };
     };
 
 const LOGO_SPSS = {
@@ -819,7 +822,18 @@ export const courses = [
     slug: "nckh-chuyen-sau-spss",
     eyebrow: "Khóa chuyên sâu · 06 module thực hành",
     title: "Phân tích định lượng với SPSS, Stata & AI",
-    cover: { kind: "logos", logos: [LOGO_SPSS, LOGO_STATA], extra: "+ AI" },
+    cover: {
+      kind: "logos",
+      logos: [LOGO_SPSS, LOGO_STATA],
+      extra: "+ AI",
+      background: {
+        src: "/images/khoa-hoc/nckh-chuyen-sau-spss.jpg",
+        credit: {
+          author: "Carlos Muza",
+          url: "https://unsplash.com/photos/laptop-computer-on-glass-top-table-hpjSkU2UYSU",
+        },
+      },
+    },
     audience:
       "Dành cho sinh viên năm 3–4, học viên cao học, nghiên cứu sinh, giảng viên và chuyên viên phân tích đang thực hiện nghiên cứu định lượng bằng dữ liệu khảo sát hoặc dữ liệu thống kê có sẵn",
     intro:
@@ -987,7 +1001,17 @@ export const courses = [
     slug: "spss-smartpls-ai",
     eyebrow: "Khóa chuyên sâu · 06 module thực hành",
     title: "Thiết kế nghiên cứu và phân tích dữ liệu với SPSS & SmartPLS",
-    cover: { kind: "logos", logos: [LOGO_SPSS, LOGO_SMARTPLS] },
+    cover: {
+      kind: "logos",
+      logos: [LOGO_SPSS, LOGO_SMARTPLS],
+      background: {
+        src: "/images/khoa-hoc/spss-smartpls-ai.jpg",
+        credit: {
+          author: "Jakub Żerdzicki",
+          url: "https://unsplash.com/photos/a-person-holding-a-piece-of-paper-over-a-laptop-9PwLeZA-RGc",
+        },
+      },
+    },
     audience:
       "Dành cho sinh viên đại học, học viên cao học và người đang thực hiện nghiên cứu định lượng",
     intro:
@@ -1123,7 +1147,17 @@ export const courses = [
     slug: "kinh-te-luong-stata-ai",
     eyebrow: "Khóa chuyên sâu · Khai giảng tháng 11/2026",
     title: "Stata trong nghiên cứu định lượng",
-    cover: { kind: "logos", logos: [LOGO_STATA] },
+    cover: {
+      kind: "logos",
+      logos: [LOGO_STATA],
+      background: {
+        src: "/images/khoa-hoc/kinh-te-luong-stata-ai.jpg",
+        credit: {
+          author: "Mika Baumeister",
+          url: "https://unsplash.com/photos/white-printing-paper-with-numbers-Wpnoqo2plFA",
+        },
+      },
+    },
     audience:
       "Dành cho người làm nghiên cứu định lượng, đã có kiến thức cơ bản về thống kê và hồi quy, muốn dùng Stata theo quy trình nghiên cứu, khai thác ChatGPT có kiểm chứng và định hướng công bố quốc tế",
     audienceProfiles: [

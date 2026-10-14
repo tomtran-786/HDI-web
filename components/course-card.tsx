@@ -48,8 +48,8 @@ const statusTone = {
  * giao diện.
  *
  * Ảnh bìa riêng của từng khóa (content/course.ts `cover`) vẫn có mặt: ảnh chụp
- * thành lớp nền mờ dưới màu xanh, panel logo thì thành một hàng logo nhỏ trên
- * tên khóa. Bản đầy đủ của ảnh nằm ở modal và trang chi tiết.
+ * (hoặc ảnh nền của panel logo) thành lớp nền mờ dưới màu xanh, còn logo thì
+ * thành một hàng logo nhỏ trên tên khóa. Bản đầy đủ của ảnh nằm ở modal và trang chi tiết.
  */
 function CourseBanner({
   course,
@@ -64,15 +64,13 @@ function CourseBanner({
 
   return (
     <div className="relative isolate flex aspect-[16/9] flex-col justify-between overflow-hidden bg-[#0b315e] p-5 text-white">
-      {cover.kind === "photo" && (
-        <Image
-          src={cover.src}
-          alt=""
-          fill
-          sizes={sizes}
-          className="-z-10 object-cover opacity-25 mix-blend-luminosity"
-        />
-      )}
+      <Image
+        src={cover.kind === "photo" ? cover.src : cover.background.src}
+        alt=""
+        fill
+        sizes={sizes}
+        className="-z-10 object-cover opacity-25 mix-blend-luminosity"
+      />
       {/* Ba dải chéo ở góc phải trên, chỉ để trang trí. */}
       <span aria-hidden className="absolute -right-10 -top-12 -z-10 h-40 w-16 rotate-[35deg] bg-white/10" />
       <span aria-hidden className="absolute -right-2 -top-16 -z-10 h-44 w-10 rotate-[35deg] bg-[#6aabee]/35" />
