@@ -844,9 +844,17 @@ export const courses = [
     curriculum: "modules",
     price: {
       amount: "1.100.000 đ",
-      note: "Giảm 10% cho nhóm từ 03 người",
-      group: true,
+      note: "Đăng ký nhóm từ 03 người: 990.000 đ mỗi người",
       vnd: 1100000,
+      group: true,
+      // Đúng bằng bậc 10% chung của lib/group-pricing.ts (1.100.000 × 0,9), ghi
+      // ra đây để trang khóa học in được giá ưu đãi nổi bật. prisma/seed.ts nạp
+      // `deal.vnd` xuống courses.group_price_vnd; sửa con số thì chạy lại seed.
+      deal: {
+        amount: "990.000 đ",
+        vnd: 990000,
+        condition: "mỗi người · nhóm từ 03 bạn",
+      },
     },
     // Chủ khóa báo trong chat ngày 2026-10-14: tối thứ Hai hằng tuần, 19:00 –
     // 21:00, dự kiến khai giảng 02/11/2026. Năm buổi 02/11 – 30/11/2026 khớp
@@ -1020,9 +1028,17 @@ export const courses = [
     curriculum: "modules",
     price: {
       amount: "1.100.000 đ",
-      note: "Giảm 10% cho nhóm từ 03 người",
-      group: true,
+      note: "Đăng ký nhóm từ 03 người: 990.000 đ mỗi người",
       vnd: 1100000,
+      group: true,
+      // Đúng bằng bậc 10% chung của lib/group-pricing.ts (1.100.000 × 0,9), ghi
+      // ra đây để trang khóa học in được giá ưu đãi nổi bật. prisma/seed.ts nạp
+      // `deal.vnd` xuống courses.group_price_vnd; sửa con số thì chạy lại seed.
+      deal: {
+        amount: "990.000 đ",
+        vnd: 990000,
+        condition: "mỗi người · nhóm từ 03 bạn",
+      },
     },
     // Mới chốt tháng khai giảng, chưa có ngày: `null` là lời khai "chưa công bố
     // ngày". Khi có ngày thì sửa cả ba chỗ — `opening`, ô "Lịch học", `eyebrow`.
