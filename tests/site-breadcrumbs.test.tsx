@@ -25,7 +25,7 @@ describe("breadcrumb toàn site", () => {
     expect(html).toContain('aria-label="Breadcrumb"');
     expect(html).toContain('href="/"');
     expect(html).toContain('href="/khoa-hoc"');
-    expect(html).toContain("Phân tích định lượng với SPSS &amp; Stata");
+    expect(html).toContain("Phân tích định lượng với SPSS");
     expect(html).toContain('aria-current="page"');
   });
 

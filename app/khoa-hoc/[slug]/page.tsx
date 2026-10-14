@@ -50,7 +50,8 @@ import { structuredDataForCourse } from "@/lib/structured-data";
 
 type CoursePageProps = { params: Promise<{ slug: string }> };
 
-const LEGACY_STATA_SLUG = "stata-kinh-te-luong";
+/** Slug của các khóa đã gộp vào khóa SPSS — giữ lại chỉ để link cũ không 404. */
+const LEGACY_SPSS_SLUGS = new Set(["stata-kinh-te-luong", "spss-smartpls-ai"]);
 const MERGED_SPSS_SLUG = "nckh-chuyen-sau-spss";
 
 /** Id của card học phí — thanh cố định ở đáy chỉ hiện khi card này đã cuộn qua. */
@@ -58,7 +59,7 @@ const PRICE_CARD_ID = "hoc-phi";
 const ROADMAP_ID = "lo-trinh";
 
 function redirectLegacyCourse(slug: string): void {
-  if (slug === LEGACY_STATA_SLUG) redirect(`/khoa-hoc/${MERGED_SPSS_SLUG}`);
+  if (LEGACY_SPSS_SLUGS.has(slug)) redirect(`/khoa-hoc/${MERGED_SPSS_SLUG}`);
 }
 
 function courseForSlug(slug: string): Course | undefined {

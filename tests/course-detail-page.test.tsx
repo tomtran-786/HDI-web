@@ -67,7 +67,7 @@ beforeEach(() => {
 });
 
 describe("trang chi tiết khóa học", () => {
-  it("tạo sẵn đúng tám route khóa học", () => {
+  it("tạo sẵn đúng bảy route khóa học", () => {
     expect(generateStaticParams()).toEqual(COURSE_SLUGS.map((slug) => ({ slug })));
   });
 
@@ -181,7 +181,7 @@ describe("trang chi tiết khóa học", () => {
     expect(html).toContain(`Buổi ${total}:`);
   });
 
-  it("render đủ sáu module cho khóa SPSS & Stata và ẩn đánh giá khi chưa có review", async () => {
+  it("render đủ năm buổi cho khóa SPSS và ẩn đánh giá khi chưa có review", async () => {
     const course = courses.find((item) => item.slug === "nckh-chuyen-sau-spss")!;
     const html = renderToStaticMarkup(
       await CourseDetailPage({
@@ -189,14 +189,15 @@ describe("trang chi tiết khóa học", () => {
       }),
     );
 
-    // Khóa này đánh số theo module (1.1 … 6.11), không phải "Buổi n" — giáo
-    // trình gốc chia hai tầng và đánh số đúng như vậy.
+    // Khóa này đánh số theo module (1.1 … 5.10), mỗi module là một buổi, nên
+    // chủ đề đánh số hai tầng chứ không phải "Buổi n".
     expect(html).toContain("1.1");
     expect(html).toContain("Từ vấn đề thực tiễn đến câu hỏi và mục tiêu nghiên cứu");
-    expect(html).toContain("6.10");
+    expect(html).toContain("5.10");
+    expect(html).not.toContain("6.1");
     expect(html).toContain("Đề xuất hướng phát triển và lập kế hoạch triển khai tiếp theo");
-    // Danh mục tài liệu gửi trước buổi tư vấn là mục cuối của Module 6, kèm ý con.
-    expect(html).toContain("Tài liệu học viên gửi trước Module 6");
+    // Danh mục tài liệu gửi trước buổi tư vấn là mục cuối của Buổi 5, kèm ý con.
+    expect(html).toContain("Tài liệu học viên gửi trước Buổi 5");
     expect(html).toContain("Tối đa ba vấn đề cần giảng viên tư vấn");
     expect(html).not.toContain("Buổi 1:");
     expect(html).not.toContain("Kho record");
@@ -289,24 +290,23 @@ describe("trang chi tiết khóa học", () => {
     expect(html).toContain("Nhắn Zalo");
   });
 
-  it("redirect URL Stata cũ về khóa SPSS & Stata ở page và metadata", async () => {
-    await expect(
-      CourseDetailPage({
-        params: Promise.resolve({ slug: "stata-kinh-te-luong" }),
-      }),
-    ).rejects.toBeInstanceOf(RedirectSignal);
+  it.each(["stata-kinh-te-luong", "spss-smartpls-ai"])(
+    "redirect URL cũ %s về khóa SPSS ở page và metadata",
+    async (slug) => {
+      await expect(
+        CourseDetailPage({ params: Promise.resolve({ slug }) }),
+      ).rejects.toBeInstanceOf(RedirectSignal);
 
-    await expect(
-      generateMetadata({
-        params: Promise.resolve({ slug: "stata-kinh-te-luong" }),
-      }),
-    ).rejects.toBeInstanceOf(RedirectSignal);
+      await expect(
+        generateMetadata({ params: Promise.resolve({ slug }) }),
+      ).rejects.toBeInstanceOf(RedirectSignal);
 
-    expect(mocks.redirect).toHaveBeenCalledWith(
-      "/khoa-hoc/nckh-chuyen-sau-spss",
-    );
-    expect(mocks.landingCourseData).not.toHaveBeenCalled();
-  });
+      expect(mocks.redirect).toHaveBeenCalledWith(
+        "/khoa-hoc/nckh-chuyen-sau-spss",
+      );
+      expect(mocks.landingCourseData).not.toHaveBeenCalled();
+    },
+  );
 
   it("trả 404 cho slug lạ trước khi truy vấn dữ liệu", async () => {
     await expect(

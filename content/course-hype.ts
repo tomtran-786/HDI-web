@@ -13,7 +13,6 @@ export const enrolledCount: Record<CourseSlug, number> = {
   "nckh-ung-dung-ai-xuat-ban-quoc-te": 312,
   "training-tieu-luan-nckh-kltn": 1428,
   "nckh-chuyen-sau-spss": 690,
-  "spss-smartpls-ai": 428,
   "kinh-te-luong-stata-ai": 374,
   "viet-bai-tap-chi": 517,
   "viet-bao-cao-khoa-hoc": 386,
