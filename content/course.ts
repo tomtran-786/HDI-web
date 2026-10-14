@@ -824,7 +824,7 @@ export const courses = [
   {
     code: "SPSS",
     slug: "nckh-chuyen-sau-spss",
-    eyebrow: "Khóa chuyên sâu · 05 buổi thực hành",
+    eyebrow: "Khóa chuyên sâu · Dự kiến khai giảng 02/11/2026",
     title: "Phân tích định lượng với SPSS",
     cover: {
       kind: "logos",
@@ -848,12 +848,18 @@ export const courses = [
       group: true,
       vnd: 1100000,
     },
-    // Chưa chốt ngày — ô "Lịch học" vẫn là FACT_TBA. Bốn khóa dưới đây cũng vậy.
-    opening: null,
+    // Chủ khóa báo trong chat ngày 2026-10-14: tối thứ Hai hằng tuần, 19:00 –
+    // 21:00, dự kiến khai giảng 02/11/2026. Chưa có ngày kết thúc nên ô "Lịch
+    // học" không ghi khoảng ngày.
+    opening: { startDate: "2026-11-02" },
     facts: [
       { label: "Hình thức", value: "Trực tuyến qua Zoom" },
       { label: "Thời lượng", value: "05 buổi" },
-      { label: "Lịch học", value: FACT_TBA },
+      {
+        label: "Lịch học",
+        value:
+          "Tối thứ Hai hằng tuần · 19:00 – 21:00 (giờ Việt Nam) · Dự kiến khai giảng 02/11/2026",
+      },
       { label: "Sĩ số", value: FACT_TBA },
       { label: "Học liệu", value: "Recording và bộ dữ liệu thực hành" },
       { label: "Xem lại", value: "02 năm kể từ ngày đăng ký" },
