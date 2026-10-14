@@ -81,11 +81,11 @@ describe("trang chi tiết khóa học", () => {
 
     expect(course.slug).toBe("nckh-ung-dung-ai-xuat-ban-quoc-te");
     expect(html).toContain("Nghiên cứu khoa học ứng dụng AI &amp; xuất bản quốc tế");
-    expect(html).toContain("22/09/2026");
+    expect(html).toContain("01/12/2026");
     // Thời khóa biểu chi tiết đã chốt (xem ghi chú D ở đầu content/course.ts):
-    // sáu buổi thứ Ba và thứ Bảy, 22/09 – 10/10/2026, 19:00 – 21:00. Dòng
+    // sáu buổi thứ Ba và thứ Bảy, 01/12 – 19/12/2026, 19:00 – 21:00. Dòng
     // "Lịch học" mang đúng câu đó.
-    expect(html).toContain("Thứ Ba và thứ Bảy hằng tuần, 22/09 – 10/10/2026");
+    expect(html).toContain("Thứ Ba và thứ Bảy hằng tuần, 01/12 – 19/12/2026");
     expect(html).not.toContain("Chủ Nhật");
     expect(html).toContain("Tiến sĩ Trịnh Công Tâm");
     expect(html).toContain("System GMM");

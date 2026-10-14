@@ -28,7 +28,10 @@
  *    date with 07/09/2026 with no weekday schedule; on 2026-09-04 the owner
  *    confirmed the detailed timetable — six sessions on Tuesdays and Saturdays,
  *    22/09/2026 – 10/10/2026, 19:00 – 21:00 — and the opening date moved to
- *    22/09/2026 to match the first session.
+ *    22/09/2026 to match the first session. On 2026-10-14 the owner's updated
+ *    poster (public/images/lich-khai-giang-09-12-2026.png) moved the course to
+ *    a new intake: six sessions on Tuesdays and Saturdays, 01/12/2026 –
+ *    19/12/2026, keeping the 19:00 – 21:00 slot.
  *
  * E. `training-tieu-luan-nckh-kltn` was re-authored on 2026-08-27 from an
  *    owner-supplied outline ("Viet tieu luan, Luan van va NCKH.md"). It is no
@@ -166,7 +169,7 @@ export type CoursePhase = {
  * Ngày khai giảng ĐÃ CHỐT của một khóa, ở dạng máy đọc được.
  *
  * Ô `facts` nhãn "Lịch học" mang câu tiếng Việt dành cho người đọc — "Thứ Ba và
- * thứ Bảy hằng tuần, 22/09 – 10/10/2026 · 19:00 – 21:00" — còn trường này mang
+ * thứ Bảy hằng tuần, 01/12 – 19/12/2026 · 19:00 – 21:00" — còn trường này mang
  * đúng ngày bắt đầu đó ở dạng ISO, để dải lịch khai giảng ngoài trang chủ sắp
  * xếp và định dạng được mà không phải bóc chuỗi tiếng Việt bằng regex.
  *
@@ -434,7 +437,7 @@ export const courses = [
   {
     code: "AIQT",
     slug: "nckh-ung-dung-ai-xuat-ban-quoc-te",
-    eyebrow: "Khóa mới · Khai giảng 22/09/2026",
+    eyebrow: "Khóa mới · Khai giảng 01/12/2026",
     title: "Nghiên cứu khoa học ứng dụng AI & xuất bản quốc tế",
     cover: {
       kind: "photo",
@@ -456,13 +459,13 @@ export const courses = [
       noteLabel: "Quyền lợi",
       vnd: 3000000,
     },
-    opening: { startDate: "2026-09-22" },
+    opening: { startDate: "2026-12-01" },
     facts: [
       { label: "Hình thức", value: "Trực tuyến qua Zoom" },
       { label: "Thời lượng", value: "06 buổi" },
       {
         label: "Lịch học",
-        value: "Thứ Ba và thứ Bảy hằng tuần, 22/09 – 10/10/2026 · 19:00 – 21:00",
+        value: "Thứ Ba và thứ Bảy hằng tuần, 01/12 – 19/12/2026 · 19:00 – 21:00",
       },
       { label: "Sĩ số", value: "Tối đa 15 học viên/lớp" },
       { label: "Học liệu", value: "Recording và dữ liệu thực hành" },
@@ -537,7 +540,7 @@ export const courses = [
   {
     code: "TIEULUAN",
     slug: "training-tieu-luan-nckh-kltn",
-    eyebrow: "Khóa nền tảng · Khai giảng 05/10/2026",
+    eyebrow: "Khóa nền tảng · Khai giảng 07/12/2026",
     title: "Viết tiểu luận, nghiên cứu khoa học & khóa luận tốt nghiệp",
     cover: {
       kind: "photo",
@@ -589,13 +592,13 @@ export const courses = [
         condition: "mỗi người · nhóm từ 03 bạn",
       },
     },
-    opening: { startDate: "2026-10-05" },
+    opening: { startDate: "2026-12-07" },
     facts: [
       { label: "Hình thức", value: "Trực tuyến qua Zoom" },
       { label: "Thời lượng", value: "03 buổi" },
       {
         label: "Lịch học",
-        value: "Thứ Hai hằng tuần, 05/10 – 19/10/2026 · 19:00 – 21:00",
+        value: "Thứ Hai hằng tuần, 07/12 – 21/12/2026 · 19:00 – 21:00",
       },
       { label: "Sĩ số", value: "Tối đa 15 học viên/lớp" },
       { label: "Học liệu", value: "Học liệu online" },
@@ -858,7 +861,7 @@ export const courses = [
     },
     // Chủ khóa báo trong chat ngày 2026-10-14: tối thứ Hai hằng tuần, 19:00 –
     // 21:00, dự kiến khai giảng 02/11/2026. Năm buổi 02/11 – 30/11/2026 khớp
-    // poster public/images/lich-khai-giang-09-11-2026.png.
+    // poster public/images/lich-khai-giang-09-12-2026.png.
     opening: { startDate: "2026-11-02" },
     facts: [
       { label: "Hình thức", value: "Trực tuyến qua Zoom" },

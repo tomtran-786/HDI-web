@@ -103,7 +103,7 @@ describe("kiến trúc nội dung homepage và Về HDI", () => {
     expect(html.indexOf("data-opening-poster")).toBeLessThan(
       html.indexOf('id="khoa-hoc"'),
     );
-    // Poster là MỘT ảnh tĩnh cố định (public/images/lich-khai-giang-09-11-2026.png):
+    // Poster là MỘT ảnh tĩnh cố định (public/images/lich-khai-giang-09-12-2026.png):
     // hễ còn ít nhất một khóa đang bán thì cả ảnh hiện nguyên vẹn, kể cả phần
     // nói về TIEULUAN dù mock này đánh dấu khóa đó `not_open` — khác với mục
     // "Khóa học đang nhận học viên" ngay dưới, nơi từng thẻ vẫn lọc theo

@@ -23,7 +23,7 @@ describe("<OpeningPoster>", () => {
     expect(html).toContain("data-opening-poster");
     // `next/image` mã hóa `src` thành `/_next/image?url=%2Fimages%2F...`, nên
     // bám vào tên file trần thay vì nguyên đường dẫn có dấu `/`.
-    expect(html).toContain("lich-khai-giang-09-11-2026.png");
+    expect(html).toContain("lich-khai-giang-09-12-2026.png");
     expect(html).toContain("Lịch khai giảng các khóa đang mở đăng ký");
   });
 
