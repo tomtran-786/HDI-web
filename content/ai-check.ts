@@ -2,10 +2,13 @@
  * Dịch vụ kiểm tra AI & đạo văn — bảng giá và toàn bộ chữ của trang
  * /kiem-tra-ai-dao-van.
  *
- * NGUỒN: bảng giá do HDI cung cấp, cập nhật ngày 2026-09-01 — chép nguyên văn
- * ba bậc và chín mức giá. Không có mức nào được nội suy, làm tròn hay suy ra từ
- * mức khác. Ranh giới bậc ghi theo trang; quy đổi sang từ theo tỷ lệ 250 từ/
- * trang mà bảng đang dùng (40 trang = 10.000 từ ⇒ 20 trang = 5.000 từ).
+ * NGUỒN: poster "chỉ từ" do HDI cung cấp ngày 2026-10-19 — AI 50K, đạo văn
+ * 20K, combo 60K. Poster chỉ nêu mức thấp nhất nên CHỈ bậc đầu là số của HDI;
+ * hai bậc sau là bậc cũ (bảng 2026-09-01) cộng đúng mức chênh của bậc đầu
+ * (AI +30K, đạo văn +5K, combo +25K), do chủ web xác nhận chứ chưa có bảng gốc.
+ * Khi HDI gửi bảng đầy đủ thì thay thẳng các số này. Ranh giới bậc ghi theo
+ * trang; quy đổi sang từ theo tỷ lệ 250 từ/trang mà bảng đang dùng (40 trang =
+ * 10.000 từ ⇒ 20 trang = 5.000 từ).
  *
  * Bảng giá là DỮ LIỆU chứ không phải JSX vì đúng những con số này còn được
  * server dùng lại để tính số tiền gửi sang PayOS (lib/ai-check-pricing.ts).
@@ -35,7 +38,7 @@ export const aiCheckTiers = [
     // "5.000 – 10.000". Chỗ chồng lấn đó được xử theo dấu "≤", tức là theo mức
     // có lợi cho học viên.
     maxWords: 5_000,
-    prices: { ai: 20_000, plagiarism: 15_000, combo: 35_000 },
+    prices: { ai: 50_000, plagiarism: 20_000, combo: 60_000 },
   },
   {
     id: "duoi-40-trang",
@@ -44,14 +47,14 @@ export const aiCheckTiers = [
     // Cùng cách xử dấu "≤" ở ranh giới 10.000 từ: đúng 10.000 từ vẫn thuộc bậc
     // này chứ không rơi sang bậc trên.
     maxWords: 10_000,
-    prices: { ai: 35_000, plagiarism: 25_000, combo: 50_000 },
+    prices: { ai: 65_000, plagiarism: 30_000, combo: 75_000 },
   },
   {
     id: "tren-40-trang",
     label: "Trên 40 trang",
     words: "10.000 – 29.000 từ",
     maxWords: 29_000,
-    prices: { ai: 50_000, plagiarism: 35_000, combo: 70_000 },
+    prices: { ai: 80_000, plagiarism: 40_000, combo: 95_000 },
   },
 ] as const;
 
@@ -60,7 +63,7 @@ export type AiCheckTierId = AiCheckTier["id"];
 
 /**
  * Trần của bảng giá, lấy từ bậc cuối chứ không viết tay lại: bảng giá chỉ có
- * hai bậc và dừng ở 29.000 từ, nên bài dài hơn không có giá để báo. Trang sẽ
+ * ba bậc và dừng ở 29.000 từ, nên bài dài hơn không có giá để báo. Trang sẽ
  * chuyển sang mời liên hệ thay vì đoán một con số.
  */
 export const WORD_LIMIT = aiCheckTiers[aiCheckTiers.length - 1].maxWords;

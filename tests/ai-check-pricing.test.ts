@@ -8,39 +8,47 @@ import { quote } from "@/lib/ai-check-pricing";
  * một hóa đơn sai, không phải một pixel sai.
  */
 describe("bảng giá check AI & đạo văn", () => {
-  it("dùng đúng sáu mức giá HDI đưa ra", () => {
+  it("dùng đúng chín mức giá của bảng", () => {
+    expect(quote(3_000, "ai")).toEqual({
+      ok: true,
+      tier: "duoi-20-trang",
+      amountVnd: 50_000,
+    });
+    expect(quote(3_000, "plagiarism")).toMatchObject({ amountVnd: 20_000 });
+    expect(quote(3_000, "combo")).toMatchObject({ amountVnd: 60_000 });
+
     expect(quote(8_000, "ai")).toEqual({
       ok: true,
       tier: "duoi-40-trang",
-      amountVnd: 35_000,
+      amountVnd: 65_000,
     });
-    expect(quote(8_000, "plagiarism")).toMatchObject({ amountVnd: 25_000 });
-    expect(quote(8_000, "combo")).toMatchObject({ amountVnd: 50_000 });
+    expect(quote(8_000, "plagiarism")).toMatchObject({ amountVnd: 30_000 });
+    expect(quote(8_000, "combo")).toMatchObject({ amountVnd: 75_000 });
 
     expect(quote(15_000, "ai")).toEqual({
       ok: true,
       tier: "tren-40-trang",
-      amountVnd: 50_000,
+      amountVnd: 80_000,
     });
-    expect(quote(15_000, "plagiarism")).toMatchObject({ amountVnd: 35_000 });
-    expect(quote(15_000, "combo")).toMatchObject({ amountVnd: 70_000 });
+    expect(quote(15_000, "plagiarism")).toMatchObject({ amountVnd: 40_000 });
+    expect(quote(15_000, "combo")).toMatchObject({ amountVnd: 95_000 });
   });
 
   it('xếp đúng 10.000 từ vào bậc rẻ hơn, theo dấu "≤" của bảng', () => {
     expect(quote(9_999, "combo")).toMatchObject({ tier: "duoi-40-trang" });
     expect(quote(10_000, "combo")).toMatchObject({
       tier: "duoi-40-trang",
-      amountVnd: 50_000,
+      amountVnd: 75_000,
     });
     expect(quote(10_001, "combo")).toMatchObject({
       tier: "tren-40-trang",
-      amountVnd: 70_000,
+      amountVnd: 95_000,
     });
   });
 
   it("nhận đúng trần bảng giá rồi từ chối số từ vượt trần", () => {
     expect(WORD_LIMIT).toBe(29_000);
-    expect(quote(29_000, "ai")).toMatchObject({ ok: true, amountVnd: 50_000 });
+    expect(quote(29_000, "ai")).toMatchObject({ ok: true, amountVnd: 80_000 });
     expect(quote(29_001, "ai")).toEqual({ ok: false, reason: "too_long" });
     expect(quote(1_000_000, "combo")).toEqual({ ok: false, reason: "too_long" });
   });

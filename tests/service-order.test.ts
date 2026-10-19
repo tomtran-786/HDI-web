@@ -60,7 +60,7 @@ describe("đơn dịch vụ check AI", () => {
       ...({ amountVnd: 1 } as object),
     });
 
-    expect(result).toMatchObject({ ok: true, amountVnd: 70_000 });
+    expect(result).toMatchObject({ ok: true, amountVnd: 95_000 });
     const written = mocks.create.mock.calls[0][0].data;
     expect(written).toMatchObject({
       // Chủ đơn đến từ phiên đăng nhập phía server, không từ form.
@@ -68,7 +68,7 @@ describe("đơn dịch vụ check AI", () => {
       kind: "combo",
       wordCount: 15_000,
       tier: "tren-40-trang",
-      amountVnd: 70_000,
+      amountVnd: 95_000,
       provider: "payos",
     });
     // `ref` đi vào URL công khai nên nó phải là byte ngẫu nhiên, không phải mã đơn.

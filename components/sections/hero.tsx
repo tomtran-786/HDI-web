@@ -108,10 +108,10 @@ export function Hero() {
               pointer-events-none để không chặn nút bên dưới. */}
           <div className="mx-auto max-w-lg overflow-hidden rounded-card border border-line bg-card shadow-[0_1px_2px_rgba(23,38,56,0.04),0_16px_32px_-16px_rgba(23,38,56,0.18)] lg:relative lg:z-10 lg:-ml-10 lg:w-[calc(100%+2.5rem)] lg:max-w-none lg:pointer-events-none xl:-ml-20 xl:w-[calc(100%+5rem)]">
             <Image
-              src="/images/hero-check-turnitin-v2.png"
-              alt="Dịch vụ check Turnitin của HDI — Check AI Turnitin chỉ từ 20K, check đạo văn Turnitin chỉ từ 15K, combo AI và đạo văn Turnitin chỉ từ 35K"
-              width={1536}
-              height={856}
+              src="/images/hero-check-turnitin-v3.jpg"
+              alt="Dịch vụ check Turnitin của HDI — Check AI Turnitin chỉ từ 50K, check đạo văn Turnitin chỉ từ 20K, combo AI và đạo văn Turnitin chỉ từ 60K"
+              width={1675}
+              height={939}
               priority
               sizes="(min-width: 1280px) 44rem, (min-width: 1024px) 40vw, (min-width: 640px) 32rem, 100vw"
               className="h-auto w-full"

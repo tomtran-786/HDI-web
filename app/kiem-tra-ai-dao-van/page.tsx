@@ -31,13 +31,13 @@ export default async function AiCheckPage({
   return (
     <>
       {/* Banner quảng cáo do HDI cung cấp — ảnh thuần, chạy full-width và tự
-          giữ tỷ lệ 2048×768 qua `h-auto w-full`. Chỉ đặt ở trang này. */}
+          giữ tỷ lệ 2045×769 qua `h-auto w-full`. Chỉ đặt ở trang này. */}
       <div className="w-full border-b border-line bg-bg">
         <Image
-          src="/images/banner-check-turnitin.png"
-          alt="Check AI & Đạo văn Turnitin — Check AI chỉ từ 20K, Check đạo văn chỉ từ 15K, Combo AI + Đạo văn chỉ từ 35K"
-          width={2048}
-          height={768}
+          src="/images/banner-check-turnitin-v2.jpg"
+          alt="Check AI & Đạo văn Turnitin — Check AI chỉ từ 50K, Check đạo văn chỉ từ 20K, Combo AI + Đạo văn chỉ từ 60K"
+          width={2045}
+          height={769}
           priority
           sizes="100vw"
           className="h-auto w-full"
