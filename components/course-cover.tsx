@@ -10,6 +10,10 @@ import { ExternalLink } from "./ui/external-link";
  * (`variant="banner"`) và khung media đầu trang chi tiết (`variant="hero"`,
  * 16:9 bo góc cạnh card học phí). Hai biến thể sau là ảnh chính của trang nên
  * có alt và dòng credit.
+ *
+ * `variant="thumb"` là ảnh nhỏ của một dòng hàng ở giỏ hàng / đơn hàng: lấp đầy
+ * khung của cha (cha tự định kích thước và `overflow-hidden`), chỉ trang trí
+ * nên không alt, không credit, và panel logo thu về một chip logo đầu tiên.
  */
 export function CourseCover({
   cover,
@@ -18,11 +22,12 @@ export function CourseCover({
   eager = false,
 }: {
   cover: CourseCoverData;
-  variant: "card" | "banner" | "hero";
+  variant: "card" | "banner" | "hero" | "thumb";
   sizes: string;
   /** Banner nằm trong màn hình đầu: tải ngay, ưu tiên cao (Next 16 bỏ `priority`). */
   eager?: boolean;
 }) {
+  if (variant === "thumb") return <CourseThumb cover={cover} sizes={sizes} />;
   const banner = variant !== "card";
 
   return (
@@ -142,3 +147,38 @@ const SIZE = {
   wide: "h-6 @md:h-9 @3xl:h-14",
   compact: "h-9 @md:h-14 @3xl:h-20",
 };
+
+/** Ảnh nhỏ lấp đầy khung cha — xem `variant="thumb"`. */
+function CourseThumb({
+  cover,
+  sizes,
+}: {
+  cover: CourseCoverData;
+  sizes: string;
+}) {
+  const source = cover.kind === "photo" ? cover.src : cover.background.src;
+  const first = cover.kind === "logos" ? cover.logos[0] : null;
+
+  return (
+    <div className="relative h-full w-full overflow-hidden">
+      <Image src={source} alt="" fill sizes={sizes} className="object-cover" />
+      {first && (
+        <>
+          <div aria-hidden className="absolute inset-0 bg-[#0c2f57]/60" />
+          <div className="absolute inset-0 flex items-center justify-center p-2">
+            <span className="flex max-w-full items-center rounded-md bg-white px-1.5 py-1">
+              <Image
+                src={first.src}
+                alt=""
+                width={first.width}
+                height={first.height}
+                unoptimized={first.src.endsWith(".svg")}
+                className="h-6 w-auto max-w-full"
+              />
+            </span>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}

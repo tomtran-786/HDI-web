@@ -22,7 +22,6 @@ const staticLabels: Record<string, string> = {
   "/xac-thuc-email": "Xác thực email",
   "/hoan-tat-ho-so": "Hoàn tất hồ sơ",
   "/quan-tri": "Quản trị",
-  "/gio-hang": "Giỏ hàng",
 };
 
 const serviceNav = nav.find((item) => item.href === "/dich-vu");
@@ -40,6 +39,9 @@ function childLabel(parent: typeof serviceNav, pathname: string) {
  */
 export function breadcrumbsForPathname(pathname: string): BreadcrumbItem[] {
   if (pathname === "/") return [];
+  // Giỏ hàng và các trang thanh toán tự mang breadcrumb trong đầu trang phẳng của
+  // chúng (components/checkout/checkout-header.tsx); thêm thanh này nữa là lặp.
+  if (pathname === "/gio-hang" || pathname.startsWith("/thanh-toan/")) return [];
 
   const staticLabel = staticLabels[pathname];
   if (staticLabel) return [HOME, { label: staticLabel }];
@@ -104,21 +106,6 @@ export function breadcrumbsForPathname(pathname: string): BreadcrumbItem[] {
       HOME,
       { label: "Tài khoản", href: "/tai-khoan" },
       { label: "Giới thiệu bạn bè" },
-    ];
-  }
-
-  if (pathname === "/thanh-toan/ket-qua") {
-    return [
-      HOME,
-      { label: "Tài khoản", href: "/tai-khoan" },
-      { label: "Kết quả thanh toán" },
-    ];
-  }
-  if (pathname === "/thanh-toan/huy") {
-    return [
-      HOME,
-      { label: "Tài khoản", href: "/tai-khoan" },
-      { label: "Thanh toán đã hủy" },
     ];
   }
 

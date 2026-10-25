@@ -95,6 +95,10 @@ export async function GET() {
         capacity: course.capacity,
         seatsLeft: course.seatsLeft,
         availability: course.availability,
+        // Ảnh bìa + hai dòng meta cho dòng hàng; toàn chữ và đường dẫn ảnh công khai.
+        cover: course.cover,
+        schedule: course.schedule,
+        format: course.format,
         // Mã đơn đang chặn khóa này. Không phải secret: `code` là số tự tăng
         // đoán được, và trang đơn hàng vẫn tự thu hẹp theo phiên đăng nhập.
         pendingOrderCode: course.pendingOrderCode,

@@ -83,6 +83,15 @@ const groupCourse = {
   groupPriceVnd: 250_000,
   availability: "buyable" as const,
   seatsLeft: 10,
+  cover: {
+    kind: "photo" as const,
+    src: "/images/khoa-hoc/viet-bao-cao-khoa-hoc.jpg",
+    alt: "Ảnh bìa",
+    credit: { author: "Test", url: "https://example.com" },
+  },
+  schedule: "Thứ Hai hằng tuần, 07/12 – 21/12/2026",
+  format: "Trực tuyến qua Zoom",
+  pendingOrderCode: null,
 };
 
 /** Khóa thứ hai, để tick thêm vào giỏ giữa lúc đang cầm một báo giá nhóm. */
@@ -96,6 +105,15 @@ const soloCourse = {
   groupPriceVnd: null,
   availability: "buyable" as const,
   seatsLeft: 10,
+  cover: {
+    kind: "photo" as const,
+    src: "/images/khoa-hoc/viet-bao-cao-khoa-hoc.jpg",
+    alt: "Ảnh bìa",
+    credit: { author: "Test", url: "https://example.com" },
+  },
+  schedule: "Thứ Hai hằng tuần, 07/12 – 21/12/2026",
+  format: "Trực tuyến qua Zoom",
+  pendingOrderCode: null,
 };
 
 /**
@@ -237,9 +255,12 @@ describe("giỏ hàng — thanh toán nhóm", () => {
     await enterMember("thanhvien@example.com");
     expect(host.querySelectorAll('input[name="thanhVien"]')).toHaveLength(1);
 
-    const courseCheckbox = host.querySelector<HTMLInputElement>('input[type="checkbox"]');
-    if (!courseCheckbox) throw new Error("Không tìm thấy checkbox khóa học.");
-    await act(async () => courseCheckbox.click());
+    // Khóa duy nhất có ưu đãi nhóm rời giỏ bằng nút "Xóa" trên dòng hàng.
+    const removeButton = host.querySelector<HTMLButtonElement>(
+      `#cart-course-${groupCourse.slug} button[aria-label^="Xóa khóa"]`,
+    );
+    if (!removeButton) throw new Error("Không tìm thấy nút Xóa khóa học.");
+    await act(async () => removeButton.click());
 
     expect(host.querySelectorAll('input[name="thanhVien"]')).toHaveLength(0);
     expect([...host.querySelectorAll('[role="status"]')].some((item) =>
@@ -316,11 +337,8 @@ describe("giỏ hàng — thanh toán nhóm", () => {
     await settlePreview();
     expect(hiddenTotal()).toBe("600000");
 
-    const soloBox = host.querySelector<HTMLInputElement>(
-      `#cart-course-${soloCourse.slug} input[type="checkbox"]`,
-    );
-    if (!soloBox) throw new Error("Không tìm thấy checkbox khóa thứ hai.");
-    await act(async () => soloBox.click());
+    // Thêm khóa thứ hai vào cookie giỏ hàng — giống `?course=` hay nút "Thêm vào giỏ".
+    await act(async () => mocks.add(soloCourse.id));
 
     // (300.000 + 500.000) × 2 ghế — giỏ MỚI, không phải 600.000 của giỏ cũ.
     expect(hiddenTotal()).toBe("1600000");

@@ -37,15 +37,15 @@ describe("breadcrumb toàn site", () => {
   });
 
   /**
-   * Không có dòng `/gio-hang` trong `staticLabels`, breadcrumb rơi về nhãn
-   * "Không tìm thấy trang" — đúng loại lỗi mà chú thích trong
-   * components/site-breadcrumbs.tsx ghi lại cho `/tai-khoan/gioi-thieu`.
+   * Giỏ hàng và các trang thanh toán tự mang breadcrumb trong đầu trang của
+   * chúng, nên thanh toàn cục phải bỏ qua — nếu không, một trang sẽ có hai hàng
+   * `Trang chủ › …` chồng nhau. Và phải trả mảng RỖNG, không phải nhãn "Không
+   * tìm thấy trang" của nhánh cuối.
    */
-  it("nhận ra trang giỏ hàng", () => {
-    expect(breadcrumbsForPathname("/gio-hang")).toEqual([
-      { label: "Trang chủ", href: "/" },
-      { label: "Giỏ hàng" },
-    ]);
+  it("bỏ qua giỏ hàng và mọi trang thanh toán vì chúng tự có breadcrumb", () => {
+    expect(breadcrumbsForPathname("/gio-hang")).toEqual([]);
+    expect(breadcrumbsForPathname("/thanh-toan/ket-qua")).toEqual([]);
+    expect(breadcrumbsForPathname("/thanh-toan/huy")).toEqual([]);
   });
 
   it("nhận ra trang hội thảo quốc tế", () => {

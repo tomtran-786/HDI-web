@@ -64,6 +64,48 @@ export const cartPage = {
   /** Nhãn dòng tổng đã giảm — chênh giữa giá gốc và số phải trả sau ưu đãi. */
   discountTotal: "Tổng giảm",
   backToCourses: "Xem thêm khóa học",
+  /** Breadcrumb ở đầu giỏ hàng và các trang thanh toán. */
+  home: "Trang chủ",
+  /** Số khóa ở góc phải đầu trang. */
+  itemCount: (n: number) => `${n} khóa`,
+  summaryTitle: "Tóm tắt đơn hàng",
+  /** Nhãn dòng tiền trong thẻ tóm tắt; mỗi khoản trừ có tên riêng. */
+  subtotal: "Tạm tính",
+  groupDiscount: "Ưu đãi nhóm",
+  referralDiscount: "Mã giới thiệu",
+  credits: "Credits",
+  total: "Tổng thanh toán",
+  checkout: "Thanh toán",
+  remove: "Xóa",
+  /** `title` là tên khóa — nút "Xóa" chỉ có một chữ nên cần tên đầy đủ cho trình đọc màn hình. */
+  removeLabel: (title: string) => `Xóa khóa ${title} khỏi giỏ hàng`,
+  /** Meta dưới tên khóa ở dòng hàng. */
+  line: {
+    code: "Mã khóa",
+    schedule: "Lịch học",
+    format: "Hình thức",
+    learners: "Số người học",
+  },
+  promo: {
+    label: "Mã giới thiệu",
+    apply: "Áp dụng",
+    applying: "Đang kiểm tra…",
+    applied: `Mã hợp lệ — giảm ${REFERRAL_DISCOUNT_PCT}% cho khóa học đầu tiên đã được tính vào tổng.`,
+    networkError: "Chưa kiểm tra được mã giới thiệu. Vui lòng thử lại.",
+  },
+  group: {
+    title: "Học theo nhóm",
+  },
+  empty: {
+    title: "Giỏ hàng của bạn đang trống",
+    body: "Chọn một khóa đang mở đăng ký để bắt đầu. Giá nhóm và mã giới thiệu được tính ngay trong giỏ.",
+    browse: "Xem khóa học đang mở",
+    suggestTitle: "Khóa đang mở đăng ký",
+    add: "Thêm vào giỏ",
+  },
+  /** Khóa người dùng vừa chọn (`?course=`) hiện không đăng ký được. */
+  focusUnavailable: (title: string, reason: string) =>
+    `Khóa "${title}" hiện không thể thêm vào giỏ: ${reason.toLowerCase()}.`,
 } as const;
 
 /**

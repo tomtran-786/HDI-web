@@ -20,6 +20,9 @@ vi.mock("next/navigation", () => ({
 vi.mock("@/app/gio-hang/cart-client", () => ({
   CartClient: () => <p>CART_CLIENT_SENTINEL</p>,
 }));
+vi.mock("@/app/gio-hang/cart-item-count", () => ({
+  CartItemCount: () => <span>COUNT_SENTINEL</span>,
+}));
 
 import CartPage from "@/app/gio-hang/page";
 
@@ -51,15 +54,23 @@ describe("trang /gio-hang", () => {
     );
   });
 
-  it("đã đăng nhập, hồ sơ đủ → vẽ tiêu đề giỏ hàng và gắn CartClient", async () => {
+  it("đã đăng nhập, hồ sơ đủ → đầu trang phẳng có breadcrumb + h1 và gắn CartClient", async () => {
     mocks.currentSession.mockResolvedValue({ user: { id: "user-1" } });
     mocks.currentProfile.mockResolvedValue({ id: "user-1" });
     mocks.isProfileComplete.mockReturnValue(true);
 
     const html = renderToStaticMarkup(await render());
 
-    expect(html).toContain("Giỏ hàng");
+    // `Trang chủ › Giỏ hàng`, tiêu đề trang là mục cuối của breadcrumb.
+    expect(html).toContain('aria-label="Breadcrumb"');
+    expect(html).toContain('href="/"');
+    expect(html).toMatch(/<h1[^>]*>Giỏ hàng<\/h1>/);
+    expect(html.indexOf("Trang chủ")).toBeLessThan(html.indexOf("<h1"));
+    expect(html).toContain("COUNT_SENTINEL");
     expect(html).toContain("CART_CLIENT_SENTINEL");
+    // Không còn hero ảnh nền của PageBackdrop.
+    expect(html).not.toContain("work-bg.jpg");
+    expect(html).not.toContain("Chọn các khóa còn chỗ");
   });
 
   it("không có hồ sơ → chuyển thẳng về /dang-nhap", async () => {

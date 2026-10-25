@@ -69,7 +69,7 @@ vi.mock("@/components/cart-provider", async () => {
 });
 
 import { CartClient } from "@/app/gio-hang/cart-client";
-import { groupPanel } from "@/content/checkout";
+import { cartPage, groupPanel, referralPanel } from "@/content/checkout";
 
 const soloCourse = {
   id: "course-solo",
@@ -81,6 +81,15 @@ const soloCourse = {
   groupPriceVnd: null,
   availability: "buyable" as const,
   seatsLeft: 10,
+  cover: {
+    kind: "photo" as const,
+    src: "/images/khoa-hoc/viet-bao-cao-khoa-hoc.jpg",
+    alt: "Ảnh bìa",
+    credit: { author: "Test", url: "https://example.com" },
+  },
+  schedule: "Thứ Hai hằng tuần, 07/12 – 21/12/2026",
+  format: "Trực tuyến qua Zoom",
+  pendingOrderCode: null,
 };
 
 /**
@@ -101,6 +110,15 @@ const groupCourse = {
   groupPriceVnd: 950_000,
   availability: "buyable" as const,
   seatsLeft: 15,
+  cover: {
+    kind: "photo" as const,
+    src: "/images/khoa-hoc/viet-bao-cao-khoa-hoc.jpg",
+    alt: "Ảnh bìa",
+    credit: { author: "Test", url: "https://example.com" },
+  },
+  schedule: "Thứ Hai hằng tuần, 07/12 – 21/12/2026",
+  format: "Trực tuyến qua Zoom",
+  pendingOrderCode: null,
 };
 
 let host: HTMLDivElement;
@@ -108,7 +126,30 @@ let root: Root;
 
 
 function codeInput() {
-  return host.querySelector<HTMLInputElement>('input[name="maGioiThieu"]');
+  return host.querySelector<HTMLInputElement>("#cart-promo");
+}
+/** Input ẩn đi theo form — chỉ có sau khi mã được server xác nhận. */
+function submittedCode() {
+  return host.querySelector<HTMLInputElement>('input[type="hidden"][name="maGioiThieu"]');
+}
+function applyButton() {
+  const button = [...host.querySelectorAll<HTMLButtonElement>("button")].find(
+    (item) => item.textContent === cartPage.promo.apply,
+  );
+  if (!button) throw new Error("Không tìm thấy nút Áp dụng.");
+  return button;
+}
+function promoStatus() {
+  return codeInput()
+    ?.closest("div")
+    ?.parentElement?.querySelector('[role="status"]')?.textContent;
+}
+/** Phản hồi của /api/gio-hang/ma-gioi-thieu cho lần bấm "Áp dụng" kế tiếp. */
+let promoResponse: () => Promise<unknown>;
+async function apply(code: string) {
+  await act(async () => setNativeValue(codeInput()!, code));
+  await act(async () => applyButton().click());
+  await flush();
 }
 function hiddenTotal() {
   return host.querySelector<HTMLInputElement>('input[name="tongTienDuKien"]')?.value;
@@ -130,15 +171,19 @@ async function renderWith(
   referral: Record<string, unknown>,
   course: typeof soloCourse | typeof groupCourse = soloCourse,
 ) {
-  mocks.fetch.mockResolvedValue({
-    ok: true,
-    status: 200,
-    json: async () => ({
-      email: "mua@example.com",
-      catalog: [course],
-      staleIds: [],
-      referral,
-    }),
+  promoResponse = async () => ({ ok: true, status: 200, json: async () => ({ ok: true }) });
+  mocks.fetch.mockImplementation(async (url: string) => {
+    if (String(url).includes("/ma-gioi-thieu")) return promoResponse();
+    return {
+      ok: true,
+      status: 200,
+      json: async () => ({
+        email: "mua@example.com",
+        catalog: [course],
+        staleIds: [],
+        referral,
+      }),
+    };
   });
   mocks.store.listeners.clear();
   mocks.store.ids = [course.id];
@@ -186,7 +231,7 @@ afterEach(async () => {
 });
 
 describe("giỏ hàng — ô mã giới thiệu ở checkout", () => {
-  it("hiện ô nhập mã khi canEnterCode và trừ 10% vào tổng khi gõ mã", async () => {
+  it("gõ mã chưa đổi tổng: chỉ khi bấm Áp dụng và server xác nhận mới trừ 10%", async () => {
     await renderWith({ eligible: false, canEnterCode: true, creditBalanceVnd: 0 });
 
     const input = codeInput();
@@ -196,10 +241,106 @@ describe("giỏ hàng — ô mã giới thiệu ở checkout", () => {
     await act(async () => setNativeValue(input!, "skgaxbzr"));
     await flush();
 
-    // Client lạc quan coi mã đã gõ là hợp lệ để `tongTienDuKien` khớp con số
-    // server sắp áp — nếu không nhánh chốt giá sẽ hủy đơn vừa tạo.
+    // Mã mới gõ chưa được kiểm nên chưa được tính, cũng chưa đi theo form.
     expect(input!.value).toBe("SKGAXBZR");
+    expect(hiddenTotal()).toBe("300000");
+    expect(submittedCode()).toBeNull();
+    expect(mocks.fetch).not.toHaveBeenCalledWith(
+      expect.stringContaining("/ma-gioi-thieu"),
+      expect.anything(),
+    );
+
+    await act(async () => applyButton().click());
+    await flush();
+
+    expect(mocks.fetch).toHaveBeenCalledWith(
+      "/api/gio-hang/ma-gioi-thieu",
+      expect.objectContaining({ method: "POST", body: JSON.stringify({ code: "SKGAXBZR" }) }),
+    );
+    // Giờ client khớp con số server sắp áp — nếu không nhánh chốt giá sẽ hủy đơn.
     expect(hiddenTotal()).toBe("270000");
+    expect(submittedCode()?.value).toBe("SKGAXBZR");
+    expect(promoStatus()).toBe(cartPage.promo.applied);
+    expect(host.textContent).toContain(cartPage.referralDiscount);
+    expect(host.textContent).toContain("−30.000");
+  });
+
+  it("mã không tồn tại: giữ nguyên tổng, báo lỗi, không gửi mã theo form", async () => {
+    await renderWith({ eligible: false, canEnterCode: true, creditBalanceVnd: 0 });
+    promoResponse = async () => ({
+      ok: true,
+      status: 200,
+      json: async () => ({ ok: false, reason: "unknown" }),
+    });
+
+    await apply("khongco");
+
+    expect(hiddenTotal()).toBe("300000");
+    expect(submittedCode()).toBeNull();
+    expect(promoStatus()).toBe(referralPanel.codeUnknownError);
+  });
+
+  it("mã của chính mình: báo đúng câu của ca này", async () => {
+    await renderWith({ eligible: false, canEnterCode: true, creditBalanceVnd: 0 });
+    promoResponse = async () => ({
+      ok: true,
+      status: 200,
+      json: async () => ({ ok: false, reason: "self" }),
+    });
+
+    await apply("MACUATOI");
+
+    expect(promoStatus()).toBe(referralPanel.codeSelfError);
+    expect(hiddenTotal()).toBe("300000");
+  });
+
+  it("chạm hạn mức (429): nói về ô mã, không áp khoản giảm", async () => {
+    await renderWith({ eligible: false, canEnterCode: true, creditBalanceVnd: 0 });
+    promoResponse = async () => ({
+      ok: false,
+      status: 429,
+      json: async () => ({ ok: false, reason: "throttled" }),
+    });
+
+    await apply("SKGAXBZR");
+
+    expect(promoStatus()).toBe(referralPanel.codeThrottledError);
+    expect(hiddenTotal()).toBe("300000");
+  });
+
+  it("mạng hỏng khi kiểm mã: báo thử lại, không áp khoản giảm", async () => {
+    const consoleError = vi.spyOn(console, "error").mockImplementation(() => {});
+    await renderWith({ eligible: false, canEnterCode: true, creditBalanceVnd: 0 });
+    promoResponse = async () => {
+      throw new Error("offline");
+    };
+
+    await apply("SKGAXBZR");
+
+    expect(promoStatus()).toBe(cartPage.promo.networkError);
+    expect(hiddenTotal()).toBe("300000");
+    consoleError.mockRestore();
+  });
+
+  it("sửa ô mã sau khi đã áp dụng thì về trạng thái chưa áp dụng", async () => {
+    await renderWith({ eligible: false, canEnterCode: true, creditBalanceVnd: 0 });
+    await apply("SKGAXBZR");
+    expect(hiddenTotal()).toBe("270000");
+
+    await act(async () => setNativeValue(codeInput()!, "SKGAXBZ"));
+    await flush();
+
+    expect(hiddenTotal()).toBe("300000");
+    expect(submittedCode()).toBeNull();
+    expect(promoStatus()).toBe("");
+  });
+
+  it("nút Áp dụng tắt khi ô trống", async () => {
+    await renderWith({ eligible: false, canEnterCode: true, creditBalanceVnd: 0 });
+    expect(applyButton().disabled).toBe(true);
+
+    await act(async () => setNativeValue(codeInput()!, "a"));
+    expect(applyButton().disabled).toBe(false);
   });
 
   /**
@@ -232,10 +373,27 @@ describe("giỏ hàng — ô mã giới thiệu ở checkout", () => {
     // bấm ngay lúc này.
     expect(hiddenTotal()).toBe("2850000");
 
-    await act(async () => setNativeValue(codeInput()!, "SKGAXBZR"));
-    await flush();
+    await apply("SKGAXBZR");
 
     expect(hiddenTotal()).toBe("2700000");
+    // Hai khoản trừ có tên riêng: ưu đãi nhóm và phần chênh giới thiệu.
+    expect(host.textContent).toContain(cartPage.groupDiscount);
+    expect(host.textContent).toContain("−150.000");
+  });
+
+  it("ưu đãi nhóm đã cao hơn mã thì nói rõ không cộng dồn, không in −0 đ", async () => {
+    await renderWith(
+      { eligible: false, canEnterCode: true, creditBalanceVnd: 0 },
+      { ...groupCourse, groupPriceVnd: 900_000 },
+    );
+
+    await inviteMembers("ban1@example.com", "ban2@example.com");
+    await apply("SKGAXBZR");
+
+    // 3 × 900.000 = 2.700.000: nhóm giảm đúng 10%, bằng mức giới thiệu.
+    expect(hiddenTotal()).toBe("2700000");
+    expect(host.textContent).toContain(referralPanel.supersededByGroup);
+    expect(host.textContent).not.toContain("−0");
   });
 
   it("không hiện ô nhập mã khi giỏ không còn khóa nào mua được", async () => {
@@ -250,5 +408,11 @@ describe("giỏ hàng — ô mã giới thiệu ở checkout", () => {
   it("ẩn ô nhập mã khi không canEnterCode", async () => {
     await renderWith({ eligible: true, canEnterCode: false, creditBalanceVnd: 0 });
     expect(codeInput()).toBeNull();
+    expect(submittedCode()).toBeNull();
+  });
+
+  it("đã có người giới thiệu thì khoản giảm tự tính, không cần nhập mã", async () => {
+    await renderWith({ eligible: true, canEnterCode: false, creditBalanceVnd: 0 });
+    expect(hiddenTotal()).toBe("270000");
   });
 });

@@ -1,5 +1,10 @@
 import { cookies } from "next/headers";
-import { courses as authoredCourses } from "@/content/course";
+import {
+  courses as authoredCourses,
+  type Course,
+  type CourseCover,
+  type FactLabel,
+} from "@/content/course";
 import { seatPriceVnd } from "./group-pricing";
 import { configuredCourses, heldByUser, seatsTaken } from "./course-sales";
 import {
@@ -28,6 +33,14 @@ export type CatalogCourse = {
   seatsLeft: number | null;
   availability: CourseAvailability;
   /**
+   * Ảnh bìa và hai dòng meta cho dòng hàng ở giỏ hàng. Ghép ở SERVER từ
+   * content/course.ts để client không phải kéo cả file ~1.500 dòng đó xuống chỉ
+   * vì cần một tấm ảnh nhỏ và hai dòng chữ.
+   */
+  cover: CourseCover;
+  schedule: string | null;
+  format: string | null;
+  /**
    * Đơn đang chặn khóa này, khi `availability === "pending"`.
    *
    * Không có nó thì dòng bị khóa là một ngõ cụt: ô chọn bị `disabled`, nên nút
@@ -38,6 +51,19 @@ export type CatalogCourse = {
    */
   pendingOrderCode: number | null;
 };
+
+function factOf(course: Course, label: FactLabel): string | null {
+  return course.facts.find((fact) => fact.label === label)?.value ?? null;
+}
+
+/** Phần hiển thị (không phải giá, không phải trạng thái) của một khóa trong giỏ. */
+function displayMeta(course: Course) {
+  return {
+    cover: course.cover,
+    schedule: factOf(course, "Lịch học"),
+    format: factOf(course, "Hình thức"),
+  };
+}
 
 export type CartView = {
   catalog: CatalogCourse[];
@@ -105,6 +131,7 @@ export async function loadCourseCatalog(userId: string): Promise<CatalogCourse[]
         capacity: null,
         seatsLeft: null,
         availability: "not_open" as const,
+        ...displayMeta(authored),
         pendingOrderCode: null,
       };
     }
@@ -133,6 +160,7 @@ export async function loadCourseCatalog(userId: string): Promise<CatalogCourse[]
       capacity: row.capacity,
       seatsLeft,
       availability,
+      ...displayMeta(authored),
       pendingOrderCode: availability === "pending" ? (mine?.orderCode ?? null) : null,
     };
   });
