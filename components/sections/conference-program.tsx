@@ -28,7 +28,7 @@ export function ConferenceProgram({ soft }: { soft?: boolean }) {
           <SectionHeading
             eyebrow={conferenceProgramIntro.eyebrow}
             title={conferenceProgramIntro.title}
-            mark={{ text: "xuất bản" }}
+            mark={{ text: "cơ hội xuất bản" }}
             subtitle={conferenceProgramIntro.subtitle}
           />
           <Reveal>

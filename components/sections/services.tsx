@@ -12,7 +12,7 @@ export function Services({ soft }: { soft?: boolean }) {
       <SectionHeading
         eyebrow={serviceCatalog.eyebrow}
         title={serviceCatalog.title}
-        mark={{ text: "bản thảo", type: "circle" }}
+        mark={{ text: "hỗ trợ bản thảo" }}
         subtitle={serviceCatalog.subtitle}
       />
 

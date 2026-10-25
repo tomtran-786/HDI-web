@@ -19,7 +19,7 @@ export function FooterCtaCard() {
       <div className="flex flex-col gap-6 rounded-[18px] border border-line bg-card p-6 text-fg shadow-[0_2px_100px_rgba(12,73,143,0.18)] sm:p-8 md:flex-row md:items-center md:justify-between">
         <div className="max-w-xl">
           <h2 className="text-2xl font-bold tracking-tight text-primary sm:text-3xl">
-            Đặt lịch <Notation type="underline">tư vấn</Notation> miễn phí
+            Đặt lịch tư vấn <Notation type="underline">miễn phí</Notation>
           </h2>
           <p className="mt-2 text-base text-fg-muted">
             Một buổi trò chuyện để bàn về đề tài và hướng công bố phù hợp với bạn.

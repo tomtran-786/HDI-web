@@ -292,7 +292,9 @@ export type Course = {
    */
   title: string;
   /**
-   * Cụm trong `title` được gạch chân tay ở h1 trang chi tiết (xem
+   * Từ khóa của khóa học — cụm cho biết khóa này dạy gì (tên công cụ hoặc đối
+   * tượng, như "SPSS", "tiểu luận") chứ không phải vài chữ cuối của tên — được
+   * gạch chân tay ở h1 trang chi tiết (xem
    * components/ui/notation.tsx). Phải là chuỗi con nguyên văn của `title`;
    * tests/course-detail-page.test.tsx kiểm điều đó cho cả bảy khóa.
    */
@@ -445,7 +447,7 @@ export const courses = [
     slug: "nckh-ung-dung-ai-xuat-ban-quoc-te",
     eyebrow: "Khóa mới · Khai giảng 01/12/2026",
     title: "Nghiên cứu khoa học ứng dụng AI & xuất bản quốc tế",
-    titleMark: "xuất bản quốc tế",
+    titleMark: "ứng dụng AI",
     cover: {
       kind: "photo",
       src: "/images/khoa-hoc/nckh-ung-dung-ai-xuat-ban-quoc-te.jpg",
@@ -549,7 +551,7 @@ export const courses = [
     slug: "training-tieu-luan-nckh-kltn",
     eyebrow: "Khóa nền tảng · Khai giảng 07/12/2026",
     title: "Viết tiểu luận, nghiên cứu khoa học & khóa luận tốt nghiệp",
-    titleMark: "khóa luận tốt nghiệp",
+    titleMark: "tiểu luận",
     cover: {
       kind: "photo",
       src: "/images/khoa-hoc/training-tieu-luan-nckh-kltn.jpg",
@@ -1372,7 +1374,7 @@ export const courses = [
     slug: "viet-bao-cao-khoa-hoc",
     eyebrow: "Khóa đào tạo",
     title: "Viết báo cáo khoa học, luận văn chuẩn quốc tế",
-    titleMark: "chuẩn quốc tế",
+    titleMark: "báo cáo khoa học",
     cover: {
       kind: "photo",
       src: "/images/khoa-hoc/viet-bao-cao-khoa-hoc.jpg",
