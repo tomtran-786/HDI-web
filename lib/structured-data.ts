@@ -1,3 +1,4 @@
+import { certificate } from "@/content/certificate";
 import type { Course } from "@/content/course";
 import type { ServiceItem } from "@/content/services";
 import { site } from "@/content/site";
@@ -13,6 +14,7 @@ export function structuredDataForCourse(course: Course) {
       name: course.title,
       description: course.intro,
       provider: { "@type": "Organization", name: site.name },
+      educationalCredentialAwarded: certificate.credentialAwarded,
       offers: {
         "@type": "Offer",
         price: course.price.vnd,

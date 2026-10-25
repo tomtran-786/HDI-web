@@ -24,6 +24,11 @@ export const faqItems = [
       "Các lộ trình đồng hành nghiên cứu hiện có phiên bản tiếng Việt hoặc tiếng Anh và được triển khai trực tuyến qua Zoom. Hình thức, số buổi và quyền xem lại của từng khóa học được ghi riêng trên trang chi tiết khóa đó.",
   },
   {
+    question: "Học xong có được cấp giấy chứng nhận không?",
+    answer:
+      "Có. Cả bảy khóa học đều cấp giấy chứng nhận hoàn tất song ngữ Anh – Việt, ghi tên khóa, thời gian học và số chứng nhận riêng cho từng học viên. Bạn có thể xem ảnh mẫu ngay trên trang chi tiết của từng khóa.",
+  },
+  {
     question: "Làm thế nào để đăng ký và thanh toán khóa học?",
     answer:
       "Bạn đăng nhập hoặc tạo tài khoản, chọn khóa học trong giỏ hàng rồi thanh toán trực tuyến qua PayOS. Khóa chưa mở đăng ký hoặc đã đủ chỗ sẽ được ghi rõ trên thẻ khóa học và trang chi tiết.",

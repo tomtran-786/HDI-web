@@ -3,6 +3,10 @@ import Image from "next/image";
 import Script from "next/script";
 import { notFound, redirect } from "next/navigation";
 import { CourseCard } from "@/components/course-card";
+import {
+  CertificateNote,
+  CertificateSection,
+} from "@/components/course-certificate";
 import { CourseEnroll } from "@/components/course-enroll";
 import { CourseFactList } from "@/components/course-facts";
 import { CourseRoadmap } from "@/components/course-roadmap";
@@ -39,7 +43,11 @@ import { structuredDataForCourse } from "@/lib/structured-data";
  *   3. "Dành cho ai".
  *   4. "Lộ trình học": module gập được bên trái, giảng viên bên phải — bản của
  *      "Your Course Outline" + "About the Instructor".
- *   5. Đánh giá học viên, rồi "Khóa học khác" — cùng thẻ CourseCard với trang
+ *   5. "Chứng nhận": ảnh mẫu giấy chứng nhận hoàn tất — đọc xong nội dung học,
+ *      câu hỏi tiếp theo là "học xong mình được gì". Cả bảy khóa đều cấp, nên
+ *      khối này và dòng "Có giấy chứng nhận" ở card học phí hiện cho mọi khóa
+ *      (chữ nằm ở content/certificate.ts).
+ *   6. Đánh giá học viên, rồi "Khóa học khác" — cùng thẻ CourseCard với trang
  *      chủ và /khoa-hoc, bấm vào mở modal xem nhanh.
  *
  * Bảng "Thông tin khóa học" riêng ở cuối trang đã bỏ: sáu dòng `facts` và học
@@ -200,6 +208,7 @@ export default async function CourseDetailPage({ params }: CoursePageProps) {
                 Khóa học gồm
               </p>
               <CourseFactList course={course} className="mt-4" />
+              <CertificateNote />
 
               <div className="mt-5 border-t border-line pt-5">
                 <div className="flex flex-wrap items-center justify-between gap-3">
@@ -347,8 +356,10 @@ export default async function CourseDetailPage({ params }: CoursePageProps) {
         </div>
       </Section>
 
+      <CertificateSection soft />
+
       {publishedReviews.length > 0 && (
-        <Section soft>
+        <Section>
           <SectionHeading eyebrow="Người học chia sẻ" title="Đánh giá học viên" />
           <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
             {publishedReviews.map((review, index) => (
@@ -375,7 +386,7 @@ export default async function CourseDetailPage({ params }: CoursePageProps) {
         </Section>
       )}
 
-      <Section soft={publishedReviews.length === 0}>
+      <Section soft={publishedReviews.length > 0}>
         <SectionHeading eyebrow="Tiếp tục phát triển" title="Khóa học khác" />
         <div className="grid gap-5 md:grid-cols-3">
           {related.map((item, index) => (

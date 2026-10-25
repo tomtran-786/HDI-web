@@ -119,7 +119,7 @@ describe("kiến trúc nội dung homepage và Về HDI", () => {
     expect(html).toContain('id="faq"');
     expect(html).toContain("Khóa học và dịch vụ đồng hành nghiên cứu khác nhau thế nào?");
     expect(html).toContain("Humanizing &amp; Proofreading đã có bảng giá chưa?");
-    expect(html.match(/<details/g)).toHaveLength(8);
+    expect(html.match(/<details/g)).toHaveLength(9);
     expect(html).not.toContain("zalo.me/g/");
     expect(html).not.toContain("drive.google.com/drive/folders/");
   });

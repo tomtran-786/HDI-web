@@ -1351,7 +1351,6 @@ export const courses = [
       "Viết được bài bản các mục theo bố cục chuẩn của một công bố trên tạp chí uy tín trong nước và quốc tế.",
       "Phân biệt được tạp chí uy tín với tạp chí dỏm, và nắm quy trình gửi bài trên hệ thống các nhà xuất bản lớn.",
       "Biết cách trả lời nhà bình duyệt (reviewer) và biên tập viên (editor), cũng như xử lý các vấn đề sau khi công bố thành công.",
-      "Nhận chứng nhận sau khi hoàn thành khóa học.",
     ],
     instructor: INSTRUCTOR_TAM,
     registerNote: REGISTER_NOTE_GENERIC,
