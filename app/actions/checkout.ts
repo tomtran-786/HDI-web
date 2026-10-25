@@ -13,9 +13,9 @@ import { prisma } from "@/lib/prisma";
 import { normalizeMemberEmails, resolveGroupMembers } from "@/lib/group-members";
 import { cancelOrder, createOrder } from "@/lib/orders";
 import { normalizeReferralCode } from "@/lib/referral-code";
+import { referralFailureMessage, resolveReferralCode } from "@/lib/referral-resolve";
 import { ensurePayosCheckout } from "@/lib/payment-checkout";
 import { COURSES_TAG } from "@/lib/cache-tags";
-import { referralPanel } from "@/content/checkout";
 
 export type CheckoutState = {
   error?: string;
@@ -72,20 +72,14 @@ export async function checkout(
   let referrerId: string | undefined;
   const referralCode = normalizeReferralCode(formData.get("maGioiThieu"));
   if (referralCode) {
-    if (!(await allowUserAction("referral_code", session.user.id, 30))) {
-      return { error: referralPanel.codeThrottledError, refreshCatalog: false };
+    const resolved = await resolveReferralCode(session.user.id, referralCode);
+    if (!resolved.ok) {
+      return {
+        error: referralFailureMessage(resolved.reason),
+        refreshCatalog: false,
+      };
     }
-    const referrer = await prisma.user.findUnique({
-      where: { referralCode },
-      select: { id: true },
-    });
-    if (!referrer) {
-      return { error: referralPanel.codeUnknownError, refreshCatalog: false };
-    }
-    if (referrer.id === session.user.id) {
-      return { error: referralPanel.codeSelfError, refreshCatalog: false };
-    }
-    referrerId = referrer.id;
+    referrerId = resolved.referrerId;
   }
 
   // Mỗi lần chạy tới đây đều khóa hàng courses, tạo enrolment và gọi PayOS tạo
