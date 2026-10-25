@@ -11,7 +11,7 @@ export default function CartLoading() {
       </div>
 
       <section className="bg-bg">
-        <div className="shell py-8 pb-28 sm:py-10 lg:pb-12">
+        <div className="shell py-8 pb-28 sm:py-10 lg:pb-20">
           <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_22rem]">
             <div className="space-y-5">
               {[0, 1].map((row) => (

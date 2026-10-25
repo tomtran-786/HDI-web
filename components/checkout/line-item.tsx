@@ -89,28 +89,32 @@ export function LineItem({
                   {formatVnd(unitVnd)}
                 </span>
               </p>
-              {dealNote && (
-                <p className="mt-0.5 text-xs font-semibold text-success">{dealNote}</p>
-              )}
             </div>
           )}
         </div>
 
         {children}
 
-        {(status || onRemove) && (
-          <div className="mt-auto flex items-center justify-end gap-3 pt-3">
-            {status}
-            {onRemove && (
-              <button
-                type="button"
-                onClick={onRemove}
-                aria-label={cartPage.removeLabel(course.title)}
-                className="rounded-md bg-primary px-3 py-1.5 text-xs font-bold text-primary-fg transition-colors hover:bg-primary-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-bg"
-              >
-                {cartPage.remove}
-              </button>
-            )}
+        {(dealNote || status || onRemove) && (
+          <div className="mt-auto flex items-end justify-between gap-3 pt-3">
+            {/* Điều kiện ưu đãi nằm ngay dưới con số lớn nhưng ở hàng riêng, để
+                câu dài không đẩy tên khóa hẹp lại ở màn hình nhỏ. */}
+            <p className="min-w-0 text-xs font-semibold leading-snug text-success">
+              {dealNote}
+            </p>
+            <span className="ml-auto flex shrink-0 items-center gap-3">
+              {status}
+              {onRemove && (
+                <button
+                  type="button"
+                  onClick={onRemove}
+                  aria-label={cartPage.removeLabel(course.title)}
+                  className="rounded-md bg-primary px-3 py-1.5 text-xs font-bold text-primary-fg transition-colors hover:bg-primary-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-bg"
+                >
+                  {cartPage.remove}
+                </button>
+              )}
+            </span>
           </div>
         )}
       </div>
@@ -120,9 +124,9 @@ export function LineItem({
 
 function Meta({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex gap-1.5">
-      <dt className="shrink-0">{label}:</dt>
-      <dd className="min-w-0 text-fg">{value}</dd>
+    <div>
+      <dt className="inline">{label}: </dt>
+      <dd className="inline text-fg">{value}</dd>
     </div>
   );
 }

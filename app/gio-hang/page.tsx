@@ -58,7 +58,7 @@ export default async function CartPage({
       />
 
       <section className="bg-bg">
-        <div className="shell py-8 pb-28 sm:py-10 lg:pb-12">
+        <div className="shell py-8 pb-28 sm:py-10 lg:pb-20">
           <Suspense fallback={<CartFallback />}>
             <CartClient />
           </Suspense>

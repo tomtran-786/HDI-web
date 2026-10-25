@@ -178,9 +178,9 @@ describe("giỏ hàng — chỉ liệt kê khóa đang trong giỏ", () => {
 
     const row = host.querySelector(`#cart-course-${tieuLuan.slug}`)!;
     expect(row.textContent).toContain(tieuLuan.title);
-    expect(row.textContent).toContain(`${cartPage.line.code}:TIEULUAN`);
-    expect(row.textContent).toContain(`${cartPage.line.schedule}:${tieuLuan.schedule}`);
-    expect(row.textContent).toContain(`${cartPage.line.format}:${tieuLuan.format}`);
+    expect(row.textContent).toContain(`${cartPage.line.code}: TIEULUAN`);
+    expect(row.textContent).toContain(`${cartPage.line.schedule}: ${tieuLuan.schedule}`);
+    expect(row.textContent).toContain(`${cartPage.line.format}: ${tieuLuan.format}`);
     // Khóa còn lại trong catalog nhưng chưa vào giỏ thì không hiện.
     expect(host.querySelector(`#cart-course-${spss.slug}`)).toBeNull();
     expect(host.textContent).not.toContain(spss.title);
