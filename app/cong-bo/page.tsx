@@ -3,7 +3,7 @@ import { Publications } from "@/components/sections/publications";
 import { Projects } from "@/components/sections/projects";
 import { Conferences } from "@/components/sections/conferences";
 import { Teaching } from "@/components/sections/teaching";
-import { StatsBoard } from "@/components/stats-board";
+import { ConferenceMap } from "@/components/conference-map";
 import { about } from "@/content/about";
 import { site } from "@/content/site";
 
@@ -36,11 +36,11 @@ export default function AcademicRecordPage() {
             dẫn của {advisor.name} — {advisor.credential}.
           </p>
 
-          {/* Bốn con số này tóm tắt đúng bốn mục ngay bên dưới, nên chúng đứng
+          {/* Bản đồ hội thảo mang cả bốn con số hồ sơ ở thẻ đáy, nên nó đứng
               trong khối mở đầu chứ không thành một băng riêng — băng riêng sẽ
               phá nhịp nền sáng/tối xen kẽ của các section phía sau. */}
           <div className="mt-10">
-            <StatsBoard />
+            <ConferenceMap />
           </div>
         </div>
       </section>

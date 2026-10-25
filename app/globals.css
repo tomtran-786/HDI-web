@@ -278,3 +278,86 @@ html[data-course-bar] [data-contact-dock] {
 @media (prefers-reduced-motion: reduce) {
   .course-bar-in { animation: none; }
 }
+
+/* Bản đồ hội thảo (components/conference-map.tsx). Mặc định mọi thứ hiện đủ;
+   khi JS đã chạy (data-ready) và bản đồ chưa vào viewport thì cung nối và ghim
+   chờ, rồi chạy khi data-shown được bật. */
+.map-dot {
+  fill: color-mix(in srgb, var(--fg-subtle) 45%, var(--bg));
+}
+.map-arc {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 1.4;
+  stroke-dasharray: 4 5;
+  opacity: 0.55;
+}
+/* Cung nối chỉ được lộ ra qua mask: mask vẽ dần bằng stroke-dashoffset, còn nét
+   đứt thật nằm ở .map-arc. */
+[data-map][data-ready="true"]:not([data-shown="true"]) .map-arc-reveal {
+  stroke-dashoffset: 1;
+}
+[data-map][data-shown="true"] .map-arc-reveal {
+  stroke-dashoffset: 1;
+  animation: map-arc 2.4s ease-out forwards;
+  animation-delay: calc(var(--i, 0) * 0.18s);
+}
+[data-map][data-ready="true"]:not([data-shown="true"]) .map-pin {
+  opacity: 0;
+}
+[data-map][data-shown="true"] .map-pin {
+  animation: map-pin-in 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  animation-delay: calc(var(--i, 0) * 0.18s + 0.3s);
+}
+.map-ping {
+  animation: map-ping 2.5s ease-out infinite;
+}
+@keyframes map-arc {
+  to { stroke-dashoffset: 0; }
+}
+@keyframes map-pin-in {
+  from { opacity: 0; transform: scale(0.2); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes map-ping {
+  0% { opacity: 0.7; transform: scale(1); }
+  70%, 100% { opacity: 0; transform: scale(2.6); }
+}
+@media (prefers-reduced-motion: reduce) {
+  [data-map] .map-arc-reveal { animation: none !important; stroke-dashoffset: 0 !important; }
+  [data-map] .map-pin { animation: none !important; opacity: 1 !important; }
+  .map-ping { animation: none; opacity: 0; }
+}
+
+/* Dải chạy "Công bố & trình bày tại" (components/sections/credibility-marquee.tsx).
+   Dừng khi hover hoặc khi có phần tử bên trong nhận focus bàn phím; không có
+   nút tạm dừng riêng. */
+.marquee-mask {
+  overflow: hidden;
+  mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+}
+.marquee-track {
+  display: flex;
+  width: max-content;
+  animation: marquee-left 30s linear infinite;
+}
+.marquee-track[data-direction="right"] {
+  animation-name: marquee-right;
+}
+[data-marquee]:hover .marquee-track,
+[data-marquee]:focus-within .marquee-track {
+  animation-play-state: paused;
+}
+@keyframes marquee-left {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+@keyframes marquee-right {
+  from { transform: translateX(-50%); }
+  to { transform: translateX(0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .marquee-mask { mask-image: none; }
+  .marquee-track { animation: none; width: auto; flex-wrap: wrap; }
+  .marquee-track [data-marquee-copy] { display: none; }
+}

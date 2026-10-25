@@ -11,7 +11,7 @@ function group(value: number): string {
   return String(value).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 }
 
-function format(stat: Stat, value: number): string {
+export function format(stat: Stat, value: number): string {
   const digits = stat.grouped ? group(value) : String(value);
   return `${stat.prefix ?? ""}${digits}${stat.suffix ?? ""}`;
 }
@@ -25,7 +25,13 @@ const DURATION_MS = 1400;
  *  hiệu ứng trang trí là cái giá không đáng trả. Giá trị cuối vẫn nằm trong
  *  JSX nên HTML từ máy chủ, lần render đầu ở trình duyệt và mọi lần render sau
  *  đều hiện đúng con số thật — kể cả khi người dùng tắt JavaScript. */
-function RunningScore({ stat }: { stat: Stat }) {
+export function RunningScore({
+  stat,
+  className = "text-primary",
+}: {
+  stat: Stat;
+  className?: string;
+}) {
   const ref = useRef<HTMLSpanElement>(null);
 
   useEffect(() => {
@@ -65,7 +71,7 @@ function RunningScore({ stat }: { stat: Stat }) {
       // Con số đang nhảy là hiệu ứng trang trí; trình đọc màn hình lấy giá trị
       // thật từ nhãn ẩn bên cạnh thay vì đọc lại từng khung hình.
       aria-hidden
-      className="block text-3xl font-bold tracking-tight text-primary tabular-nums sm:text-4xl"
+      className={`block text-3xl font-bold tracking-tight tabular-nums sm:text-4xl ${className}`}
     >
       {format(stat, stat.to)}
     </span>

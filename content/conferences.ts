@@ -11,6 +11,8 @@
 
 export type Conference = {
   name: string;
+  /** Tên ngắn dùng làm wordmark ở dải chạy trang chủ (components/sections/credibility-marquee.tsx). */
+  short: string;
   when: string;
   where: string;
   role: string;
@@ -26,6 +28,7 @@ export const conferencesIntro = {
 export const conferences: Conference[] = [
   {
     name: "The 20th Annual World Congress of the Academy for Global Business Advancement (AGBA 2024)",
+    short: "AGBA",
     when: "8–10/7/2024",
     where: "Bangkok, Thailand",
     role: "Chair of Session and Presenter",
@@ -33,6 +36,7 @@ export const conferences: Conference[] = [
   },
   {
     name: "The Vietnam Symposium in Global Economic Issues 2023 (VSGE2023)",
+    short: "VSGE",
     when: "30–31/10/2023",
     where: "Ho Chi Minh City, Vietnam",
     role: "Chair of Session and Presenter",
@@ -40,6 +44,7 @@ export const conferences: Conference[] = [
   },
   {
     name: "The 2023 Feng Chia Conference — Recent Advances in Sustainable Development, Green Finance, and Regional Cooperation, Department of Economics, Feng Chia University",
+    short: "Feng Chia University",
     when: "20/6/2023",
     where: "Taichung, Taiwan",
     role: "Discussant and Presenter",
@@ -47,6 +52,7 @@ export const conferences: Conference[] = [
   },
   {
     name: "The 2022 Vietnam Symposium in International Business (VSIB2022)",
+    short: "VSIB",
     when: "31/10 – 1/11/2022",
     where: "Ho Chi Minh City, Vietnam",
     role: "Chair of Session and Presenter",
@@ -54,6 +60,7 @@ export const conferences: Conference[] = [
   },
   {
     name: "Women Entrepreneurs in Asia (WEA 2022): Empowering vulnerable communities, Monash University Malaysia",
+    short: "Monash University Malaysia",
     when: "7/2022",
     where: "Malaysia",
     role: "Co-organizer and Presenter",
@@ -61,6 +68,7 @@ export const conferences: Conference[] = [
   },
   {
     name: "The 38th Eurasia Business and Economic Society (EBES) Conference",
+    short: "EBES",
     when: "1/2022",
     where: "Warsaw, Poland",
     role: "Presenter",
@@ -68,6 +76,7 @@ export const conferences: Conference[] = [
   },
   {
     name: "The 2021 Vietnam Symposium in Banking and Finance (VSBF2021)",
+    short: "VSBF",
     when: "28–30/10/2021",
     where: "Hanoi, Vietnam",
     role: "Chair of Session and Presenter",
@@ -75,6 +84,7 @@ export const conferences: Conference[] = [
   },
   {
     name: "Hong Kong on-line Conference on Recent Advances in International Trade, Finance, Business and Regional Cooperation 2020",
+    short: "Hong Kong Online Conference",
     when: "2020",
     where: "Hong Kong (trực tuyến)",
     role: "Presenter",
@@ -82,12 +92,14 @@ export const conferences: Conference[] = [
   },
   {
     name: "The 1st ASEAN Financial Development and Creating Shared Value Forum, National University of Laos",
+    short: "National University of Laos",
     when: "2/2018",
     where: "Vientiane, Laos",
     role: "Presenter",
   },
   {
     name: "American Risk and Insurance Association (ARIA) 2016 Annual Meeting",
+    short: "ARIA",
     when: "8/2016",
     where: "Cambridge, Massachusetts, United States",
     role: "Presenter",
@@ -95,6 +107,7 @@ export const conferences: Conference[] = [
   },
   {
     name: "The 2016 Insurance Risk and Finance Research Conference, Nanyang Technological University",
+    short: "Nanyang Technological University",
     when: "6/2016",
     where: "Singapore",
     role: "Presenter",
@@ -102,6 +115,7 @@ export const conferences: Conference[] = [
   },
   {
     name: "The 19th Eurasia Business and Economic Society (EBES) Conference, Istanbul Technical University",
+    short: "EBES",
     when: "5/2016",
     where: "Istanbul, Turkey",
     role: "Presenter",
@@ -109,12 +123,14 @@ export const conferences: Conference[] = [
   },
   {
     name: "The Faculty of Business and Law HDR Colloquium, Deakin University",
+    short: "Deakin University",
     when: "10/2015",
     where: "Melbourne, Australia",
     role: "Presenter",
   },
   {
     name: "The Asia-Pacific Trade Seminars (APTS), Australian National University",
+    short: "Australian National University",
     when: "6/2015",
     where: "Canberra, Australia",
     role: "Presenter",

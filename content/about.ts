@@ -101,9 +101,6 @@ export const about = {
   eyebrow: "Về chúng tôi",
   title: "Về HDI Research Center",
   subtitle: "Nghiên cứu bài bản – Đồng hành thực chất – Hướng tới công bố",
-  // Giữ SVG gốc thay vì bản WebP raster: asset có SMIL animation cho nhân vật,
-  // lá cây và các chi tiết minh họa.
-  illustration: { src: "/images/successful-target.svg" },
   paragraphs: [
     "HDI Research Center là cộng đồng huấn luyện và hỗ trợ nghiên cứu dành cho sinh viên, học viên cao học, nghiên cứu sinh, giảng viên và các nhà nghiên cứu trẻ. HDI đồng hành cùng người học từ bước hình thành ý tưởng, xây dựng câu hỏi nghiên cứu và lựa chọn phương pháp đến hoàn thiện bản thảo, gửi bài và phản hồi nhận xét của phản biện.",
     "Các chương trình của HDI được đội ngũ trợ lý nghiên cứu và điều phối viên triển khai dưới sự định hướng chuyên môn của Dr. Tam Trinh – Lead Academic Advisor.",

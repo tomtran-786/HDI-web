@@ -3,6 +3,7 @@ import Link from "next/link";
 import { about } from "@/content/about";
 import { site } from "@/content/site";
 import { CtaLink } from "../ui/cta-link";
+import { CredibilityMarquee } from "./credibility-marquee";
 import { Notation } from "../ui/notation";
 import { Reveal } from "../ui/reveal";
 import { IconArrow, IconCheck, IconClock, IconMessage } from "../ui/icons";
@@ -122,6 +123,9 @@ export function Hero() {
           </div>
         </Reveal>
       </div>
+      {/* Dải chạy nằm trong chính <section id="top"> để thứ tự và nền các
+          section của trang chủ không đổi. */}
+      <CredibilityMarquee />
     </section>
   );
 }

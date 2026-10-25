@@ -113,9 +113,15 @@ describe("kiến trúc nội dung homepage và Về HDI", () => {
     expect(html).not.toContain("220.000 đ");
     expect(html).not.toContain("Đánh giá học viên");
     expect(html).not.toContain("Tuan Tran");
-    expect(html).not.toContain("Economic Modelling");
-    expect(html).toContain("/images/successful-target.svg");
-    expect(html).not.toContain("/images/successful-target.webp");
+    // Danh mục công bố đầy đủ ở /cong-bo; trang chủ chỉ có tên tạp chí trên
+    // dải chạy, không có tiêu đề bài báo.
+    expect(html).not.toContain("Green Energy and Wage Inequality");
+    // About mang bản đồ hội thảo thay cho ảnh minh họa cũ.
+    expect(html).not.toContain("/images/successful-target");
+    const about = html.slice(html.indexOf('id="ve-chung-toi"'));
+    expect(about).toContain("data-map");
+    expect(about).toContain("14 lần trình bày");
+    expect(about).toContain("11 quốc gia");
     expect(html).toContain('id="faq"');
     expect(html).toContain("Khóa học và dịch vụ đồng hành nghiên cứu khác nhau thế nào?");
     expect(html).toContain("Humanizing &amp; Proofreading đã có bảng giá chưa?");
@@ -154,6 +160,22 @@ describe("kiến trúc nội dung homepage và Về HDI", () => {
     // liệu và nhánh catch riêng của nó.
     expect(html).not.toContain("data-opening-poster");
     consoleError.mockRestore();
+  });
+
+  it("dải chạy công bố nằm trong <section id=\"top\"> của hero, không thêm section", async () => {
+    const html = renderToStaticMarkup(await Home());
+    const hero = html.slice(
+      html.indexOf('id="top"'),
+      html.indexOf("</section>", html.indexOf('id="top"')),
+    );
+
+    expect(hero).toContain("data-marquee");
+    expect(hero).toContain("Công bố &amp; trình bày tại");
+    expect(hero).toContain("Economic Modelling");
+    expect(hero).toContain("Deakin University");
+    // Bản sao để lặp vòng bị ẩn khỏi trình đọc màn hình.
+    expect(hero).toMatch(/<ul aria-hidden="true" data-marquee-copy="true"/);
+    expect(html.match(/data-marquee(?![-\w])/g)).toHaveLength(1);
   });
 
   it("/ve-hdi chứa đội ngũ đầy đủ và các liên kết tài liệu", () => {
