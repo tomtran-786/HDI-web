@@ -10,6 +10,7 @@ export function Contact({ soft }: { soft?: boolean }) {
       <SectionHeading
         eyebrow="Liên hệ"
         title="Đặt lịch tư vấn"
+        mark={{ text: "tư vấn" }}
         subtitle="Một buổi trò chuyện miễn phí để bàn về đề tài của bạn"
       />
 

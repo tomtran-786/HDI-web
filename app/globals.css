@@ -4,11 +4,10 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 :root {
-  /* The light theme is deliberately all-white: page, alternate band and card
-     surfaces are the same #ffffff, so sections are separated by their rules and
-     cards by their borders, not by a change of tone. `soft` on <Section> is
-     therefore invisible here — it still does its job in the dark theme below,
-     so keep the alternating flags in place. */
+  /* Light theme: page and cards are white. `soft` sections do not change the
+     flat background token (--bg-soft stays #ffffff, so it can still be used as
+     a plain colour) — `.bg-bg-soft` below paints a soft radial wash from
+     --wash instead, which is what makes the alternating sections visible. */
   --bg: #ffffff;
   --bg-soft: #ffffff;
   --card: #ffffff;
@@ -20,6 +19,10 @@
   --primary-deep: #003865;
   --primary-fg: #ffffff;
   --tint: #e8f0fe;
+  --accent: #0f9d90;
+  --band-from: #003865;
+  --band-to: #0c498f;
+  --wash: #e9edf2;
   --success: #1c7a4d;
   --warning: #9a6400;
   --danger: #b3261e;
@@ -40,6 +43,10 @@
   --primary-deep: #9cc9f7;
   --primary-fg: #08121e;
   --tint: #14304e;
+  --accent: #57e1cf;
+  --band-from: #0a1a2c;
+  --band-to: #13304f;
+  --wash: #101b28;
   --success: #4fbe8b;
   --warning: #e0aa3e;
   --danger: #f28b82;
@@ -65,6 +72,7 @@
   --color-primary-deep: var(--primary-deep);
   --color-primary-fg: var(--primary-fg);
   --color-tint: var(--tint);
+  --color-accent: var(--accent);
   --color-success: var(--success);
   --color-warning: var(--warning);
   --color-danger: var(--danger);
@@ -117,6 +125,28 @@ body {
   max-width: 76rem;
   margin-inline: auto;
   padding-inline: 1.25rem;
+}
+
+/* Navy "band" section: the brand gradient with white text. Used by
+   <Section tone="band"> and the footer. */
+@utility band {
+  background: linear-gradient(90deg, var(--band-from), var(--band-to));
+  color: #fff;
+}
+
+/* Alternate section surface. In the light theme it is a soft radial wash
+   (centre grey, edge white); in the dark theme --wash equals --bg-soft so it
+   collapses back to a flat surface. The class name is kept so the section
+   rhythm test can still read it from the markup. */
+.bg-bg-soft {
+  background: radial-gradient(circle, var(--wash) 0%, var(--bg) 100%);
+}
+
+/* rough-notation draws its strokes as SVG paths with a stroke presentation
+   attribute; CSS wins over it, so the colour follows --accent and flips with
+   the theme without re-drawing. */
+.rough-annotation path {
+  stroke: var(--accent);
 }
 
 /* Fade-and-rise on scroll; inert until JS marks the element visible. */

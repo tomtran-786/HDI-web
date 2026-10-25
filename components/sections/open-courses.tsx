@@ -45,6 +45,7 @@ export async function OpenCourses() {
         <SectionHeading
           eyebrow="Đang mở đăng ký"
           title="Khóa học đang nhận học viên"
+          mark={{ text: "học viên", type: "circle" }}
           subtitle="Số chỗ được tính từ các lượt giữ chỗ còn hạn và ghi danh đã thanh toán."
         />
 

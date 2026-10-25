@@ -3,6 +3,7 @@ import Link from "next/link";
 import { about } from "@/content/about";
 import { site } from "@/content/site";
 import { CtaLink } from "../ui/cta-link";
+import { Notation } from "../ui/notation";
 import { Reveal } from "../ui/reveal";
 import { IconArrow, IconCheck, IconClock, IconMessage } from "../ui/icons";
 
@@ -31,7 +32,9 @@ export function Hero() {
           <h1 className="mt-6 text-4xl font-bold leading-[1.08] tracking-tight sm:text-5xl lg:text-6xl">
             <span className="text-primary">Nghiên cứu bài bản,</span>
             <br />
-            <span className="text-fg">công bố quốc tế</span>
+            <span className="text-fg">
+              <Notation type="underline">công bố quốc tế</Notation>
+            </span>
           </h1>
 
           <p className="mt-4 text-lg font-semibold text-primary">

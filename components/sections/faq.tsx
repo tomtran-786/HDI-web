@@ -10,6 +10,7 @@ export function Faq({ soft }: { soft?: boolean }) {
       <SectionHeading
         eyebrow="Câu hỏi thường gặp"
         title="Những điều bạn có thể muốn biết trước khi bắt đầu"
+        mark={{ text: "bắt đầu", type: "circle" }}
         subtitle="Thông tin về khóa học, dịch vụ, hình thức học và quy trình đăng ký tại HDI."
       />
 

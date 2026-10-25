@@ -12,6 +12,7 @@ export function About({ soft }: { soft?: boolean }) {
       <SectionHeading
         eyebrow={about.eyebrow}
         title={about.title}
+        mark={{ text: "HDI Research Center" }}
         subtitle={about.subtitle}
       />
 
