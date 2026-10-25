@@ -447,6 +447,16 @@ export function CartClient() {
       ? groupPanel.checkout(groupSize)
       : cartModal.checkout;
 
+  // Ô mã giới thiệu: nhập được khi còn quyền nhập mã VÀ có khóa để giảm.
+  const promoCanEdit = referral.canEnterCode && selected.length > 0;
+  const promoHint = referral.canEnterCode
+    ? selected.length > 0
+      ? referralPanel.codeHint
+      : cartPage.promo.needCourse
+    : referral.eligible
+      ? cartPage.promo.lockedAuto
+      : cartPage.promo.lockedUsed;
+
   const groupDiscountVnd = Math.max(0, listTotalVnd - subtotalVnd);
   const lines: SummaryLine[] = [
     {
@@ -872,61 +882,63 @@ export function CartClient() {
             </form>
           }
         >
-          {/* Ô mã giới thiệu chỉ hiện cho người chưa có người giới thiệu và chưa
-              chốt đơn nào — server dựng cờ này trong `referralQuoteFor`. */}
-          {selected.length > 0 && referral.canEnterCode && (
-            <div>
-              <label htmlFor="cart-promo" className="text-xs font-semibold text-fg-muted">
-                {cartPage.promo.label}
-              </label>
-              <div className="mt-1.5 flex">
-                <input
-                  id="cart-promo"
-                  type="text"
-                  value={referralCodeDraft}
-                  onChange={(event) => {
-                    const next = event.target.value.toUpperCase();
-                    setReferralCodeDraft(next);
-                    if (appliedCode !== null && next.trim() !== appliedCode) {
-                      setAppliedCode(null);
-                      setPromoStatus(null);
-                    }
-                  }}
-                  onKeyDown={(event) => {
-                    if (event.key !== "Enter") return;
-                    event.preventDefault();
-                    void applyCode();
-                  }}
-                  autoComplete="off"
-                  spellCheck={false}
-                  maxLength={12}
-                  placeholder={referralPanel.codePlaceholder}
-                  className="min-w-0 flex-1 rounded-l-md border border-r-0 border-line bg-bg px-3 py-2 text-sm uppercase tracking-wide text-fg outline-none transition placeholder:normal-case placeholder:tracking-normal placeholder:text-fg-subtle focus:border-primary"
-                />
-                <button
-                  type="button"
-                  onClick={() => void applyCode()}
-                  disabled={promoChecking || referralCodeDraft.trim() === ""}
-                  className="shrink-0 rounded-r-md bg-primary px-4 py-2 text-sm font-bold text-primary-fg transition-colors hover:bg-primary-deep disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                  {promoChecking ? cartPage.promo.applying : cartPage.promo.apply}
-                </button>
-              </div>
-              <p
-                role="status"
-                className={`mt-1.5 min-h-4 text-xs leading-relaxed ${
-                  promoStatus?.kind === "error" ? "text-danger" : "text-success"
-                }`}
+          {/* Ô mã giới thiệu LUÔN hiện, như ô mã giảm giá của một giỏ hàng bình
+              thường. Chỉ người chưa có người giới thiệu và chưa chốt đơn nào
+              (`canEnterCode`, dựng ở `referralQuoteFor`) mới nhập được; hai ca
+              còn lại thấy ô bị khóa kèm lý do, chứ không phải một khoảng trống. */}
+          <div>
+            <label htmlFor="cart-promo" className="text-xs font-semibold text-fg-muted">
+              {cartPage.promo.label}
+            </label>
+            <div className="mt-1.5 flex">
+              <input
+                id="cart-promo"
+                type="text"
+                value={promoCanEdit ? referralCodeDraft : ""}
+                disabled={!promoCanEdit}
+                onChange={(event) => {
+                  const next = event.target.value.toUpperCase();
+                  setReferralCodeDraft(next);
+                  if (appliedCode !== null && next.trim() !== appliedCode) {
+                    setAppliedCode(null);
+                    setPromoStatus(null);
+                  }
+                }}
+                onKeyDown={(event) => {
+                  if (event.key !== "Enter") return;
+                  event.preventDefault();
+                  void applyCode();
+                }}
+                autoComplete="off"
+                spellCheck={false}
+                maxLength={12}
+                placeholder={referralPanel.codePlaceholder}
+                className="min-w-0 flex-1 rounded-l-md border border-r-0 border-line bg-bg px-3 py-2 text-sm uppercase tracking-wide text-fg outline-none transition placeholder:normal-case placeholder:tracking-normal placeholder:text-fg-subtle focus:border-primary disabled:cursor-not-allowed disabled:bg-bg-soft disabled:opacity-70"
+              />
+              <button
+                type="button"
+                onClick={() => void applyCode()}
+                disabled={
+                  !promoCanEdit || promoChecking || referralCodeDraft.trim() === ""
+                }
+                className="shrink-0 rounded-r-md bg-primary px-4 py-2 text-sm font-bold text-primary-fg transition-colors hover:bg-primary-deep disabled:cursor-not-allowed disabled:opacity-60"
               >
-                {promoStatus?.message}
-              </p>
-              {!promoStatus && (
-                <p className="text-xs leading-relaxed text-fg-subtle">
-                  {referralPanel.codeHint}
-                </p>
-              )}
+                {promoChecking ? cartPage.promo.applying : cartPage.promo.apply}
+              </button>
             </div>
-          )}
+            <p
+              role="status"
+              className={`mt-1.5 text-xs leading-relaxed ${
+                promoStatus?.kind === "error"
+                  ? "min-h-4 text-danger"
+                  : promoStatus
+                    ? "min-h-4 text-success"
+                    : "min-h-4 text-fg-subtle"
+              }`}
+            >
+              {promoStatus?.message ?? promoHint}
+            </p>
+          </div>
         </SummaryCard>
       </div>
 

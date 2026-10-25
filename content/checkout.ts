@@ -77,6 +77,15 @@ export const cartPage = {
     applying: "Đang kiểm tra…",
     applied: `Mã hợp lệ — giảm ${REFERRAL_DISCOUNT_PCT}% cho khóa học đầu tiên đã được tính vào tổng.`,
     networkError: "Chưa kiểm tra được mã giới thiệu. Vui lòng thử lại.",
+    /**
+     * Ô mã luôn hiện ở thẻ tóm tắt; hai ca này thì nó bị khóa và nói vì sao thay
+     * vì biến mất, để người mua không tưởng site không có mã giới thiệu.
+     */
+    lockedAuto: `Bạn đã có người giới thiệu — khoản giảm ${REFERRAL_DISCOUNT_PCT}% cho khóa học đầu tiên được tự động tính vào đơn.`,
+    lockedUsed:
+      "Mã giới thiệu chỉ áp dụng cho khóa học đầu tiên của bạn, nên không dùng được cho đơn này.",
+    /** Giỏ chưa có khóa nào mua được thì chưa có gì để giảm. */
+    needCourse: "Thêm một khóa còn chỗ vào giỏ để dùng mã giới thiệu.",
   },
   group: {
     title: "Học theo nhóm",

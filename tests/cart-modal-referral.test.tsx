@@ -332,7 +332,8 @@ describe("giỏ hàng — ô mã giới thiệu ở checkout", () => {
 
     expect(hiddenTotal()).toBe("300000");
     expect(submittedCode()).toBeNull();
-    expect(promoStatus()).toBe("");
+    // Hết "mã hợp lệ"; dòng gợi ý quay lại.
+    expect(promoStatus()).toBe(referralPanel.codeHint);
   });
 
   it("nút Áp dụng tắt khi ô trống", async () => {
@@ -396,19 +397,40 @@ describe("giỏ hàng — ô mã giới thiệu ở checkout", () => {
     expect(host.textContent).not.toContain("−0");
   });
 
-  it("không hiện ô nhập mã khi giỏ không còn khóa nào mua được", async () => {
+  it("giỏ không còn khóa nào mua được: ô mã vẫn hiện nhưng khóa, và nói cần thêm khóa", async () => {
     await renderWith(
       { eligible: false, canEnterCode: true, creditBalanceVnd: 0 },
       { ...soloCourse, availability: "sold_out" as unknown as "buyable" },
     );
 
-    expect(codeInput()).toBeNull();
+    expect(codeInput()).not.toBeNull();
+    expect(codeInput()!.disabled).toBe(true);
+    expect(applyButton().disabled).toBe(true);
+    expect(promoStatus()).toBe(cartPage.promo.needCourse);
   });
 
-  it("ẩn ô nhập mã khi không canEnterCode", async () => {
+  /**
+   * Ô mã LUÔN hiện. Trước đây nó biến mất với người đã có người giới thiệu hoặc
+   * đã chốt đơn, nên họ tưởng site không có mã giới thiệu — giờ nó bị khóa kèm
+   * lý do, và không bao giờ gửi mã theo form.
+   */
+  it("không canEnterCode: ô mã vẫn hiện, bị khóa, không gửi mã", async () => {
     await renderWith({ eligible: true, canEnterCode: false, creditBalanceVnd: 0 });
-    expect(codeInput()).toBeNull();
+
+    expect(codeInput()).not.toBeNull();
+    expect(codeInput()!.disabled).toBe(true);
+    expect(applyButton().disabled).toBe(true);
     expect(submittedCode()).toBeNull();
+    // Đã có người giới thiệu: nói khoản giảm tự động được tính.
+    expect(promoStatus()).toBe(cartPage.promo.lockedAuto);
+  });
+
+  it("đã dùng ưu đãi đơn đầu: ô mã khóa kèm lý do, tổng không đổi", async () => {
+    await renderWith({ eligible: false, canEnterCode: false, creditBalanceVnd: 0 });
+
+    expect(codeInput()!.disabled).toBe(true);
+    expect(promoStatus()).toBe(cartPage.promo.lockedUsed);
+    expect(hiddenTotal()).toBe("300000");
   });
 
   it("đã có người giới thiệu thì khoản giảm tự tính, không cần nhập mã", async () => {
