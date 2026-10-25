@@ -162,7 +162,7 @@ export default async function CourseDetailPage({ params }: CoursePageProps) {
                   {course.eyebrow}
                 </span>
               </div>
-              <h1 className="mt-4 text-3xl font-bold tracking-tight text-primary sm:text-4xl lg:text-[2.75rem] lg:leading-[1.1]">
+              <h1 className="mt-4 text-3xl font-bold leading-[1.22] tracking-tight text-primary sm:text-4xl lg:text-[2.75rem]">
                 <MarkedTitle
                   title={course.title}
                   mark={{ text: course.titleMark }}

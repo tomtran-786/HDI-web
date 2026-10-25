@@ -31,7 +31,7 @@ export function CourseExpectBand({
           <p className="mb-3 text-xs font-semibold uppercase tracking-[0.18em] text-accent-on-band">
             {courseExpect.eyebrow}
           </p>
-          <h2 className="text-3xl font-bold tracking-tight text-white sm:text-4xl lg:text-5xl lg:leading-[1.1]">
+          <h2 className="text-3xl font-bold leading-[1.22] tracking-tight text-white sm:text-4xl lg:text-5xl">
             <MarkedTitle
               title={courseExpect.title}
               mark={{ text: courseExpect.mark }}

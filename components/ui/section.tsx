@@ -117,9 +117,11 @@ export function SectionHeading({
         </p>
       )}
       <h2
-        className={`text-3xl font-bold tracking-tight sm:text-4xl lg:text-[2.75rem] lg:leading-[1.1] ${
-          onBand ? "text-white" : "text-primary"
-        }`}
+        className={`text-3xl font-bold tracking-tight sm:text-4xl lg:text-[2.75rem] ${
+          // Tiêu đề có nét vẽ tay cần dòng thoáng hơn để nét ở dòng trên không
+          // chạm dấu tiếng Việt của dòng dưới.
+          mark ? "leading-[1.22]" : "lg:leading-[1.1]"
+        } ${onBand ? "text-white" : "text-primary"}`}
       >
         <MarkedTitle title={title} mark={mark} />
       </h2>

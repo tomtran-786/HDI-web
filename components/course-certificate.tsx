@@ -47,7 +47,7 @@ export function CertificateSection({ soft = false }: { soft?: boolean }) {
           <p className="mb-3 text-xs font-semibold uppercase tracking-[0.18em] text-accent-text">
             {certificate.eyebrow}
           </p>
-          <h2 className="text-3xl font-bold tracking-tight text-primary sm:text-4xl lg:text-5xl lg:leading-[1.1]">
+          <h2 className="text-3xl font-bold leading-[1.22] tracking-tight text-primary sm:text-4xl lg:text-5xl">
             <MarkedTitle
               title={certificate.title}
               mark={{ text: certificate.mark }}
