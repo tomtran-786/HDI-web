@@ -1,15 +1,25 @@
-import { AuthShell } from "@/components/auth-shell";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export default function OrderDetailLoading() {
   return (
-    <AuthShell>
-      <Skeleton className="mb-3 h-3 w-20" />
-      <Skeleton className="mb-10 h-9 w-56" />
-      <div className="mx-auto max-w-2xl space-y-5">
-        <Skeleton className="h-56 w-full" />
-        <Skeleton className="h-40 w-full" />
+    <>
+      <div className="border-b border-line bg-bg">
+        <div className="shell flex items-baseline justify-between py-5">
+          <Skeleton className="h-6 w-64" />
+          <Skeleton className="h-4 w-28" />
+        </div>
       </div>
-    </AuthShell>
+      <section className="bg-bg">
+        <div className="shell py-8 sm:py-10">
+          <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_22rem]">
+            <div className="space-y-5">
+              <Skeleton className="h-28" />
+              <Skeleton className="h-24" />
+            </div>
+            <Skeleton className="h-72" />
+          </div>
+        </div>
+      </section>
+    </>
   );
 }

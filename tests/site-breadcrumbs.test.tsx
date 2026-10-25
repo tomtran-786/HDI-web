@@ -48,6 +48,15 @@ describe("breadcrumb toàn site", () => {
     expect(breadcrumbsForPathname("/thanh-toan/huy")).toEqual([]);
   });
 
+  it("trang chi tiết đơn hàng cũng tự có breadcrumb, nhưng danh sách đơn thì không", () => {
+    expect(breadcrumbsForPathname("/tai-khoan/don-hang/100123")).toEqual([]);
+    expect(breadcrumbsForPathname("/tai-khoan/don-hang")).toEqual([
+      { label: "Trang chủ", href: "/" },
+      { label: "Tài khoản", href: "/tai-khoan" },
+      { label: "Đơn hàng" },
+    ]);
+  });
+
   it("nhận ra trang hội thảo quốc tế", () => {
     expect(breadcrumbsForPathname("/hoi-thao-quoc-te")).toEqual([
       { label: "Trang chủ", href: "/" },
@@ -63,7 +72,7 @@ describe("breadcrumb toàn site", () => {
 
     expect(order.map((item) => item.label).join(" ")).not.toContain("HDI-SECRET-123");
     expect(result.map((item) => item.label).join(" ")).not.toContain("PRIVATE-REF");
-    expect(order.at(-1)?.label).toBe("Chi tiết đơn hàng");
+    expect(order).toEqual([]);
     expect(result.at(-1)?.label).toBe("Kết quả dịch vụ");
   });
 

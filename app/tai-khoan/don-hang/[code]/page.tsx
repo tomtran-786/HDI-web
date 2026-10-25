@@ -3,22 +3,19 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { currentSession } from "@/lib/current-session";
 import { prisma } from "@/lib/prisma";
-import { findCourse } from "@/lib/courses";
 import { syncPayosOrderStatus } from "@/lib/orders";
-import { formatDate, formatVnd } from "@/lib/format";
-import {
-  groupOrderLabel,
-  orderPage,
-  orderStatusLabel,
-  orderStatusTone,
-  referralPanel,
-} from "@/content/checkout";
+import { formatDate } from "@/lib/format";
+import { cartPage, orderPage, orderStatusLabel } from "@/content/checkout";
 import { composeEmailHref, links } from "@/content/site";
-import { AuthShell } from "@/components/auth-shell";
+import { CheckoutHeader } from "@/components/checkout/checkout-header";
+import {
+  OrderLineList,
+  OrderStatusBadges,
+  orderSummaryLines,
+} from "@/components/checkout/order-parts";
+import { SummaryCard } from "@/components/checkout/summary-card";
 import { HoldCountdown } from "@/components/hold-countdown";
 import { PayosLink } from "@/components/payos-link";
-import { SectionHeading } from "@/components/ui/section";
-import { Badge } from "@/components/ui/badge";
 import { IconArrow, IconMail, IconMessage } from "@/components/ui/icons";
 import { CancelOrder } from "./cancel";
 import { RetryPayment } from "./retry";
@@ -90,178 +87,125 @@ export default async function OrderDetailPage({
   const status = synced.closed ? synced.as : order.status;
 
   const pending = status === "pending";
-  const isGroup = order.groupSize > 1;
+  const { lines, total } = orderSummaryLines(order);
+
+  // Nút chữ nhật bo nhẹ, đặc cho hành động chính và viền cho hành động phụ —
+  // cùng ngôn ngữ với thẻ tóm tắt ở giỏ hàng.
+  const secondaryButton =
+    "inline-flex w-full items-center justify-center gap-2 rounded-md border border-line px-5 py-2.5 text-sm font-bold text-fg transition hover:border-primary hover:text-primary";
 
   return (
-    <AuthShell>
-      <SectionHeading
-        eyebrow={orderPage.eyebrow}
+    <>
+      <CheckoutHeader
+        trail={[
+          { label: cartPage.home, href: "/" },
+          { label: "Tài khoản", href: "/tai-khoan" },
+          { label: orderPage.eyebrow, href: "/tai-khoan/don-hang" },
+        ]}
         title={`${orderPage.codeLabel} #${order.code}`}
-        subtitle={`Đặt ngày ${formatDate(order.createdAt)}`}
+        aside={`Đặt ngày ${formatDate(order.createdAt)}`}
       />
-      <div className="mx-auto max-w-2xl">
-        <div className="rounded-card border border-line bg-card p-6 sm:p-7">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <Badge tone={orderStatusTone[status] ?? "cool"}>
-              {orderStatusLabel[status] ?? status}
-            </Badge>
-            {isGroup && <Badge tone="cool">Nhóm {order.groupSize} người</Badge>}
-            {pending && (
-              <HoldCountdown expiresAtIso={order.expiresAt.toISOString()} />
-            )}
-          </div>
 
-          <ul className="mt-6">
-            {order.items.map((item) => (
-              <li
-                key={item.id}
-                className="flex flex-wrap items-baseline justify-between gap-3 border-b border-line py-3.5 last:border-0"
-              >
-                <div className="min-w-0">
-                  <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-fg-subtle">
-                    Mã khóa {item.course.code}
+      <section className="bg-bg">
+        <div className="shell py-8 pb-24 sm:py-10 lg:pb-20">
+          <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_22rem]">
+            <div className="min-w-0">
+              {/* Dòng đơn lấy SNAPSHOT giá trên đơn, không phải giá hiện hành của
+                  khóa: số tiền người ta đã đồng ý không được đổi theo bảng giá. */}
+              <OrderLineList items={order.items} viewerId={session.user.id} />
+
+              {pending ? (
+                <div className="mt-6 rounded-md border border-primary bg-tint p-5">
+                  <p className="font-bold text-primary">
+                    {orderPage.awaitingGateway.title}
                   </p>
-                  <p className="font-semibold leading-snug text-fg">
-                    {findCourse(item.course.slug)?.title ?? item.course.slug}
+                  <p className="mt-1.5 text-sm leading-relaxed text-fg-muted">
+                    {orderPage.awaitingGateway.body}
                   </p>
-                  {/* Với đơn nhóm, mỗi dòng là một GHẾ của một người cụ thể.
-                      Không in email ở đơn lẻ: người mua đã biết đó là mình. */}
-                  {isGroup && (
-                    <p className="mt-0.5 text-xs text-fg-muted">
-                      {groupOrderLabel.learner}:{" "}
-                      {item.memberUserId === session.user.id ? "bạn" : item.member.email}
-                    </p>
-                  )}
+                  <p className="mt-2 text-xs leading-relaxed text-fg-subtle">
+                    {orderPage.awaitingGateway.hint}
+                  </p>
                 </div>
-                {/* The snapshot on the line, not the course's current price —
-                    what someone owes must not move after they agreed to it. */}
-                <p className="font-bold tabular-nums text-fg">
-                  {formatVnd(item.priceVnd)}
-                </p>
-              </li>
-            ))}
-          </ul>
-
-          {/* Hai khoản trừ ở mức ĐƠN, kể tên riêng: cộng các dòng ghế phía trên
-              không còn ra tổng cuối, và một hóa đơn không cộng lại được là một
-              hóa đơn không ai đối chiếu được. */}
-          {(order.referralDiscountVnd > 0 || order.creditAppliedVnd > 0) && (
-            <div className="mt-5 space-y-1.5 border-t border-line pt-5 text-sm text-fg-muted">
-              <p className="flex items-baseline justify-between gap-4">
-                <span>{referralPanel.subtotal}</span>
-                <span className="tabular-nums">
-                  {formatVnd(
-                    order.amountVnd + order.referralDiscountVnd + order.creditAppliedVnd,
-                  )}
-                </span>
-              </p>
-              {order.referralDiscountVnd > 0 && (
-                <p className="flex items-baseline justify-between gap-4">
-                  <span>{referralPanel.discountLine}</span>
-                  <span className="tabular-nums font-semibold text-primary">
-                    −{formatVnd(order.referralDiscountVnd)}
-                  </span>
-                </p>
-              )}
-              {order.creditAppliedVnd > 0 && (
-                <p className="flex items-baseline justify-between gap-4">
-                  <span>{referralPanel.creditLine}</span>
-                  <span className="tabular-nums font-semibold text-primary">
-                    −{formatVnd(order.creditAppliedVnd)}
-                  </span>
+              ) : status === "paid" ? (
+                <div className="mt-6 rounded-md border border-line bg-card p-5">
+                  <p className="font-bold text-success">{orderPage.paid.title}</p>
+                  <p className="mt-1.5 text-sm leading-relaxed text-fg-muted">
+                    {orderPage.paid.body}
+                  </p>
+                </div>
+              ) : (
+                <p className="mt-6 rounded-md border border-line bg-card px-5 py-4 text-sm leading-relaxed text-fg-muted">
+                  {orderPage.closed[status as keyof typeof orderPage.closed] ??
+                    orderStatusLabel[status]}
                 </p>
               )}
             </div>
-          )}
 
-          <div className="mt-5 flex flex-wrap items-baseline justify-between gap-3 border-t border-line pt-5">
-            <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-fg-subtle">
-              {"Tổng cộng"}
-            </p>
-            <p className="text-2xl font-bold tracking-tight text-primary">
-              {formatVnd(order.amountVnd)}
-            </p>
+            <SummaryCard
+              title={cartPage.summaryTitle}
+              lines={lines}
+              total={total}
+              actions={
+                pending ? (
+                  <div className="space-y-3">
+                    {order.checkoutUrl && (
+                      <PayosLink
+                        href={order.checkoutUrl}
+                        handoff={{ kind: "order", key: String(order.code) }}
+                        className="inline-flex w-full items-center justify-center gap-2 rounded-md bg-primary px-5 py-3 text-sm font-bold text-primary-fg transition hover:bg-primary-deep"
+                      >
+                        Thanh toán với PayOS
+                        <IconArrow size={16} />
+                      </PayosLink>
+                    )}
+                    {!order.checkoutUrl && <RetryPayment orderId={order.id} />}
+                    <a
+                      href={composeEmailHref(`Thanh toán đơn #${order.code}`)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={secondaryButton}
+                    >
+                      <IconMail size={16} />
+                      Gửi email
+                    </a>
+                    {!order.checkoutUrl && (
+                      <a
+                        href={links.zalo}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className={secondaryButton}
+                      >
+                        <IconMessage size={16} />
+                        Nhắn Zalo
+                      </a>
+                    )}
+                    <div className="flex justify-center pt-1">
+                      <CancelOrder orderId={order.id} />
+                    </div>
+                  </div>
+                ) : status === "paid" ? (
+                  <Link
+                    href="/tai-khoan"
+                    className="inline-flex w-full items-center justify-center gap-2 rounded-md bg-primary px-5 py-3 text-sm font-bold text-primary-fg transition hover:bg-primary-deep"
+                  >
+                    Vào trang tài khoản
+                    <IconArrow size={16} />
+                  </Link>
+                ) : undefined
+              }
+            >
+              <div className="space-y-2">
+                <OrderStatusBadges status={status} groupSize={order.groupSize} />
+                {pending && (
+                  <p>
+                    <HoldCountdown expiresAtIso={order.expiresAt.toISOString()} />
+                  </p>
+                )}
+              </div>
+            </SummaryCard>
           </div>
         </div>
-
-        {pending ? (
-          <div className="mt-5 rounded-card border border-primary bg-tint p-6 sm:p-7">
-            <p className="text-lg font-bold tracking-tight text-primary">
-              {orderPage.awaitingGateway.title}
-            </p>
-            <p className="mt-2 text-[15px] leading-relaxed text-fg-muted">
-              {orderPage.awaitingGateway.body}
-            </p>
-            <div className="mt-5 flex flex-wrap gap-3">
-              {order.checkoutUrl && (
-                <PayosLink
-                  href={order.checkoutUrl}
-                  handoff={{ kind: "order", key: String(order.code) }}
-                  className="inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-bold text-primary-fg transition hover:bg-primary-deep"
-                >
-                  Thanh toán với PayOS
-                  <IconArrow size={16} />
-                </PayosLink>
-              )}
-              <a
-                href={composeEmailHref(`Thanh toán đơn #${order.code}`)}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 rounded-full border border-line px-5 py-2.5 text-sm font-bold text-fg transition hover:border-primary hover:text-primary"
-              >
-                <IconMail size={16} />
-                Gửi email
-              </a>
-              {!order.checkoutUrl && (
-                <a
-                  href={links.zalo}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 rounded-full border border-line px-5 py-2.5 text-sm font-bold text-fg transition hover:border-primary hover:text-primary"
-                >
-                  <IconMessage size={16} />
-                  Nhắn Zalo
-                </a>
-              )}
-            </div>
-            {!order.checkoutUrl && (
-              <div className="mt-4">
-                <RetryPayment orderId={order.id} />
-              </div>
-            )}
-            <p className="mt-3 text-xs leading-relaxed text-fg-subtle">
-              {orderPage.awaitingGateway.hint}
-            </p>
-          </div>
-        ) : status === "paid" ? (
-          <div className="mt-5 rounded-card border border-line bg-card p-6 sm:p-7">
-            <p className="text-lg font-bold tracking-tight text-success">
-              {orderPage.paid.title}
-            </p>
-            <p className="mt-2 text-[15px] leading-relaxed text-fg-muted">
-              {orderPage.paid.body}
-            </p>
-            <Link
-              href="/tai-khoan"
-              className="mt-5 inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-bold text-primary-fg transition hover:bg-primary-deep"
-            >
-              Vào trang tài khoản
-              <IconArrow size={16} />
-            </Link>
-          </div>
-        ) : (
-          <p className="mt-5 rounded-card border border-line bg-card px-5 py-4 text-sm leading-relaxed text-fg-muted">
-            {orderPage.closed[status as keyof typeof orderPage.closed] ??
-              orderStatusLabel[status]}
-          </p>
-        )}
-
-        {pending && (
-          <div className="mt-6 flex justify-end">
-            <CancelOrder orderId={order.id} />
-          </div>
-        )}
-      </div>
-    </AuthShell>
+      </section>
+    </>
   );
 }

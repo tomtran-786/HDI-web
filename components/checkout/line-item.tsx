@@ -8,7 +8,8 @@ export type LineCourse = {
   slug: string;
   code: string;
   title: string;
-  cover: CourseCoverData;
+  /** Vắng mặt khi khóa không còn trong nội dung — hiện ô trơn mang mã khóa. */
+  cover?: CourseCoverData;
   schedule?: string | null;
   format?: string | null;
 };
@@ -53,7 +54,16 @@ export function LineItem({
   return (
     <li id={id} className="flex gap-4 py-5 first:pt-0 sm:gap-5">
       <div className="h-28 w-24 shrink-0 overflow-hidden rounded-md bg-bg-soft">
-        <CourseCover cover={course.cover} variant="thumb" sizes="96px" />
+        {course.cover ? (
+          <CourseCover cover={course.cover} variant="thumb" sizes="96px" />
+        ) : (
+          <span
+            aria-hidden
+            className="grid h-full w-full place-items-center text-xs font-bold tracking-tight text-primary"
+          >
+            {course.code}
+          </span>
+        )}
       </div>
 
       <div className="flex min-w-0 flex-1 flex-col">

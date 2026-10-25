@@ -24,6 +24,11 @@ const staticLabels: Record<string, string> = {
   "/quan-tri": "Quản trị",
 };
 
+/** `/tai-khoan/don-hang/<mã>` — danh sách `/tai-khoan/don-hang` thì không. */
+const isOrderDetail = (pathname: string) =>
+  pathname.startsWith("/tai-khoan/don-hang/") &&
+  pathname.length > "/tai-khoan/don-hang/".length;
+
 const serviceNav = nav.find((item) => item.href === "/dich-vu");
 const courseNav = nav.find((item) => item.href === "/khoa-hoc");
 
@@ -41,7 +46,13 @@ export function breadcrumbsForPathname(pathname: string): BreadcrumbItem[] {
   if (pathname === "/") return [];
   // Giỏ hàng và các trang thanh toán tự mang breadcrumb trong đầu trang phẳng của
   // chúng (components/checkout/checkout-header.tsx); thêm thanh này nữa là lặp.
-  if (pathname === "/gio-hang" || pathname.startsWith("/thanh-toan/")) return [];
+  if (
+    pathname === "/gio-hang" ||
+    pathname.startsWith("/thanh-toan/") ||
+    isOrderDetail(pathname)
+  ) {
+    return [];
+  }
 
   const staticLabel = staticLabels[pathname];
   if (staticLabel) return [HOME, { label: staticLabel }];
@@ -89,15 +100,6 @@ export function breadcrumbsForPathname(pathname: string): BreadcrumbItem[] {
       { label: "Đơn hàng" },
     ];
   }
-  if (pathname.startsWith("/tai-khoan/don-hang/")) {
-    return [
-      HOME,
-      { label: "Tài khoản", href: "/tai-khoan" },
-      { label: "Đơn hàng", href: "/tai-khoan/don-hang" },
-      { label: "Chi tiết đơn hàng" },
-    ];
-  }
-
   // Trang giới thiệu bạn bè, và lối vào công khai dẫn tới nó. Thiếu hai nhánh
   // này thì cả hai rơi xuống nhánh cuối và in "Không tìm thấy trang" ngay trên
   // một trang hoạt động bình thường.

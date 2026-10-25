@@ -293,6 +293,29 @@ export const checkoutReclaim = {
 } as const;
 
 export const paymentResultPage = {
+  /** Đầu trang phẳng: `Trang chủ › Giỏ hàng › Thanh toán`, kèm `Đơn #…` bên phải. */
+  header: {
+    title: "Thanh toán",
+    order: (code: number) => `Đơn #${code}`,
+  },
+  /** Nhãn badge trạng thái trong thẻ tóm tắt — ba trạng thái, không phải hai. */
+  badge: {
+    paid: "Đã thanh toán",
+    waiting: "Đang chờ xác nhận",
+    closed: "Đã đóng",
+  },
+  paid: {
+    title: "Đã xác nhận thanh toán",
+    subtitle:
+      "Webhook đã được kiểm tra và đơn hàng đã chuyển sang trạng thái đã thanh toán.",
+    cta: "Vào khu vực học viên",
+  },
+  waiting: {
+    title: "Đang chờ PayOS xác nhận",
+    subtitle:
+      "Trang quay lại không tự đánh dấu đã trả tiền. HDI đang chờ webhook có chữ ký hợp lệ.",
+  },
+  viewOrder: (code: number) => `Xem đơn #${code}`,
   /**
    * Trang quay lại của PayOS không chỉ có "đã trả" và "đang chờ". Học viên tới
    * đây với một đơn đã đóng cũng là chuyện thường: link hết hạn giữa chừng, hoặc

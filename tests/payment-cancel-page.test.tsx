@@ -1,6 +1,6 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { paymentCancelPage } from "@/content/checkout";
+import { cartPage, paymentCancelPage } from "@/content/checkout";
 
 class NotFoundSignal extends Error {}
 class RedirectSignal extends Error {}
@@ -49,6 +49,13 @@ const pendingOrder = {
   code: 100001,
   status: "pending",
   providerRef: LINK_ID,
+  groupSize: 1,
+  amountVnd: 270_000,
+  referralDiscountVnd: 30_000,
+  creditAppliedVnd: 0,
+  items: [
+    { priceVnd: 300_000, course: { code: "TIEULUAN", slug: "training-tieu-luan-nckh-kltn" } },
+  ],
 };
 
 /** Trang là async Server Component: await ra phần tử rồi mới render tĩnh. */
@@ -88,6 +95,23 @@ describe("trang PayOS trả về khi hủy", () => {
     expect(markup).toContain(paymentCancelPage.released.title);
     // Nút xác nhận sau khi đã hủy là một nút chết.
     expect(markup).not.toContain("data-cancel-order");
+  });
+
+  it("dùng cùng khung với giỏ hàng: header phẳng, khóa trong đơn, thẻ tóm tắt chứa nút xác nhận và link quay lại", async () => {
+    const markup = await html({ orderCode: "100001" });
+
+    expect(markup).toMatch(/<h1[^>]*>Thanh toán<\/h1>/);
+    expect(markup).toContain('href="/gio-hang"');
+    expect(markup).toContain("Đơn #100001");
+    expect(markup).toContain("Viết tiểu luận");
+    expect(markup).toContain(cartPage.summaryTitle);
+    expect(markup).toContain("270.000");
+    expect(markup).toContain('data-cancel-order="order-1"');
+    expect(markup).toContain(paymentCancelPage.backToOrder(100001));
+    // Trang vừa tự hủy thì badge nói "đã hủy", không còn "chờ thanh toán".
+    const released = await html({ orderCode: "100001", id: LINK_ID });
+    expect(released).toContain("Đã hủy");
+    expect(released).not.toContain("Chờ thanh toán");
   });
 
   /**

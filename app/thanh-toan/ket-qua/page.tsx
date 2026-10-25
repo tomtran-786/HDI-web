@@ -4,8 +4,14 @@ import { notFound, redirect } from "next/navigation";
 import { currentSession } from "@/lib/current-session";
 import { syncPayosOrderStatus } from "@/lib/orders";
 import { prisma } from "@/lib/prisma";
-import { paymentResultPage } from "@/content/checkout";
-import { Section, SectionHeading } from "@/components/ui/section";
+import { cartPage, paymentResultPage } from "@/content/checkout";
+import { CheckoutHeader } from "@/components/checkout/checkout-header";
+import {
+  OrderLineList,
+  orderSummaryLines,
+} from "@/components/checkout/order-parts";
+import { SummaryCard } from "@/components/checkout/summary-card";
+import { Badge } from "@/components/ui/badge";
 import { PaymentPoll } from "@/components/payment-poll";
 
 export const metadata: Metadata = {
@@ -29,7 +35,20 @@ export default async function PaymentResultPage({
 
   const order = await prisma.order.findFirst({
     where: { code, userId: session.user.id },
-    select: { id: true, code: true, status: true },
+    select: {
+      id: true,
+      code: true,
+      status: true,
+      amountVnd: true,
+      referralDiscountVnd: true,
+      creditAppliedVnd: true,
+      items: {
+        select: {
+          priceVnd: true,
+          course: { select: { code: true, slug: true } },
+        },
+      },
+    },
   });
   if (!order) notFound();
 
@@ -50,42 +69,77 @@ export default async function PaymentResultPage({
   // sắp có tiền về — và cái nút poll bên dưới hứa một điều không bao giờ tới.
   const waiting = status === "pending";
 
+  const message = paid
+    ? paymentResultPage.paid
+    : waiting
+      ? paymentResultPage.waiting
+      : {
+          title: paymentResultPage.closed.title,
+          subtitle:
+            paymentResultPage.closed[
+              status as keyof typeof paymentResultPage.closed
+            ] ?? paymentResultPage.closed.title,
+        };
+  const { lines, total } = orderSummaryLines(order);
+
   return (
-    <Section soft>
-      <div className="mx-auto max-w-xl text-center">
-        <SectionHeading
-          align="center"
-          eyebrow="PayOS"
-          title={
-            paid
-              ? "Đã xác nhận thanh toán"
-              : waiting
-                ? "Đang chờ PayOS xác nhận"
-                : paymentResultPage.closed.title
-          }
-          subtitle={
-            paid
-              ? "Webhook đã được kiểm tra và đơn hàng đã chuyển sang trạng thái đã thanh toán."
-              : waiting
-                ? "Trang quay lại không tự đánh dấu đã trả tiền. HDI đang chờ webhook có chữ ký hợp lệ."
-                : paymentResultPage.closed[
-                    status as keyof typeof paymentResultPage.closed
-                  ] ?? paymentResultPage.closed.title
-          }
-        />
-        <Link
-          className="inline-flex rounded-full bg-primary px-6 py-3 text-sm font-bold text-primary-fg"
-          href={paid ? "/tai-khoan" : `/tai-khoan/don-hang/${order.code}`}
-        >
-          {paid ? "Vào khu vực học viên" : `Xem đơn #${order.code}`}
-        </Link>
-        {waiting && (
-          <PaymentPoll
-            statusUrl={`/api/trang-thai-don?donHang=${order.code}`}
-            banDau={status}
-          />
-        )}
-      </div>
-    </Section>
+    <>
+      <CheckoutHeader
+        trail={[
+          { label: cartPage.home, href: "/" },
+          { label: cartPage.title, href: "/gio-hang" },
+        ]}
+        title={paymentResultPage.header.title}
+        aside={paymentResultPage.header.order(order.code)}
+      />
+
+      <section className="bg-bg">
+        <div className="shell py-8 pb-24 sm:py-10 lg:pb-20">
+          <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_22rem]">
+            <div className="min-w-0">
+              <div role="status" className="mb-5 rounded-md border border-line bg-bg-soft px-4 py-4">
+                <p className="font-bold text-fg">{message.title}</p>
+                <p className="mt-1 text-sm leading-relaxed text-fg-muted">
+                  {message.subtitle}
+                </p>
+              </div>
+              <OrderLineList items={order.items} />
+            </div>
+
+            <SummaryCard
+              title={cartPage.summaryTitle}
+              lines={lines}
+              total={total}
+              actions={
+                <div className="space-y-3">
+                  <Link
+                    className="inline-flex w-full items-center justify-center rounded-md bg-primary px-5 py-3 text-sm font-bold text-primary-fg transition-colors hover:bg-primary-deep"
+                    href={paid ? "/tai-khoan" : `/tai-khoan/don-hang/${order.code}`}
+                  >
+                    {paid
+                      ? paymentResultPage.paid.cta
+                      : paymentResultPage.viewOrder(order.code)}
+                  </Link>
+                  {waiting && (
+                    <PaymentPoll
+                      statusUrl={`/api/trang-thai-don?donHang=${order.code}`}
+                      banDau={status}
+                    />
+                  )}
+                </div>
+              }
+            >
+              <Badge tone={paid ? "success" : waiting ? "warning" : "danger"}>
+                {paid
+                  ? paymentResultPage.badge.paid
+                  : waiting
+                    ? paymentResultPage.badge.waiting
+                    : paymentResultPage.badge.closed}
+              </Badge>
+            </SummaryCard>
+          </div>
+        </div>
+      </section>
+    </>
   );
 }
