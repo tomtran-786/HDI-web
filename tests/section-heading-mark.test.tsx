@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { renderToStaticMarkup } from "react-dom/server";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { Section, SectionHeading } from "@/components/ui/section";
@@ -61,5 +63,20 @@ describe("Section tone", () => {
     expect(html).toMatch(/<section[^>]*class="band /);
     expect(html).not.toMatch(/\bbg-bg\b/);
     expect(html).toContain("<circle");
+  });
+});
+
+describe("nền wash của section", () => {
+  const css = readFileSync(join(process.cwd(), "app/globals.css"), "utf8");
+
+  it("radial wash chỉ áp cho <section>, không lan sang hộp nhỏ dùng bg-bg-soft", () => {
+    expect(css).toMatch(/section\.bg-bg-soft\s*\{[^}]*radial-gradient/);
+    expect(css).not.toMatch(/(^|\n)\.bg-bg-soft\s*\{/);
+  });
+
+  it("gạch chân trong thẻ trắng nằm trên band dùng màu accent đậm, không phải teal nhạt", () => {
+    expect(css).toMatch(
+      /\.band \.bg-card \.rough-annotation path\s*\{[^}]*stroke:\s*var\(--accent\)/,
+    );
   });
 });

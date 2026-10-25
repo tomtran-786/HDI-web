@@ -22,7 +22,7 @@
   --accent: #0f9d90;
   /* Teal for small text on the plain page surface (eyebrows): --accent itself
      is only ~3.4:1 on white. */
-  --accent-text: #0b7a70;
+  --accent-text: #0a6e65;
   /* Teal for text and strokes sitting on a navy band: --accent itself is too
      dark there to reach 4.5:1 in the light theme. */
   --accent-on-band: #4fd8c9;
@@ -144,11 +144,13 @@ body {
   color: #fff;
 }
 
-/* Alternate section surface. In the light theme it is a soft radial wash
-   (centre grey, edge white); in the dark theme --wash equals --bg-soft so it
-   collapses back to a flat surface. The class name is kept so the section
-   rhythm test can still read it from the markup. */
-.bg-bg-soft {
+/* Alternate SECTION surface: a soft radial wash (centre --wash, edge --bg).
+   Scoped to `section` on purpose: the same `bg-bg-soft` utility is used for
+   small boxes (alerts, notes, modals, toolbars) that must stay flat. In the
+   light theme the wash is a visible grey; in the dark theme --wash is
+   #101b28 against --bg #0d1520, so it is only a faint lift. The class name is
+   kept so the section rhythm test can still read it from the markup. */
+section.bg-bg-soft {
   background: radial-gradient(circle, var(--wash) 0%, var(--bg) 100%);
 }
 
@@ -160,6 +162,11 @@ body {
 }
 .band .rough-annotation path {
   stroke: var(--accent-on-band);
+}
+/* A white/card surface inside a band (the footer's consultation card) is a
+   light background again, so the band's pale teal would vanish on it. */
+.band .bg-card .rough-annotation path {
+  stroke: var(--accent);
 }
 
 /* A surface that stays light in the dark theme (review cards on the navy band,
