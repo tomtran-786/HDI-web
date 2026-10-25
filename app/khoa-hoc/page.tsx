@@ -6,7 +6,9 @@ import { IconArrow, IconMessage } from "@/components/ui/icons";
 import { Reveal } from "@/components/ui/reveal";
 import { Section } from "@/components/ui/section";
 import { courses, coursesIntro } from "@/content/course";
+import { courseVisibility } from "@/content/course-visibility";
 import { site } from "@/content/site";
+import { isListed } from "@/lib/course-availability";
 import { landingCourseData } from "@/lib/course-sales";
 import type { ReviewSummary } from "@/lib/reviews";
 
@@ -31,6 +33,9 @@ async function loadCourseData() {
 
 export default async function CoursesPage() {
   const { summaries, availability } = await loadCourseData();
+  // Khóa chưa mở bán không hiện ở danh sách; `full` vẫn hiện kèm badge. Khi
+  // không đọc được dữ liệu (`availability === null`) thì hiện đủ, như trước.
+  const listed = courses.filter((course) => isListed(availability, course.slug));
 
   return (
     <>
@@ -55,11 +60,32 @@ export default async function CoursesPage() {
             {coursesIntro.guide}
           </p>
         </Reveal>
-        <CourseList
-          courses={courses}
-          summaries={summaries}
-          availability={availability}
-        />
+        {listed.length > 0 ? (
+          <CourseList
+            courses={listed}
+            summaries={summaries}
+            availability={availability}
+          />
+        ) : (
+          <Reveal>
+            <div className="rounded-card border border-line bg-card p-7 text-center sm:p-10">
+              <h2 className="text-xl font-bold text-fg sm:text-2xl">
+                {courseVisibility.listEmpty.title}
+              </h2>
+              <p className="mx-auto mt-3 max-w-xl text-base leading-relaxed text-fg-muted">
+                {courseVisibility.listEmpty.body}
+              </p>
+              <CtaLink
+                source="lien-he"
+                target="tu-van"
+                className="mt-6 inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-bold text-primary-fg transition hover:bg-primary-deep"
+              >
+                Tư vấn miễn phí
+                <IconArrow size={15} />
+              </CtaLink>
+            </div>
+          </Reveal>
+        )}
       </Section>
 
       <Section soft>

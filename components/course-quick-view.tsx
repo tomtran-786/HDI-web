@@ -52,6 +52,9 @@ export function CourseQuickView({
     if (dialog && !dialog.open) dialog.showModal();
   }, []);
 
+  // Khóa chưa mở bán không có modal: người dùng cuối không được thấy nó.
+  if (availability === "not_open") return null;
+
   return (
     <dialog
       ref={dialogRef}

@@ -13,6 +13,9 @@ import { SiteFooter } from "@/components/site-footer";
 import { themeBootstrap } from "@/lib/theme-script";
 import { appUrl } from "@/lib/app-url";
 import { isAdminEmail } from "@/lib/auth";
+import { COURSE_SLUGS } from "@/content/course";
+import { hiddenSlugs } from "@/lib/course-availability";
+import { publicAvailability } from "@/lib/course-sales";
 import { currentSession } from "@/lib/current-session";
 import "./globals.css";
 
@@ -49,7 +52,13 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
   // Nonce do middleware.ts sinh. Đọc headers() ở đây là lý do mọi route được
   // render động thay vì tĩnh — xem lib/security-headers.ts để biết vì sao CSP
   // của Next không thể dùng hash thay cho nonce.
-  const [headerStore, session] = await Promise.all([headers(), currentSession()]);
+  const [headerStore, session, availability] = await Promise.all([
+    headers(),
+    currentSession(),
+    // Cùng ô cache 5 phút với trang chủ, và đổi ngay khi admin bật/tắt khóa
+    // (COURSES_TAG). DB lỗi thì menu hiện đủ khóa: không đọc được ≠ đóng.
+    publicAvailability().catch(() => null),
+  ]);
   const nonce = headerStore.get("x-nonce") ?? undefined;
   const appShell = (
     <CartProvider>
@@ -59,6 +68,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
         // Không tốn truy vấn nào: email đã nằm sẵn trong JWT, và
         // isAdminEmail chỉ đọc một biến môi trường.
         isAdmin={isAdminEmail(session?.user?.email)}
+        hiddenCourseSlugs={hiddenSlugs(availability, COURSE_SLUGS)}
         // Ảnh đại diện Google đã nằm trong JWT — xem lib/auth.ts — nên ô tài
         // khoản trên navbar vẽ được mà không thêm truy vấn nào.
         user={

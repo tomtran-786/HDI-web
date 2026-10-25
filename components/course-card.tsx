@@ -139,8 +139,8 @@ function CourseBanner({
  * Bấm vào đâu trên thẻ cũng mở modal xem nhanh
  * (components/course-quick-view.tsx). Riêng nút chân thẻ: khóa đang bán thì
  * "Đăng ký ngay" vào thẳng giỏ; khóa chưa mở / hết chỗ không đăng ký được nên
- * nút là "Xem nhanh". `cardPresentation` fail-open khi không đọc được
- * database, như mọi nơi khác. Một
+ * nút là "Xem nhanh". Khóa `not_open` thì thẻ không render gì (xem bên dưới).
+ * `cardPresentation` fail-open khi không đọc được database, như mọi nơi khác. Một
  * link phủ cả thẻ (`absolute inset-0`) trỏ thật tới trang chi tiết, nên
  * Ctrl/⌘-click, chuột giữa và crawler vẫn đi tới đó; click trơn thì mở modal.
  */
@@ -178,6 +178,11 @@ export function CourseCard({
     setOpen(true);
     trackCourseQuickView(course.slug);
   }
+
+  // Khóa chưa mở bán không được xuất hiện với người dùng cuối ở bất cứ đâu. Các
+  // danh sách đã lọc trước (lib/course-availability.ts, `isListed`); dòng này
+  // là chốt chặn cuối để một chỗ gọi quên lọc cũng không lộ thẻ ra.
+  if (availability === "not_open") return null;
 
   return (
     <>

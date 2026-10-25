@@ -47,6 +47,24 @@ describe("badge availability của thẻ khóa học", () => {
   });
 });
 
+describe("khóa chưa mở bán", () => {
+  it("thẻ không render gì: người dùng cuối không thấy khóa, tên, giá hay link", () => {
+    const html = renderToStaticMarkup(
+      <CourseCard course={foundation} availability="not_open" />,
+    );
+
+    expect(html).toBe("");
+  });
+
+  it("khóa hết chỗ vẫn là khóa đã mở bán nên thẻ vẫn hiện", () => {
+    const html = renderToStaticMarkup(
+      <CourseCard course={foundation} availability="full" />,
+    );
+
+    expect(html).toContain(foundation.title.replace("&", "&amp;"));
+  });
+});
+
 describe("thẻ khóa học dùng chung", () => {
   it("thẻ gọn: tên trên banner, nút \"Đăng ký ngay\", link thật, chưa có modal", () => {
     const html = renderToStaticMarkup(

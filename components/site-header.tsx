@@ -4,7 +4,7 @@ import { useEffect, useState, type FocusEvent } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { nav, type NavItem } from "@/content/navigation";
+import { nav, withoutHiddenCourses, type NavItem } from "@/content/navigation";
 import { site } from "@/content/site";
 import { ThemeToggle } from "./theme-toggle";
 import { Avatar } from "./ui/avatar";
@@ -21,10 +21,13 @@ const ADMIN_NAV: NavItem = { label: "Quản trị", href: "/quan-tri" };
 export function SiteHeader({
   signedIn,
   isAdmin = false,
+  hiddenCourseSlugs = [],
   user,
 }: {
   signedIn: boolean;
   isAdmin?: boolean;
+  /** Khóa chưa mở bán: bỏ khỏi menu khóa học, cả desktop lẫn mobile. */
+  hiddenCourseSlugs?: readonly string[];
   user?: { name?: string | null; email?: string | null; image?: string | null };
 }) {
   const pathname = usePathname();
@@ -34,7 +37,10 @@ export function SiteHeader({
   const [mobileOpenGroups, setMobileOpenGroups] = useState<string[]>([]);
   const [activeHref, setActiveHref] = useState<string | null>(null);
 
-  const navItems: readonly NavItem[] = isAdmin ? [...nav, ADMIN_NAV] : nav;
+  const visibleNav = withoutHiddenCourses(nav, hiddenCourseSlugs);
+  const navItems: readonly NavItem[] = isAdmin
+    ? [...visibleNav, ADMIN_NAV]
+    : visibleNav;
 
   const closeMobile = () => {
     setOpen(false);

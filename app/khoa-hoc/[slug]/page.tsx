@@ -24,11 +24,14 @@ import { CourseCover } from "@/components/course-cover";
 import { Stars } from "@/components/ui/stars";
 import { cartModal } from "@/content/checkout";
 import { COURSE_SLUGS, courses, type Course } from "@/content/course";
+import { courseVisibility } from "@/content/course-visibility";
 import { site } from "@/content/site";
-import { cardPresentation } from "@/lib/course-availability";
+import { cardPresentation, isListed } from "@/lib/course-availability";
 import { landingCourseData } from "@/lib/course-sales";
 import { formatDate } from "@/lib/format";
 import type { PublicReview, ReviewSummary } from "@/lib/reviews";
+import { isAdminEmail } from "@/lib/auth";
+import { currentSession } from "@/lib/current-session";
 import { structuredDataForCourse } from "@/lib/structured-data";
 
 /*
@@ -94,10 +97,16 @@ export async function generateMetadata({
   const course = courseForSlug(slug);
   if (!course) notFound();
 
+  // Khóa chưa mở bán chỉ admin xem được; dù vậy trang đó không bao giờ được lập
+  // chỉ mục.
+  const { availability } = await loadCourseData();
+  const unlisted = !isListed(availability, course.slug);
+
   return {
     title: `${course.title} — ${site.name}`,
     description: course.intro,
     alternates: { canonical: `/khoa-hoc/${course.slug}` },
+    ...(unlisted ? { robots: { index: false, follow: false } } : {}),
   };
 }
 
@@ -135,6 +144,14 @@ export default async function CourseDetailPage({ params }: CoursePageProps) {
   if (!course) notFound();
 
   const { summaries, reviews, availability } = await loadCourseData();
+  // Khóa `not_open` trả 404 cho khách. Admin vẫn xem được để duyệt trước khi
+  // bật, nên session chỉ được đọc ở nhánh này. Khi không đọc được dữ liệu
+  // (`availability === null`) thì `isListed` cho qua, như các trang khác.
+  const unlisted = !isListed(availability, course.slug);
+  if (unlisted) {
+    const session = await currentSession();
+    if (!isAdminEmail(session?.user?.email)) notFound();
+  }
   const summary = summaries[course.slug];
   const publishedReviews = reviews[course.slug] ?? [];
   const publicAvailability = availability
@@ -143,12 +160,24 @@ export default async function CourseDetailPage({ params }: CoursePageProps) {
   const { badge, buyable } = cardPresentation(publicAvailability);
   const availabilityTone =
     badge === "buyable" ? "success" : badge === "full" ? "danger" : "cool";
-  const related = courses.filter((item) => item.slug !== course.slug).slice(0, 3);
+  // Lọc rồi mới cắt ba: nếu cắt trước, một khóa ẩn sẽ chiếm mất một ô.
+  const related = courses
+    .filter((item) => item.slug !== course.slug && isListed(availability, item.slug))
+    .slice(0, 3);
   const { instructor } = course;
 
   return (
     <>
       <StructuredData course={course} />
+
+      {unlisted && (
+        <p
+          role="status"
+          className="border-b border-warning/40 bg-warning/10 px-5 py-3 text-center text-sm font-semibold text-fg"
+        >
+          {courseVisibility.adminBanner}
+        </p>
+      )}
 
       <section className="border-b border-line bg-bg">
         <div className="shell py-8 sm:py-10">
@@ -414,23 +443,25 @@ export default async function CourseDetailPage({ params }: CoursePageProps) {
         priceCardId={PRICE_CARD_ID}
       />
 
-      <Section>
-        <SectionHeading eyebrow="Tiếp tục phát triển" title="Khóa học khác" />
-        <div className="grid gap-5 md:grid-cols-3">
-          {related.map((item, index) => (
-            <Reveal key={item.slug} delay={index * 60} className="h-full">
-              <CourseCard
-                course={item}
-                summary={summaries[item.slug]}
-                availability={
-                  availability ? (availability[item.slug] ?? "not_open") : undefined
-                }
-                sizes="(min-width: 768px) 24rem, 100vw"
-              />
-            </Reveal>
-          ))}
-        </div>
-      </Section>
+      {related.length > 0 && (
+        <Section>
+          <SectionHeading eyebrow="Tiếp tục phát triển" title="Khóa học khác" />
+          <div className="grid gap-5 md:grid-cols-3">
+            {related.map((item, index) => (
+              <Reveal key={item.slug} delay={index * 60} className="h-full">
+                <CourseCard
+                  course={item}
+                  summary={summaries[item.slug]}
+                  availability={
+                    availability ? (availability[item.slug] ?? "not_open") : undefined
+                  }
+                  sizes="(min-width: 768px) 24rem, 100vw"
+                />
+              </Reveal>
+            ))}
+          </div>
+        </Section>
+      )}
 
       <CourseStickyBar
         course={course}

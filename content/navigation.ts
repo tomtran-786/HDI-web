@@ -133,3 +133,28 @@ export const nav: readonly NavItem[] = [
 
 /** Footer chỉ hiển thị các hub/cha, không bung item trong dropdown. */
 export const footerNav = nav.map(({ label, href }) => ({ label, href }));
+
+/**
+ * Bỏ các khóa đang ẩn khỏi menu. Nhóm hết khóa thì biến mất; mục cha không còn
+ * nhóm nào thì thành một link thường ("Khóa học" → /khoa-hoc). `nav` gốc vẫn đủ
+ * bảy khóa để breadcrumb tra nhãn.
+ */
+export function withoutHiddenCourses(
+  items: readonly NavItem[],
+  hiddenSlugs: readonly string[],
+): readonly NavItem[] {
+  if (hiddenSlugs.length === 0) return items;
+  const hidden = new Set(hiddenSlugs.map((slug) => `/khoa-hoc/${slug}`));
+  return items.map((item) => {
+    if (!item.groups) return item;
+    const groups = item.groups
+      .map((group) => ({
+        ...group,
+        children: group.children.filter((child) => !hidden.has(child.href)),
+      }))
+      .filter((group) => group.children.length > 0);
+    const removed = groups.reduce((n, group) => n + group.children.length, 0) !==
+      item.groups.reduce((n, group) => n + group.children.length, 0);
+    return removed ? { ...item, groups } : item;
+  });
+}

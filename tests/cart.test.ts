@@ -23,7 +23,7 @@ describe("course cart catalog", () => {
     for (const mock of Object.values(mocks)) mock.mockReset();
   });
 
-  it("shows every marketing course but prices and gates it from the database", async () => {
+  it("shows only courses that are on sale, priced and gated from the database", async () => {
     const [first, second, third, fourth] = courses;
     mocks.configuredCourses.mockResolvedValue([
       {
@@ -74,7 +74,13 @@ describe("course cart catalog", () => {
       "user-1",
     );
 
-    expect(result.catalog).toHaveLength(courses.length);
+    // Khóa chưa mở bán (nháp, hoặc chưa có dòng DB) không hiện ở giỏ, trừ khi
+    // đang nằm trong cookie của người này — xem test kế tiếp.
+    expect(result.catalog.map((item) => item.id)).toEqual([
+      "course-open",
+      "course-full",
+      "course-owned",
+    ]);
     expect(result.catalog.find((item) => item.id === "course-open")).toMatchObject({
       availability: "buyable",
       priceVnd: 450_000,
@@ -87,14 +93,44 @@ describe("course cart catalog", () => {
     expect(result.catalog.find((item) => item.id === "course-owned")).toMatchObject({
       availability: "already_enrolled",
     });
-    expect(result.catalog.find((item) => item.id === "course-draft")).toMatchObject({
-      availability: "not_open",
-    });
-    expect(result.catalog.find((item) => item.id === null)).toMatchObject({
-      availability: "not_open",
-    });
+    expect(result.catalog.find((item) => item.id === "course-draft")).toBeUndefined();
+    expect(result.catalog.find((item) => item.id === null)).toBeUndefined();
     expect(result.staleIds).toEqual(["course-full", "course-owned", "gone"]);
     expect(result.totalVnd).toBe(450_000);
+  });
+
+  it("keeps a closed course that is still in the cart cookie so it can be reported as removed", async () => {
+    const [first, second] = courses;
+    mocks.configuredCourses.mockResolvedValue([
+      {
+        id: "course-open",
+        code: first.code,
+        slug: first.slug,
+        capacity: 10,
+        priceVnd: 300_000,
+        status: "open",
+      },
+      {
+        id: "course-closed",
+        code: second.code,
+        slug: second.slug,
+        capacity: 10,
+        priceVnd: 400_000,
+        status: "closed",
+      },
+    ]);
+    mocks.seatsTaken.mockResolvedValue(new Map());
+    mocks.heldByUser.mockResolvedValue(new Map());
+
+    const result = await loadCart(["course-closed"], "user-1");
+
+    expect(result.catalog.map((item) => item.id)).toEqual([
+      "course-open",
+      "course-closed",
+    ]);
+    expect(result.catalog[1].availability).toBe("not_open");
+    expect(result.staleIds).toEqual(["course-closed"]);
+    expect(result.totalVnd).toBe(0);
   });
 
   /**

@@ -143,9 +143,18 @@ export async function loadCart(
   userId: string,
   groupSize = 1,
 ): Promise<CartView> {
-  const catalog = await loadCourseCatalog(userId);
+  const fullCatalog = await loadCourseCatalog(userId);
   const byId = new Map(
-    catalog.flatMap((course) => (course.id ? [[course.id, course] as const] : [])),
+    fullCatalog.flatMap((course) => (course.id ? [[course.id, course] as const] : [])),
+  );
+  // Khóa chưa mở bán không được hiện ở giỏ hàng. Ngoại lệ là khóa ĐANG nằm
+  // trong cookie của người này: giữ lại để giỏ còn tên khóa mà báo "đã bị gỡ"
+  // (`staleIds`) thay vì một id trống. Khóa có đơn đang chờ hay đã ghi danh có
+  // `availability` riêng (`pending`, `already_enrolled`) nên không bị lọc.
+  const catalog = fullCatalog.filter(
+    (course) =>
+      course.availability !== "not_open" ||
+      (course.id !== null && ids.includes(course.id)),
   );
   const selected = ids.flatMap((id) => {
     const course = byId.get(id);

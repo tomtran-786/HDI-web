@@ -2,6 +2,8 @@ import type { MetadataRoute } from "next";
 import { COURSE_SLUGS } from "@/content/course";
 import { SERVICE_SLUGS } from "@/content/services";
 import { appUrl } from "@/lib/app-url";
+import { isListed } from "@/lib/course-availability";
+import { publicAvailability } from "@/lib/course-sales";
 
 /**
  * Public marketing pages include the landing page, the HDI and academic-record
@@ -12,10 +14,14 @@ import { appUrl } from "@/lib/app-url";
  * /kiem-tra-ai-dao-van/ket-qua/<ref> is deliberately absent: it is one person's
  * order, not a page to be found.
  */
-export default function sitemap(): MetadataRoute.Sitemap {
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const base = appUrl();
+  // Khóa chưa mở bán trả 404 nên không được nằm trong sitemap. DB lỗi thì giữ đủ.
+  const availability = await publicAvailability().catch(() => null);
   const lastModified = new Date();
-  const coursePages: MetadataRoute.Sitemap = COURSE_SLUGS.map((slug) => ({
+  const coursePages: MetadataRoute.Sitemap = COURSE_SLUGS.filter((slug) =>
+    isListed(availability, slug),
+  ).map((slug) => ({
     url: `${base}/khoa-hoc/${slug}`,
     lastModified,
     changeFrequency: "monthly",

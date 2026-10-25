@@ -2,6 +2,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { COURSE_SLUGS, courses } from "@/content/course";
 import { enrolledCount, enrolledLabel } from "@/content/course-hype";
+import { courseVisibility } from "@/content/course-visibility";
 import { formatCount } from "@/lib/format";
 import { structuredDataForCourse } from "@/lib/structured-data";
 
@@ -9,6 +10,7 @@ class NotFoundSignal extends Error {}
 class RedirectSignal extends Error {}
 
 const mocks = vi.hoisted(() => ({
+  currentSession: vi.fn(),
   landingCourseData: vi.fn(),
   notFound: vi.fn(),
   redirect: vi.fn(),
@@ -17,6 +19,12 @@ const mocks = vi.hoisted(() => ({
 
 vi.mock("@/lib/course-sales", () => ({
   landingCourseData: mocks.landingCourseData,
+}));
+vi.mock("@/lib/current-session", () => ({
+  currentSession: mocks.currentSession,
+}));
+vi.mock("@/lib/auth", () => ({
+  isAdminEmail: (email?: string | null) => email === "admin@hdi.test",
 }));
 vi.mock("@/lib/analytics", () => ({
   trackCourseModal: vi.fn(),
@@ -46,6 +54,8 @@ const plainText = (html: string) =>
     .replace(/&amp;/g, "&");
 
 beforeEach(() => {
+  mocks.currentSession.mockReset();
+  mocks.currentSession.mockResolvedValue(null);
   mocks.notFound.mockImplementation(() => {
     throw new NotFoundSignal();
   });
@@ -315,12 +325,12 @@ describe("trang chi tiết khóa học", () => {
     expect(html.match(/Đăng ký học khóa này/g)).toHaveLength(1);
   });
 
-  it("khóa chưa mở thì nút ở band đổi nhãn thay vì mời giữ chỗ", async () => {
+  it("khóa hết chỗ thì nút ở band đổi nhãn thay vì mời giữ chỗ", async () => {
     const course = courses.find((item) => item.slug === "nckh-chuyen-sau-spss")!;
     mocks.landingCourseData.mockResolvedValueOnce({
       summaries: {},
       reviews: {},
-      availability: { [course.slug]: "not_open" },
+      availability: { [course.slug]: "full" },
     });
     const html = renderToStaticMarkup(
       await CourseDetailPage({
@@ -365,23 +375,120 @@ describe("trang chi tiết khóa học", () => {
     expect(html).not.toContain("Chưa mở đăng ký");
   });
 
-  it("không render nút đăng ký chết khi khóa chưa mở", async () => {
+  const notOpenData = (slug: string) => ({
+    summaries: {},
+    reviews: {},
+    availability: {
+      ...Object.fromEntries(COURSE_SLUGS.map((item) => [item, "buyable"])),
+      [slug]: "not_open",
+    },
+  });
+
+  it("khóa chưa mở bán trả 404 cho khách, không lộ trang", async () => {
+    const course = courses.find((item) => item.slug === "nckh-chuyen-sau-spss")!;
+    mocks.landingCourseData.mockResolvedValueOnce(notOpenData(course.slug));
+
+    await expect(
+      CourseDetailPage({ params: Promise.resolve({ slug: course.slug }) }),
+    ).rejects.toBeInstanceOf(NotFoundSignal);
+    expect(mocks.notFound).toHaveBeenCalled();
+  });
+
+  it("khóa không có dòng nào trong DB cũng là chưa mở bán nên 404", async () => {
     const course = courses.find((item) => item.slug === "nckh-chuyen-sau-spss")!;
     mocks.landingCourseData.mockResolvedValueOnce({
       summaries: {},
       reviews: {},
-      availability: { [course.slug]: "not_open" },
+      availability: {},
+    });
+
+    await expect(
+      CourseDetailPage({ params: Promise.resolve({ slug: course.slug }) }),
+    ).rejects.toBeInstanceOf(NotFoundSignal);
+  });
+
+  it("tài khoản thường đăng nhập rồi cũng vẫn thấy 404", async () => {
+    const course = courses.find((item) => item.slug === "nckh-chuyen-sau-spss")!;
+    mocks.landingCourseData.mockResolvedValueOnce(notOpenData(course.slug));
+    mocks.currentSession.mockResolvedValue({
+      user: { id: "u1", email: "hocvien@example.com" },
+    });
+
+    await expect(
+      CourseDetailPage({ params: Promise.resolve({ slug: course.slug }) }),
+    ).rejects.toBeInstanceOf(NotFoundSignal);
+  });
+
+  it("admin vẫn xem được khóa chưa mở, có banner báo đang ẩn với khách", async () => {
+    const course = courses.find((item) => item.slug === "nckh-chuyen-sau-spss")!;
+    mocks.landingCourseData.mockResolvedValueOnce(notOpenData(course.slug));
+    mocks.currentSession.mockResolvedValue({
+      user: { id: "admin", email: "admin@hdi.test" },
     });
 
     const html = renderToStaticMarkup(
-      await CourseDetailPage({
-        params: Promise.resolve({ slug: course.slug }),
-      }),
+      await CourseDetailPage({ params: Promise.resolve({ slug: course.slug }) }),
     );
 
+    expect(html).toContain(courseVisibility.adminBanner);
+    expect(plainText(html)).toContain(course.title);
     expect(html).toContain("Chưa mở đăng ký");
     expect(html).not.toContain("Đăng ký học khóa này");
-    expect(html).toContain("Nhắn Zalo");
+  });
+
+  it("khóa đang mở không có banner và không đụng tới phiên đăng nhập", async () => {
+    const course = courses[0];
+    const html = renderToStaticMarkup(
+      await CourseDetailPage({ params: Promise.resolve({ slug: course.slug }) }),
+    );
+
+    expect(html).not.toContain(courseVisibility.adminBanner);
+    expect(mocks.currentSession).not.toHaveBeenCalled();
+  });
+
+  it("\"Khóa học khác\" bỏ khóa chưa mở trước khi cắt còn ba thẻ", async () => {
+    const course = courses[0];
+    const hidden = courses[1];
+    mocks.landingCourseData.mockResolvedValueOnce(notOpenData(hidden.slug));
+
+    const html = renderToStaticMarkup(
+      await CourseDetailPage({ params: Promise.resolve({ slug: course.slug }) }),
+    );
+    const related = html.slice(html.lastIndexOf("Khóa học khác"));
+
+    expect(related).not.toContain(`/khoa-hoc/${hidden.slug}`);
+    expect(related).toContain(`/khoa-hoc/${courses[2].slug}`);
+    expect(related).toContain(`/khoa-hoc/${courses[3].slug}`);
+    expect(related).toContain(`/khoa-hoc/${courses[4].slug}`);
+  });
+
+  it("không còn khóa nào khác đang bán thì ẩn cả mục \"Khóa học khác\"", async () => {
+    const course = courses[0];
+    mocks.landingCourseData.mockResolvedValueOnce({
+      summaries: {},
+      reviews: {},
+      availability: { [course.slug]: "buyable" },
+    });
+
+    const html = renderToStaticMarkup(
+      await CourseDetailPage({ params: Promise.resolve({ slug: course.slug }) }),
+    );
+
+    expect(plainText(html)).not.toContain("Khóa học khác");
+  });
+
+  it("metadata của khóa chưa mở là noindex; khóa đang mở thì không", async () => {
+    const closed = courses[1];
+    mocks.landingCourseData.mockResolvedValueOnce(notOpenData(closed.slug));
+    const closedMeta = await generateMetadata({
+      params: Promise.resolve({ slug: closed.slug }),
+    });
+    const openMeta = await generateMetadata({
+      params: Promise.resolve({ slug: courses[0].slug }),
+    });
+
+    expect(closedMeta.robots).toEqual({ index: false, follow: false });
+    expect(openMeta.robots).toBeUndefined();
   });
 
   it.each(["stata-kinh-te-luong", "spss-smartpls-ai"])(

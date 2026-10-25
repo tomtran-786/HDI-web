@@ -46,12 +46,11 @@ describe("modal xem nhanh khóa học", () => {
     expect(html).not.toContain("flex-1");
   });
 
-  it("không có nút đăng ký chết khi khóa chưa mở", () => {
-    const { html } = render("nckh-chuyen-sau-spss", "not_open");
+  it("không có modal cho khóa chưa mở: không <dialog>, tên khóa hay nút nào", () => {
+    const { course, html } = render("nckh-chuyen-sau-spss", "not_open");
 
-    expect(html).toContain("Chưa mở đăng ký");
-    expect(html).not.toContain("Đăng ký ngay");
-    expect(html).toContain("Nhắn Zalo");
+    expect(html).toBe("");
+    expect(html).not.toContain(course.title);
   });
 
   it("giữ quy ước giá ưu đãi: giá giảm trước, giá gốc trong <s>, kèm điều kiện", () => {

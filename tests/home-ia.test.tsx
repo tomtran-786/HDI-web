@@ -51,7 +51,7 @@ describe("kiến trúc nội dung homepage và Về HDI", () => {
         "nckh-ung-dung-ai-xuat-ban-quoc-te": "buyable",
         "training-tieu-luan-nckh-kltn": "not_open",
         "nckh-chuyen-sau-spss": "not_open",
-        "stata-kinh-te-luong": "not_open",
+        "kinh-te-luong-stata-ai": "not_open",
         "viet-bai-tap-chi": "not_open",
         "viet-bao-cao-khoa-hoc": "not_open",
         "ung-dung-chatgpt-nckh": "not_open",

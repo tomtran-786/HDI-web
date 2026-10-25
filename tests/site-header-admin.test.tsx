@@ -23,7 +23,11 @@ import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { footerNav, nav } from "@/content/navigation";
 
-const render = (props: { signedIn: boolean; isAdmin?: boolean }) =>
+const render = (props: {
+  signedIn: boolean;
+  isAdmin?: boolean;
+  hiddenCourseSlugs?: string[];
+}) =>
   renderToStaticMarkup(<SiteHeader {...props} />);
 
 beforeEach(() => {
@@ -110,5 +114,22 @@ describe("lối vào trang quản trị trên navbar", () => {
     for (const child of children) expect(html).not.toContain(`href="${child.href}"`);
     expect(html).not.toContain("Tư vấn miễn phí<span");
     expect(html).toContain('href="/docs/cv.pdf" download=""');
+  });
+
+  it("bỏ khóa chưa mở bán khỏi menu, cả desktop lẫn mobile, nhưng không đụng footer", () => {
+    const html = render({
+      signedIn: false,
+      hiddenCourseSlugs: ["kinh-te-luong-stata-ai"],
+    });
+
+    expect(html).not.toContain("/khoa-hoc/kinh-te-luong-stata-ai");
+    expect(html).toContain("/khoa-hoc/nckh-chuyen-sau-spss");
+  });
+
+  it("không có khóa bị ẩn thì menu hiện đủ bảy khóa", () => {
+    const html = render({ signedIn: false });
+    const links = html.match(/href="\/khoa-hoc\/[a-z0-9-]+"/g) ?? [];
+
+    expect(new Set(links).size).toBe(7);
   });
 });
