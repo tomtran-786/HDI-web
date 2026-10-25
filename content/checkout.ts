@@ -1,5 +1,6 @@
 /**
- * Copy for the cart modal and order pages.
+ * Copy for the cart page (`cartModal` keeps the strings that survived the move
+ * from a modal to /gio-hang) and the order pages.
  *
  * Nothing here states a fact about the world that HDI has not supplied. In
  * Payment copy points students to the hosted PayOS link and never publishes
@@ -9,18 +10,10 @@
 import { REFERRAL_DISCOUNT_PCT } from "@/lib/referral-pricing";
 
 export const cartModal = {
-  eyebrow: "Đăng ký học",
-  title: "Chọn khóa học",
-  intro: "Chọn các khóa còn chỗ, kiểm tra tổng tiền rồi thanh toán một lần.",
   loading: "Đang tải khóa học",
   loadError: "Chưa tải được khóa học. Vui lòng thử lại.",
   pruned:
     "Một số khóa không còn mở, đã hết chỗ hoặc không còn tồn tại nên được bỏ khỏi giỏ.",
-  selected: "Đã chọn",
-  empty: "Chọn ít nhất một khóa đang mở để thanh toán.",
-  total: "Tổng cộng",
-  /** `amount` là chênh lệch giữa tổng giá lẻ và số phải trả sau ưu đãi. */
-  savings: (amount: string) => `Bạn tiết kiệm ${amount}`,
   /**
    * Nói trước khi rời trang: nút thanh toán redirect thẳng sang PayOS và giỏ
    * hàng bị dọn ngay lúc đó. Không có dòng này thì người mua bị chuyển đi mà
@@ -37,8 +30,6 @@ export const cartModal = {
    */
   pendingHold:
     "Bạn đang có đơn chờ thanh toán. Chỗ học đang được giữ cho đơn đó, nên khóa trong đơn tạm thời không chọn lại được.",
-  /** Nhãn ngắn đặt ngay trên dòng khóa bị khóa, nơi không đủ chỗ cho một câu. */
-  openPendingOrderShort: (code: number) => `Mở đơn #${code}`,
   paying: "Đang kết nối PayOS…",
   checkout: "Thanh toán",
   availability: {
@@ -56,13 +47,7 @@ export const cartModal = {
  * xuống đáy màn hình trên mobile).
  */
 export const cartPage = {
-  eyebrow: cartModal.eyebrow,
   title: "Giỏ hàng",
-  intro: cartModal.intro,
-  /** Nhãn dòng tổng giá gốc trong khối "Chi tiết đơn". */
-  listTotal: "Tổng giá",
-  /** Nhãn dòng tổng đã giảm — chênh giữa giá gốc và số phải trả sau ưu đãi. */
-  discountTotal: "Tổng giảm",
   backToCourses: "Xem thêm khóa học",
   /** Breadcrumb ở đầu giỏ hàng và các trang thanh toán. */
   home: "Trang chủ",
@@ -166,7 +151,6 @@ export const groupPanel = {
 export const referralPanel = {
   discountLine: "Giảm giới thiệu (đơn đầu tiên)",
   creditLine: "Trừ credits giới thiệu",
-  subtotal: "Tạm tính",
   useCredit: "Dùng credits giới thiệu",
   balance: (amount: string) => `Số dư ${amount}`,
   /**
