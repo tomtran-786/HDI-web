@@ -11,7 +11,7 @@ import {
 import { stats } from "@/content/stats";
 import { observeReveal } from "@/lib/reveal-observer";
 import { landPath, MAP_HEIGHT, MAP_WIDTH } from "./conference-map-land";
-import { RunningScore, format } from "./stats-board";
+import { RunningScore, format } from "./running-score";
 
 type Pin = {
   where: string;
@@ -82,6 +82,9 @@ function tipPlacement(pin: Pin) {
 export function ConferenceMap() {
   const rootRef = useRef<HTMLDivElement>(null);
   const [openWhere, setOpenWhere] = useState<string | null>(null);
+  // Esc đóng mọi tooltip, kể cả cái đang mở bằng hover/focus (WCAG 1.4.13); mở
+  // lại khi người dùng chạm tới một ghim khác.
+  const [dismissed, setDismissed] = useState(false);
 
   useEffect(() => {
     const root = rootRef.current;
@@ -99,21 +102,24 @@ export function ConferenceMap() {
   }, []);
 
   useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return;
+      setOpenWhere(null);
+      setDismissed(true);
+    };
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, []);
+
+  useEffect(() => {
     if (!openWhere) return;
     const onPointerDown = (event: PointerEvent) => {
       if (!(event.target as Element).closest("[data-map-pin]")) {
         setOpenWhere(null);
       }
     };
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setOpenWhere(null);
-    };
     document.addEventListener("pointerdown", onPointerDown);
-    document.addEventListener("keydown", onKeyDown);
-    return () => {
-      document.removeEventListener("pointerdown", onPointerDown);
-      document.removeEventListener("keydown", onKeyDown);
-    };
+    return () => document.removeEventListener("pointerdown", onPointerDown);
   }, [openWhere]);
 
   return (
@@ -123,8 +129,11 @@ export function ConferenceMap() {
           <svg
             aria-hidden
             viewBox={`0 0 ${MAP_WIDTH} ${MAP_HEIGHT}`}
-            preserveAspectRatio="none"
-            className="absolute inset-0 h-full w-full"
+            // Khung 2:1 ở màn rộng; ở mobile khung là 16:10 nên svg rộng 125% và
+            // lệch trái 18,75% — vẫn tỉ lệ 2:1 (không méo), chỉ cắt bớt rìa trái
+            // (Tây Bắc Mỹ) và rìa phải (Thái Bình Dương). Ghim cùng phép cắt này
+            // ở `.map-pin-at` trong globals.css.
+            className="absolute left-[-18.75%] top-0 h-full w-[125%] max-w-none sm:left-0 sm:w-full"
           >
             <defs>
               <pattern
@@ -199,12 +208,12 @@ export function ConferenceMap() {
               <li
                 key={pin.where}
                 data-map-pin
-                className={`group absolute -translate-x-1/2 -translate-y-1/2 ${
+                className={`map-pin-at group absolute -translate-x-1/2 -translate-y-1/2 ${
                   open ? "z-30" : "z-20 hover:z-30 focus-within:z-30"
                 }`}
                 style={
                   {
-                    left: `${pin.x}%`,
+                    "--x": pin.x,
                     top: `${pin.y}%`,
                     "--i": index,
                   } as React.CSSProperties
@@ -220,7 +229,12 @@ export function ConferenceMap() {
                     aria-describedby={tipId}
                     aria-expanded={open}
                     aria-label={`${pin.where}: ${pin.items.length} lần trình bày`}
-                    onClick={() => setOpenWhere(open ? null : pin.where)}
+                    onClick={() => {
+                      setDismissed(false);
+                      setOpenWhere(open ? null : pin.where);
+                    }}
+                    onPointerEnter={() => setDismissed(false)}
+                    onFocus={() => setDismissed(false)}
                     className={`relative block overflow-hidden rounded-full border-2 border-accent shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-bg ${
                       pin.photo
                         ? "h-7 w-7 sm:h-9 sm:w-9"
@@ -243,8 +257,12 @@ export function ConferenceMap() {
                   <span
                     id={tipId}
                     role="tooltip"
-                    className={`band pointer-events-none absolute z-30 w-60 max-w-[70vw] rounded-xl px-3.5 py-3 text-left shadow-[0_12px_40px_rgba(0,0,0,0.3)] transition-opacity duration-150 group-hover:visible group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100 ${
-                      open ? "visible opacity-100" : "invisible opacity-0"
+                    className={`band pointer-events-none absolute z-30 w-60 max-w-[70vw] rounded-xl px-3.5 py-3 text-left shadow-[0_12px_40px_rgba(0,0,0,0.3)] transition-opacity duration-150 ${
+                      open
+                        ? "visible opacity-100"
+                        : dismissed
+                          ? "invisible opacity-0"
+                          : "invisible opacity-0 group-hover:visible group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100"
                     } ${tipPlacement(pin)}`}
                   >
                     {pin.items.map((conference) => (
@@ -277,7 +295,10 @@ export function ConferenceMap() {
         {stats.map((stat) => (
           <div key={stat.label} className="text-center">
             <dt className="sr-only">{`${stat.label}: ${format(stat, stat.to)}`}</dt>
-            <dd>
+            {/* Phần hiển thị (số đang chạy + nhãn) ẩn khỏi trình đọc màn hình:
+                nhãn kèm giá trị cuối đã nằm trong <dt> ở trên, đọc cả hai là
+                đọc nhãn hai lần. */}
+            <dd aria-hidden>
               <RunningScore stat={stat} className="text-accent-on-band" />
               <span className="mt-1.5 block text-[11px] font-semibold uppercase tracking-[0.14em] text-white/75">
                 {stat.label}

@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { observeReveal } from "@/lib/reveal-observer";
-import { stats, type Stat } from "@/content/stats";
+import type { Stat } from "@/content/stats";
 
 /** 37300 → "37,300". Không dùng toLocaleString: máy chủ và trình duyệt có thể
  *  chọn locale khác nhau, và một chuỗi lệch nhau ở lần render đầu là lỗi
@@ -75,30 +75,5 @@ export function RunningScore({
     >
       {format(stat, stat.to)}
     </span>
-  );
-}
-
-/**
- * Bốn con số tóm tắt hồ sơ học thuật. Không bọc trong `<Section>`: nó nằm bên
- * trong khối mở đầu của trang /cong-bo, ngay trên bốn mục mà nó tóm tắt.
- */
-export function StatsBoard() {
-  return (
-    <dl className="grid grid-cols-2 divide-x divide-line rounded-card border border-line bg-card lg:grid-cols-4">
-      {stats.map((stat) => (
-        <div
-          key={stat.label}
-          className="border-b border-line px-6 py-8 text-center last:border-b-0 sm:border-b-0 [&:nth-child(-n+2)]:border-b lg:[&:nth-child(-n+2)]:border-b-0"
-        >
-          <dt className="sr-only">{`${stat.label}: ${format(stat, stat.to)}`}</dt>
-          <dd>
-            <RunningScore stat={stat} />
-            <span className="mt-2 block text-[11px] font-semibold uppercase tracking-[0.14em] text-fg-subtle">
-              {stat.label}
-            </span>
-          </dd>
-        </div>
-      ))}
-    </dl>
   );
 }

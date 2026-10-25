@@ -393,3 +393,13 @@ html[data-course-bar] [data-contact-dock] {
   .marquee-track { animation: none; width: auto; flex-wrap: wrap; }
   .marquee-track [data-marquee-copy] { display: none; }
 }
+
+/* Vị trí ghim trên bản đồ. `--x` là phần trăm bề ngang của bản đồ 2:1. Ở mobile
+   khung là 16:10 và svg rộng 125% lệch trái 18,75% (xem conference-map.tsx),
+   nên ghim đổi cùng phép biến đổi đó. */
+.map-pin-at {
+  left: calc(var(--x) * 1.25% - 18.75%);
+}
+@media (min-width: 640px) {
+  .map-pin-at { left: calc(var(--x) * 1%); }
+}
