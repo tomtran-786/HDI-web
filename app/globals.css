@@ -20,6 +20,9 @@
   --primary-fg: #ffffff;
   --tint: #e8f0fe;
   --accent: #0f9d90;
+  /* Teal for small text on the plain page surface (eyebrows): --accent itself
+     is only ~3.4:1 on white. */
+  --accent-text: #0b7a70;
   /* Teal for text and strokes sitting on a navy band: --accent itself is too
      dark there to reach 4.5:1 in the light theme. */
   --accent-on-band: #4fd8c9;
@@ -47,6 +50,7 @@
   --primary-fg: #08121e;
   --tint: #14304e;
   --accent: #57e1cf;
+  --accent-text: #57e1cf;
   --accent-on-band: #57e1cf;
   --band-from: #0a1a2c;
   --band-to: #13304f;
@@ -77,6 +81,7 @@
   --color-primary-fg: var(--primary-fg);
   --color-tint: var(--tint);
   --color-accent: var(--accent);
+  --color-accent-text: var(--accent-text);
   --color-accent-on-band: var(--accent-on-band);
   --color-success: var(--success);
   --color-warning: var(--warning);
@@ -155,6 +160,35 @@ body {
 }
 .band .rough-annotation path {
   stroke: var(--accent-on-band);
+}
+
+/* A surface that stays light in the dark theme (review cards on the navy band,
+   the top sheet of the manuscript deck). Token classes inside it resolve to
+   the light-theme values. */
+.on-white {
+  --fg: #172636;
+  --fg-muted: #4a4a4a;
+  --fg-subtle: #6b7785;
+  --primary: #0c498f;
+  --warning: #9a6400;
+  --border: #e3e9f1;
+  background: #fff;
+  color: var(--fg);
+}
+
+/* Rows of the manuscript deck appear one after another once the wrapping
+   <Reveal> is shown; each row sets its own transition-delay inline. */
+.deck-row {
+  opacity: 0;
+  transform: translateY(10px);
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+.reveal[data-shown="true"] .deck-row {
+  opacity: 1;
+  transform: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .deck-row { opacity: 1; transform: none; transition: none; }
 }
 
 /* Fade-and-rise on scroll; inert until JS marks the element visible. */

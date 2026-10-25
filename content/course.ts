@@ -291,6 +291,12 @@ export type Course = {
    * hoa hơn một cách hợp lệ.
    */
   title: string;
+  /**
+   * Cụm trong `title` được gạch chân tay ở h1 trang chi tiết (xem
+   * components/ui/notation.tsx). Phải là chuỗi con nguyên văn của `title`;
+   * tests/course-detail-page.test.tsx kiểm điều đó cho cả bảy khóa.
+   */
+  titleMark: string;
   cover: CourseCover;
   audience: string;
   /**
@@ -439,6 +445,7 @@ export const courses = [
     slug: "nckh-ung-dung-ai-xuat-ban-quoc-te",
     eyebrow: "Khóa mới · Khai giảng 01/12/2026",
     title: "Nghiên cứu khoa học ứng dụng AI & xuất bản quốc tế",
+    titleMark: "xuất bản quốc tế",
     cover: {
       kind: "photo",
       src: "/images/khoa-hoc/nckh-ung-dung-ai-xuat-ban-quoc-te.jpg",
@@ -542,6 +549,7 @@ export const courses = [
     slug: "training-tieu-luan-nckh-kltn",
     eyebrow: "Khóa nền tảng · Khai giảng 07/12/2026",
     title: "Viết tiểu luận, nghiên cứu khoa học & khóa luận tốt nghiệp",
+    titleMark: "khóa luận tốt nghiệp",
     cover: {
       kind: "photo",
       src: "/images/khoa-hoc/training-tieu-luan-nckh-kltn.jpg",
@@ -829,6 +837,7 @@ export const courses = [
     slug: "nckh-chuyen-sau-spss",
     eyebrow: "Khóa chuyên sâu · Dự kiến khai giảng 02/11/2026",
     title: "Phân tích định lượng với SPSS",
+    titleMark: "SPSS",
     cover: {
       kind: "logos",
       logos: [LOGO_SPSS],
@@ -989,6 +998,7 @@ export const courses = [
     slug: "kinh-te-luong-stata-ai",
     eyebrow: "Khóa chuyên sâu · Khai giảng tháng 11/2026",
     title: "Stata trong nghiên cứu định lượng",
+    titleMark: "Stata",
     cover: {
       kind: "logos",
       logos: [LOGO_STATA],
@@ -1248,6 +1258,7 @@ export const courses = [
     slug: "viet-bai-tap-chi",
     eyebrow: "Khóa chuyên sâu",
     title: "Viết bài tạp chí khoa học trong nước và quốc tế",
+    titleMark: "tạp chí khoa học",
     cover: {
       kind: "photo",
       src: "/images/khoa-hoc/viet-bai-tap-chi.jpg",
@@ -1361,6 +1372,7 @@ export const courses = [
     slug: "viet-bao-cao-khoa-hoc",
     eyebrow: "Khóa đào tạo",
     title: "Viết báo cáo khoa học, luận văn chuẩn quốc tế",
+    titleMark: "chuẩn quốc tế",
     cover: {
       kind: "photo",
       src: "/images/khoa-hoc/viet-bao-cao-khoa-hoc.jpg",
@@ -1434,6 +1446,7 @@ export const courses = [
     slug: "ung-dung-chatgpt-nckh",
     eyebrow: "Khóa công cụ AI",
     title: "Ứng dụng ChatGPT trong nghiên cứu khoa học",
+    titleMark: "ChatGPT",
     cover: {
       kind: "photo",
       src: "/images/khoa-hoc/ung-dung-chatgpt-nckh.jpg",

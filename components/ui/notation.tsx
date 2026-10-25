@@ -8,8 +8,22 @@ type NotationType = "underline" | "circle" | "strike-through";
 // Vẽ khi phần tử vào 80% chiều cao viewport (rootMargin đáy -20%).
 const DRAW_ROOT_MARGIN = "0px 0px -20% 0px";
 const DRAW_DELAY_MS = 100;
-// Chờ `Reveal` bao quanh trượt lên xong rồi mới vẽ nét.
-const REVEAL_SETTLE_MS = 350;
+// Thời lượng transition của `.reveal` trong globals.css (0.6s).
+const REVEAL_TRANSITION_MS = 600;
+
+/**
+ * Nét vẽ phải chờ `Reveal` bao quanh trượt xong: `.reveal` có `transform` nên
+ * là containing block của SVG rough-notation chèn cạnh phần tử, và khi
+ * transform về `none` SVG nhảy sang tổ tiên khác, làm các hình chữ nhật đã đo
+ * bị lệch.
+ */
+function revealSettleMs(el: HTMLElement, reduceMotion: boolean) {
+  if (reduceMotion) return 0;
+  const reveal = el.closest<HTMLElement>(".reveal");
+  if (!reveal) return 0;
+  const delay = parseFloat(getComputedStyle(reveal).transitionDelay) * 1000;
+  return REVEAL_TRANSITION_MS + (Number.isFinite(delay) ? delay : 0) + 50;
+}
 
 /**
  * Nét vẽ tay (rough-notation) trên một cụm chữ. Render ra `<span>` bọc chữ nên
@@ -49,7 +63,7 @@ export function Notation({
     const show = () => {
       timer = setTimeout(
         () => annotation.show(),
-        reduceMotion ? 0 : DRAW_DELAY_MS + REVEAL_SETTLE_MS,
+        reduceMotion ? 0 : DRAW_DELAY_MS + revealSettleMs(el, reduceMotion),
       );
     };
 

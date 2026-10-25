@@ -8,6 +8,7 @@ import {
   CertificateSection,
 } from "@/components/course-certificate";
 import { CourseEnroll } from "@/components/course-enroll";
+import { CourseExpectBand } from "@/components/course-expect-band";
 import { CourseFactList } from "@/components/course-facts";
 import { CourseRoadmap } from "@/components/course-roadmap";
 import { CourseStickyBar } from "@/components/course-sticky-bar";
@@ -18,7 +19,7 @@ import { CheckDot } from "@/components/ui/check-dot";
 import { IconArrow } from "@/components/ui/icons";
 import { PriceTag } from "@/components/ui/price-tag";
 import { Reveal } from "@/components/ui/reveal";
-import { Section, SectionHeading } from "@/components/ui/section";
+import { MarkedTitle, Section, SectionHeading } from "@/components/ui/section";
 import { CourseCover } from "@/components/course-cover";
 import { Stars } from "@/components/ui/stars";
 import { cartModal } from "@/content/checkout";
@@ -43,12 +44,19 @@ import { structuredDataForCourse } from "@/lib/structured-data";
  *   3. "Dành cho ai".
  *   4. "Lộ trình học": module gập được bên trái, giảng viên bên phải — bản của
  *      "Your Course Outline" + "About the Instructor".
- *   5. "Chứng nhận": ảnh mẫu giấy chứng nhận hoàn tất — đọc xong nội dung học,
- *      câu hỏi tiếp theo là "học xong mình được gì". Cả bảy khóa đều cấp, nên
- *      khối này và dòng "Có giấy chứng nhận" ở card học phí hiện cho mọi khóa
- *      (chữ nằm ở content/certificate.ts).
- *   6. Đánh giá học viên, rồi "Khóa học khác" — cùng thẻ CourseCard với trang
- *      chủ và /khoa-hoc, bấm vào mở modal xem nhanh.
+ *   5. "Đánh giá học viên" trên band navy (chỉ khi có đánh giá đã duyệt) — bản
+ *      của khối Testimonials.
+ *   6. "Chứng nhận": ảnh mẫu giấy chứng nhận hoàn tất, dựng như mục
+ *      Certification của AA — đọc xong nội dung học, câu hỏi tiếp theo là
+ *      "học xong mình được gì". Cả bảy khóa đều cấp, nên khối này và dòng "Có
+ *      giấy chứng nhận" ở card học phí hiện cho mọi khóa (chữ nằm ở
+ *      content/certificate.ts).
+ *   7. Band navy "Điều bạn nhận được" (bản của "What to expect"), rồi "Khóa học
+ *      khác" — cùng thẻ CourseCard với trang chủ và /khoa-hoc, bấm vào mở modal
+ *      xem nhanh.
+ *
+ * Nhịp nền: hero và các section trắng xen kẽ với nền `soft` (radial wash), còn
+ * band navy chỉ dùng cho đánh giá và "Điều bạn nhận được".
  *
  * Bảng "Thông tin khóa học" riêng ở cuối trang đã bỏ: sáu dòng `facts` và học
  * phí giờ nằm trong card đầu trang, chỗ người đọc cần chúng khi bấm đăng ký.
@@ -132,7 +140,7 @@ export default async function CourseDetailPage({ params }: CoursePageProps) {
   const publicAvailability = availability
     ? (availability[course.slug] ?? "not_open")
     : undefined;
-  const { badge } = cardPresentation(publicAvailability);
+  const { badge, buyable } = cardPresentation(publicAvailability);
   const availabilityTone =
     badge === "buyable" ? "success" : badge === "full" ? "danger" : "cool";
   const related = courses.filter((item) => item.slug !== course.slug).slice(0, 3);
@@ -155,7 +163,10 @@ export default async function CourseDetailPage({ params }: CoursePageProps) {
                 </span>
               </div>
               <h1 className="mt-4 text-3xl font-bold tracking-tight text-primary sm:text-4xl lg:text-[2.75rem] lg:leading-[1.1]">
-                {course.title}
+                <MarkedTitle
+                  title={course.title}
+                  mark={{ text: course.titleMark }}
+                />
               </h1>
               <p className="mt-4 max-w-3xl text-base leading-relaxed text-fg-muted sm:text-lg">
                 {course.audience}
@@ -292,7 +303,11 @@ export default async function CourseDetailPage({ params }: CoursePageProps) {
       </Section>
 
       <Section id={ROADMAP_ID}>
-        <SectionHeading eyebrow="Nội dung đào tạo" title="Lộ trình học" />
+        <SectionHeading
+          eyebrow="Nội dung đào tạo"
+          title="Lộ trình học"
+          mark={{ text: "Lộ trình" }}
+        />
         <div
           className={
             instructor
@@ -356,15 +371,20 @@ export default async function CourseDetailPage({ params }: CoursePageProps) {
         </div>
       </Section>
 
-      <CertificateSection soft />
-
       {publishedReviews.length > 0 && (
-        <Section>
-          <SectionHeading eyebrow="Người học chia sẻ" title="Đánh giá học viên" />
+        <Section tone="band">
+          <SectionHeading
+            eyebrow="Người học chia sẻ"
+            title="Đánh giá học viên"
+            mark={{ text: "học viên" }}
+            onBand
+          />
           <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
             {publishedReviews.map((review, index) => (
               <Reveal key={review.id} delay={index * 60} className="h-full">
-                <Card className="flex h-full flex-col p-6" hover={false}>
+                {/* `on-white`: thẻ giữ nền trắng và màu chữ sáng ở cả dark mode,
+                    vì nó nằm trên band navy chứ không trên nền trang. */}
+                <div className="on-white flex h-full flex-col rounded-card border border-line p-6 shadow-[0_2px_100px_rgba(0,0,0,0.25)]">
                   <Stars value={review.rating} size={15} />
                   {review.comment && (
                     <p className="mt-3 text-[15px] font-semibold leading-relaxed text-fg">
@@ -379,14 +399,22 @@ export default async function CourseDetailPage({ params }: CoursePageProps) {
                       {formatDate(new Date(review.createdAt))}
                     </span>
                   </div>
-                </Card>
+                </div>
               </Reveal>
             ))}
           </div>
         </Section>
       )}
 
-      <Section soft={publishedReviews.length > 0}>
+      <CertificateSection soft />
+
+      <CourseExpectBand
+        course={course}
+        buyable={buyable}
+        priceCardId={PRICE_CARD_ID}
+      />
+
+      <Section>
         <SectionHeading eyebrow="Tiếp tục phát triển" title="Khóa học khác" />
         <div className="grid gap-5 md:grid-cols-3">
           {related.map((item, index) => (

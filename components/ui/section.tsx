@@ -66,7 +66,7 @@ export function splitTitleAtMark(title: string, mark: HeadingMark) {
   };
 }
 
-function MarkedTitle({ title, mark }: { title: string; mark?: HeadingMark }) {
+export function MarkedTitle({ title, mark }: { title: string; mark?: HeadingMark }) {
   if (!mark) return <>{title}</>;
   const parts = splitTitleAtMark(title, mark);
   if (!parts) {

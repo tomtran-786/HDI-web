@@ -38,6 +38,13 @@ import CourseDetailPage, {
 
 const reviewedSlug = "viet-bao-cao-khoa-hoc";
 
+/** Văn bản thấy được của trang: tiêu đề có nét vẽ tay bị tách bởi <span>. */
+const plainText = (html: string) =>
+  html
+    .replace(/<script[\s\S]*?<\/script>/g, "")
+    .replace(/<[^>]+>/g, "")
+    .replace(/&amp;/g, "&");
+
 beforeEach(() => {
   mocks.notFound.mockImplementation(() => {
     throw new NotFoundSignal();
@@ -80,7 +87,9 @@ describe("trang chi tiết khóa học", () => {
     );
 
     expect(course.slug).toBe("nckh-ung-dung-ai-xuat-ban-quoc-te");
-    expect(html).toContain("Nghiên cứu khoa học ứng dụng AI &amp; xuất bản quốc tế");
+    expect(plainText(html)).toContain(
+      "Nghiên cứu khoa học ứng dụng AI & xuất bản quốc tế",
+    );
     expect(html).toContain("01/12/2026");
     // Thời khóa biểu chi tiết đã chốt (xem ghi chú D ở đầu content/course.ts):
     // sáu buổi thứ Ba và thứ Bảy, 01/12 – 19/12/2026, 19:00 – 21:00. Dòng
@@ -125,7 +134,7 @@ describe("trang chi tiết khóa học", () => {
       }),
     );
 
-    expect(html).toContain(course.title.replace("&", "&amp;"));
+    expect(plainText(html)).toContain(course.title);
     expect(html).toContain(course.price.amount);
     expect(html).toContain("Lộ trình rõ ràng và áp dụng được ngay.");
     expect(html).not.toContain("←");
@@ -149,14 +158,17 @@ describe("trang chi tiết khóa học", () => {
       "Dành cho ai",
       "Lộ trình học",
       "Đánh giá học viên",
+      "Hoàn thành khóa học, nhận giấy chứng nhận",
+      "Đưa nghiên cứu của bạn từ mơ hồ đến bài bản",
       "Khóa học khác",
     ];
-    const positions = headings.map((heading) => html.indexOf(heading));
+    const text = plainText(html);
+    const positions = headings.map((heading) => text.indexOf(heading));
     expect(positions.every((position) => position >= 0)).toBe(true);
     expect(positions).toEqual([...positions].sort((a, b) => a - b));
     expect(html).not.toContain("Thông tin khóa học");
     for (const fact of course.facts) {
-      expect(html.indexOf(fact.value)).toBeLessThan(html.indexOf("Giới thiệu khóa học"));
+      expect(text.indexOf(fact.value)).toBeLessThan(text.indexOf("Giới thiệu khóa học"));
     }
     // Thanh học phí cố định chỉ mount sau khi cuộn qua card học phí, nên HTML
     // tĩnh vẫn chỉ có một nút đăng ký.
@@ -201,7 +213,10 @@ describe("trang chi tiết khóa học", () => {
     expect(html).toContain("Tối đa ba vấn đề cần giảng viên tư vấn");
     expect(html).not.toContain("Buổi 1:");
     expect(html).not.toContain("Kho record");
-    expect(html).not.toContain("Đánh giá học viên");
+    expect(plainText(html)).not.toContain("Đánh giá học viên");
+    // Không có đánh giá thì khối chứng nhận và band cuối vẫn có mặt.
+    expect(plainText(html)).toContain("Hoàn thành khóa học, nhận giấy chứng nhận");
+    expect(html).toContain("Điều bạn nhận được");
   });
 
   /**
@@ -257,6 +272,85 @@ describe("trang chi tiết khóa học", () => {
     expect(html).toContain("Nguyên tắc Human → AI → Verify → Rewrite");
   });
 
+  it("`titleMark` của cả bảy khóa là chuỗi con nguyên văn của title", () => {
+    expect(courses).toHaveLength(7);
+    for (const course of courses) {
+      expect(course.titleMark.length).toBeGreaterThan(0);
+      expect(course.title).toContain(course.titleMark);
+    }
+  });
+
+  it("h1 gạch chân đúng cụm `titleMark` mà vẫn giữ nguyên chữ của title", async () => {
+    const course = courses.find(
+      (item) => item.slug === "training-tieu-luan-nckh-kltn",
+    )!;
+    const html = renderToStaticMarkup(
+      await CourseDetailPage({
+        params: Promise.resolve({ slug: course.slug }),
+      }),
+    );
+    const h1 = html.match(/<h1[^>]*>([\s\S]*?)<\/h1>/)![1];
+
+    expect(h1).toContain(
+      `<span data-notation="underline" class="">${course.titleMark}</span>`,
+    );
+    expect(plainText(h1)).toBe(course.title);
+  });
+
+  it("band \"Điều bạn nhận được\" nối về #hoc-phi và hiện ba kết quả đầu của khóa", async () => {
+    const course = courses.find((item) => item.slug === reviewedSlug)!;
+    const html = renderToStaticMarkup(
+      await CourseDetailPage({
+        params: Promise.resolve({ slug: course.slug }),
+      }),
+    );
+    const band = html.slice(html.indexOf("Điều bạn nhận được"));
+
+    expect(band).toContain('href="#hoc-phi"');
+    expect(band).toContain("Giữ chỗ khóa này");
+    for (const outcome of course.outcomes.slice(0, 3)) {
+      expect(band).toContain(outcome);
+    }
+    // Chữ của nút đăng ký thật vẫn chỉ xuất hiện đúng một lần trên trang.
+    expect(html.match(/Đăng ký học khóa này/g)).toHaveLength(1);
+  });
+
+  it("khóa chưa mở thì nút ở band đổi nhãn thay vì mời giữ chỗ", async () => {
+    const course = courses.find((item) => item.slug === "nckh-chuyen-sau-spss")!;
+    mocks.landingCourseData.mockResolvedValueOnce({
+      summaries: {},
+      reviews: {},
+      availability: { [course.slug]: "not_open" },
+    });
+    const html = renderToStaticMarkup(
+      await CourseDetailPage({
+        params: Promise.resolve({ slug: course.slug }),
+      }),
+    );
+
+    expect(html).toContain("Xem học phí và lịch học");
+    expect(html).not.toContain("Giữ chỗ khóa này");
+  });
+
+  it("đánh giá nằm trên band navy, thẻ trắng cố định, và đứng trước chứng nhận", async () => {
+    const course = courses.find((item) => item.slug === reviewedSlug)!;
+    const html = renderToStaticMarkup(
+      await CourseDetailPage({
+        params: Promise.resolve({ slug: course.slug }),
+      }),
+    );
+    const reviewBand = html.slice(
+      html.lastIndexOf("<section", html.indexOf("Người học chia sẻ")),
+      html.indexOf('id="chung-nhan"'),
+    );
+
+    expect(reviewBand).toMatch(/^<section[^>]*class="band /);
+    expect(reviewBand).toContain("on-white");
+    expect(html.indexOf("Người học chia sẻ")).toBeLessThan(
+      html.indexOf('id="chung-nhan"'),
+    );
+  });
+
   it("fail-open khi dữ liệu công khai tạm thời không đọc được", async () => {
     mocks.landingCourseData.mockRejectedValueOnce(new Error("database offline"));
     const course = courses[0];
@@ -266,7 +360,7 @@ describe("trang chi tiết khóa học", () => {
       }),
     );
 
-    expect(html).toContain(course.title.replace("&", "&amp;"));
+    expect(plainText(html)).toContain(course.title);
     expect(html).toContain("Đăng ký học khóa này");
     expect(html).not.toContain("Chưa mở đăng ký");
   });

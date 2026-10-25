@@ -21,6 +21,16 @@ export const certificate = {
   },
   eyebrow: "Chứng nhận",
   title: "Hoàn thành khóa học, nhận giấy chứng nhận",
+  /** Cụm trong `title` được gạch chân tay. */
+  mark: "giấy chứng nhận",
+  /** Đoạn dẫn ngắn; `strong` là các cụm tô đậm. Chỉ lấy ý từ ảnh mẫu bên dưới. */
+  lead: [
+    { text: "Giấy chứng nhận " },
+    { text: "song ngữ Anh – Việt", strong: true },
+    { text: " do HDI Research Center cấp, " },
+    { text: "ghi đúng họ tên và khóa bạn học", strong: true },
+    { text: "." },
+  ],
   points: [
     "Song ngữ Anh – Việt, do HDI Research Center cấp",
     "Ghi họ tên, tên khóa, số buổi và thời gian học",
