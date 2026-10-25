@@ -1,7 +1,15 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import { ConferenceMap } from "@/components/conference-map";
-import { journalNames, venueName, conferenceNames } from "@/components/sections/credibility-marquee";
+import {
+  CredibilityMarquee,
+  conferenceNames,
+  journalNames,
+  venueName,
+} from "@/components/sections/credibility-marquee";
+import { existsSync } from "node:fs";
+import { join } from "node:path";
+import { conferenceLogos, publisherLogos } from "@/content/credibility-logos";
 import { conferences } from "@/content/conferences";
 import {
   conferenceMapOrigins,
@@ -116,5 +124,35 @@ describe("dải chạy công bố", () => {
     for (const name of journalNames) {
       expect(publications.some((p) => p.venue.startsWith(name))).toBe(true);
     }
+  });
+});
+
+describe("logo của dải chạy", () => {
+  it("mọi tạp chí đã đăng bài đều thuộc một nhà xuất bản có logo", () => {
+    const covered = new Set(publisherLogos.flatMap((logo) => logo.journals));
+    for (const name of journalNames) {
+      expect(covered.has(name), `"${name}" chưa có nhà xuất bản`).toBe(true);
+    }
+    // Không có tạp chí thừa mà trang không còn đăng bài ở đó.
+    for (const name of covered) expect(journalNames).toContain(name);
+  });
+
+  it("mọi logo hội thảo khớp một hội thảo thật và file logo có tồn tại", () => {
+    const shorts = new Set(conferences.map((conference) => conference.short));
+    for (const logo of conferenceLogos) {
+      expect(shorts.has(logo.short), `${logo.short} không có trong conferences`).toBe(true);
+    }
+    for (const logo of [...publisherLogos, ...conferenceLogos]) {
+      expect(existsSync(join(process.cwd(), "public", logo.src)), logo.src).toBe(true);
+    }
+  });
+
+  it("hero render logo với alt, danh sách tạp chí cho trình đọc màn hình, bản lặp bị ẩn", () => {
+    const html = renderToStaticMarkup(<CredibilityMarquee />);
+    expect(html).toContain('alt="Elsevier"');
+    expect(html).toContain('alt="Deakin University"');
+    expect(html).toContain("Energy Economics, International Review of Financial Analysis");
+    // Chỉ bộ logo đầu của mỗi hàng được đọc; các bản lặp có aria-hidden.
+    expect(html.match(/<ul(?![^>]*aria-hidden)/g)).toHaveLength(2);
   });
 });

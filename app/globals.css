@@ -339,7 +339,7 @@ html[data-course-bar] [data-contact-dock] {
 .marquee-track {
   display: flex;
   width: max-content;
-  animation: marquee-left 30s linear infinite;
+  animation: marquee-left var(--marquee-duration, 30s) linear infinite;
 }
 .marquee-track[data-direction="right"] {
   animation-name: marquee-right;
@@ -348,12 +348,37 @@ html[data-course-bar] [data-contact-dock] {
 [data-marquee]:focus-within .marquee-track {
   animation-play-state: paused;
 }
+/* Logo xám khi nghỉ, hiện màu khi rê chuột. Logo chỉ có nét trắng thì ép thành
+   bóng đen. Ở dark mode mỗi logo nằm trên một chip trắng để nét đen không mất. */
+.marquee-logo {
+  max-width: none;
+  filter: grayscale(1);
+  opacity: 0.85;
+  transition: filter 0.2s ease, opacity 0.2s ease;
+}
+.marquee-logo-white {
+  filter: brightness(0);
+  opacity: 0.55;
+}
+.marquee-chip:hover .marquee-logo {
+  filter: none;
+  opacity: 1;
+}
+.marquee-chip:hover .marquee-logo-white {
+  filter: brightness(0);
+  opacity: 0.85;
+}
+.dark .marquee-chip {
+  border-radius: 0.5rem;
+  background: #fff;
+  padding: 0.375rem 0.75rem;
+}
 @keyframes marquee-left {
   from { transform: translateX(0); }
-  to { transform: translateX(-50%); }
+  to { transform: translateX(var(--marquee-shift, -50%)); }
 }
 @keyframes marquee-right {
-  from { transform: translateX(-50%); }
+  from { transform: translateX(var(--marquee-shift, -50%)); }
   to { transform: translateX(0); }
 }
 @media (prefers-reduced-motion: reduce) {
