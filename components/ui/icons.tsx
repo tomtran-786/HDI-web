@@ -400,3 +400,33 @@ export function IconAward({ className, size = 20 }: IconProps) {
     </svg>
   );
 }
+
+export function IconTiktok({ className, size = 20 }: IconProps) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="currentColor"
+      className={className}
+      aria-hidden
+    >
+      <path d="M16.6 2h-3.2v13.3a2.9 2.9 0 1 1-2.9-2.9c.3 0 .6 0 .9.1V9.2a6.1 6.1 0 1 0 5.2 6V8.9a7.4 7.4 0 0 0 4.3 1.4V7.1a4.3 4.3 0 0 1-4.3-4.3V2z" />
+    </svg>
+  );
+}
+
+export function IconLinktree({ className, size = 20 }: IconProps) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="currentColor"
+      className={className}
+      aria-hidden
+    >
+      <path d="M12 2.5 15 6l-1.6.1 3.4 3.8-1.7.1 3.8 4.3h-6.4v4.9h-1v-4.9H5.1l3.8-4.3-1.7-.1L10.6 6.1 9 6l3-3.5zM11 19.5h2V22h-2v-2.5z" />
+    </svg>
+  );
+}

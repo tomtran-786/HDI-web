@@ -110,7 +110,7 @@ export function SectionHeading({
       {eyebrow && (
         <p
           className={`mb-3 text-xs font-semibold uppercase tracking-[0.18em] ${
-            onBand ? "text-accent" : "text-fg-muted"
+            onBand ? "text-accent-on-band" : "text-fg-muted"
           }`}
         >
           {eyebrow}

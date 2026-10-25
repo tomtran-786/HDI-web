@@ -41,7 +41,7 @@ describe("SectionHeading mark", () => {
       <SectionHeading eyebrow="Nhãn" title="Tiêu đề" onBand />,
     );
     expect(html).toContain("text-white");
-    expect(html).toContain("text-accent");
+    expect(html).toContain("text-accent-on-band");
   });
 });
 
