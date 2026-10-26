@@ -113,6 +113,22 @@ describe("/khoa-hoc", () => {
     expect(html).not.toContain(courseVisibility.listEmpty.title);
   });
 
+  it("khối chứng nhận nằm sau danh sách khóa và trước thẻ tư vấn", async () => {
+    mocks.landingCourseData.mockResolvedValue({
+      summaries: {},
+      reviews: {},
+      availability: { [open]: "buyable", [full]: "full", [closed]: "not_open" },
+    });
+    const html = await render();
+
+    const lastCard = html.indexOf(`href="/khoa-hoc/${full}"`);
+    const certificate = html.indexOf('id="chung-nhan"');
+    const consult = html.indexOf("Chưa chắc khóa học nào phù hợp với bạn?");
+    expect(lastCard).toBeGreaterThan(-1);
+    expect(certificate).toBeGreaterThan(lastCard);
+    expect(consult).toBeGreaterThan(certificate);
+  });
+
   it("không còn khóa nào thì hiện trạng thái trống kèm link tư vấn", async () => {
     mocks.landingCourseData.mockResolvedValue({
       summaries: {},
@@ -125,6 +141,7 @@ describe("/khoa-hoc", () => {
     expect(html).toContain(courseVisibility.listEmpty.title);
     expect(html).toContain('href="/#lien-he"');
     expect(html).not.toContain("Sắp xếp");
+    expect(html).not.toContain('id="chung-nhan"');
   });
 
   it("không đọc được dữ liệu thì hiện đủ bảy khóa, không badge", async () => {
@@ -134,6 +151,7 @@ describe("/khoa-hoc", () => {
 
     expect(cardHrefs(html)).toHaveLength(7);
     expect(html).not.toContain("Chưa mở đăng ký");
+    expect(html).toContain('id="chung-nhan"');
     consoleError.mockRestore();
   });
 });

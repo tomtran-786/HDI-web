@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { CertificateSection } from "@/components/course-certificate";
 import { CourseList } from "@/components/course-list";
 import { PageBackdrop } from "@/components/page-backdrop";
 import { CtaLink } from "@/components/ui/cta-link";
@@ -88,7 +89,11 @@ export default async function CoursesPage() {
         )}
       </Section>
 
-      <Section soft>
+      {/* Cả bảy khóa đều cấp chứng nhận; khi không còn khóa nào hiện thì trang
+          đang ở trạng thái trống, nên khối này ẩn theo. */}
+      {listed.length > 0 && <CertificateSection soft />}
+
+      <Section soft={listed.length === 0}>
         <Reveal>
           <div className="rounded-card border border-line bg-card p-7 sm:p-9">
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-fg-muted">
