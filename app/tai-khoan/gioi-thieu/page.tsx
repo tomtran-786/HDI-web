@@ -39,7 +39,7 @@ function Stat({
 }) {
   return (
     <Card className="p-5 sm:p-6" hover={false}>
-      <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-fg-subtle">
+      <p className="text-[0.8125rem] font-bold uppercase tracking-[0.06em] text-fg-subtle">
         {label}
       </p>
       <p className="mt-1.5 text-2xl font-bold tracking-tight text-primary">
@@ -104,7 +104,7 @@ export default async function ReferralPage() {
     <AuthShell>
       <div className="mx-auto max-w-2xl">
         <SectionHeading
-          eyebrow={referralPage.eyebrow}
+          as="h1"
           title={referralPage.title}
           subtitle={referralPage.subtitle}
         />
@@ -116,7 +116,7 @@ export default async function ReferralPage() {
           <ol className="mt-4 space-y-4">
             {referralPage.howItWorks.map((step, index) => (
               <li key={step.text} className="flex gap-3.5">
-                <span className="mt-0.5 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-tint text-[11px] font-bold tabular-nums text-primary">
+                <span className="mt-0.5 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-tint text-xs font-bold tabular-nums text-primary">
                   {index + 1}
                 </span>
                 <div>
@@ -262,7 +262,7 @@ export default async function ReferralPage() {
           <div className="mt-4 space-y-5">
             {referralPage.rules.map((group) => (
               <div key={group.title}>
-                <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-fg-subtle">
+                <p className="text-[0.8125rem] font-bold uppercase tracking-[0.06em] text-fg-subtle">
                   {group.title}
                 </p>
                 <ul className="mt-2 space-y-2 text-sm leading-relaxed text-fg-muted">

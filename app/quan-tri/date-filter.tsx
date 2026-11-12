@@ -2,7 +2,7 @@ import Link from "next/link";
 import { toDayInputVN } from "@/lib/format";
 
 const inputClass =
-  "rounded-full border border-line bg-card px-4 py-2 text-sm text-fg outline-none transition focus:border-primary";
+  "rounded-sm border border-line bg-card px-4 py-2 text-sm text-fg outline-none transition focus:border-primary";
 
 const pillClass =
   "rounded-xs border border-line bg-card px-4 py-2 text-sm font-bold text-fg-muted transition hover:border-primary hover:text-primary";
@@ -48,7 +48,7 @@ export function DateFilter({
 
   return (
     <div className="mb-8 rounded-card border border-line bg-card p-4 sm:p-5">
-      <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-fg-subtle">
+      <p className="text-[0.8125rem] font-bold uppercase tracking-[0.06em] text-fg-subtle">
         Lọc theo ngày
       </p>
 
@@ -75,7 +75,7 @@ export function DateFilter({
         </label>
         <button
           type="submit"
-          className="rounded-xs bg-primary px-5 py-2 text-sm font-bold text-primary-fg transition hover:opacity-90"
+          className="rounded-xs bg-primary px-5 py-2 text-sm font-semibold text-primary-fg transition hover:opacity-90"
         >
           Áp dụng
         </button>

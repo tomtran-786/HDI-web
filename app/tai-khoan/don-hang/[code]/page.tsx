@@ -16,7 +16,7 @@ import {
 import { SummaryCard } from "@/components/checkout/summary-card";
 import { HoldCountdown } from "@/components/hold-countdown";
 import { PayosLink } from "@/components/payos-link";
-import { IconArrow, IconMail, IconMessage } from "@/components/ui/icons";
+import { IconMail, IconMessage } from "@/components/ui/icons";
 import { CancelOrder } from "./cancel";
 import { RetryPayment } from "./retry";
 
@@ -92,7 +92,7 @@ export default async function OrderDetailPage({
   // Nút chữ nhật bo nhẹ, đặc cho hành động chính và viền cho hành động phụ —
   // cùng ngôn ngữ với thẻ tóm tắt ở giỏ hàng.
   const secondaryButton =
-    "inline-flex w-full items-center justify-center gap-2 rounded-md border border-line px-5 py-2.5 text-sm font-bold text-fg transition hover:border-primary hover:text-primary";
+    "inline-flex w-full items-center justify-center gap-2 rounded-sm border border-line px-5 py-2.5 text-sm font-bold text-fg transition hover:border-primary hover:text-primary";
 
   return (
     <>
@@ -115,7 +115,7 @@ export default async function OrderDetailPage({
               <OrderLineList items={order.items} viewerId={session.user.id} />
 
               {pending ? (
-                <div className="mt-6 rounded-md border border-primary bg-tint p-5">
+                <div className="mt-6 rounded-sm border border-primary bg-tint p-5">
                   <p className="font-bold text-primary">
                     {orderPage.awaitingGateway.title}
                   </p>
@@ -127,14 +127,14 @@ export default async function OrderDetailPage({
                   </p>
                 </div>
               ) : status === "paid" ? (
-                <div className="mt-6 rounded-md border border-line bg-card p-5">
+                <div className="mt-6 rounded-sm border border-line bg-card p-5">
                   <p className="font-bold text-success">{orderPage.paid.title}</p>
                   <p className="mt-1.5 text-sm leading-relaxed text-fg-muted">
                     {orderPage.paid.body}
                   </p>
                 </div>
               ) : (
-                <p className="mt-6 rounded-md border border-line bg-card px-5 py-4 text-sm leading-relaxed text-fg-muted">
+                <p className="mt-6 rounded-sm border border-line bg-card px-5 py-4 text-sm leading-relaxed text-fg-muted">
                   {orderPage.closed[status as keyof typeof orderPage.closed] ??
                     orderStatusLabel[status]}
                 </p>
@@ -152,10 +152,9 @@ export default async function OrderDetailPage({
                       <PayosLink
                         href={order.checkoutUrl}
                         handoff={{ kind: "order", key: String(order.code) }}
-                        className="inline-flex w-full items-center justify-center gap-2 rounded-md bg-primary px-5 py-3 text-sm font-bold text-primary-fg transition hover:bg-primary-deep"
+                        className="inline-flex w-full items-center justify-center gap-2 rounded-sm bg-primary px-5 py-3 text-sm font-bold text-primary-fg transition hover:bg-primary-deep"
                       >
                         Thanh toán với PayOS
-                        <IconArrow size={16} />
                       </PayosLink>
                     )}
                     {!order.checkoutUrl && <RetryPayment orderId={order.id} />}
@@ -186,10 +185,9 @@ export default async function OrderDetailPage({
                 ) : status === "paid" ? (
                   <Link
                     href="/tai-khoan"
-                    className="inline-flex w-full items-center justify-center gap-2 rounded-md bg-primary px-5 py-3 text-sm font-bold text-primary-fg transition hover:bg-primary-deep"
+                    className="inline-flex w-full items-center justify-center gap-2 rounded-sm bg-primary px-5 py-3 text-sm font-bold text-primary-fg transition hover:bg-primary-deep"
                   >
                     Vào trang tài khoản
-                    <IconArrow size={16} />
                   </Link>
                 ) : undefined
               }

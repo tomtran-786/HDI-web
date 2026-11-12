@@ -3,7 +3,7 @@
 import { useActionState } from "react";
 import { stages } from "@/content/account";
 import { saveProfile, type ProfileState } from "./actions";
-import { IconArrow } from "@/components/ui/icons";
+import { buttonClass } from "@/components/ui/button";
 
 export function ProfileForm({
   defaultPhone,
@@ -40,7 +40,7 @@ export function ProfileForm({
 
       <label
         htmlFor="phone"
-        className="block text-[10px] font-bold uppercase tracking-[0.16em] text-fg-subtle"
+        className="block text-[0.8125rem] font-bold uppercase tracking-[0.06em] text-fg-subtle"
       >
         Số điện thoại
       </label>
@@ -60,7 +60,7 @@ export function ProfileForm({
       </p>
 
       <fieldset className="mt-7">
-        <legend className="text-[10px] font-bold uppercase tracking-[0.16em] text-fg-subtle">
+        <legend className="text-[0.8125rem] font-bold uppercase tracking-[0.06em] text-fg-subtle">
           Bạn đang ở giai đoạn nào?
         </legend>
         <div className="mt-3 space-y-2.5">
@@ -86,10 +86,9 @@ export function ProfileForm({
       <button
         type="submit"
         disabled={pending}
-        className="mt-7 inline-flex w-full items-center justify-center gap-2 rounded-xs bg-primary px-6 py-3 text-sm font-bold text-primary-fg transition hover:bg-primary-deep disabled:opacity-60"
+        className={buttonClass({ size: "lg", className: "mt-7 w-full" })}
       >
         {pending ? "Đang lưu…" : "Lưu và tiếp tục"}
-        {!pending && <IconArrow size={16} />}
       </button>
     </form>
   );

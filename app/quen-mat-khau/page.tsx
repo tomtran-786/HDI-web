@@ -27,8 +27,7 @@ export default async function ForgotPasswordPage({
     <AuthShell>
       <div className="mx-auto max-w-md">
         <SectionHeading
-          align="center"
-          eyebrow={forgotPage.eyebrow}
+          as="h1"
           title={sent ? forgotPage.sent.title : forgotPage.title}
           subtitle={sent ? undefined : forgotPage.subtitle}
         />

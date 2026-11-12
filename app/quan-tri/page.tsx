@@ -290,9 +290,8 @@ export default async function AdminPage({
   const filtering = Boolean(from || to);
 
   return (
-    <Section soft>
+    <Section>
       <SectionHeading
-        eyebrow="Quản trị"
         title="Ghi danh & khóa học"
         // `missingDriveCount` là count() TOÀN HỆ THỐNG và cố tình không theo bộ
         // lọc — nó là tình trạng "ngay lúc này", lọc theo ngày sẽ làm nó vô
@@ -311,7 +310,7 @@ export default async function AdminPage({
 
       {reviewPayments.length > 0 && (
         <div className="mb-10 rounded-card border border-primary bg-tint p-5 sm:p-6">
-          <h3 className="text-sm font-bold uppercase tracking-[0.16em] text-primary">
+          <h3 className="text-sm font-bold uppercase tracking-[0.06em] text-primary">
             Thanh toán cần kiểm tra thủ công
           </h3>
           <ul className="mt-4 space-y-3">
@@ -401,7 +400,7 @@ export default async function AdminPage({
         />
       </div>
 
-      <h3 className="mb-4 text-sm font-bold uppercase tracking-[0.16em] text-fg-subtle">
+      <h3 className="mb-4 text-sm font-bold uppercase tracking-[0.06em] text-fg-subtle">
         Đơn hàng
       </h3>
       {orders.length === 0 ? (
@@ -427,7 +426,7 @@ export default async function AdminPage({
                     <Badge tone="cool">Nhóm {order.groupSize} người</Badge>
                   )}
                   {order.provider && (
-                    <span className="text-[11px] text-fg-subtle">
+                    <span className="text-xs text-fg-subtle">
                       {order.provider}
                     </span>
                   )}
@@ -463,7 +462,7 @@ export default async function AdminPage({
         </ul>
       )}
 
-      <h3 className="mt-12 mb-4 text-sm font-bold uppercase tracking-[0.16em] text-fg-subtle">
+      <h3 className="mt-12 mb-4 text-sm font-bold uppercase tracking-[0.06em] text-fg-subtle">
         Góp ý &amp; báo lỗi
       </h3>
       {feedbacks.length === 0 ? (
@@ -525,7 +524,7 @@ export default async function AdminPage({
         </ul>
       )}
 
-      <h3 className="mt-12 mb-4 text-sm font-bold uppercase tracking-[0.16em] text-fg-subtle">
+      <h3 className="mt-12 mb-4 text-sm font-bold uppercase tracking-[0.06em] text-fg-subtle">
         Ghi danh
       </h3>
       {enrollments.length === 0 ? (
@@ -584,7 +583,7 @@ export default async function AdminPage({
         </ul>
       )}
 
-      <h3 className="mt-12 mb-4 text-sm font-bold uppercase tracking-[0.16em] text-fg-subtle">
+      <h3 className="mt-12 mb-4 text-sm font-bold uppercase tracking-[0.06em] text-fg-subtle">
         Khóa học
       </h3>
       {courses.length === 0 ? (
@@ -659,7 +658,7 @@ export default async function AdminPage({
                     </select>
                     <button
                       type="submit"
-                      className="rounded-full border border-line px-3 py-2 text-sm font-bold text-fg-muted transition hover:border-primary hover:text-primary"
+                      className="rounded-xs border border-rule px-3 py-2 text-sm font-semibold text-fg-muted transition hover:bg-fg hover:text-bg"
                     >
                       Lưu
                     </button>
@@ -671,7 +670,7 @@ export default async function AdminPage({
         </ul>
       )}
 
-      <h3 className="mt-12 mb-4 text-sm font-bold uppercase tracking-[0.16em] text-fg-subtle">
+      <h3 className="mt-12 mb-4 text-sm font-bold uppercase tracking-[0.06em] text-fg-subtle">
         Đánh giá khóa học
       </h3>
       {reviews.length === 0 ? (
@@ -691,7 +690,7 @@ export default async function AdminPage({
                   <Badge tone={reviewTone[review.status]}>
                     {reviewStatusLabel[review.status]}
                   </Badge>
-                  <span className="text-[11px] text-fg-subtle">
+                  <span className="text-xs text-fg-subtle">
                     {findCourse(review.course.slug)?.title ?? review.course.slug}
                   </span>
                 </div>
@@ -718,7 +717,7 @@ export default async function AdminPage({
                       <input type="hidden" name="status" value={next} />
                       <button
                         type="submit"
-                        className="rounded-full border border-line px-4 py-2 text-sm font-bold text-fg-muted transition hover:border-primary hover:text-primary"
+                        className="rounded-xs border border-rule px-4 py-2 text-sm font-semibold text-fg-muted transition hover:bg-fg hover:text-bg"
                       >
                         {next === "published" ? "Duyệt & đăng" : "Không đăng"}
                       </button>
@@ -730,7 +729,7 @@ export default async function AdminPage({
         </ul>
       )}
 
-      <h3 className="mt-12 mb-4 text-sm font-bold uppercase tracking-[0.16em] text-fg-subtle">
+      <h3 className="mt-12 mb-4 text-sm font-bold uppercase tracking-[0.06em] text-fg-subtle">
         Đơn dịch vụ check AI
       </h3>
       {serviceOrders.length === 0 ? (

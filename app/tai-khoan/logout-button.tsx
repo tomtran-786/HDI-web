@@ -32,7 +32,7 @@ export function LogoutButton() {
           setBusy(false);
         }
       }}
-      className="inline-flex items-center gap-2 rounded-full border border-line px-5 py-2.5 text-sm font-bold text-fg-muted transition hover:border-primary hover:text-primary disabled:cursor-wait disabled:opacity-60"
+      className="inline-flex items-center gap-2 rounded-xs border border-rule px-5 py-2.5 text-sm font-semibold text-fg-muted transition hover:bg-fg hover:text-bg disabled:cursor-wait disabled:opacity-60"
     >
       <IconLogout size={16} />
       {busy ? "Đang đăng xuất…" : "Đăng xuất"}

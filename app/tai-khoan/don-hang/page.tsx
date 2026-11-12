@@ -13,7 +13,7 @@ import {
 import { AuthShell } from "@/components/auth-shell";
 import { SectionHeading } from "@/components/ui/section";
 import { Badge } from "@/components/ui/badge";
-import { IconArrow, IconReceipt } from "@/components/ui/icons";
+import { IconReceipt } from "@/components/ui/icons";
 
 export const metadata: Metadata = {
   title: "Đơn hàng — HDI Research Center",
@@ -75,7 +75,7 @@ export default async function OrderListPage() {
   return (
     <AuthShell>
       <SectionHeading
-        eyebrow={orderPage.eyebrow}
+          as="h1"
         title={orderPage.listTitle}
         subtitle="Lịch sử đặt chỗ và trạng thái thanh toán."
       />
@@ -95,10 +95,9 @@ export default async function OrderListPage() {
           </p>
           <Link
             href="/khoa-hoc"
-            className="mt-6 inline-flex items-center gap-2 rounded-xs bg-primary px-6 py-3 text-sm font-bold text-primary-fg transition hover:bg-primary-deep"
+            className="mt-6 inline-flex items-center gap-2 rounded-xs bg-primary px-6 py-3 text-sm font-semibold text-primary-fg transition hover:bg-primary-deep"
           >
             Xem các khóa học
-            <IconArrow size={16} />
           </Link>
         </div>
       ) : (

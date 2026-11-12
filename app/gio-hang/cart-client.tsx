@@ -21,7 +21,7 @@ import { addMemberEmails, groupApplies, MAX_MEMBERS } from "@/lib/group-invite";
 import { LineItem } from "@/components/checkout/line-item";
 import { SummaryCard, type SummaryLine } from "@/components/checkout/summary-card";
 import { Badge } from "@/components/ui/badge";
-import { IconArrow, IconCart } from "@/components/ui/icons";
+import { IconCart } from "@/components/ui/icons";
 
 type ReferralQuote = {
   eligible: boolean;
@@ -535,22 +535,22 @@ export function CartClient() {
   const banners = (
     <>
       {pruned && (
-        <p role="status" className="mb-3 rounded-md border border-line bg-bg-soft px-4 py-3 text-sm text-fg-muted">
+        <p role="status" className="mb-3 rounded-sm border border-line bg-bg-soft px-4 py-3 text-sm text-fg-muted">
           {cartModal.pruned}
         </p>
       )}
       {droppedGroup && (
-        <p role="status" className="mb-3 rounded-md border border-line bg-bg-soft px-4 py-3 text-sm text-fg-muted">
+        <p role="status" className="mb-3 rounded-sm border border-line bg-bg-soft px-4 py-3 text-sm text-fg-muted">
           {groupPanel.dropped}
         </p>
       )}
       {focusNotice && (
-        <p role="status" className="mb-3 rounded-md border border-line bg-bg-soft px-4 py-3 text-sm text-fg-muted">
+        <p role="status" className="mb-3 rounded-sm border border-line bg-bg-soft px-4 py-3 text-sm text-fg-muted">
           {focusNotice}
         </p>
       )}
       {pendingOrderCodes.length > 0 && (
-        <p role="status" className="mb-3 rounded-md border border-primary bg-tint px-4 py-3 text-sm text-fg">
+        <p role="status" className="mb-3 rounded-sm border border-primary bg-tint px-4 py-3 text-sm text-fg">
           {cartModal.pendingHold}{" "}
           {pendingOrderCodes.map((code) => (
             <a
@@ -564,7 +564,7 @@ export function CartClient() {
         </p>
       )}
       {(loadError || state.error) && (
-        <p role="alert" className="mb-3 rounded-md border border-line bg-bg-soft px-4 py-3 text-sm text-danger">
+        <p role="alert" className="mb-3 rounded-sm border border-line bg-bg-soft px-4 py-3 text-sm text-danger">
           {state.error ?? loadError}
           {state.pendingOrderCode !== undefined && (
             <>
@@ -588,7 +588,6 @@ export function CartClient() {
       className="mt-6 inline-flex items-center gap-2 text-sm font-bold text-primary transition hover:underline"
     >
       {cartPage.backToCourses}
-      <IconArrow size={15} />
     </Link>
   );
 
@@ -605,10 +604,9 @@ export function CartClient() {
           </p>
           <Link
             href="/khoa-hoc"
-            className="mt-5 inline-flex items-center gap-2 rounded-md bg-primary px-5 py-2.5 text-sm font-bold text-primary-fg transition-colors hover:bg-primary-deep"
+            className="mt-5 inline-flex items-center gap-2 rounded-sm bg-primary px-5 py-2.5 text-sm font-bold text-primary-fg transition-colors hover:bg-primary-deep"
           >
             {cartPage.empty.browse}
-            <IconArrow size={15} />
           </Link>
         </div>
 
@@ -634,7 +632,7 @@ export function CartClient() {
                         add(course.id);
                         trackCartAdd(course.slug);
                       }}
-                      className="rounded-md border border-primary px-3 py-1.5 text-xs font-bold text-primary transition-colors hover:bg-tint disabled:cursor-not-allowed disabled:opacity-60"
+                      className="rounded-sm border border-primary px-3 py-1.5 text-xs font-bold text-primary transition-colors hover:bg-tint disabled:cursor-not-allowed disabled:opacity-60"
                     >
                       {cartPage.empty.add}
                     </button>
@@ -658,7 +656,7 @@ export function CartClient() {
           {!cartReady ? (
             <div className="space-y-5" aria-label={cartModal.loading}>
               {[0, 1].map((item) => (
-                <div key={item} className="h-28 animate-pulse rounded-md bg-tint" />
+                <div key={item} className="h-28 animate-pulse rounded-sm bg-tint" />
               ))}
             </div>
           ) : (
@@ -707,7 +705,7 @@ export function CartClient() {
           {selected.length > 0 && anyGroupEligible && (
             <section
               aria-labelledby="cart-group-title"
-              className="mt-2 rounded-md border border-line p-4"
+              className="mt-2 rounded-sm border border-line p-4"
             >
               <h2 id="cart-group-title" className="text-sm font-bold text-fg">
                 {cartPage.group.title}
@@ -760,13 +758,13 @@ export function CartClient() {
                         }
                       }}
                       disabled={memberEmails.length >= MAX_MEMBERS}
-                      className="min-w-0 flex-1 rounded-full border border-line bg-bg px-3 py-2 text-sm text-fg outline-none transition focus:border-primary disabled:opacity-60"
+                      className="min-w-0 flex-1 rounded-sm border border-line bg-bg px-3 py-2 text-sm text-fg outline-none transition focus:border-primary disabled:opacity-60"
                     />
                     <button
                       type="button"
                       onClick={() => addMember(draft)}
                       disabled={!draft.trim()}
-                      className="shrink-0 rounded-full border border-line px-3 py-2 text-xs font-bold text-fg-muted transition hover:border-primary hover:text-primary disabled:opacity-50"
+                      className="shrink-0 rounded-xs border border-rule px-3 py-2 text-xs font-semibold text-fg-muted transition hover:bg-fg hover:text-bg disabled:opacity-50"
                     >
                       {groupPanel.add}
                     </button>
@@ -871,7 +869,7 @@ export function CartClient() {
               <button
                 type="submit"
                 disabled={checkoutDisabled}
-                className="hidden w-full items-center justify-center gap-2 rounded-md bg-primary px-7 py-3 text-sm font-bold text-primary-fg transition hover:bg-primary-deep disabled:cursor-not-allowed disabled:opacity-60 lg:inline-flex"
+                className="hidden w-full items-center justify-center gap-2 rounded-sm bg-primary px-7 py-3 text-sm font-bold text-primary-fg transition hover:bg-primary-deep disabled:cursor-not-allowed disabled:opacity-60 lg:inline-flex"
               >
                 <IconCart size={16} />
                 {checkoutLabel}
@@ -913,7 +911,7 @@ export function CartClient() {
                 spellCheck={false}
                 maxLength={12}
                 placeholder={referralPanel.codePlaceholder}
-                className="min-w-0 flex-1 rounded-l-md border border-r-0 border-line bg-bg px-3 py-2 text-sm uppercase tracking-wide text-fg outline-none transition placeholder:normal-case placeholder:tracking-normal placeholder:text-fg-subtle focus:border-primary disabled:cursor-not-allowed disabled:bg-bg-soft disabled:opacity-70"
+                className="min-w-0 flex-1 rounded-l-sm border border-r-0 border-line bg-bg px-3 py-2 text-sm uppercase tracking-wide text-fg outline-none transition placeholder:normal-case placeholder:tracking-normal placeholder:text-fg-subtle focus:border-primary disabled:cursor-not-allowed disabled:bg-bg-soft disabled:opacity-70"
               />
               <button
                 type="button"
@@ -921,7 +919,7 @@ export function CartClient() {
                 disabled={
                   !promoCanEdit || promoChecking || referralCodeDraft.trim() === ""
                 }
-                className="shrink-0 rounded-r-md bg-primary px-4 py-2 text-sm font-bold text-primary-fg transition-colors hover:bg-primary-deep disabled:cursor-not-allowed disabled:opacity-60"
+                className="shrink-0 rounded-r-sm bg-primary px-4 py-2 text-sm font-bold text-primary-fg transition-colors hover:bg-primary-deep disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {promoChecking ? cartPage.promo.applying : cartPage.promo.apply}
               </button>
@@ -946,7 +944,7 @@ export function CartClient() {
       {selected.length > 0 && (
         <div className="fixed inset-x-0 bottom-0 z-40 flex items-center justify-between gap-3 border-t border-line bg-card px-4 py-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] shadow-[0_-1px_0_var(--border)] lg:hidden">
           <div className="min-w-0">
-            <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-fg-subtle">
+            <p className="text-[0.8125rem] font-bold uppercase tracking-[0.06em] text-fg-subtle">
               {cartPage.total}
             </p>
             <p className="flex flex-wrap items-baseline gap-x-2">
@@ -965,7 +963,7 @@ export function CartClient() {
             type="submit"
             form="cart-checkout-form"
             disabled={checkoutDisabled}
-            className="inline-flex shrink-0 items-center justify-center gap-2 rounded-md bg-primary px-6 py-3 text-sm font-bold text-primary-fg transition hover:bg-primary-deep disabled:cursor-not-allowed disabled:opacity-60"
+            className="inline-flex shrink-0 items-center justify-center gap-2 rounded-sm bg-primary px-6 py-3 text-sm font-bold text-primary-fg transition hover:bg-primary-deep disabled:cursor-not-allowed disabled:opacity-60"
           >
             <IconCart size={16} />
             {checkoutLabel}

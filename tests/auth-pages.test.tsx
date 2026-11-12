@@ -225,8 +225,10 @@ describe("/dang-nhap", () => {
     expect(html).toContain("/dang-ky-tai-khoan");
     expect(html).toContain("/quen-mat-khau");
     expect(html).toContain("/xac-thuc-email");
-    // The shared AuthShell paints the flow's background behind the form.
-    expect(html).toContain("auth-bg.jpg");
+    // The shared AuthShell frames the flow on the flat paper surface — the
+    // decorative photo backdrop was removed in the redesign.
+    expect(html).toContain("data-auth-shell");
+    expect(html).not.toContain("auth-bg.jpg");
   });
 
   it("redirects a signed-in visitor to the safe return path rather than rendering the form", async () => {

@@ -23,7 +23,7 @@ export function CopyField({
 
   return (
     <div>
-      <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-fg-subtle">
+      <p className="text-[0.8125rem] font-bold uppercase tracking-[0.06em] text-fg-subtle">
         {label}
       </p>
       <div className="mt-1.5 flex flex-wrap items-center gap-3">
@@ -47,7 +47,7 @@ export function CopyField({
               // Trình duyệt từ chối clipboard. Giá trị vẫn nằm ngay bên cạnh.
             }
           }}
-          className="inline-flex items-center gap-2 rounded-full border border-line px-4 py-2 text-xs font-bold text-fg-muted transition hover:border-primary hover:text-primary"
+          className="inline-flex items-center gap-2 rounded-xs border border-rule px-4 py-2 text-xs font-semibold text-fg-muted transition hover:bg-fg hover:text-bg"
         >
           {copied ? referralPage.copied : referralPage.copy}
         </button>

@@ -97,7 +97,7 @@ export default async function PaymentResultPage({
         <div className="shell py-8 pb-24 sm:py-10 lg:pb-20">
           <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_22rem]">
             <div className="min-w-0">
-              <div role="status" className="mb-5 rounded-md border border-line bg-bg-soft px-4 py-4">
+              <div role="status" className="mb-5 rounded-sm border border-line bg-bg-soft px-4 py-4">
                 <p className="font-bold text-fg">{message.title}</p>
                 <p className="mt-1 text-sm leading-relaxed text-fg-muted">
                   {message.subtitle}
@@ -113,7 +113,7 @@ export default async function PaymentResultPage({
               actions={
                 <div className="space-y-3">
                   <Link
-                    className="inline-flex w-full items-center justify-center rounded-md bg-primary px-5 py-3 text-sm font-bold text-primary-fg transition-colors hover:bg-primary-deep"
+                    className="inline-flex w-full items-center justify-center rounded-sm bg-primary px-5 py-3 text-sm font-bold text-primary-fg transition-colors hover:bg-primary-deep"
                     href={paid ? "/tai-khoan" : `/tai-khoan/don-hang/${order.code}`}
                   >
                     {paid

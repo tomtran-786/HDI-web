@@ -26,7 +26,7 @@ export function CartButton({ onNavigate }: { onNavigate?: () => void }) {
     >
       <IconCart size={17} />
       {count > 0 && (
-        <span className="absolute -right-1 -top-1 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-bold leading-none text-primary-fg">
+        <span className="absolute -right-1 -top-1 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[0.8125rem] font-bold leading-none text-primary-fg">
           {count}
         </span>
       )}

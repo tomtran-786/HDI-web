@@ -30,9 +30,9 @@ export default function AdminError({
   }, [error]);
 
   return (
-    <Section soft>
+    <Section>
       <div className="mx-auto max-w-2xl rounded-card border border-line bg-card p-8 sm:p-10">
-        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-fg-muted">
+        <p className="text-xs font-semibold uppercase tracking-[0.06em] text-fg-muted">
           Quản trị
         </p>
         <h2 className="mt-3 text-3xl font-bold tracking-tight text-primary">
@@ -57,7 +57,7 @@ export default function AdminError({
           </button>
           <Link
             href="/quan-tri"
-            className="rounded-full border border-line px-6 py-3 text-sm font-bold text-fg transition hover:border-primary hover:text-primary"
+            className="rounded-xs border border-rule px-6 py-3 text-sm font-semibold text-fg transition hover:bg-fg hover:text-bg"
           >
             Mở lại trang quản trị
           </Link>

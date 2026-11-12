@@ -53,7 +53,7 @@ export function LineItem({
 
   return (
     <li id={id} className="flex gap-4 py-5 first:pt-0 sm:gap-5">
-      <div className="h-28 w-24 shrink-0 overflow-hidden rounded-md bg-bg-soft">
+      <div className="h-28 w-24 shrink-0 overflow-hidden rounded-sm bg-bg-soft">
         {course.cover ? (
           <CourseCover cover={course.cover} variant="thumb" sizes="96px" />
         ) : (
@@ -119,7 +119,7 @@ export function LineItem({
                   type="button"
                   onClick={onRemove}
                   aria-label={cartPage.removeLabel(course.title)}
-                  className="rounded-md bg-primary px-3 py-1.5 text-xs font-bold text-primary-fg transition-colors hover:bg-primary-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-bg"
+                  className="rounded-sm bg-primary px-3 py-1.5 text-xs font-bold text-primary-fg transition-colors hover:bg-primary-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-bg"
                 >
                   {cartPage.remove}
                 </button>

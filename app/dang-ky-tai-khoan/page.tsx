@@ -48,8 +48,7 @@ export default async function RegisterPage({
     <AuthShell>
       <div className="mx-auto max-w-md">
         <SectionHeading
-          align="center"
-          eyebrow={registerPage.eyebrow}
+          as="h1"
           title={sent ? registerPage.sent.title : registerPage.title}
           subtitle={sent ? undefined : registerPage.subtitle}
         />
@@ -70,13 +69,13 @@ export default async function RegisterPage({
               <div className="mt-6 space-y-3">
                 <Link
                   href={`/xac-thuc-email${nextQuery}`}
-                  className="block w-full rounded-full border border-line px-6 py-3 text-center text-sm font-bold text-fg transition hover:border-primary hover:text-primary"
+                  className="block w-full rounded-xs border border-rule px-6 py-3 text-center text-sm font-semibold text-fg transition hover:bg-fg hover:text-bg"
                 >
                   {registerPage.sent.resendCta}
                 </Link>
                 <Link
                   href={`/dang-nhap${nextQuery}`}
-                  className="block w-full rounded-xs bg-primary px-6 py-3 text-center text-sm font-bold text-primary-fg transition hover:bg-primary-deep"
+                  className="block w-full rounded-xs bg-primary px-6 py-3 text-center text-sm font-semibold text-primary-fg transition hover:bg-primary-deep"
                 >
                   {registerPage.sent.signInCta}
                 </Link>

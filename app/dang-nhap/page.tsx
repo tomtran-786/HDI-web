@@ -56,8 +56,7 @@ export default async function SignInPage({
     <AuthShell>
       <div className="mx-auto max-w-md">
         <SectionHeading
-          align="center"
-          eyebrow={signInPage.eyebrow}
+          as="h1"
           title={signInPage.title}
           subtitle={signInPage.subtitle}
         />
@@ -135,7 +134,7 @@ export default async function SignInPage({
             }}
           >
             <SubmitButton
-              className="inline-flex w-full items-center justify-center gap-3 rounded-full border border-line bg-bg px-6 py-3 text-sm font-bold text-fg transition hover:border-primary hover:text-primary"
+              className="inline-flex w-full items-center justify-center gap-3 rounded-xs border border-rule bg-bg px-6 py-3 text-sm font-semibold text-fg transition hover:bg-fg hover:text-bg"
               pendingLabel="Đang chuyển sang Google…"
             >
               <IconGoogle size={18} />

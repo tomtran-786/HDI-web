@@ -98,6 +98,7 @@ export function SectionHeading({
   subtitle,
   align = "left",
   onBand = false,
+  as: Heading = "h2",
 }: {
   /** @deprecated Không còn được vẽ ra. */
   eyebrow?: string;
@@ -108,16 +109,18 @@ export function SectionHeading({
   mark?: HeadingMark;
   /** Tiêu đề nằm trên band navy: chữ trắng. */
   onBand?: boolean;
+  /** `h1` khi đây là tiêu đề chính của trang (các màn đăng nhập, tài khoản). */
+  as?: "h1" | "h2";
 }) {
   return (
     <div className={`mb-8 sm:mb-10 ${align === "center" ? "text-center" : ""}`}>
-      <h2
+      <Heading
         className={`text-[1.875rem] leading-[1.15] font-bold tracking-[-0.02em] sm:text-4xl lg:text-[2.625rem] ${
           onBand ? "text-white" : "text-fg"
         }`}
       >
         {title}
-      </h2>
+      </Heading>
       {subtitle && (
         <p
           className={`mt-3 max-w-[62ch] text-base sm:text-lg ${

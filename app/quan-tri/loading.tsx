@@ -3,7 +3,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 export default function AdminLoading() {
   return (
-    <Section soft>
+    <Section>
       <Skeleton className="mb-3 h-3 w-20" />
       <Skeleton className="mb-6 h-9 w-80 max-w-full" />
       {/* Thanh lọc ngày. Thiếu ô này thì mỗi lần bấm "Áp dụng" trang sẽ tụt lên

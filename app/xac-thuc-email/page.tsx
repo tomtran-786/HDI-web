@@ -59,8 +59,7 @@ export default async function VerifyEmailPage({
     <AuthShell>
       <div className="mx-auto max-w-md">
         <SectionHeading
-          align="center"
-          eyebrow={verifyPage.eyebrow}
+          as="h1"
           title={verifyPage.title}
           subtitle={verifyPage.subtitle}
         />

@@ -39,8 +39,7 @@ export default async function ProfilePage({
     <AuthShell>
       <div className="mx-auto max-w-md">
         <SectionHeading
-          align="center"
-          eyebrow={profileIntro.eyebrow}
+          as="h1"
           title={profileIntro.title}
           subtitle={profileIntro.subtitle}
         />

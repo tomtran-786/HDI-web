@@ -86,7 +86,7 @@ export function PaymentPoll({
           setSettled(false);
           router.refresh();
         }}
-        className="mt-3 inline-flex items-center rounded-full border border-line px-5 py-2.5 text-sm font-bold text-fg transition hover:border-primary hover:text-primary"
+        className="mt-3 inline-flex items-center rounded-xs border border-rule px-5 py-2.5 text-sm font-semibold text-fg transition hover:bg-fg hover:text-bg"
       >
         {paymentResultPage.retryLabel}
       </button>

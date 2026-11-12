@@ -1,7 +1,7 @@
 import { avatarInitials, safeAvatarUrl } from "@/lib/avatar";
 
 const SIZES = {
-  sm: "h-7 w-7 text-[10px]",
+  sm: "h-7 w-7 text-[0.8125rem]",
   md: "h-9 w-9 text-xs",
   lg: "h-14 w-14 text-lg",
 } as const;

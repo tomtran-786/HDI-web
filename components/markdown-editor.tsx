@@ -21,7 +21,7 @@ const tools = [
   { action: "italic", label: "Nghiêng", content: <em>I</em> },
   { action: "strike", label: "Gạch ngang", content: <s>S</s> },
   { action: "inline-code", label: "Mã trong dòng", content: <span className="font-mono">&lt;&gt;</span> },
-  { action: "code-block", label: "Khối mã", content: <span className="font-mono text-[10px]">```</span> },
+  { action: "code-block", label: "Khối mã", content: <span className="font-mono text-[0.8125rem]">```</span> },
   { action: "heading", label: "Tiêu đề cấp 2", content: <IconHeading /> },
   { action: "paragraph", label: "Đoạn văn", content: <IconParagraph /> },
   { action: "quote", label: "Trích dẫn", content: <IconQuote /> },

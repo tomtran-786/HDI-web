@@ -68,7 +68,7 @@ export function ReviewForm({
           if (justSaved) setOpened((n) => n + 1);
           dialogRef.current?.showModal();
         }}
-        className="inline-flex items-center gap-2 rounded-full border border-line px-5 py-2.5 text-sm font-bold text-fg transition hover:border-primary hover:text-primary"
+        className="inline-flex items-center gap-2 rounded-xs border border-rule px-5 py-2.5 text-sm font-semibold text-fg transition hover:bg-fg hover:text-bg"
       >
         {status ? review.editCta : review.rateCta}
       </button>
@@ -164,7 +164,7 @@ function ReviewDialogBody({
             <button
               type="button"
               onClick={onClose}
-              className="inline-flex items-center justify-center rounded-full border border-line px-6 py-2.5 text-sm font-bold text-fg transition hover:border-primary hover:text-primary"
+              className="inline-flex items-center justify-center rounded-xs border border-rule px-6 py-2.5 text-sm font-semibold text-fg transition hover:bg-fg hover:text-bg"
             >
               {review.close}
             </button>
@@ -230,14 +230,14 @@ function ReviewDialogBody({
             <button
               type="button"
               onClick={onClose}
-              className="inline-flex items-center justify-center rounded-full border border-line px-6 py-2.5 text-sm font-bold text-fg transition hover:border-primary hover:text-primary"
+              className="inline-flex items-center justify-center rounded-xs border border-rule px-6 py-2.5 text-sm font-semibold text-fg transition hover:bg-fg hover:text-bg"
             >
               {review.cancel}
             </button>
             <button
               type="submit"
               disabled={pending}
-              className="inline-flex items-center justify-center rounded-xs bg-primary px-6 py-2.5 text-sm font-bold text-primary-fg transition hover:bg-primary-deep disabled:cursor-not-allowed disabled:opacity-60"
+              className="inline-flex items-center justify-center rounded-xs bg-primary px-6 py-2.5 text-sm font-semibold text-primary-fg transition hover:bg-primary-deep disabled:cursor-not-allowed disabled:opacity-60"
             >
               {pending
                 ? review.submitting
