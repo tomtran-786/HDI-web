@@ -1,8 +1,9 @@
+import type { CSSProperties } from "react";
 import { certificate } from "@/content/certificate";
+import { CertificateStage } from "./certificate-stage";
 import { CertificateViewer } from "./certificate-viewer";
 import { CheckDot } from "./ui/check-dot";
 import { IconAward } from "./ui/icons";
-import { Reveal } from "./ui/reveal";
 import { Section } from "./ui/section";
 
 /**
@@ -32,9 +33,12 @@ export function CertificateNote() {
 }
 
 /**
- * Khối chứng nhận nổi bật, dựng theo mục "Certification" của Analyst Academy:
- * ảnh nghiêng trong khung trắng, hai đốm blur phía sau, huy hiệu tròn đè góc,
- * còn tiêu đề lớn nằm ở cột chữ bên phải chứ không ở trên cả khối.
+ * Khối chứng nhận: ảnh mẫu trong khung trắng, tiêu đề lớn ở cột chữ bên phải.
+ *
+ * Chuyển động (CertificateStage + `[data-cert]` trong globals.css): khi khối vào
+ * màn hình, tờ chứng nhận trồi lên và lộ dần từ trên xuống như giấy ra khỏi máy
+ * in, rồi bốn dấu tích được đánh lần lượt cạnh từng quyền lợi. Chữ luôn hiện
+ * sẵn; chỉ hình và dấu tích chuyển động.
  *
  * Cột chữ đứng trước trong DOM để thứ tự đọc là tiêu đề → ảnh (và trên mobile
  * chữ lên trước ảnh); từ `lg` trở lên ảnh được kéo sang trái.
@@ -42,8 +46,8 @@ export function CertificateNote() {
 export function CertificateSection() {
   return (
     <Section id={certificate.sectionId}>
-      <div className="grid gap-12 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)] lg:items-center lg:gap-16">
-        <Reveal className="lg:order-2">
+      <CertificateStage className="grid gap-12 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)] lg:items-center lg:gap-16">
+        <div className="lg:order-2">
           <h2 className="text-[1.875rem] leading-[1.15] font-bold tracking-[-0.02em] sm:text-4xl lg:text-[2.625rem]">
             {certificate.title}
           </h2>
@@ -59,27 +63,30 @@ export function CertificateSection() {
             )}
           </p>
           <ul className="mt-6 space-y-4">
-            {certificate.points.map((point) => (
+            {certificate.points.map((point, index) => (
               <li
                 key={point}
                 className="flex gap-3 text-base leading-relaxed text-fg-muted"
               >
-                <CheckDot />
+                <CheckDot
+                  className="cert-tick"
+                  style={{ "--i": index } as CSSProperties}
+                />
                 <span>{point}</span>
               </li>
             ))}
           </ul>
-        </Reveal>
+        </div>
 
-        <Reveal delay={80} className="lg:order-1">
-          <div className="rounded-card border border-line bg-white p-3 shadow-sm sm:p-4">
+        <div className="lg:order-1">
+          <div className="cert-paper rounded-card border border-line bg-white p-3 shadow-sm sm:p-4">
             <CertificateViewer />
           </div>
           <p className="mt-3 text-sm leading-relaxed text-fg-subtle">
             {certificate.caption}
           </p>
-        </Reveal>
-      </div>
+        </div>
+      </CertificateStage>
     </Section>
   );
 }

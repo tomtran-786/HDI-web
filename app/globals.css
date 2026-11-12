@@ -423,3 +423,57 @@ html[data-course-bar] [data-contact-dock] {
   45% { transform: rotate(1.2deg); }
   100% { transform: rotate(0deg); }
 }
+
+/* Khối chứng nhận (components/course-certificate.tsx + certificate-stage.tsx).
+   Mặc định hiện đủ. Khi JS đã chạy (data-ready) mà khối chưa vào màn hình thì
+   tờ giấy và dấu tích chờ; lúc data-shown bật: tờ chứng nhận trồi lên và lộ
+   dần từ trên xuống như giấy ra khỏi máy in, rồi bốn dấu tích được đánh lần
+   lượt. Chạy một lần. */
+.cert-tick path {
+  stroke-dasharray: 30;
+}
+[data-cert][data-ready="true"]:not([data-shown="true"]) .cert-paper {
+  clip-path: inset(0 0 100% 0);
+  transform: translateY(24px);
+}
+[data-cert][data-ready="true"]:not([data-shown="true"]) .cert-tick {
+  opacity: 0;
+  transform: scale(0.6);
+}
+[data-cert][data-ready="true"]:not([data-shown="true"]) .cert-tick path {
+  stroke-dashoffset: 30;
+}
+[data-cert][data-shown="true"] .cert-paper {
+  animation: cert-print 1.1s var(--ease-out-expo) both;
+}
+[data-cert][data-shown="true"] .cert-tick {
+  animation: cert-tick-in 0.45s var(--ease-out-expo) both;
+  animation-delay: calc(0.7s + var(--i, 0) * 0.14s);
+}
+[data-cert][data-shown="true"] .cert-tick path {
+  animation: cert-tick-draw 0.5s var(--ease-out-expo) both;
+  animation-delay: calc(0.8s + var(--i, 0) * 0.14s);
+}
+@keyframes cert-print {
+  from { clip-path: inset(0 0 100% 0); transform: translateY(24px); }
+  to { clip-path: inset(0); transform: none; }
+}
+@keyframes cert-tick-in {
+  from { opacity: 0; transform: scale(0.6); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes cert-tick-draw {
+  from { stroke-dashoffset: 30; }
+  to { stroke-dashoffset: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  [data-cert] .cert-paper,
+  [data-cert] .cert-tick,
+  [data-cert] .cert-tick path {
+    animation: none !important;
+    clip-path: none !important;
+    transform: none !important;
+    opacity: 1 !important;
+    stroke-dashoffset: 0 !important;
+  }
+}
