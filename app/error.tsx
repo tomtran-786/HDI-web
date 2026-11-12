@@ -16,18 +16,16 @@ export default function ErrorPage({
   }, [error]);
 
   return (
-    <Section soft>
-      <div className="mx-auto max-w-2xl rounded-card border border-line bg-card p-8 text-center sm:p-10">
-        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-fg-muted">
-          Có lỗi xảy ra
-        </p>
-        <h2 className="mt-3 text-3xl font-bold tracking-tight text-primary">
+    <Section>
+      <div role="alert" className="max-w-2xl">
+        <h2 className="text-[1.875rem] leading-[1.15] font-bold tracking-[-0.02em] sm:text-4xl">
           Chưa tải được nội dung
         </h2>
-        <p className="mt-3 text-base leading-relaxed text-fg-muted">
-          Kết nối có thể đang gián đoạn. Hãy thử tải lại phần nội dung này.
+        <p className="mt-3 max-w-[54ch] text-lg leading-relaxed text-fg-muted">
+          Có lỗi xảy ra, có thể do kết nối đang gián đoạn. Hãy thử tải lại phần
+          nội dung này.
         </p>
-        <div className="mt-7 flex flex-wrap justify-center gap-3">
+        <div className="mt-7 flex flex-wrap gap-3">
           <button
             type="button"
             onClick={reset}

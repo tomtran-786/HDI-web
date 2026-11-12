@@ -14,9 +14,8 @@ export function Conferences() {
   const hidden = conferences.length - INITIAL;
 
   return (
-    <Section id="hoi-thao" soft>
+    <Section id="hoi-thao">
       <SectionHeading
-        eyebrow={conferencesIntro.eyebrow}
         title={conferencesIntro.title}
         subtitle={conferencesIntro.subtitle}
       />

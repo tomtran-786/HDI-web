@@ -314,7 +314,9 @@ describe("trang chi tiết khóa học", () => {
         params: Promise.resolve({ slug: course.slug }),
       }),
     );
-    const band = html.slice(html.indexOf("Điều bạn nhận được"));
+    // Nhãn "Điều bạn nhận được" nằm trên tờ danh sách, sau nút; cắt từ đầu
+    // section band chứa nó để lấy cả nút lẫn danh sách.
+    const band = html.slice(html.lastIndexOf("<section", html.indexOf("Điều bạn nhận được")));
 
     expect(band).toContain('href="#hoc-phi"');
     expect(band).toContain("Giữ chỗ khóa này");

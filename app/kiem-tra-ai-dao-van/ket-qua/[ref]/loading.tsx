@@ -3,7 +3,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 export default function ServiceOrderResultLoading() {
   return (
-    <Section soft>
+    <Section>
       <Skeleton className="mb-3 h-3 w-24" />
       <Skeleton className="mb-10 h-9 w-80 max-w-full" />
       <div className="grid gap-5 lg:grid-cols-2">

@@ -11,7 +11,7 @@ import { site } from "@/content/site";
 import { ActivityGallery, PhotoFigure } from "@/components/activity-gallery";
 import { Badge } from "@/components/ui/badge";
 import { CtaLink } from "@/components/ui/cta-link";
-import { IconArrow, IconCheck } from "@/components/ui/icons";
+import { IconCheck } from "@/components/ui/icons";
 import { Reveal } from "@/components/ui/reveal";
 import { Section, SectionHeading } from "@/components/ui/section";
 import { buttonClass } from "@/components/ui/button";
@@ -38,13 +38,10 @@ export default function ConferenceProgramPage() {
     <>
       <section className="border-b border-line bg-bg">
         <div className="shell py-14 sm:py-16 lg:py-20">
-          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-fg-muted">
-            {conferenceProgramIntro.eyebrow}
-          </p>
-          <h1 className="mt-3 max-w-3xl text-3xl font-bold tracking-tight text-primary sm:text-4xl lg:text-[2.75rem] lg:leading-[1.1]">
+          <h1 className="max-w-[22ch] text-[2.25rem] leading-[1.08] font-extrabold tracking-[-0.03em] sm:text-5xl lg:text-[3.25rem]">
             {conferenceProgramIntro.title}
           </h1>
-          <p className="mt-3 max-w-2xl text-base text-fg-muted sm:text-lg">
+          <p className="mt-4 max-w-[54ch] text-lg leading-relaxed text-fg-muted">
             {conferenceProgramIntro.subtitle}
           </p>
         </div>
@@ -62,9 +59,9 @@ export default function ConferenceProgramPage() {
       </div>
 
       <Section>
-        <SectionHeading eyebrow="Đồng hành nghiên cứu" title="HDI đồng hành cùng bạn" />
+        <SectionHeading title="HDI đồng hành cùng bạn" />
         <Reveal>
-          <p className="max-w-3xl text-base leading-relaxed text-fg-muted sm:text-lg">
+          <p className="max-w-[54ch] text-base leading-relaxed text-fg-muted sm:text-lg">
             {lead}
           </p>
           <p className="mt-6 text-sm font-semibold text-fg">
@@ -74,18 +71,17 @@ export default function ConferenceProgramPage() {
         </Reveal>
       </Section>
 
-      <ForumSection forum={forums[0]} soft />
+      <ForumSection forum={forums[0]} />
       <ForumSection forum={forums[1]} />
 
-      <Section soft>
+      <Section>
         <SectionHeading
-          eyebrow="Người hướng dẫn"
           title="Đồng hành cùng Dr. Tâm Trịnh"
           subtitle="Kinh nghiệm học thuật — hướng dẫn thực chất — kết nối quốc tế."
         />
         <div className="grid gap-8 lg:grid-cols-2 lg:items-center">
           <Reveal>
-            <div className="space-y-4 text-base leading-relaxed text-fg-muted">
+            <div className="space-y-4 text-base leading-relaxed text-fg-muted max-w-[62ch]">
               {advisor.paragraphs.map((paragraph) => (
                 <p key={paragraph}>{paragraph}</p>
               ))}
@@ -98,10 +94,9 @@ export default function ConferenceProgramPage() {
             <p className="mt-4 text-sm font-semibold text-fg">{advisor.since}</p>
             <Link
               href="/cong-bo"
-              className="mt-6 inline-flex items-center gap-2 text-sm font-bold text-primary hover:underline"
+              className="mt-6 text-[0.9375rem] font-semibold text-primary underline decoration-1 underline-offset-4 hover:decoration-2"
             >
               Xem hồ sơ học thuật đầy đủ
-              <IconArrow size={15} />
             </Link>
           </Reveal>
           <Reveal delay={100}>
@@ -122,7 +117,6 @@ export default function ConferenceProgramPage() {
 
       <Section>
         <SectionHeading
-          eyebrow="Quy trình"
           title="Quy trình đồng hành"
           subtitle="Bảy bước từ đánh giá đề tài đến tư vấn hướng gửi xuất bản."
         />
@@ -150,13 +144,13 @@ export default function ConferenceProgramPage() {
         </Reveal>
       </Section>
 
-      <Section soft>
+      <Section>
         <Reveal>
           <div className="rounded-card border border-line bg-card p-7 sm:p-9">
             <h2 className="text-2xl font-bold text-fg sm:text-3xl">
               Sẵn sàng cho hội thảo quốc tế đầu tiên?
             </h2>
-            <p className="mt-3 max-w-3xl text-base leading-relaxed text-fg-muted sm:text-lg">
+            <p className="mt-3 max-w-[54ch] text-base leading-relaxed text-fg-muted sm:text-lg">
               Đặt lịch tư vấn để HDI đánh giá mức độ sẵn sàng của đề tài và cùng
               bạn chọn giữa AGBA, EBES hoặc hướng công bố phù hợp.
             </p>
@@ -167,11 +161,10 @@ export default function ConferenceProgramPage() {
                 className={buttonClass()}
               >
                 Đăng ký tư vấn lộ trình hội thảo
-                <IconArrow size={15} />
               </CtaLink>
               <Link
                 href="/khoa-hoc"
-                className="inline-flex items-center rounded-full border border-line px-5 py-2.5 text-sm font-bold text-fg transition hover:border-primary hover:text-primary"
+                className="inline-flex items-center rounded-xs border border-rule px-5 py-2.5 text-sm font-semibold text-fg transition hover:bg-fg hover:text-bg"
               >
                 Xem khóa học nền tảng
               </Link>
@@ -183,20 +176,14 @@ export default function ConferenceProgramPage() {
   );
 }
 
-function ForumSection({
-  forum,
-  soft = false,
-}: {
-  forum: ConferenceForum;
-  soft?: boolean;
-}) {
+function ForumSection({ forum }: { forum: ConferenceForum }) {
   return (
-    <Section id={forum.id} soft={soft}>
-      <SectionHeading eyebrow={forum.eyebrow} title={forum.name} />
+    <Section id={forum.id}>
+      <SectionHeading title={forum.name} />
 
       <div className="grid gap-8 lg:grid-cols-[1.6fr_1fr] lg:items-start">
         <Reveal>
-          <div className="space-y-4 text-base leading-relaxed text-fg-muted">
+          <div className="space-y-4 text-base leading-relaxed text-fg-muted max-w-[62ch]">
             {forum.body.map((paragraph) => (
               <p key={paragraph}>{paragraph}</p>
             ))}
@@ -205,10 +192,9 @@ function ForumSection({
             href={forum.externalUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="mt-5 inline-flex items-center gap-2 text-sm font-bold text-primary hover:underline"
+            className="mt-5 text-[0.9375rem] font-semibold text-primary underline decoration-1 underline-offset-4 hover:decoration-2"
           >
             Trang chính thức
-            <IconArrow size={15} />
           </a>
         </Reveal>
 
@@ -250,7 +236,7 @@ function ForumSection({
       </Reveal>
 
       <Reveal>
-        <p className="mt-4 rounded-card border border-line bg-tint px-4 py-3 text-sm leading-relaxed text-fg-muted">
+        <p className="mt-4 max-w-[72ch] rounded-card border border-line bg-tint px-4 py-3 text-sm leading-relaxed text-fg-muted">
           <span className="font-semibold text-fg">Lưu ý về xếp hạng. </span>
           {forum.note}
         </p>
@@ -264,7 +250,7 @@ function ForumSection({
       </Reveal>
 
       <Reveal>
-        <p className="mt-8 rounded-card border border-line bg-bg-soft px-4 py-3 text-sm leading-relaxed text-fg-subtle">
+        <p className="mt-8 max-w-[72ch] rounded-card border border-line bg-bg-soft px-4 py-3 text-sm leading-relaxed text-fg-subtle">
           <span className="font-semibold text-fg-muted">Miễn trừ. </span>
           {forum.disclaimer}
         </p>

@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Image from "next/image";
 import { aiCheck, aiCheckKinds, aiCheckTiers } from "@/content/ai-check";
 import { site } from "@/content/site";
 import { formatVnd } from "@/lib/format";
@@ -30,79 +29,63 @@ export default async function AiCheckPage({
 
   return (
     <>
-      {/* Banner quảng cáo do HDI cung cấp — ảnh thuần, chạy full-width và tự
-          giữ tỷ lệ 2045×769 qua `h-auto w-full`. Chỉ đặt ở trang này. */}
-      <div className="w-full border-b border-line bg-bg">
-        <Image
-          src="/images/banner-check-turnitin-v2.jpg"
-          alt="Check AI & Đạo văn Turnitin — Check AI chỉ từ 50K, Check đạo văn chỉ từ 20K, Combo AI + Đạo văn chỉ từ 60K"
-          width={2045}
-          height={769}
-          priority
-          sizes="100vw"
-          className="h-auto w-full"
-        />
-      </div>
-
       <section className="border-b border-line bg-bg">
         <div className="shell py-14 sm:py-16 lg:py-20">
-          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-fg-muted">
-            {aiCheck.eyebrow}
-          </p>
-          <h1 className="mt-3 text-3xl font-bold tracking-tight text-primary sm:text-4xl lg:text-[2.75rem] lg:leading-[1.1]">
+          <h1 className="max-w-[22ch] text-[2.25rem] leading-[1.08] font-extrabold tracking-[-0.03em] sm:text-5xl lg:text-[3.25rem]">
             {aiCheck.title}
           </h1>
-          <p className="mt-3 max-w-2xl text-base text-fg-muted sm:text-lg">
+          <p className="mt-4 max-w-[54ch] text-lg leading-relaxed text-fg-muted">
             {aiCheck.subtitle}
           </p>
+          <p className="mt-3 max-w-[54ch] leading-relaxed text-fg-muted">{aiCheck.intro}</p>
         </div>
       </section>
 
-      <section className="border-t border-line bg-bg-soft text-fg">
-        <div className="shell py-16 sm:py-20 lg:py-24">
-          <p className="max-w-2xl text-base leading-relaxed text-fg-muted sm:text-[17px]">
-            {aiCheck.intro}
-          </p>
-
-          <div className="mt-10 grid gap-8 lg:grid-cols-[0.95fr_1.05fr] lg:gap-12">
-            <div>
-              <h2 className="text-lg font-bold tracking-tight text-fg">
-                {aiCheck.tableTitle}
-              </h2>
-              <div className="mt-4 space-y-4">
+      <section className="bg-bg text-fg">
+        <div className="shell grid gap-12 py-14 sm:py-16 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)] lg:gap-16 lg:py-20">
+          <div>
+            <h2 className="text-xl font-bold">{aiCheck.tableTitle}</h2>
+            {/* Một bảng thật: ba bậc độ dài theo hàng, ba loại kiểm tra theo
+                cột — đọc được cả theo hàng lẫn theo cột, không còn ba thẻ. */}
+            <table className="mt-4 w-full border-collapse text-left">
+              <thead>
+                <tr className="border-b-2 border-rule align-bottom">
+                  <th scope="col" className="py-2 pr-3 text-[0.8125rem] font-semibold text-fg-muted">
+                    Độ dài bản thảo
+                  </th>
+                  {aiCheckKinds.map((kind) => (
+                    <th
+                      key={kind.id}
+                      scope="col"
+                      className="py-2 pl-3 text-right text-[0.8125rem] font-semibold text-fg-muted"
+                    >
+                      {kind.label}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
                 {aiCheckTiers.map((tier) => (
-                  <div
-                    key={tier.id}
-                    className="rounded-card border border-line bg-card p-5 sm:p-6"
-                  >
-                    <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-fg-subtle">
-                      {tier.words}
-                    </p>
-                    <h3 className="mt-1.5 text-base font-bold tracking-tight text-fg">
-                      {tier.label}
-                    </h3>
-                    <dl className="mt-4">
-                      {aiCheckKinds.map((kind) => (
-                        <div
-                          key={kind.id}
-                          className="flex flex-wrap items-baseline justify-between gap-2 border-b border-line py-2.5 last:border-0"
-                        >
-                          <dt className="text-[13px] text-fg-muted">
-                            {kind.label}
-                          </dt>
-                          <dd className="text-[15px] font-bold tabular-nums text-primary">
-                            {formatVnd(tier.prices[kind.id])}
-                          </dd>
-                        </div>
-                      ))}
-                    </dl>
-                  </div>
+                  <tr key={tier.id} className="border-b border-line">
+                    <th scope="row" className="py-4 pr-3 align-top font-normal">
+                      <span className="block font-semibold">{tier.label}</span>
+                      <span className="block text-sm text-fg-subtle">{tier.words}</span>
+                    </th>
+                    {aiCheckKinds.map((kind) => (
+                      <td
+                        key={kind.id}
+                        className="py-4 pl-3 text-right align-top font-cond text-lg font-bold whitespace-nowrap"
+                      >
+                        {formatVnd(tier.prices[kind.id])}
+                      </td>
+                    ))}
+                  </tr>
                 ))}
-              </div>
-            </div>
-
-            <QuoteForm defaultWords={defaultWords} defaultKind={defaultKind} />
+              </tbody>
+            </table>
           </div>
+
+          <QuoteForm defaultWords={defaultWords} defaultKind={defaultKind} />
         </div>
       </section>
     </>

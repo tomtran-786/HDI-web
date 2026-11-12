@@ -8,7 +8,6 @@ export function Projects() {
   return (
     <Section id="du-an">
       <SectionHeading
-        eyebrow={projectsIntro.eyebrow}
         title={projectsIntro.title}
         subtitle={projectsIntro.subtitle}
       />
@@ -44,7 +43,7 @@ export function Projects() {
 function Row({ label, value }: { label: string; value: string }) {
   return (
     <div>
-      <dt className="text-[10px] font-bold uppercase tracking-[0.16em] text-fg-subtle">
+      <dt className="text-[0.8125rem] font-bold uppercase tracking-[0.06em] text-fg-subtle">
         {label}
       </dt>
       <dd className="mt-0.5 text-fg-muted">{value}</dd>

@@ -128,7 +128,7 @@ export function CourseCover({
 function PhotoCredit({ credit }: { credit: { author: string; url: string } }) {
   return (
     // Góc trái: góc phải dưới màn hình là chỗ của nút liên hệ nổi.
-    <p className="absolute bottom-2 left-3 rounded-full bg-bg/75 px-2.5 py-1 text-[11px] text-fg-muted">
+    <p className="absolute bottom-2 left-3 rounded-full bg-bg/75 px-2.5 py-1 text-xs text-fg-muted">
       Ảnh:{" "}
       <ExternalLink
         href={credit.url}

@@ -273,7 +273,7 @@ export function ConferenceMap() {
                         <span className="line-clamp-3 block text-xs font-semibold leading-snug">
                           {conference.name}
                         </span>
-                        <span className="mt-1 block text-[11px] leading-snug text-white/75">
+                        <span className="mt-1 block text-xs leading-snug text-white/75">
                           {conference.when} · {conference.role}
                         </span>
                       </span>
@@ -300,7 +300,7 @@ export function ConferenceMap() {
                 đọc nhãn hai lần. */}
             <dd aria-hidden>
               <RunningScore stat={stat} className="text-accent-on-band" />
-              <span className="mt-1.5 block text-[11px] font-semibold uppercase tracking-[0.14em] text-white/75">
+              <span className="mt-1.5 block text-xs font-semibold uppercase tracking-[0.06em] text-white/75">
                 {stat.label}
               </span>
             </dd>

@@ -7,7 +7,6 @@ import {
   publicationYears,
 } from "@/content/publications";
 import { Badge } from "../ui/badge";
-import { Card } from "../ui/card";
 import { Reveal } from "../ui/reveal";
 import { Section, SectionHeading } from "../ui/section";
 
@@ -29,9 +28,8 @@ export function Publications() {
   ];
 
   return (
-    <Section id="cong-bo" soft>
+    <Section id="cong-bo">
       <SectionHeading
-        eyebrow={publicationsIntro.eyebrow}
         title={publicationsIntro.title}
         subtitle={publicationsIntro.subtitle}
       />
@@ -46,7 +44,7 @@ export function Publications() {
                 type="button"
                 onClick={() => setYear(f.key)}
                 aria-pressed={active}
-                className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition ${
+                className={`inline-flex items-center gap-2 rounded-xs px-4 py-2 text-sm font-semibold transition ${
                   active
                     ? "bg-primary text-primary-fg"
                     : "border border-line bg-card text-fg-muted hover:border-primary hover:text-primary"
@@ -54,7 +52,7 @@ export function Publications() {
               >
                 {f.label}
                 <span
-                  className={`text-[11px] ${active ? "opacity-70" : "text-fg-subtle"}`}
+                  className={`text-xs ${active ? "opacity-70" : "text-fg-subtle"}`}
                 >
                   {f.count}
                 </span>
@@ -67,7 +65,7 @@ export function Publications() {
       <ol className="space-y-4">
         {shown.map((p, i) => (
           <Reveal key={p.title} delay={Math.min(i, 6) * 45}>
-            <Card className="p-6" hover={false}>
+            <div className="border-t-2 border-rule pt-5">
               <div className="flex flex-wrap items-center gap-3">
                 <span className="text-sm font-bold text-primary">{p.year}</span>
                 {p.status && <Badge tone="success">{p.status}</Badge>}
@@ -92,7 +90,7 @@ export function Publications() {
                   </a>
                 )}
               </div>
-            </Card>
+            </div>
           </Reveal>
         ))}
       </ol>

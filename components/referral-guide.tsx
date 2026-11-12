@@ -21,7 +21,7 @@ export function ReferralGuide({ code }: { code: string | null }) {
     >
       <div className="rounded-card border border-line bg-card p-4 sm:p-5">
         <p className="flex items-center gap-2 text-sm font-bold text-fg">
-          <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-tint text-[11px] font-bold tabular-nums text-primary">
+          <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-tint text-xs font-bold tabular-nums text-primary">
             3
           </span>
           {referralPage.guideStepLabel}
@@ -53,7 +53,7 @@ export function ReferralGuide({ code }: { code: string | null }) {
 
             {/* Mũi tên nằm dưới ô trên màn hình hẹp và bên phải ô trên màn hình
                 rộng — trỏ sang ngang ở điện thoại thì nó chỉ ra ngoài màn hình. */}
-            <p className="flex shrink-0 items-center gap-2 text-xs font-bold uppercase tracking-[0.16em] text-danger">
+            <p className="flex shrink-0 items-center gap-2 text-xs font-bold uppercase tracking-[0.06em] text-danger">
               <span className="text-base leading-none sm:hidden">↑</span>
               <span className="hidden text-base leading-none sm:inline">←</span>
               {referralPage.guideMarker}

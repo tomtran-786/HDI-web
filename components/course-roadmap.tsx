@@ -47,7 +47,7 @@ export function CourseRoadmap({ course }: { course: Course }) {
                 <h3 className="text-base font-bold leading-snug text-primary sm:text-lg">
                   {phaseKind(course)} {i + 1}: {phase.name}
                 </h3>
-                <p className="mt-1 text-xs font-semibold uppercase tracking-[0.12em] text-fg-subtle">
+                <p className="mt-1 text-xs font-semibold uppercase tracking-[0.06em] text-fg-subtle">
                   {phaseMeta(course, i)}
                 </p>
               </div>
@@ -67,7 +67,7 @@ export function CourseRoadmap({ course }: { course: Course }) {
                     className="flex gap-3.5 border-b border-line py-3.5 last:border-0"
                   >
                     <span
-                      className={`mt-0.5 inline-flex h-6 shrink-0 items-center justify-center rounded-full bg-tint text-[11px] font-bold tabular-nums text-primary ${
+                      className={`mt-0.5 inline-flex h-6 shrink-0 items-center justify-center rounded-full bg-tint text-xs font-bold tabular-nums text-primary ${
                         byModule ? "px-2" : "w-6"
                       }`}
                     >

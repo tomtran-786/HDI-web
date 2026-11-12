@@ -11,7 +11,8 @@ import {
 import { composeEmailHref, links } from "@/content/site";
 import { quote } from "@/lib/ai-check-pricing";
 import { formatVnd } from "@/lib/format";
-import { IconArrow, IconMessage } from "@/components/ui/icons";
+import { IconMessage } from "@/components/ui/icons";
+import { buttonClass } from "@/components/ui/button";
 import { startServiceCheckout, type QuoteState } from "./actions";
 
 /**
@@ -61,7 +62,7 @@ export function QuoteForm({
 
       <label
         htmlFor="wordCount"
-        className="mt-6 block text-[10px] font-bold uppercase tracking-[0.16em] text-fg-subtle"
+        className="mt-6 block text-[0.8125rem] font-bold uppercase tracking-[0.06em] text-fg-subtle"
       >
         {aiCheck.wordLabel}
       </label>
@@ -83,7 +84,7 @@ export function QuoteForm({
       </p>
 
       <fieldset className="mt-7">
-        <legend className="text-[10px] font-bold uppercase tracking-[0.16em] text-fg-subtle">
+        <legend className="text-[0.8125rem] font-bold uppercase tracking-[0.06em] text-fg-subtle">
           {aiCheck.kindLabel}
         </legend>
         <div className="mt-3 space-y-2.5">
@@ -149,7 +150,7 @@ export function QuoteForm({
                 )}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center justify-center gap-2 rounded-full border border-line px-5 py-2.5 text-sm font-bold text-fg transition hover:border-primary hover:text-primary"
+                className="inline-flex items-center justify-center gap-2 rounded-xs border border-rule px-5 py-2.5 text-sm font-semibold text-fg transition hover:bg-fg hover:text-bg"
               >
                 Gửi email
               </a>
@@ -173,10 +174,9 @@ export function QuoteForm({
       <button
         type="submit"
         disabled={pending || !payable}
-        className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-xs bg-primary px-6 py-3 text-sm font-bold text-primary-fg transition hover:bg-primary-deep disabled:opacity-50"
+        className={buttonClass({ size: "lg", className: "mt-6 w-full" })}
       >
         {pending ? aiCheck.paying : aiCheck.payLabel}
-        {!pending && <IconArrow size={16} />}
       </button>
       <p className="mt-3 text-center text-xs leading-relaxed text-fg-subtle">
         Cần đăng nhập để đặt dịch vụ — đơn được lưu trong trang tài khoản của

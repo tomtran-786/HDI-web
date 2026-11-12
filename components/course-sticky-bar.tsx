@@ -9,7 +9,7 @@ import {
 } from "@/lib/course-availability";
 import { useCart } from "./cart-provider";
 import { CtaLink } from "./ui/cta-link";
-import { IconArrow, IconMessage } from "./ui/icons";
+import { IconMessage } from "./ui/icons";
 import { buttonClass } from "@/components/ui/button";
 
 /**
@@ -90,7 +90,7 @@ export function CourseStickyBar({
         <div className="flex shrink-0 items-center gap-2">
           <a
             href={outlineHref}
-            className="hidden items-center rounded-full border border-line px-4 py-2.5 text-sm font-bold text-fg transition hover:border-primary hover:text-primary md:inline-flex"
+            className="hidden items-center rounded-xs border border-rule px-4 py-2.5 text-sm font-semibold text-fg transition hover:bg-fg hover:text-bg md:inline-flex"
           >
             Xem lộ trình
           </a>
@@ -104,7 +104,6 @@ export function CourseStickyBar({
               className={buttonClass()}
             >
               Đăng ký ngay
-              <IconArrow size={15} />
             </button>
           ) : (
             <CtaLink

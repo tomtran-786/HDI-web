@@ -1,9 +1,8 @@
 import type { Metadata } from "next";
 import { CertificateSection } from "@/components/course-certificate";
 import { CourseList } from "@/components/course-list";
-import { PageBackdrop } from "@/components/page-backdrop";
 import { CtaLink } from "@/components/ui/cta-link";
-import { IconArrow, IconMessage } from "@/components/ui/icons";
+import { IconMessage } from "@/components/ui/icons";
 import { Reveal } from "@/components/ui/reveal";
 import { Section } from "@/components/ui/section";
 import { courses, coursesIntro } from "@/content/course";
@@ -41,24 +40,23 @@ export default async function CoursesPage() {
 
   return (
     <>
-      <PageBackdrop>
-        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-fg-muted">
-          {coursesIntro.eyebrow}
-        </p>
-        <h1 className="mt-3 max-w-4xl text-3xl font-bold tracking-tight text-primary sm:text-4xl lg:text-[2.75rem] lg:leading-[1.1]">
+      <section className="border-b border-line bg-bg">
+        <div className="shell py-14 sm:py-16 lg:py-20">
+        <h1 className="max-w-[22ch] text-[2.25rem] leading-[1.08] font-extrabold tracking-[-0.03em] sm:text-5xl lg:text-[3.25rem]">
           {coursesIntro.title}
         </h1>
-        <p className="mt-3 max-w-3xl text-base text-fg-muted sm:text-lg">
+        <p className="mt-4 max-w-[54ch] text-lg leading-relaxed text-fg-muted">
           {coursesIntro.subtitle}
         </p>
-      </PageBackdrop>
+      </div>
+      </section>
 
       <Section>
         <Reveal>
-          <p className="max-w-3xl text-base leading-relaxed text-fg-muted sm:text-lg">
+          <p className="max-w-[54ch] text-base leading-relaxed text-fg-muted sm:text-lg">
             {coursesIntro.intro}
           </p>
-          <p className="mb-8 mt-3 max-w-3xl text-sm leading-relaxed text-fg-subtle">
+          <p className="mb-8 mt-3 max-w-[54ch] text-sm leading-relaxed text-fg-subtle">
             {coursesIntro.guide}
           </p>
         </Reveal>
@@ -80,10 +78,9 @@ export default async function CoursesPage() {
               <CtaLink
                 source="lien-he"
                 target="tu-van"
-                className="mt-6 inline-flex items-center gap-2 rounded-xs bg-primary px-5 py-2.5 text-sm font-bold text-primary-fg transition hover:bg-primary-deep"
+                className={buttonClass({ className: "mt-6" })}
               >
                 Tư vấn miễn phí
-                <IconArrow size={15} />
               </CtaLink>
             </div>
           </Reveal>
@@ -92,42 +89,45 @@ export default async function CoursesPage() {
 
       {/* Cả bảy khóa đều cấp chứng nhận; khi không còn khóa nào hiện thì trang
           đang ở trạng thái trống, nên khối này ẩn theo. */}
-      {listed.length > 0 && <CertificateSection soft />}
+      {listed.length > 0 && <CertificateSection />}
 
-      <Section soft={listed.length === 0}>
-        <Reveal>
-          <div className="rounded-card border border-line bg-card p-7 sm:p-9">
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-fg-muted">
-              Chọn đúng lộ trình
-            </p>
-            <h2 className="mt-3 text-2xl font-bold text-fg sm:text-3xl">
+      {/* Lời mời tư vấn của trang này đứng sau khối chứng nhận; vì đã có nó
+          nên lời mời ở đầu footer được ẩn trên /khoa-hoc
+          (components/footer-cta-card.tsx). */}
+      <Section tone="band">
+        <div className="grid gap-x-16 gap-y-6 lg:grid-cols-[minmax(0,1.2fr)_auto] lg:items-end">
+          <div>
+            <h2 className="text-[1.875rem] leading-[1.15] font-bold tracking-[-0.02em] sm:text-4xl">
               Chưa chắc khóa học nào phù hợp với bạn?
             </h2>
-            <p className="mt-3 max-w-3xl text-base leading-relaxed text-fg-muted sm:text-lg">
-              Chia sẻ mục tiêu và giai đoạn nghiên cứu hiện tại để đội ngũ HDI
-              tư vấn lộ trình phù hợp, hoàn toàn miễn phí.
+            <p className="mt-3 max-w-[54ch] text-lg text-white/85">
+              Chia sẻ mục tiêu và giai đoạn nghiên cứu hiện tại để đội ngũ HDI tư
+              vấn lộ trình phù hợp, hoàn toàn miễn phí.
             </p>
-            <div className="mt-7 flex flex-wrap gap-3">
-              <CtaLink
-                source="lien-he"
-                target="tu-van"
-                className={buttonClass()}
-              >
-                Tư vấn miễn phí
-                <IconArrow size={15} />
-              </CtaLink>
-              <CtaLink
-                source="lien-he"
-                target="zalo"
-                className="inline-flex items-center gap-2 rounded-full border border-line px-5 py-2.5 text-sm font-bold text-fg transition hover:border-primary hover:text-primary"
-              >
-                <IconMessage size={15} />
-                Nhắn Zalo
-              </CtaLink>
-            </div>
           </div>
-        </Reveal>
+          <div className="flex flex-wrap gap-3">
+            <CtaLink
+              source="lien-he"
+              target="zalo"
+              className={buttonClass({ variant: "onBand", size: "lg" })}
+            >
+              <IconMessage size={18} />
+              Nhắn Zalo
+            </CtaLink>
+            <CtaLink
+              source="lien-he"
+              target="tu-van"
+              className={buttonClass({
+                size: "lg",
+                className: "border border-white/60 bg-transparent text-white hover:bg-white/10",
+              })}
+            >
+              Tư vấn miễn phí
+            </CtaLink>
+          </div>
+        </div>
       </Section>
+
     </>
   );
 }

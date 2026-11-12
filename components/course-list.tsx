@@ -49,8 +49,8 @@ export function CourseList({
   return (
     <>
       <Reveal>
-        <div className="mb-7 flex flex-wrap items-center gap-2">
-          <span className="mr-1 text-[10px] font-bold uppercase tracking-[0.16em] text-fg-subtle">
+        <div className="mb-7 flex flex-wrap items-center">
+          <span className="mr-2 text-sm font-semibold text-fg-muted">
             Sắp xếp
           </span>
           {(Object.keys(sorts) as SortKey[]).map((key) => {
@@ -66,10 +66,10 @@ export function CourseList({
                   trackCourseSort(key);
                 }}
                 aria-pressed={active}
-                className={`inline-flex items-center rounded-full px-4 py-2 text-sm font-semibold transition ${
+                className={`-ml-px inline-flex h-9 items-center border px-3.5 text-sm font-semibold transition-colors first-of-type:rounded-l-xs last:rounded-r-xs ${
                   active
-                    ? "bg-primary text-primary-fg"
-                    : "border border-line bg-card text-fg-muted hover:border-primary hover:text-primary"
+                    ? "relative z-[1] border-rule bg-fg text-bg"
+                    : "border-line bg-bg text-fg-muted hover:text-fg"
                 }`}
               >
                 {sorts[key].label}
@@ -79,6 +79,8 @@ export function CourseList({
         </div>
       </Reveal>
 
+      {/* Các thẻ khóa mang h3; h2 ẩn giữ cấp tiêu đề liền mạch từ h1 của trang. */}
+      <h2 className="sr-only">Danh sách khóa học</h2>
       <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
         {shown.map((course, i) => (
           <Reveal key={course.slug} delay={110 + i * 70} className="h-full">

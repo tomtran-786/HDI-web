@@ -15,7 +15,7 @@ import {
 import { allowUserAction } from "@/lib/auth-throttle";
 import { Badge } from "@/components/ui/badge";
 import { Section, SectionHeading } from "@/components/ui/section";
-import { IconArrow, IconMessage } from "@/components/ui/icons";
+import { IconMessage } from "@/components/ui/icons";
 import { PaymentPoll } from "@/components/payment-poll";
 import { PayosLink } from "@/components/payos-link";
 import { CancelServiceOrder } from "./cancel";
@@ -115,9 +115,8 @@ export default async function ServiceOrderResultPage({
   const checkoutOpen = view === "open" || view === "cancelled_checkout";
 
   return (
-    <Section soft>
+    <Section>
       <SectionHeading
-        eyebrow={aiCheck.result.eyebrow}
         title={title}
         subtitle={subtitle}
       />
@@ -125,7 +124,7 @@ export default async function ServiceOrderResultPage({
       <div className="grid gap-5 lg:grid-cols-2">
         <div className="rounded-card border border-line bg-card p-6 sm:p-7">
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-fg-subtle">
+            <p className="text-[0.8125rem] font-bold uppercase tracking-[0.06em] text-fg-subtle">
               {aiCheck.result.codeLabel}
             </p>
             <Badge tone={orderStatusTone[status] ?? "cool"}>
@@ -163,7 +162,6 @@ export default async function ServiceOrderResultPage({
               className={buttonClass({ size: "lg", className: "mt-5 w-full" })}
             >
               Mở lại trang thanh toán
-              <IconArrow size={16} />
             </PayosLink>
           )}
           {view === "open" && (
@@ -178,16 +176,15 @@ export default async function ServiceOrderResultPage({
           {view === "closed" && (
             <Link
               href="/kiem-tra-ai-dao-van"
-              className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-full border border-line px-5 py-3 text-sm font-bold text-fg transition hover:border-primary hover:text-primary"
+              className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-xs border border-rule px-5 py-3 text-sm font-semibold text-fg transition hover:bg-fg hover:text-bg"
             >
               {aiCheck.result.back}
-              <IconArrow size={16} />
             </Link>
           )}
         </div>
 
         <div className="rounded-card border border-line bg-card p-6 sm:p-7">
-          <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-fg-subtle">
+          <p className="text-[0.8125rem] font-bold uppercase tracking-[0.06em] text-fg-subtle">
             {aiCheck.result.sendTitle}
           </p>
           <p className="mt-3 text-[15px] leading-relaxed text-fg-muted">

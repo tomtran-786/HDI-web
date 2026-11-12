@@ -5,7 +5,6 @@ import {
   unitsTaught,
 } from "@/content/teaching";
 import { Badge } from "../ui/badge";
-import { Card } from "../ui/card";
 import { Reveal } from "../ui/reveal";
 import { Section, SectionHeading } from "../ui/section";
 
@@ -13,15 +12,14 @@ export function Teaching() {
   return (
     <Section id="giang-day">
       <SectionHeading
-        eyebrow={teachingIntro.eyebrow}
         title={teachingIntro.title}
         subtitle={teachingIntro.subtitle}
       />
 
       <div className="grid gap-5 lg:grid-cols-[1.15fr_0.85fr]">
         <Reveal>
-          <Card className="h-full p-6 sm:p-7" hover={false}>
-            <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-fg-subtle">
+          <div className="h-full border-t-2 border-rule pt-5">
+            <p className="text-[0.8125rem] font-bold uppercase tracking-[0.06em] text-fg-subtle">
               Luận án đã hướng dẫn
             </p>
             <ul className="mt-4 space-y-4">
@@ -39,13 +37,13 @@ export function Teaching() {
                 </li>
               ))}
             </ul>
-          </Card>
+          </div>
         </Reveal>
 
         <Reveal delay={90}>
           <div className="grid h-full gap-5">
-            <Card className="p-6 sm:p-7" hover={false}>
-              <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-fg-subtle">
+            <div className="border-t-2 border-rule pt-5">
+              <p className="text-[0.8125rem] font-bold uppercase tracking-[0.06em] text-fg-subtle">
                 Lĩnh vực giảng dạy
               </p>
               <div className="mt-3 flex flex-wrap gap-2">
@@ -53,9 +51,9 @@ export function Teaching() {
                   <Badge key={t}>{t}</Badge>
                 ))}
               </div>
-            </Card>
-            <Card className="p-6 sm:p-7" hover={false}>
-              <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-fg-subtle">
+            </div>
+            <div className="border-t-2 border-rule pt-5">
+              <p className="text-[0.8125rem] font-bold uppercase tracking-[0.06em] text-fg-subtle">
                 Học phần đã giảng dạy
               </p>
               <ul className="mt-3 grid gap-1.5 sm:grid-cols-2 lg:grid-cols-1">
@@ -65,7 +63,7 @@ export function Teaching() {
                   </li>
                 ))}
               </ul>
-            </Card>
+            </div>
           </div>
         </Reveal>
       </div>

@@ -32,7 +32,7 @@ export function CopyCode({ code }: { code: number }) {
             // hiện ngay bên cạnh nên vẫn chép tay được; không báo lỗi làm gì.
           }
         }}
-        className="inline-flex items-center gap-2 rounded-full border border-line px-4 py-2 text-sm font-bold text-fg-muted transition hover:border-primary hover:text-primary"
+        className="inline-flex items-center gap-2 rounded-xs border border-rule px-4 py-2 text-sm font-semibold text-fg-muted transition hover:bg-fg hover:text-bg"
       >
         {copied ? aiCheck.result.copied : aiCheck.result.copy}
       </button>

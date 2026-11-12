@@ -15,7 +15,7 @@ import { CourseFactList } from "./course-facts";
 import { phaseKind, phaseMeta } from "./course-roadmap";
 import { Badge } from "./ui/badge";
 import { CheckDot } from "./ui/check-dot";
-import { IconArrow, IconClose } from "./ui/icons";
+import { IconClose } from "./ui/icons";
 import { PriceTag } from "./ui/price-tag";
 
 /** Số kết quả đạt được in trong modal; bản đầy đủ nằm ở trang chi tiết. */
@@ -67,7 +67,7 @@ export function CourseQuickView({
     >
       <div className="sticky top-0 z-10 flex items-start justify-between gap-4 border-b border-line bg-card px-5 py-4 sm:px-7">
         <div className="min-w-0">
-          <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-fg-subtle">
+          <p className="text-[0.8125rem] font-bold uppercase tracking-[0.06em] text-fg-subtle">
             Mã khóa {course.code} · {course.eyebrow}
           </p>
           <h2
@@ -107,14 +107,14 @@ export function CourseQuickView({
 
         <div className="md:sticky md:top-24 md:col-start-2 md:row-span-2 md:row-start-1 md:self-start">
           <div className="rounded-card border border-line bg-bg-soft p-5">
-            <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-fg-subtle">
+            <p className="text-[0.8125rem] font-bold uppercase tracking-[0.06em] text-fg-subtle">
               Khóa học gồm
             </p>
             <CourseFactList course={course} className="mt-3" />
 
             <div className="mt-5 border-t border-line pt-4">
               <div className="flex flex-wrap items-center justify-between gap-3">
-                <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-fg-subtle">
+                <p className="text-[0.8125rem] font-bold uppercase tracking-[0.06em] text-fg-subtle">
                   Học phí
                 </p>
                 {badge && (
@@ -150,7 +150,6 @@ export function CourseQuickView({
             className="mt-4 inline-flex w-full items-center justify-center gap-2 text-sm font-bold text-primary underline underline-offset-4 hover:text-primary-deep"
           >
             Xem trang chi tiết
-            <IconArrow size={15} />
           </Link>
         </div>
         <div className="min-w-0 md:col-start-1 md:row-start-2">
@@ -179,7 +178,7 @@ export function CourseQuickView({
                 <span className="text-sm font-semibold leading-snug text-fg">
                   {phaseKind(course)} {i + 1}: {phase.name}
                 </span>
-                <span className="shrink-0 text-[11px] font-semibold uppercase tracking-[0.12em] text-fg-subtle">
+                <span className="shrink-0 text-xs font-semibold uppercase tracking-[0.06em] text-fg-subtle">
                   {phaseMeta(course, i)}
                 </span>
               </li>

@@ -25,13 +25,10 @@ export default function AcademicRecordPage() {
     <>
       <section className="border-b border-line bg-bg">
         <div className="shell py-14 sm:py-16 lg:py-20">
-          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-fg-muted">
-            {advisor.label}
-          </p>
-          <h1 className="mt-3 text-3xl font-bold tracking-tight text-primary sm:text-4xl lg:text-[2.75rem] lg:leading-[1.1]">
+          <h1 className="max-w-[22ch] text-[2.25rem] leading-[1.08] font-extrabold tracking-[-0.03em] sm:text-5xl lg:text-[3.25rem]">
             Công bố &amp; hồ sơ học thuật
           </h1>
-          <p className="mt-3 max-w-2xl text-base text-fg-muted sm:text-lg">
+          <p className="mt-4 max-w-[54ch] text-lg leading-relaxed text-fg-muted">
             Danh mục công bố, dự án được tài trợ, hội thảo quốc tế và hồ sơ hướng
             dẫn của {advisor.name} — {advisor.credential}.
           </p>

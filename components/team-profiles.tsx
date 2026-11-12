@@ -3,7 +3,6 @@ import { about } from "@/content/about";
 import { links } from "@/content/site";
 import { ActivityGallery } from "./activity-gallery";
 import { Badge } from "./ui/badge";
-import { Card } from "./ui/card";
 import { IconCheck, IconDownload } from "./ui/icons";
 import { Reveal } from "./ui/reveal";
 import { Section, SectionHeading } from "./ui/section";
@@ -15,11 +14,11 @@ export function TeamProfiles() {
   const assistant = about.assistant;
 
   return (
-    <Section id="doi-ngu" soft>
-      <SectionHeading eyebrow="Đội ngũ HDI" title="Đội ngũ học thuật và nghiên cứu" />
+    <Section id="doi-ngu">
+      <SectionHeading title="Đội ngũ học thuật và nghiên cứu" />
 
       <Reveal>
-        <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-fg-subtle">
+        <p className="text-[0.8125rem] font-bold uppercase tracking-[0.06em] text-fg-subtle">
           {advisor.label} – {advisor.labelEn}
         </p>
         <h3 className="mt-2 text-2xl font-bold text-fg">{advisor.name}</h3>
@@ -38,7 +37,7 @@ export function TeamProfiles() {
               className="h-40 w-40 rounded-card border border-line object-cover"
             />
 
-            <p className="mt-7 text-[10px] font-bold uppercase tracking-[0.16em] text-fg-subtle">
+            <p className="mt-7 text-[0.8125rem] font-bold uppercase tracking-[0.06em] text-fg-subtle">
               Học vấn
             </p>
             <ul className="mt-3 space-y-4">
@@ -58,7 +57,7 @@ export function TeamProfiles() {
               ))}
             </ul>
 
-            <p className="mt-7 text-[10px] font-bold uppercase tracking-[0.16em] text-fg-subtle">
+            <p className="mt-7 text-[0.8125rem] font-bold uppercase tracking-[0.06em] text-fg-subtle">
               Giải thưởng
             </p>
             <ul className="mt-3 space-y-2">
@@ -91,14 +90,14 @@ export function TeamProfiles() {
         </Reveal>
 
         <Reveal delay={100}>
-          <div className="space-y-4 text-[15px] leading-relaxed text-fg-muted sm:text-base">
+          <div className="space-y-4 text-[15px] leading-relaxed text-fg-muted sm:text-base max-w-[62ch]">
             {advisor.paragraphs.map((paragraph) => (
               <p key={paragraph}>{paragraph}</p>
             ))}
           </div>
 
-          <Card className="mt-8 p-6" hover={false}>
-            <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-fg-subtle">
+          <div className="mt-8 border-t-2 border-rule pt-5">
+            <p className="text-[0.8125rem] font-bold uppercase tracking-[0.06em] text-fg-subtle">
               Vai trò tại HDI
             </p>
             <ul className="mt-4 grid gap-3 sm:grid-cols-2">
@@ -109,11 +108,11 @@ export function TeamProfiles() {
                 </li>
               ))}
             </ul>
-          </Card>
+          </div>
 
           <div className="mt-5 grid gap-5 sm:grid-cols-2">
-            <Card className="p-6" hover={false}>
-              <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-fg-subtle">
+            <div className="border-t-2 border-rule pt-5">
+              <p className="text-[0.8125rem] font-bold uppercase tracking-[0.06em] text-fg-subtle">
                 Hướng nghiên cứu
               </p>
               <div className="mt-3 flex flex-wrap gap-2">
@@ -121,9 +120,9 @@ export function TeamProfiles() {
                   <Badge key={topic}>{topic}</Badge>
                 ))}
               </div>
-            </Card>
-            <Card className="p-6" hover={false}>
-              <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-fg-subtle">
+            </div>
+            <div className="border-t-2 border-rule pt-5">
+              <p className="text-[0.8125rem] font-bold uppercase tracking-[0.06em] text-fg-subtle">
                 Phản biện cho tạp chí
               </p>
               <ul className="mt-3 space-y-1.5">
@@ -133,25 +132,22 @@ export function TeamProfiles() {
                   </li>
                 ))}
               </ul>
-            </Card>
+            </div>
           </div>
         </Reveal>
       </div>
 
       <div className="mt-12">
         <Reveal>
-          <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-fg-subtle">
-            Hoạt động học thuật
-          </p>
-          <h3 className="mt-2 text-xl font-bold text-fg">
-            Trao đổi và kết nối cùng học giả quốc tế
+          <h3 className="border-b-2 border-rule pb-2 text-xl font-bold text-fg">
+            Hoạt động học thuật: trao đổi và kết nối cùng học giả quốc tế
           </h3>
         </Reveal>
         <ActivityGallery photos={advisor.activityPhotos} className="mt-6" />
       </div>
 
       <Reveal delay={120}>
-        <Card className="mt-12 border-t border-line p-6 sm:p-8" hover={false}>
+        <div className="mt-12 border-t border-line border-t-2 border-rule pt-5">
           <div className="flex flex-col gap-6 sm:flex-row sm:items-start">
             <Image
               src={assistant.portrait.src}
@@ -162,18 +158,18 @@ export function TeamProfiles() {
               className="h-36 w-36 shrink-0 rounded-full border border-line object-cover object-[center_30%]"
             />
             <div>
-              <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-fg-subtle">
+              <p className="text-[0.8125rem] font-bold uppercase tracking-[0.06em] text-fg-subtle">
                 {assistant.label} – {assistant.labelVi}
               </p>
               <h3 className="mt-2 text-2xl font-bold text-fg">{assistant.name}</h3>
-              <div className="mt-4 space-y-4 text-[15px] leading-relaxed text-fg-muted sm:text-base">
+              <div className="mt-4 space-y-4 text-[15px] leading-relaxed text-fg-muted sm:text-base max-w-[62ch]">
                 {assistant.paragraphs.map((paragraph) => (
                   <p key={paragraph}>{paragraph}</p>
                 ))}
               </div>
             </div>
           </div>
-          <p className="mt-7 text-[10px] font-bold uppercase tracking-[0.16em] text-fg-subtle">
+          <p className="mt-7 text-[0.8125rem] font-bold uppercase tracking-[0.06em] text-fg-subtle">
             Vai trò tại HDI
           </p>
           <ul className="mt-4 grid gap-3 sm:grid-cols-2">
@@ -204,7 +200,7 @@ export function TeamProfiles() {
               Resume
             </a>
           </div>
-        </Card>
+        </div>
       </Reveal>
     </Section>
   );

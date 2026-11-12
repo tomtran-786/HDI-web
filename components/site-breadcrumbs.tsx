@@ -122,10 +122,10 @@ export function SiteBreadcrumbs() {
   return (
     <nav
       aria-label="Breadcrumb"
-      className="border-b border-line bg-bg-soft/95 text-fg"
+      className="border-b border-line bg-bg text-fg"
     >
-      <div className="shell py-3.5 sm:py-4">
-        <ol className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] font-bold uppercase tracking-[0.12em] sm:text-xs">
+      <div className="shell py-3">
+        <ol className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm font-semibold">
           {items.map((item, index) => {
             const current = index === items.length - 1;
             return (

@@ -3,7 +3,7 @@ import { CertificateViewer } from "./certificate-viewer";
 import { CheckDot } from "./ui/check-dot";
 import { IconAward } from "./ui/icons";
 import { Reveal } from "./ui/reveal";
-import { MarkedTitle, Section } from "./ui/section";
+import { Section } from "./ui/section";
 
 /**
  * Một dòng dưới danh sách "Khóa học gồm" ở card học phí: báo trước khi bấm đăng
@@ -39,19 +39,13 @@ export function CertificateNote() {
  * Cột chữ đứng trước trong DOM để thứ tự đọc là tiêu đề → ảnh (và trên mobile
  * chữ lên trước ảnh); từ `lg` trở lên ảnh được kéo sang trái.
  */
-export function CertificateSection({ soft = false }: { soft?: boolean }) {
+export function CertificateSection() {
   return (
-    <Section id={certificate.sectionId} soft={soft}>
+    <Section id={certificate.sectionId}>
       <div className="grid gap-12 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)] lg:items-center lg:gap-16">
         <Reveal className="lg:order-2">
-          <p className="mb-3 text-xs font-semibold uppercase tracking-[0.18em] text-accent-text">
-            {certificate.eyebrow}
-          </p>
-          <h2 className="text-3xl font-bold leading-[1.22] tracking-tight text-primary sm:text-4xl lg:text-5xl">
-            <MarkedTitle
-              title={certificate.title}
-              mark={{ text: certificate.mark }}
-            />
+          <h2 className="text-[1.875rem] leading-[1.15] font-bold tracking-[-0.02em] sm:text-4xl lg:text-[2.625rem]">
+            {certificate.title}
           </h2>
           <p className="mt-5 text-base leading-relaxed text-fg-muted sm:text-lg">
             {certificate.lead.map((part, index) =>
@@ -78,24 +72,8 @@ export function CertificateSection({ soft = false }: { soft?: boolean }) {
         </Reveal>
 
         <Reveal delay={80} className="lg:order-1">
-          <div className="relative px-2 pb-6 sm:px-4">
-            <div
-              aria-hidden
-              className="pointer-events-none absolute -left-4 -top-6 h-44 w-44 rounded-full bg-accent/35 blur-3xl"
-            />
-            <div
-              aria-hidden
-              className="pointer-events-none absolute -bottom-4 -right-2 h-56 w-56 rounded-full bg-primary/25 blur-3xl"
-            />
-            <div className="relative -rotate-2 rounded-card border border-line bg-white p-3 shadow-md transition-transform duration-300 hover:rotate-0 motion-reduce:rotate-0 motion-reduce:transition-none sm:p-4">
-              <CertificateViewer />
-            </div>
-            <span
-              aria-hidden
-              className="absolute -bottom-1 left-0 flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-fg shadow-lg ring-4 ring-bg sm:left-1"
-            >
-              <IconAward size={26} />
-            </span>
+          <div className="rounded-card border border-line bg-white p-3 shadow-sm sm:p-4">
+            <CertificateViewer />
           </div>
           <p className="mt-3 text-sm leading-relaxed text-fg-subtle">
             {certificate.caption}

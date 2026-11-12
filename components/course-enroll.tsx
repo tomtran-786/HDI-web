@@ -8,7 +8,7 @@ import {
 } from "@/lib/course-availability";
 import { useCart } from "./cart-provider";
 import { CtaLink } from "./ui/cta-link";
-import { IconArrow, IconMessage } from "./ui/icons";
+import { IconMessage } from "./ui/icons";
 
 export function CourseEnroll({
   course,
@@ -49,19 +49,18 @@ export function CourseEnroll({
             trackCta(source, "dang-ky", course.slug);
             openCart(course.slug);
           }}
-          className={`inline-flex items-center justify-center gap-2 rounded-full bg-primary ${size} text-sm font-bold text-primary-fg transition hover:bg-primary-deep ${
+          className={`inline-flex items-center justify-center gap-2 rounded-xs bg-primary ${size} text-sm font-semibold text-primary-fg transition hover:bg-primary-deep ${
             pills ? "" : "flex-1"
           }`}
         >
           {pills ? "Đăng ký ngay" : "Đăng ký học khóa này"}
-          <IconArrow size={pills ? 14 : 16} />
         </button>
       )}
       <CtaLink
         source={source}
         target="zalo"
         course={course.slug}
-        className={`inline-flex items-center justify-center gap-2 rounded-full border border-line ${size} text-sm font-bold text-fg transition hover:border-primary hover:text-primary`}
+        className={`inline-flex items-center justify-center gap-2 rounded-xs border border-rule ${size} text-sm font-semibold text-fg transition hover:border-primary hover:text-primary`}
       >
         <IconMessage size={pills ? 14 : 16} />
         Nhắn Zalo

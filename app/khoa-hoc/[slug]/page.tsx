@@ -13,10 +13,10 @@ import { CourseFactList } from "@/components/course-facts";
 import { CourseRoadmap } from "@/components/course-roadmap";
 import { CourseStickyBar } from "@/components/course-sticky-bar";
 import { Badge } from "@/components/ui/badge";
+import { buttonClass } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { EnrolledPill } from "@/components/ui/enrolled-pill";
 import { CheckDot } from "@/components/ui/check-dot";
-import { IconArrow } from "@/components/ui/icons";
 import { PriceTag } from "@/components/ui/price-tag";
 import { Reveal } from "@/components/ui/reveal";
 import { MarkedTitle, Section, SectionHeading } from "@/components/ui/section";
@@ -183,26 +183,25 @@ export default async function CourseDetailPage({ params }: CoursePageProps) {
         <div className="shell py-8 sm:py-10">
           <div className="flex flex-wrap items-start justify-between gap-6">
             <div className="max-w-4xl">
-              <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-                <span className="inline-flex items-center rounded-md bg-tint px-2.5 py-1 text-[11px] font-bold uppercase tracking-[0.14em] text-primary">
-                  Mã khóa {course.code}
+              <p className="text-sm text-fg-muted">
+                <span className="font-cond font-semibold text-fg">Mã khóa {course.code}</span>
+                <span aria-hidden className="px-2 text-line">
+                  |
                 </span>
-                <span className="text-xs font-semibold uppercase tracking-[0.16em] text-fg-muted">
-                  {course.eyebrow}
-                </span>
-              </div>
-              <h1 className="mt-4 text-3xl font-bold leading-[1.22] tracking-tight text-primary sm:text-4xl lg:text-[2.75rem]">
+                {course.eyebrow}
+              </p>
+              <h1 className="mt-3 text-[2.25rem] leading-[1.15] font-extrabold tracking-[-0.03em] sm:text-5xl lg:text-[3.25rem]">
                 <MarkedTitle
                   title={course.title}
                   mark={{ text: course.titleMark }}
                 />
               </h1>
-              <p className="mt-4 max-w-3xl text-base leading-relaxed text-fg-muted sm:text-lg">
+              <p className="mt-4 max-w-[54ch] text-lg leading-relaxed text-fg-muted">
                 {course.audience}
               </p>
             </div>
             {summary && (
-              <div className="flex flex-col items-center gap-1.5 rounded-card bg-tint px-6 py-4 text-center">
+              <div className="flex flex-col items-start gap-1.5 border-l-2 border-rule pl-5">
                 <Stars value={summary.average} size={17} />
                 <p className="text-sm font-bold text-fg">
                   Đánh giá {summary.average.toFixed(1)}/5
@@ -244,7 +243,7 @@ export default async function CourseDetailPage({ params }: CoursePageProps) {
             </div>
 
             <Card id={PRICE_CARD_ID} className="p-6 sm:p-7" hover={false}>
-              <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-fg-subtle">
+              <p className="text-[0.8125rem] font-bold uppercase tracking-[0.06em] text-fg-subtle">
                 Khóa học gồm
               </p>
               <CourseFactList course={course} className="mt-4" />
@@ -252,7 +251,7 @@ export default async function CourseDetailPage({ params }: CoursePageProps) {
 
               <div className="mt-5 border-t border-line pt-5">
                 <div className="flex flex-wrap items-center justify-between gap-3">
-                  <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-fg-subtle">
+                  <p className="text-[0.8125rem] font-bold uppercase tracking-[0.06em] text-fg-subtle">
                     Học phí
                   </p>
                   {badge && (
@@ -283,13 +282,12 @@ export default async function CourseDetailPage({ params }: CoursePageProps) {
       </section>
 
       <Section>
-        <SectionHeading eyebrow="Tổng quan" title="Giới thiệu khóa học" />
+        <SectionHeading title="Giới thiệu khóa học" />
         <Reveal>
-          <Card className="p-6 sm:p-8" hover={false}>
-            <p className="max-w-4xl text-base leading-relaxed text-fg sm:text-lg">
+            <p className="max-w-[54ch] text-xl leading-relaxed text-fg">
               {course.intro}
             </p>
-            <h3 className="mt-8 text-lg font-bold text-primary">
+            <h3 className="mt-10 border-b-2 border-rule pb-2 text-lg font-bold">
               Sau khóa học, bạn có thể
             </h3>
             <ul className="mt-5 grid gap-x-8 gap-y-5 sm:grid-cols-2 lg:grid-cols-3">
@@ -303,39 +301,30 @@ export default async function CourseDetailPage({ params }: CoursePageProps) {
                 </li>
               ))}
             </ul>
-          </Card>
         </Reveal>
       </Section>
 
-      <Section soft>
-        <SectionHeading eyebrow="Đối tượng học viên" title="Dành cho ai" />
-        <Reveal>
-          {course.audienceProfiles ? (
-            <div className="grid gap-4 sm:grid-cols-2">
-              {course.audienceProfiles.map((profile) => (
-                <Card key={profile.name} className="p-6" hover={false}>
-                  <h3 className="text-base font-bold text-fg">{profile.name}</h3>
-                  <p className="mt-2 text-[15px] leading-relaxed text-fg-muted">
-                    {profile.detail}
-                  </p>
-                </Card>
-              ))}
-            </div>
-          ) : (
-            <Card className="max-w-3xl p-6 sm:p-8" hover={false}>
-              <p className="text-base leading-relaxed text-fg-muted sm:text-lg">
-                {course.audience}
-              </p>
-            </Card>
-          )}
-        </Reveal>
+      <Section>
+        <SectionHeading title="Dành cho ai" />
+        {course.audienceProfiles ? (
+          <dl className="grid border-t-2 border-rule sm:grid-cols-2 sm:gap-x-12">
+            {course.audienceProfiles.map((profile) => (
+              <div key={profile.name} className="border-b border-line py-5">
+                <dt className="text-lg font-bold">{profile.name}</dt>
+                <dd className="mt-2 max-w-[60ch] leading-relaxed text-fg-muted">
+                  {profile.detail}
+                </dd>
+              </div>
+            ))}
+          </dl>
+        ) : (
+          <p className="max-w-[54ch] text-lg leading-relaxed text-fg-muted">{course.audience}</p>
+        )}
       </Section>
 
       <Section id={ROADMAP_ID}>
         <SectionHeading
-          eyebrow="Nội dung đào tạo"
           title="Lộ trình học"
-          mark={{ text: "Lộ trình" }}
         />
         <div
           className={
@@ -351,7 +340,7 @@ export default async function CourseDetailPage({ params }: CoursePageProps) {
           {instructor && (
             <Reveal className="lg:sticky lg:top-24">
               <Card className="p-6" hover={false}>
-                <h3 className="text-lg font-bold text-primary">Giảng viên</h3>
+                <h3 className="text-lg font-bold">Giảng viên</h3>
                 <div className="mt-4 flex items-center gap-4">
                   <Image
                     src={instructor.portrait.src}
@@ -387,10 +376,9 @@ export default async function CourseDetailPage({ params }: CoursePageProps) {
                       href={item.href}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1.5 rounded-full border border-line px-4 py-2 text-sm font-bold text-fg transition hover:border-primary hover:text-primary"
+                      className={buttonClass({ variant: "secondary", size: "sm" })}
                     >
                       {item.label}
-                      <IconArrow size={14} />
                     </a>
                   ))}
                 </div>
@@ -403,9 +391,7 @@ export default async function CourseDetailPage({ params }: CoursePageProps) {
       {publishedReviews.length > 0 && (
         <Section tone="band">
           <SectionHeading
-            eyebrow="Người học chia sẻ"
             title="Đánh giá học viên"
-            mark={{ text: "học viên" }}
             onBand
           />
           <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
@@ -413,7 +399,7 @@ export default async function CourseDetailPage({ params }: CoursePageProps) {
               <Reveal key={review.id} delay={index * 60} className="h-full">
                 {/* `on-white`: thẻ giữ nền trắng và màu chữ sáng ở cả dark mode,
                     vì nó nằm trên band navy chứ không trên nền trang. */}
-                <div className="on-white flex h-full flex-col rounded-card border border-line p-6 shadow-md">
+                <div className="on-white flex h-full flex-col rounded-card border border-line p-6">
                   <Stars value={review.rating} size={15} />
                   {review.comment && (
                     <p className="mt-3 text-[15px] font-semibold leading-relaxed text-fg">
@@ -435,7 +421,7 @@ export default async function CourseDetailPage({ params }: CoursePageProps) {
         </Section>
       )}
 
-      <CertificateSection soft />
+      <CertificateSection />
 
       <CourseExpectBand
         course={course}
@@ -445,7 +431,7 @@ export default async function CourseDetailPage({ params }: CoursePageProps) {
 
       {related.length > 0 && (
         <Section>
-          <SectionHeading eyebrow="Tiếp tục phát triển" title="Khóa học khác" />
+          <SectionHeading title="Khóa học khác" />
           <div className="grid gap-5 md:grid-cols-3">
             {related.map((item, index) => (
               <Reveal key={item.slug} delay={index * 60} className="h-full">

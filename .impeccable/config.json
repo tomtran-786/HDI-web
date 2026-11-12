@@ -14,6 +14,18 @@
         ],
         "createdAt": "2026-11-12T01:14:51.258Z",
         "reason": "Chủ dự án: dải logo công bố là cam kết thương hiệu (PRODUCT.md Brand Commitments), dừng khi hover/focus, không thêm nút pause"
+      },
+      {
+        "rule": "line-length",
+        "value": "*",
+        "files": [
+          "http://localhost:3000/kiem-tra-ai-dao-van",
+          "http://localhost:3000/ve-hdi",
+          "http://localhost:3001/kiem-tra-ai-dao-van",
+          "http://localhost:3001/ve-hdi"
+        ],
+        "createdAt": "2026-11-12T01:33:26.323Z",
+        "reason": "Đo 2026-11-12: các dòng bị báo dài 72–75 ký tự thật (NFC); detector đếm tiếng Việt ở dạng tách dấu (NFD) nên dư ~20%"
       }
     ]
   }

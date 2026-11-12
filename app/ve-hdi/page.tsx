@@ -3,9 +3,8 @@ import Link from "next/link";
 import { about } from "@/content/about";
 import { site } from "@/content/site";
 import { TeamProfiles } from "@/components/team-profiles";
-import { Card } from "@/components/ui/card";
 import { CtaLink } from "@/components/ui/cta-link";
-import { IconArrow, IconCheck } from "@/components/ui/icons";
+import { IconCheck } from "@/components/ui/icons";
 import { Reveal } from "@/components/ui/reveal";
 import { Section, SectionHeading } from "@/components/ui/section";
 import { buttonClass } from "@/components/ui/button";
@@ -27,16 +26,13 @@ export default function AboutHdiPage() {
     <>
       <section className="border-b border-line bg-bg">
         <div className="shell py-14 sm:py-16 lg:py-20">
-          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-fg-muted">
-            {about.eyebrow}
-          </p>
-          <h1 className="mt-3 max-w-3xl text-3xl font-bold tracking-tight text-primary sm:text-4xl lg:text-[2.75rem] lg:leading-[1.1]">
+          <h1 className="max-w-[22ch] text-[2.25rem] leading-[1.08] font-extrabold tracking-[-0.03em] sm:text-5xl lg:text-[3.25rem]">
             {about.title}
           </h1>
-          <p className="mt-3 max-w-3xl text-base font-semibold text-fg sm:text-lg">
+          <p className="mt-3 max-w-[54ch] text-base font-semibold text-fg sm:text-lg">
             {about.subtitle}
           </p>
-          <div className="mt-7 max-w-3xl space-y-4 text-base leading-relaxed text-fg-muted sm:text-lg">
+          <div className="mt-7 max-w-[54ch] space-y-4 text-base leading-relaxed text-fg-muted sm:text-lg">
             {about.paragraphs.map((paragraph) => (
               <p key={paragraph}>{paragraph}</p>
             ))}
@@ -45,47 +41,46 @@ export default function AboutHdiPage() {
       </section>
 
       <Section>
-        <SectionHeading eyebrow="Về HDI" title="HDI là ai?" />
+        <SectionHeading title="HDI là ai?" />
 
         <Reveal>
-          <Card className="p-6 sm:p-8" hover={false}>
+          <div className="border-t-2 border-rule pt-5">
             <h2 className="text-xl font-bold text-fg">{identity.mission.title}</h2>
-            <div className="mt-4 space-y-4 text-base leading-relaxed text-fg-muted">
+            <div className="mt-4 space-y-4 text-base leading-relaxed text-fg-muted max-w-[62ch]">
               {identity.mission.paragraphs.map((paragraph) => (
                 <p key={paragraph}>{paragraph}</p>
               ))}
             </div>
-          </Card>
+          </div>
         </Reveal>
 
         <div className="mt-6 grid gap-6 lg:grid-cols-2">
           <Reveal delay={60} className="h-full">
-            <Card className="h-full p-6 sm:p-8" hover={false}>
+            <div className="h-full border-t-2 border-rule pt-5">
               <h2 className="text-xl font-bold text-fg">{identity.audience.title}</h2>
               <p className="mt-4 text-base leading-relaxed text-fg-muted">
                 {identity.audience.lead}
               </p>
               <CheckList items={identity.audience.items} />
-            </Card>
+            </div>
           </Reveal>
 
           <Reveal delay={120} className="h-full">
-            <Card className="h-full p-6 sm:p-8" hover={false}>
+            <div className="h-full border-t-2 border-rule pt-5">
               <h2 className="text-xl font-bold text-fg">{identity.howWeWork.title}</h2>
-              <div className="mt-4 space-y-3 text-base leading-relaxed text-fg-muted">
+              <div className="mt-4 space-y-3 text-base leading-relaxed text-fg-muted max-w-[62ch]">
                 {identity.howWeWork.paragraphs.map((paragraph) => (
                   <p key={paragraph}>{paragraph}</p>
                 ))}
               </div>
               <CheckList items={identity.howWeWork.items} />
-            </Card>
+            </div>
           </Reveal>
         </div>
       </Section>
 
-      <Section soft>
+      <Section>
         <SectionHeading
-          eyebrow="Cách HDI đồng hành"
           title={about.model.title}
           subtitle={about.model.subtitle}
         />
@@ -97,7 +92,7 @@ export default function AboutHdiPage() {
                 key={step}
                 className="contents sm:flex sm:items-center sm:gap-4"
               >
-                <span className="rounded-full bg-tint px-4 py-2 text-center text-sm font-bold text-primary">
+                <span className="rounded-xs bg-tint px-4 py-2 text-center text-sm font-semibold text-primary">
                   {step}
                 </span>
                 {index < about.model.chain.length - 1 && (
@@ -116,12 +111,12 @@ export default function AboutHdiPage() {
         <div className="mt-6 grid gap-5 sm:grid-cols-3">
           {about.model.layers.map((layer, index) => (
             <Reveal key={layer.name} delay={60 + index * 60} className="h-full">
-              <Card className="h-full p-6" hover={false}>
+              <div className="h-full border-t-2 border-rule pt-5">
                 <h2 className="text-base font-bold text-fg">{layer.name}</h2>
                 <p className="mt-3 text-sm leading-relaxed text-fg-muted">
                   {layer.body}
                 </p>
-              </Card>
+              </div>
             </Reveal>
           ))}
         </div>
@@ -129,16 +124,16 @@ export default function AboutHdiPage() {
       </Section>
 
       <Section>
-        <SectionHeading eyebrow="Cam kết của HDI" title={about.principles.title} />
+        <SectionHeading title={about.principles.title} />
         <div className="grid gap-5 sm:grid-cols-2">
           {about.principles.items.map((principle, index) => (
             <Reveal key={principle.name} delay={index * 50} className="h-full">
-              <Card className="h-full p-6 sm:p-7" hover={false}>
+              <div className="h-full border-t-2 border-rule pt-5">
                 <h2 className="text-lg font-bold text-fg">{principle.name}</h2>
                 <p className="mt-3 text-sm leading-relaxed text-fg-muted sm:text-base">
                   {principle.body}
                 </p>
-              </Card>
+              </div>
             </Reveal>
           ))}
         </div>
@@ -148,13 +143,12 @@ export default function AboutHdiPage() {
 
       <Section>
         <SectionHeading
-          eyebrow="Nền tảng chuyên môn"
           title={about.record.title}
           subtitle={about.record.subtitle}
         />
         <Reveal>
-          <Card className="p-6 sm:p-8" hover={false}>
-            <div className="max-w-3xl space-y-3 text-base leading-relaxed text-fg-muted">
+          <div className="border-t-2 border-rule pt-5">
+            <div className="max-w-[54ch] space-y-3 text-base leading-relaxed text-fg-muted">
               {about.record.paragraphs.map((paragraph) => (
                 <p key={paragraph}>{paragraph}</p>
               ))}
@@ -165,19 +159,18 @@ export default function AboutHdiPage() {
               className="mt-7 inline-flex items-center gap-2 rounded-xs bg-primary px-5 py-2.5 text-sm font-bold text-primary-fg transition hover:bg-primary-deep"
             >
               {about.record.cta.label}
-              <IconArrow size={15} />
             </Link>
-          </Card>
+          </div>
         </Reveal>
       </Section>
 
-      <Section soft>
+      <Section>
         <Reveal>
           <div className="rounded-card border border-line bg-card p-7 sm:p-9">
             <h2 className="text-2xl font-bold text-fg sm:text-3xl">
               {about.closing.title}
             </h2>
-            <p className="mt-3 max-w-3xl text-base leading-relaxed text-fg-muted sm:text-lg">
+            <p className="mt-3 max-w-[54ch] text-base leading-relaxed text-fg-muted sm:text-lg">
               {about.closing.body}
             </p>
             <div className="mt-7 flex flex-wrap gap-3">
@@ -187,11 +180,10 @@ export default function AboutHdiPage() {
                 className={buttonClass()}
               >
                 Đăng ký tư vấn miễn phí
-                <IconArrow size={15} />
               </CtaLink>
               <Link
                 href="/khoa-hoc"
-                className="inline-flex items-center rounded-full border border-line px-5 py-2.5 text-sm font-bold text-fg transition hover:border-primary hover:text-primary"
+                className="inline-flex items-center rounded-xs border border-rule px-5 py-2.5 text-sm font-semibold text-fg transition hover:bg-fg hover:text-bg"
               >
                 Xem chương trình đào tạo
               </Link>

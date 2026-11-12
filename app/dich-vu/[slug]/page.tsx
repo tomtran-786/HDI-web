@@ -1,9 +1,8 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { StructuredData } from "@/components/structured-data";
-import { Card } from "@/components/ui/card";
 import { CtaLink } from "@/components/ui/cta-link";
-import { IconArrow, IconCheck } from "@/components/ui/icons";
+import { IconCheck } from "@/components/ui/icons";
 import { Reveal } from "@/components/ui/reveal";
 import { Section, SectionHeading } from "@/components/ui/section";
 import {
@@ -52,14 +51,11 @@ export default async function ServiceDetailPage({ params }: ServicePageProps) {
 
       <section className="border-b border-line bg-bg">
         <div className="shell py-14 sm:py-16 lg:py-20">
-          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-fg-muted">
-            Dịch vụ HDI
-          </p>
-          <h1 className="mt-3 max-w-4xl text-3xl font-bold tracking-tight text-primary sm:text-4xl lg:text-[2.75rem] lg:leading-[1.1]">
+          <h1 className="max-w-[22ch] text-[2.25rem] leading-[1.08] font-extrabold tracking-[-0.03em] sm:text-5xl lg:text-[3.25rem]">
             {service.name}
           </h1>
           {service.nameVi && (
-            <p className="mt-3 max-w-3xl text-base font-semibold text-fg sm:text-lg">
+            <p className="mt-3 max-w-[54ch] text-base font-semibold text-fg sm:text-lg">
               {service.nameVi}
             </p>
           )}
@@ -69,32 +65,31 @@ export default async function ServiceDetailPage({ params }: ServicePageProps) {
       {hasResearchDetails ? (
         <>
           <Section>
-            <SectionHeading eyebrow="Tổng quan" title="Giới thiệu dịch vụ" />
+            <SectionHeading title="Giới thiệu dịch vụ" />
             <Reveal>
-              <p className="max-w-3xl text-base leading-relaxed text-fg-muted sm:text-lg">
+              <p className="max-w-[54ch] text-base leading-relaxed text-fg-muted sm:text-lg">
                 {service.summary}
               </p>
             </Reveal>
           </Section>
 
-          <Section soft>
-            <SectionHeading eyebrow="Đối tượng" title="Phù hợp với ai" />
+          <Section>
+            <SectionHeading title="Phù hợp với ai" />
             <Reveal>
-              <Card className="max-w-3xl p-6 sm:p-8" hover={false}>
+              <div className="max-w-3xl border-t-2 border-rule pt-5">
                 <p className="text-base leading-relaxed text-fg-muted sm:text-lg">
                   {service.bestFor}
                 </p>
-              </Card>
+              </div>
             </Reveal>
           </Section>
 
           <Section>
             <SectionHeading
-              eyebrow="Nội dung"
               title={service.supportLabel ?? "Nội dung hỗ trợ"}
             />
             <Reveal>
-              <Card className="max-w-4xl p-6 sm:p-8" hover={false}>
+              <div className="max-w-4xl border-t-2 border-rule pt-5">
                 <ul className="space-y-4">
                   {service.support?.map((item) => (
                     <li
@@ -106,21 +101,21 @@ export default async function ServiceDetailPage({ params }: ServicePageProps) {
                     </li>
                   ))}
                 </ul>
-              </Card>
+              </div>
             </Reveal>
           </Section>
         </>
       ) : (
         <Section>
           <Reveal>
-            <p className="max-w-3xl text-base leading-relaxed text-fg-muted sm:text-lg">
+            <p className="max-w-[54ch] text-base leading-relaxed text-fg-muted sm:text-lg">
               {service.summary}
             </p>
           </Reveal>
         </Section>
       )}
 
-      <Section soft>
+      <Section>
         <Reveal>
           <div className="rounded-card border border-line bg-card p-7 sm:p-9">
             <h2 className="text-2xl font-bold text-fg sm:text-3xl">
@@ -133,12 +128,11 @@ export default async function ServiceDetailPage({ params }: ServicePageProps) {
                 className={buttonClass()}
               >
                 Đăng ký tư vấn miễn phí
-                <IconArrow size={15} />
               </CtaLink>
               <CtaLink
                 source="dich-vu-detail"
                 target="zalo"
-                className="inline-flex items-center rounded-full border border-line px-5 py-2.5 text-sm font-bold text-fg transition hover:border-primary hover:text-primary"
+                className="inline-flex items-center rounded-xs border border-rule px-5 py-2.5 text-sm font-semibold text-fg transition hover:bg-fg hover:text-bg"
               >
                 Nhắn Zalo
               </CtaLink>
