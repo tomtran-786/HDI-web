@@ -3,6 +3,7 @@ import { aiCheck, aiCheckKinds, aiCheckTiers } from "@/content/ai-check";
 import { site } from "@/content/site";
 import { formatVnd } from "@/lib/format";
 import { isAiCheckKind, isValidWordCount } from "@/lib/ai-check-pricing";
+import { IconCheck } from "@/components/ui/icons";
 import { QuoteForm } from "./quote-form";
 
 export const metadata: Metadata = {
@@ -38,6 +39,26 @@ export default async function AiCheckPage({
             {aiCheck.subtitle}
           </p>
           <p className="mt-3 max-w-[54ch] leading-relaxed text-fg-muted">{aiCheck.intro}</p>
+
+          {/* Bốn bước của một đơn, dạng bảng chương trình: số thứ tự ở đây
+              mang thông tin (đúng thứ tự phải làm), nên được giữ. */}
+          <h2 className="mt-10 border-b-2 border-rule pb-2 text-base font-bold">
+            {aiCheck.stepsTitle}
+          </h2>
+          <ol className="grid sm:grid-cols-2 lg:grid-cols-4">
+            {aiCheck.steps.map((step, index) => (
+              <li
+                key={step.title}
+                className="border-b border-line py-4 sm:pr-6 lg:border-b-0 lg:border-r lg:px-5 lg:first:pl-0 lg:last:border-r-0"
+              >
+                <p className="font-cond text-[1.75rem] leading-none font-bold text-primary">
+                  {String(index + 1).padStart(2, "0")}
+                </p>
+                <p className="mt-2 font-semibold">{step.title}</p>
+                <p className="mt-1 text-sm leading-relaxed text-fg-muted">{step.body}</p>
+              </li>
+            ))}
+          </ol>
         </div>
       </section>
 
@@ -85,7 +106,21 @@ export default async function AiCheckPage({
             </table>
           </div>
 
-          <QuoteForm defaultWords={defaultWords} defaultKind={defaultKind} />
+          <div>
+            {/* Ba cam kết đặt ngay trên form — nơi người đọc quyết định gửi bài. */}
+            <ul className="mb-4 grid gap-3 sm:grid-cols-3">
+              {aiCheck.promises.map((promise) => (
+                <li key={promise.title} className="flex gap-2.5">
+                  <IconCheck size={18} className="mt-0.5 shrink-0 text-success" />
+                  <span className="leading-tight">
+                    <span className="block text-sm font-semibold">{promise.title}</span>
+                    <span className="block text-[0.8125rem] text-fg-muted">{promise.body}</span>
+                  </span>
+                </li>
+              ))}
+            </ul>
+            <QuoteForm defaultWords={defaultWords} defaultKind={defaultKind} />
+          </div>
         </div>
       </section>
     </>

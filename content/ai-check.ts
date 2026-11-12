@@ -71,6 +71,23 @@ export const WORD_LIMIT = aiCheckTiers[aiCheckTiers.length - 1].maxWords;
 /** Bậc giá thấp nhất, để hero mời "chỉ từ …" mà không chép lại số. */
 export const aiCheckFromPrices = aiCheckTiers[0].prices;
 
+/**
+ * Dòng "Song song" trong bảng chương trình ở trang chủ (components/ai-check-teaser.tsx):
+ * gõ số từ là thấy giá của cả ba loại, rồi sang trang dịch vụ với số từ và
+ * loại đã điền sẵn. Giá vẫn do `quote()` tính, như form ở trang dịch vụ.
+ */
+export const aiCheckTeaser = {
+  label: "Song song",
+  title: "Kiểm tra AI & đạo văn bằng Turnitin",
+  hint: "Gõ số từ để xem giá, gửi bản thảo qua Zalo sau khi thanh toán.",
+  wordLabel: "Số từ",
+  wordPlaceholder: "VD: 8000",
+  kindLegend: "Chọn loại kiểm tra",
+  from: "từ",
+  cta: "Đặt kiểm tra",
+  tooLong: "Trên 29.000 từ: HDI báo giá riêng qua Zalo.",
+} as const;
+
 export const aiCheck = {
   eyebrow: "Dịch vụ",
   title: "Kiểm tra AI & đạo văn",
@@ -90,6 +107,23 @@ export const aiCheck = {
   tooLongBody:
     "Bảng giá dừng ở 29.000 từ. Bản thảo dài hơn được báo giá riêng — nhắn Zalo kèm số từ, HDI trả lời trong ngày.",
   emptyHint: "Nhập số từ để xem chi phí.",
+  /** Bốn bước của một đơn, đúng theo luồng thật: báo giá → PayOS → Zalo → báo cáo. */
+  stepsTitle: "Một đơn kiểm tra đi qua bốn bước",
+  steps: [
+    { title: "Nhập số từ", body: "Đếm bằng Word, xem chi phí ngay trên trang." },
+    { title: "Thanh toán qua PayOS", body: "Đăng nhập rồi chuyển khoản bằng mã QR; đơn được lưu trong tài khoản." },
+    { title: "Gửi bài qua Zalo", body: "Nhắn HDI kèm mã đơn và file bản thảo (.doc/.docx/.pdf)." },
+    { title: "Nhận báo cáo", body: "Tỷ lệ AI và tỷ lệ trùng lặp, để bạn chỉnh sửa trước khi nộp hoặc gửi đăng." },
+  ],
+  /**
+   * Ba cam kết HDI đã in trên hero trang chủ trước redesign; chủ dự án xác
+   * nhận dùng lại ở trang dịch vụ (2026-11-12).
+   */
+  promises: [
+    { title: "Bảo mật tuyệt đối", body: "Không lưu trữ tài liệu" },
+    { title: "Kết quả nhanh", body: "Chỉ từ 5–30 phút" },
+    { title: "Hỗ trợ tận tâm", body: "Giải đáp mọi thắc mắc" },
+  ],
   invalidWords: "Số từ phải là một số nguyên lớn hơn 0.",
   // Zalo không nhận sẵn nội dung tin nhắn qua deep link, nên mã đơn phải được
   // học viên tự mang sang. Chữ ở trang kết quả nói đúng điều đó.

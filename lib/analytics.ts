@@ -33,6 +33,7 @@ export type CtaSource =
   | "header-mobile"
   | "hero"
   | "home-open-courses"
+  | "home-ai-check"
   | "chuong-trinh"
   | "khoa-hoc-modal"
   | "khoa-hoc-detail"
@@ -58,7 +59,8 @@ export type CtaTarget =
   | "email"
   | "phone"
   | "fanpage"
-  | "gop-y";
+  | "gop-y"
+  | "kiem-tra";
 
 /** Fired when a visitor presses any call to action. */
 export function trackCta(
