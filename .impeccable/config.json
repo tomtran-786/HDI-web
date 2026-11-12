@@ -28,5 +28,12 @@
         "reason": "Đo 2026-11-12: các dòng bị báo dài 72–75 ký tự thật (NFC); detector đếm tiếng Việt ở dạng tách dấu (NFD) nên dư ~20%"
       }
     ]
+  },
+  "hook": {
+    "enabled": true,
+    "limits": {
+      "maxFindings": 5,
+      "maxChars": 8000
+    }
   }
 }
