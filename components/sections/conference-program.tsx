@@ -5,86 +5,63 @@ import {
   conferenceProgramIntro,
 } from "@/content/conference-program";
 import { PhotoFigure } from "../activity-gallery";
-import { Badge } from "../ui/badge";
-import { Card } from "../ui/card";
-import { IconArrow } from "../ui/icons";
-import { Reveal } from "../ui/reveal";
 import { Section, SectionHeading } from "../ui/section";
 
-/** Teaser trên trang chủ; toàn bộ bảng và quy trình nằm ở /hoi-thao-quoc-te. */
-export function ConferenceProgram({ soft }: { soft?: boolean }) {
-  // Một ảnh thật duy nhất trên trang chủ, gallery đầy đủ nằm ở /hoi-thao-quoc-te
-  // và /ve-hdi để trang chủ vẫn gọn.
+/**
+ * Teaser trên trang chủ; toàn bộ bảng và quy trình nằm ở /hoi-thao-quoc-te.
+ *
+ * Hình thức: một ảnh hội thảo thật cỡ lớn, cạnh đó là hai diễn đàn dưới dạng
+ * danh sách kẻ — không phải lưới thẻ.
+ */
+export function ConferenceProgram() {
   const featuredPhoto = about.advisor.activityPhotos.find(
     (photo) => photo.id === "agba-2024",
   );
 
   return (
-    <Section id="hoi-thao-quoc-te" soft={soft}>
-      {/* Tiêu đề và lead chung một cột cạnh ảnh, để cột chữ đủ cao cân với ảnh
-          thay vì để lead lơ lửng giữa khoảng trống. */}
-      <div className="grid gap-8 lg:grid-cols-[1.4fr_1fr] lg:items-center lg:gap-12">
+    <Section id="hoi-thao-quoc-te">
+      <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)] lg:gap-16">
         <div>
           <SectionHeading
-            eyebrow={conferenceProgramIntro.eyebrow}
             title={conferenceProgramIntro.title}
-            mark={{ text: "cơ hội xuất bản" }}
             subtitle={conferenceProgramIntro.subtitle}
           />
-          <Reveal>
-            <p className="max-w-2xl text-base leading-relaxed text-fg-muted sm:text-[17px]">
-              {conferenceProgram.lead}
-            </p>
-          </Reveal>
+          <ul className="border-t-2 border-rule">
+            {conferenceProgram.forums.map((forum) => (
+              <li key={forum.id} className="border-b border-line py-5">
+                <h3 className="text-xl font-bold">
+                  <Link
+                    href={`/hoi-thao-quoc-te#${forum.id}`}
+                    className="hover:text-primary hover:underline hover:underline-offset-4"
+                  >
+                    {forum.name}
+                  </Link>
+                </h3>
+                <p className="mt-0.5 text-sm text-fg-subtle">{forum.eyebrow}</p>
+                <p className="mt-2 max-w-[60ch] text-[0.9375rem] leading-relaxed text-fg-muted">
+                  {forum.positioning}
+                </p>
+                <p className="mt-2 font-cond text-sm font-semibold text-fg">
+                  {forum.outletChips.join(" · ")}
+                </p>
+              </li>
+            ))}
+          </ul>
+          <Link
+            href="/hoi-thao-quoc-te"
+            className="mt-6 inline-block text-[0.9375rem] font-semibold text-primary underline decoration-1 underline-offset-4 hover:decoration-2"
+          >
+            Toàn bộ chương trình đồng hành hội thảo
+          </Link>
         </div>
         {featuredPhoto && (
-          <Reveal delay={100}>
-            <PhotoFigure
-              photo={featuredPhoto}
-              sizes="(min-width: 1024px) 26rem, 100vw"
-              className="mx-auto max-w-md lg:max-w-none"
-            />
-          </Reveal>
+          <PhotoFigure
+            photo={featuredPhoto}
+            sizes="(min-width: 1024px) 36rem, 100vw"
+            className="lg:mt-2"
+          />
         )}
       </div>
-
-      <div className="mt-10 grid gap-5 md:grid-cols-2 sm:mt-12">
-        {conferenceProgram.forums.map((forum, index) => (
-          <Reveal key={forum.id} delay={index * 80} className="h-full">
-            <Card className="flex h-full flex-col p-6 sm:p-8" hover={false}>
-              <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-fg-subtle">
-                {forum.eyebrow}
-              </p>
-              <h3 className="mt-2 text-xl font-bold text-fg">{forum.name}</h3>
-              <p className="mt-4 flex-1 text-sm leading-relaxed text-fg-muted sm:text-base">
-                {forum.positioning}
-              </p>
-              <div className="mt-5 flex flex-wrap gap-1.5">
-                {forum.outletChips.map((chip) => (
-                  <Badge key={chip}>{chip}</Badge>
-                ))}
-              </div>
-              <Link
-                href={`/hoi-thao-quoc-te#${forum.id}`}
-                className="mt-6 inline-flex items-center gap-2 text-sm font-bold text-primary hover:underline"
-              >
-                Xem chi tiết
-                <IconArrow size={15} />
-              </Link>
-            </Card>
-          </Reveal>
-        ))}
-      </div>
-
-      <Reveal>
-        <Link
-          href="/hoi-thao-quoc-te"
-          className="mt-8 inline-flex items-center gap-2 text-sm font-bold text-primary hover:underline"
-        >
-          Xem toàn bộ chương trình đồng hành hội thảo
-          <IconArrow size={15} />
-        </Link>
-      </Reveal>
     </Section>
   );
 }

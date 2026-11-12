@@ -1,0 +1,20 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "marquee",
+        "value": "*",
+        "files": [
+          "app/globals.css",
+          "components/sections/credibility-marquee.tsx",
+          "http://localhost:3000/",
+          "http://localhost:3001/"
+        ],
+        "createdAt": "2026-11-12T01:14:51.258Z",
+        "reason": "Chủ dự án: dải logo công bố là cam kết thương hiệu (PRODUCT.md Brand Commitments), dừng khi hover/focus, không thêm nút pause"
+      }
+    ]
+  }
+}

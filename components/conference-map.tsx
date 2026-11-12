@@ -125,7 +125,7 @@ export function ConferenceMap() {
   return (
     <div ref={rootRef} data-map className="relative">
       <div className="relative aspect-[16/10] sm:aspect-[2/1]">
-        <div className="absolute inset-0 overflow-hidden rounded-[20px] border border-line bg-card bg-[radial-gradient(circle_at_50%_40%,color-mix(in_srgb,var(--accent)_4%,transparent),transparent_70%)] shadow-md">
+        <div className="absolute inset-0 overflow-hidden rounded-card border border-line bg-card">
           <svg
             aria-hidden
             viewBox={`0 0 ${MAP_WIDTH} ${MAP_HEIGHT}`}
@@ -291,7 +291,7 @@ export function ConferenceMap() {
 
       {/* Thẻ số liệu: nổi đè mép dưới bản đồ từ `sm`, xuống dưới thành lưới 2×2
           ở mobile. Số chạy lên khi cuộn tới (RunningScore). */}
-      <dl className="band relative z-10 mt-4 grid grid-cols-2 gap-y-6 rounded-[18px] px-4 py-6 shadow-lg sm:-mt-10 sm:mx-6 sm:grid-cols-4 sm:px-6">
+      <dl className="band relative z-10 mt-4 grid grid-cols-2 gap-y-6 rounded-card px-4 py-6 sm:grid-cols-4 sm:px-6">
         {stats.map((stat) => (
           <div key={stat.label} className="text-center">
             <dt className="sr-only">{`${stat.label}: ${format(stat, stat.to)}`}</dt>

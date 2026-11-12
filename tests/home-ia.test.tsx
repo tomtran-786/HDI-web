@@ -37,10 +37,6 @@ function sectionSurfaces(html: string) {
     .map((className) => (className.includes("bg-bg-soft") ? "soft" : "plain"));
 }
 
-function adjacentDuplicates(surfaces: string[]) {
-  return surfaces.filter((value, index) => index > 0 && value === surfaces[index - 1]);
-}
-
 describe("kiến trúc nội dung homepage và Về HDI", () => {
   beforeEach(() => {
     mocks.landingCourseData.mockReset();
@@ -60,57 +56,51 @@ describe("kiến trúc nội dung homepage và Về HDI", () => {
     });
   });
 
-  it("homepage đặt khóa đang mở ngay sau hero và hiện số chỗ thật", async () => {
+  it("bảng chương trình trong hero hiện khóa đang mở, số chỗ thật và phiên song song Turnitin", async () => {
     const html = renderToStaticMarkup(await Home());
+    const heroEnd = html.indexOf("</section>", html.indexOf('id="top"'));
 
     expect(html).toContain('id="dich-vu"');
     expect(html).toContain('id="chuong-trinh"');
     expect(html).toContain("Đồng hành nghiên cứu");
     expect(html).toContain("Hỗ trợ bản thảo");
 
-    expect(html).toContain(
-      'href="/khoa-hoc/nckh-ung-dung-ai-xuat-ban-quoc-te"',
-    );
+    // Bảng chương trình (#khoa-hoc) nằm ngay trong hero, không còn là section
+    // riêng bên dưới và không còn poster ảnh lịch khai giảng.
+    const programme = html.indexOf('id="khoa-hoc"');
+    expect(programme).toBeGreaterThan(html.indexOf('id="top"'));
+    expect(programme).toBeLessThan(heroEnd);
+    expect(html).not.toContain("lich-khai-giang");
+    expect(html).not.toContain("data-opening-poster");
+
+    expect(html).toContain('href="/khoa-hoc/nckh-ung-dung-ai-xuat-ban-quoc-te"');
     expect(html).toContain("Còn 15 chỗ");
     expect(html).toContain("3.000.000 đ");
-    // Thẻ khóa ở trang chủ mang cùng số "học viên đã đăng ký" với thẻ ở
-    // /khoa-hoc; chỉ khóa đang mở có thẻ nên khóa `not_open` không có số.
-    const openSection = html.slice(html.indexOf('id="khoa-hoc"'));
+    // Dòng khóa mang cùng số "học viên đã đăng ký" với thẻ ở /khoa-hoc; chỉ
+    // khóa đang mở có dòng nên khóa `not_open` không có số.
     const pill = (slug: keyof typeof enrolledCount) =>
       `>${formatCount(enrolledCount[slug])}</span> ${enrolledLabel}`;
-    expect(openSection).toContain(pill("nckh-ung-dung-ai-xuat-ban-quoc-te"));
+    expect(html.slice(programme, heroEnd)).toContain(pill("nckh-ung-dung-ai-xuat-ban-quoc-te"));
     expect(html).not.toContain(pill("training-tieu-luan-nckh-kltn"));
-    expect(html.indexOf('id="top"')).toBeLessThan(html.indexOf('id="khoa-hoc"'));
-    expect(html.indexOf('id="khoa-hoc"')).toBeLessThan(
-      html.indexOf('id="ve-chung-toi"'),
-    );
-
-    // Teaser hội thảo quốc tế đứng giữa khối khóa học và About, và link sang
-    // trang chi tiết riêng — không kéo bảng/quy trình vào trang chủ.
-    expect(html).toContain('id="hoi-thao-quoc-te"');
-    expect(html).toContain('href="/hoi-thao-quoc-te"');
-    expect(html.indexOf('id="khoa-hoc"')).toBeLessThan(
-      html.indexOf('id="hoi-thao-quoc-te"'),
-    );
-    expect(html.indexOf('id="hoi-thao-quoc-te"')).toBeLessThan(
-      html.indexOf('id="ve-chung-toi"'),
-    );
-
-    // Poster lịch khai giảng đứng giữa hero và mục khóa đang mở.
-    expect(html.indexOf('id="top"')).toBeLessThan(
-      html.indexOf("data-opening-poster"),
-    );
-    expect(html.indexOf("data-opening-poster")).toBeLessThan(
-      html.indexOf('id="khoa-hoc"'),
-    );
-    // Poster là MỘT ảnh tĩnh cố định (public/images/lich-khai-giang-09-12-2026.png):
-    // hễ còn ít nhất một khóa đang bán thì cả ảnh hiện nguyên vẹn, kể cả phần
-    // nói về TIEULUAN dù mock này đánh dấu khóa đó `not_open` — khác với mục
-    // "Khóa học đang nhận học viên" ngay dưới, nơi từng thẻ vẫn lọc theo
-    // `availability` thật nên link ghi danh của TIEULUAN phải vắng mặt.
     expect(html).not.toContain("/khoa-hoc/training-tieu-luan-nckh-kltn");
     expect(html).not.toContain("/khoa-hoc/stata-kinh-te-luong");
     expect(html).not.toContain("220.000 đ");
+
+    // Phiên song song: kiểm tra AI & đạo văn với giá thấp nhất, trong hero.
+    const parallel = html.slice(programme, heroEnd);
+    expect(parallel).toContain('href="/kiem-tra-ai-dao-van"');
+    expect(parallel).toContain("50K");
+
+    // Thẻ đeo cố vấn trong hero.
+    expect(html.slice(html.indexOf('id="top"'), heroEnd)).toContain("Cố vấn Học thuật Trưởng");
+
+    // Teaser hội thảo quốc tế đứng ngay sau hero và trước About, link sang
+    // trang chi tiết riêng — không kéo bảng/quy trình vào trang chủ.
+    expect(html).toContain('id="hoi-thao-quoc-te"');
+    expect(html).toContain('href="/hoi-thao-quoc-te"');
+    expect(heroEnd).toBeLessThan(html.indexOf('id="hoi-thao-quoc-te"'));
+    expect(html.indexOf('id="hoi-thao-quoc-te"')).toBeLessThan(html.indexOf('id="ve-chung-toi"'));
+
     expect(html).not.toContain("Đánh giá học viên");
     expect(html).not.toContain("Tuan Tran");
     // Danh mục công bố đầy đủ ở /cong-bo; trang chủ chỉ có tên tạp chí trên
@@ -130,7 +120,7 @@ describe("kiến trúc nội dung homepage và Về HDI", () => {
     expect(html).not.toContain("drive.google.com/drive/folders/");
   });
 
-  it("ẩn section khi khóa đã hết chỗ", async () => {
+  it("ẩn bảng khóa khi khóa đã hết chỗ, giữ phiên song song và teaser hội thảo", async () => {
     mocks.landingCourseData.mockResolvedValueOnce({
       summaries: {},
       reviews: {},
@@ -141,11 +131,8 @@ describe("kiến trúc nội dung homepage và Về HDI", () => {
     const html = renderToStaticMarkup(await Home());
     expect(html).not.toContain('id="khoa-hoc"');
     expect(html).not.toContain("Còn 0 chỗ");
-    // Poster và mục khóa dùng chung một cái cổng: mất mục thì cũng phải mất
-    // poster, không để lại một khối trơ trọi phía trên khoảng trống.
-    expect(html).not.toContain("data-opening-poster");
-    // Teaser hội thảo quốc tế không đi qua cổng đó — vẫn hiển thị khi không có
-    // khóa nào đang mở, để mạch trang chủ không gãy.
+    // Dịch vụ Turnitin không phụ thuộc khóa nào đang mở.
+    expect(html).toContain('href="/kiem-tra-ai-dao-van"');
     expect(html).toContain('id="hoi-thao-quoc-te"');
   });
 
@@ -156,9 +143,6 @@ describe("kiến trúc nội dung homepage và Về HDI", () => {
     const html = renderToStaticMarkup(await Home());
     expect(html).not.toContain('id="khoa-hoc"');
     expect(html).not.toMatch(/Còn \d+ chỗ/);
-    // Gãy ngay nếu sau này ai đó tách poster ra app/page.tsx với lần đọc dữ
-    // liệu và nhánh catch riêng của nó.
-    expect(html).not.toContain("data-opening-poster");
     consoleError.mockRestore();
   });
 
@@ -199,31 +183,24 @@ describe("kiến trúc nội dung homepage và Về HDI", () => {
   });
 
   /**
-   * Nhịp nền so le phải đúng ở CẢ HAI trạng thái của khối khóa học.
-   *
-   * `OpenCourses` tự ẩn khi không có khóa nào đang mở, nên không bộ cờ `soft`
-   * cắm cứng nào đúng cho cả hai: trước đây khối khóa học (`soft`) và teaser
-   * hội thảo (`soft`) dính liền nhau ngay ở trạng thái thường — đúng thứ mà
-   * nhịp so le sinh ra để tránh.
+   * Trang chủ nằm trên một mặt giấy duy nhất (.impeccable/surfaces/app-page-tsx.md):
+   * không còn nhịp nền so le trắng/xám; các section sau hero phân tách bằng
+   * đường kẻ trên (`border-t`). Đúng ở cả hai trạng thái của bảng khóa.
    */
-  it("không có hai dải nền giống nhau dính liền, khi có khóa đang mở", async () => {
-    const surfaces = sectionSurfaces(renderToStaticMarkup(await Home()));
+  it.each([
+    ["có khóa đang mở", undefined],
+    ["không khóa nào mở", { summaries: {}, reviews: {}, availability: {}, seatsLeft: {} }],
+  ])("một mặt giấy, section phân tách bằng đường kẻ (%s)", async (_label, data) => {
+    if (data) mocks.landingCourseData.mockResolvedValue(data);
+    const html = renderToStaticMarkup(await Home());
+    const surfaces = sectionSurfaces(html);
 
     expect(surfaces.length).toBeGreaterThan(4);
-    expect(adjacentDuplicates(surfaces)).toEqual([]);
-  });
-
-  it("không có hai dải nền giống nhau dính liền, khi không khóa nào mở", async () => {
-    mocks.landingCourseData.mockResolvedValue({
-      summaries: {},
-      reviews: {},
-      availability: {},
-      seatsLeft: {},
-    });
-
-    const html = renderToStaticMarkup(await Home());
-
-    expect(html).not.toContain('id="khoa-hoc"');
-    expect(adjacentDuplicates(sectionSurfaces(html))).toEqual([]);
+    expect(surfaces).not.toContain("soft");
+    const ruled = [...html.matchAll(/<section[^>]*class="([^"]*)"/g)]
+      .map(([, className]) => className)
+      .filter((className) => /\bbg-bg\b/.test(className) && !className.includes("border-t"));
+    // Chỉ hero (section đầu tiên) không có đường kẻ trên.
+    expect(ruled).toHaveLength(1);
   });
 });

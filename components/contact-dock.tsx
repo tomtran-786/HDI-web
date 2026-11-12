@@ -27,35 +27,11 @@ const channelToneClasses = {
   cool: "bg-tint text-primary",
 };
 
-function FeedbackBubbleButton({
-  onClick,
-  showLabel,
-}: {
-  onClick: () => void;
-  showLabel: boolean;
-}) {
-  return (
-    <div className="flex items-center justify-end gap-2">
-      {showLabel && (
-        <span className="rounded-xs border border-line bg-card px-3 py-1.5 text-xs font-bold text-fg shadow-md">
-          {feedbackCopy.bubble}
-        </span>
-      )}
-      <button
-        type="button"
-        aria-label={feedbackCopy.bubbleAria}
-        onClick={() => {
-          trackCta("bubble-gop-y", "gop-y");
-          onClick();
-        }}
-        className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-line bg-card text-primary shadow-lg transition hover:-translate-y-0.5 hover:border-primary"
-      >
-        <IconBulb size={20} />
-      </button>
-    </div>
-  );
-}
-
+/**
+ * Một nút nổi duy nhất ở góc màn hình. Bấm mở ra các kênh liên hệ (Zalo,
+ * điện thoại, email, Facebook) và mục góp ý ở cuối danh sách — trước đây góp
+ * ý là nút nổi thứ hai luôn hiện, nay gộp vào để bớt chrome bám màn hình.
+ */
 export function ContactDock({ signedIn }: { signedIn: boolean }) {
   const [open, setOpen] = useState(false);
   const [feedbackOpen, setFeedbackOpen] = useState(false);
@@ -109,7 +85,7 @@ export function ContactDock({ signedIn }: { signedIn: boolean }) {
               }`}
               style={{ transitionDelay: `${index * 45}ms` }}
             >
-              <span className="rounded-xs border border-line bg-card px-3 py-1.5 text-xs font-bold text-fg shadow-md">
+              <span className="rounded-xs border border-line bg-card px-3 py-1.5 text-sm font-semibold text-fg shadow-sm">
                 {channel.label}
               </span>
               <a
@@ -119,26 +95,46 @@ export function ContactDock({ signedIn }: { signedIn: boolean }) {
                 tabIndex={open ? 0 : -1}
                 aria-label={`${channel.label}: ${channel.value}`}
                 onClick={() => trackCta("bubble-lien-he", channel.key)}
-                className={`inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-line shadow-lg transition hover:-translate-y-0.5 hover:border-primary ${channelToneClasses[channel.tone]}`}
+                className={`inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-line shadow-md transition-colors hover:border-rule ${channelToneClasses[channel.tone]}`}
               >
                 <Icon size={20} />
               </a>
             </li>
           );
         })}
+        <li
+          className={`flex items-center justify-end gap-2 transition duration-200 ${
+            open ? "translate-x-0 opacity-100" : "translate-x-3 opacity-0"
+          }`}
+          style={{ transitionDelay: `${channels.length * 45}ms` }}
+        >
+          <span className="rounded-xs border border-line bg-card px-3 py-1.5 text-sm font-semibold text-fg shadow-sm">
+            {feedbackCopy.bubble}
+          </span>
+          <button
+            type="button"
+            tabIndex={open ? 0 : -1}
+            aria-label={feedbackCopy.bubbleAria}
+            onClick={() => {
+              trackCta("bubble-gop-y", "gop-y");
+              setOpen(false);
+              setFeedbackOpen(true);
+            }}
+            className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-line bg-card text-primary shadow-md transition-colors hover:border-rule"
+          >
+            <IconBulb size={20} />
+          </button>
+        </li>
       </ul>
 
-      <FeedbackBubbleButton
-        showLabel={open}
-        onClick={() => setFeedbackOpen(true)}
-      />
+
 
       <button
         type="button"
         aria-expanded={open}
         aria-label={open ? "Đóng các kênh liên hệ" : "Mở các kênh liên hệ"}
         onClick={() => setOpen((current) => !current)}
-        className="inline-flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-fg shadow-md transition hover:-translate-y-0.5 hover:bg-primary-deep"
+        className="inline-flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-fg shadow-md transition-colors hover:bg-primary-deep"
       >
         {open ? <IconClose size={23} /> : <IconMessage size={23} />}
       </button>

@@ -89,8 +89,7 @@
   --color-warning: var(--warning);
   --color-danger: var(--danger);
 
-  --font-sans: var(--font-be-vietnam), ui-sans-serif, system-ui, sans-serif;
-  --font-cond: var(--font-archivo), ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-source-sans), ui-sans-serif, system-ui, sans-serif;
 
   /* Thang bo góc 2/4/8: giấy in gần như vuông góc. `rounded-card` là tên cũ
      mà hơn trăm chỗ đang dùng, giờ trỏ vào mức 4px. Viên thuốc
@@ -110,10 +109,10 @@
   --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-/* Chữ "lịch" hẹp: ngày, giờ, học phí, chữ hoa thẻ đeo. Số luôn thẳng cột. */
+/* Chữ của "lịch": ngày, giờ, học phí, chữ hoa thẻ đeo. Cùng font với trang
+   (Source Sans 3); utility chỉ giữ số thẳng cột để các cột ngày và giá
+   trong bảng chương trình không lệch nhau. */
 @utility font-cond {
-  font-family: var(--font-cond);
-  font-stretch: 80%;
   font-variant-numeric: tabular-nums;
 }
 
@@ -147,19 +146,6 @@ p {
 :focus-visible {
   outline: 2px solid var(--primary);
   outline-offset: 2px;
-}
-
-/* Vạch tiến độ đọc: một nét navy phẳng, không gradient, không glow. */
-.scroll-progress {
-  position: fixed;
-  z-index: 80;
-  inset: 0 0 auto;
-  height: 2px;
-  pointer-events: none;
-  transform: scaleX(0);
-  transform-origin: left center;
-  background: var(--primary);
-  will-change: transform;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -419,4 +405,18 @@ html[data-course-bar] [data-contact-dock] {
 }
 @media (min-width: 640px) {
   .map-pin-at { left: calc(var(--x) * 1%); }
+}
+
+/* Thẻ đeo diễn giả ở hero (components/sections/hero.tsx): lắc nhẹ một lần
+   quanh điểm treo rồi đứng yên — chuyển động đặc trưng duy nhất của trang chủ.
+   Chỉ chạy trên màn rộng, nơi thẻ thật sự treo trên dây. */
+@media (min-width: 1024px) and (prefers-reduced-motion: no-preference) {
+  .badge-settle {
+    animation: badge-settle 1.4s var(--ease-out-expo) both;
+  }
+}
+@keyframes badge-settle {
+  0% { transform: rotate(-4deg); }
+  45% { transform: rotate(1.2deg); }
+  100% { transform: rotate(0deg); }
 }

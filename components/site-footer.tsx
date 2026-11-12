@@ -3,7 +3,6 @@ import { footerNav } from "@/content/navigation";
 import { composeEmailHref, contact, links, site } from "@/content/site";
 import type { CtaSource } from "@/lib/analytics";
 import { FooterCtaCard } from "./footer-cta-card";
-import { CornerRings } from "./ui/corner-rings";
 import { CtaLink } from "./ui/cta-link";
 import { IconFacebook, IconLinktree, IconTiktok } from "./ui/icons";
 
@@ -38,18 +37,13 @@ const focusRing =
 // designed focus ring, and a hover colour, so every footer link has real
 // hover/focus states rather than browser defaults.
 const linkClass =
-  `rounded-sm text-sm text-white/85 transition-colors hover:text-accent-on-band ${focusRing}`;
+  `rounded-xs text-sm text-white/85 underline-offset-4 transition-colors hover:text-white hover:underline ${focusRing}`;
 
 export function SiteFooter() {
   return (
-    // `flow-root` keeps the card's negative margin from collapsing through the
-    // footer, so the card overlaps the footer's top edge instead of moving it.
-    <footer className="band relative flow-root">
-      <div aria-hidden className="absolute inset-0 overflow-hidden">
-        <CornerRings />
-      </div>
+    <footer className="band relative">
       <FooterCtaCard />
-      <div className="shell relative grid gap-x-8 gap-y-10 pb-12 pt-12 sm:grid-cols-2 lg:grid-cols-[1.5fr_1fr_1fr_1fr]">
+      <div className="shell relative grid gap-x-8 gap-y-10 border-t border-white/15 pb-12 pt-12 sm:grid-cols-2 lg:grid-cols-[1.5fr_1fr_1fr_1fr]">
         <div className="max-w-xs">
           <div className="flex items-center gap-2.5 font-bold tracking-tight">
             <Image
@@ -57,10 +51,10 @@ export function SiteFooter() {
               alt={`${site.name} logo`}
               width={256}
               height={256}
-              className="h-11 w-11 rounded-lg"
+              className="h-11 w-11 rounded-sm"
             />
             <span className="flex items-baseline gap-2">
-              <span className="text-xl text-white">{site.short}</span>
+              <span className="text-xl font-extrabold text-white">{site.short}</span>
               <span className="text-sm text-white/75">Research Center</span>
             </span>
           </div>
@@ -92,7 +86,7 @@ export function SiteFooter() {
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label={label}
-                  className={`inline-flex h-8 w-8 items-center justify-center rounded-full bg-accent-on-band text-(--band) transition-opacity hover:opacity-85 ${focusRing}`}
+                  className={`inline-flex h-9 w-9 items-center justify-center rounded-xs border border-white/40 text-white transition-colors hover:bg-white hover:text-(--band) ${focusRing}`}
                 >
                   <Icon size={16} />
                 </a>
@@ -102,14 +96,14 @@ export function SiteFooter() {
         </FooterColumn>
       </div>
 
-      <div className="relative bg-[color-mix(in_srgb,var(--band)_70%,black)]">
-        <div className="shell flex flex-col gap-2 py-5 text-sm text-white/45 sm:flex-row sm:items-center sm:justify-between">
+      <div className="relative border-t border-white/15">
+        <div className="shell flex flex-col gap-2 py-5 text-sm text-white/70 sm:flex-row sm:items-center sm:justify-between">
           <p>
             © {new Date().getFullYear()} {site.name}
           </p>
           <p className="flex items-center gap-2.5">
             <a
-              className={`${linkClass} text-white/45`}
+              className={`${linkClass} text-white/70`}
               href={composeEmailHref()}
               target="_blank"
               rel="noopener noreferrer"
@@ -119,7 +113,7 @@ export function SiteFooter() {
             <span aria-hidden className="text-white/25">
               ·
             </span>
-            <a className={`${linkClass} text-white/45`} href={contact.phoneHref}>
+            <a className={`${linkClass} text-white/70`} href={contact.phoneHref}>
               {contact.phone}
             </a>
           </p>
@@ -142,7 +136,7 @@ function FooterColumn({
 }) {
   return (
     <div>
-      <p className="mb-4 text-[13px] font-bold uppercase tracking-[0.12em] text-accent-on-band">
+      <p className="mb-4 text-[0.8125rem] font-bold tracking-[0.08em] text-white/60 uppercase">
         {title}
       </p>
       <ul className="space-y-2">
@@ -152,7 +146,6 @@ function FooterColumn({
           const label = (
             <>
               {item.label}
-              {offsite && <span aria-hidden> ↗</span>}
             </>
           );
           return (

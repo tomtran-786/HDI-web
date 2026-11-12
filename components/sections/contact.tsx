@@ -1,92 +1,86 @@
 import { composeEmailHref, contact, links } from "@/content/site";
+import { buttonClass } from "../ui/button";
 import { CtaLink } from "../ui/cta-link";
-import { Reveal } from "../ui/reveal";
-import { Section, SectionHeading } from "../ui/section";
+import { Section } from "../ui/section";
 import { IconMail, IconMessage, IconPhone } from "../ui/icons";
 
-export function Contact({ soft }: { soft?: boolean }) {
+const elsewhere = [
+  { label: "Facebook", href: links.fanpage },
+  { label: "Linktree", href: links.linktree },
+  { label: "TikTok", href: links.tiktok },
+];
+
+/**
+ * Phần kết của trang chủ: lời mời tư vấn trên dải navy, ba kênh liên hệ.
+ * `phoneNote` khuyên dùng Zalo nên Zalo là nút chính.
+ */
+export function Contact() {
   return (
-    <Section id="lien-he" soft={soft}>
-      <SectionHeading
-        eyebrow="Liên hệ"
-        title="Đặt lịch tư vấn"
-        mark={{ text: "Đặt lịch", type: "circle" }}
-        subtitle="Một buổi trò chuyện miễn phí để bàn về đề tài của bạn"
-      />
-
-      <Reveal>
-        <div className="mx-auto max-w-2xl rounded-card border border-line bg-card px-6 py-10 text-center sm:px-10">
-          <p className="text-3xl" aria-hidden>
-            👋
+    <Section id="lien-he" tone="band">
+      <div className="grid gap-x-16 gap-y-8 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)] lg:items-end">
+        <div>
+          <h2 className="text-[1.875rem] leading-[1.15] font-bold tracking-[-0.02em] sm:text-4xl lg:text-[2.625rem]">
+            Đặt lịch tư vấn
+          </h2>
+          <p className="mt-3 max-w-[52ch] text-lg text-white/85">
+            Một buổi trò chuyện miễn phí để bàn về đề tài của bạn. Số suất mỗi
+            tháng có giới hạn để mỗi học viên đều được theo sát — hãy nhắn trước
+            để giữ chỗ.
           </p>
-          <h3 className="mt-4 text-2xl font-bold text-fg">Cùng bắt đầu nhé</h3>
-          <p className="mx-auto mt-3 max-w-md text-[15px] leading-relaxed text-fg-muted">
-            Số lượng suất mỗi tháng có giới hạn để đảm bảo mỗi học viên đều được
-            theo sát. Hãy nhắn trước để giữ chỗ.
-          </p>
-
-          <div className="mt-7 flex flex-wrap justify-center gap-3">
-            <a
-              href={composeEmailHref()}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 rounded-xs bg-primary px-5 py-3 text-sm font-bold text-primary-fg transition hover:bg-primary-deep"
-            >
-              <IconMail size={16} />
-              {contact.email}
-            </a>
-            {/* `phoneNote` tells people to prefer Zalo, so Zalo needs its own
-                button — otherwise they have to copy the number by hand. */}
+        </div>
+        <div>
+          <div className="flex flex-wrap gap-3">
             <CtaLink
               source="lien-he"
               target="zalo"
-              className="inline-flex items-center gap-2 rounded-full border border-line px-5 py-3 text-sm font-bold text-fg transition hover:border-primary hover:text-primary"
+              className={buttonClass({ variant: "onBand", size: "lg" })}
             >
-              <IconMessage size={16} />
+              <IconMessage size={18} />
               Nhắn Zalo
             </CtaLink>
             <a
               href={contact.phoneHref}
-              className="inline-flex items-center gap-2 rounded-full border border-line px-5 py-3 text-sm font-bold text-fg transition hover:border-primary hover:text-primary"
+              className={buttonClass({
+                size: "lg",
+                className: "border border-white/60 bg-transparent text-white hover:bg-white/10",
+              })}
             >
-              <IconPhone size={16} />
+              <IconPhone size={18} />
               {contact.phone}
             </a>
+            <a
+              href={composeEmailHref()}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={buttonClass({
+                size: "lg",
+                className: "border border-white/60 bg-transparent text-white hover:bg-white/10",
+              })}
+            >
+              <IconMail size={18} />
+              {contact.email}
+            </a>
           </div>
-          <p className="mt-3 text-xs text-fg-subtle">{contact.phoneNote}</p>
-
-          <div className="mt-8 border-t border-line pt-6">
-            <p className="text-sm text-fg-subtle">
-              <a
-                className="hover:text-primary"
-                href={links.fanpage}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                Facebook ↗
-              </a>
-              <span className="px-2">·</span>
-              <a
-                className="hover:text-primary"
-                href={links.linktree}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                Linktree ↗
-              </a>
-              <span className="px-2">·</span>
-              <a
-                className="hover:text-primary"
-                href={links.tiktok}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                TikTok ↗
-              </a>
-            </p>
-          </div>
+          <p className="mt-4 text-sm text-white/75">
+            {contact.phoneNote}
+            {elsewhere.map(({ label, href }) => (
+              <span key={label}>
+                <span aria-hidden className="px-2 text-white/40">
+                  ·
+                </span>
+                <a
+                  href={href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="underline decoration-white/40 underline-offset-4 hover:decoration-white"
+                >
+                  {label}
+                </a>
+              </span>
+            ))}
+          </p>
         </div>
-      </Reveal>
+      </div>
     </Section>
   );
 }

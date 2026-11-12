@@ -1,12 +1,11 @@
 import type { Metadata } from "next";
 import { headers } from "next/headers";
-import { Archivo, Be_Vietnam_Pro } from "next/font/google";
+import { Source_Sans_3 } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
 import { SessionProvider } from "next-auth/react";
 import { CartProvider } from "@/components/cart-provider";
 import { CheckoutReclaim } from "@/components/checkout-reclaim";
 import { ContactDock } from "@/components/contact-dock";
-import { ScrollProgress } from "@/components/scroll-progress";
 import { SiteHeader } from "@/components/site-header";
 import { SiteBreadcrumbs } from "@/components/site-breadcrumbs";
 import { SiteFooter } from "@/components/site-footer";
@@ -20,29 +19,13 @@ import { currentSession } from "@/lib/current-session";
 import "./globals.css";
 
 /**
- * Hai giọng chữ của cuốn "chương trình hội nghị" (.impeccable/surfaces/app-page-tsx.md).
- *
- * Be Vietnam Pro là chữ của trang: tiêu đề, thân bài, nút. Font do nhóm thiết
- * kế người Việt vẽ nên dấu chồng (ề, ữ, ậ) đặt đúng chỗ ở mọi độ đậm. Font
- * không có bản variable trên Google Fonts, nên phải liệt kê độ đậm đang dùng.
- *
- * Archivo là chữ của "lịch": ngày, giờ, học phí, chữ hoa trên thẻ đeo. Bản
- * variable có trục độ rộng (wdth), utility `font-cond` trong globals.css kéo
- * nó về dạng hẹp để cột số liệu thẳng hàng mà không chiếm chỗ.
- *
- * Cả hai bắt buộc có subset `vietnamese`; thiếu nó dấu sẽ rơi về font dự phòng.
+ * Source Sans 3 là font duy nhất của site — chủ dự án chọn giữ font này khi
+ * redesign (2026-11-12). Bản variable 200–900 phủ mọi độ đậm đang dùng.
+ * Bắt buộc có subset `vietnamese`; thiếu nó dấu sẽ rơi về font dự phòng.
  */
-const beVietnam = Be_Vietnam_Pro({
-  variable: "--font-be-vietnam",
+const sourceSans = Source_Sans_3({
+  variable: "--font-source-sans",
   subsets: ["latin", "vietnamese"],
-  weight: ["400", "500", "600", "700", "800"],
-  display: "swap",
-});
-
-const archivo = Archivo({
-  variable: "--font-archivo",
-  subsets: ["latin", "vietnamese"],
-  axes: ["wdth"],
   display: "swap",
 });
 
@@ -82,7 +65,6 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
   const nonce = headerStore.get("x-nonce") ?? undefined;
   const appShell = (
     <CartProvider>
-      <ScrollProgress />
       <SiteHeader
         signedIn={Boolean(session?.user)}
         // Không tốn truy vấn nào: email đã nằm sẵn trong JWT, và
@@ -115,7 +97,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
     // the bootstrap script below adds `dark` before React hydrates
     <html
       lang="vi"
-      className={`${beVietnam.variable} ${archivo.variable} h-full antialiased`}
+      className={`${sourceSans.variable} h-full antialiased`}
       data-scroll-behavior="smooth"
       suppressHydrationWarning
     >

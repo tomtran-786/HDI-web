@@ -1,132 +1,134 @@
 import Image from "next/image";
-import Link from "next/link";
 import { about } from "@/content/about";
 import { site } from "@/content/site";
+import { stats, type Stat } from "@/content/stats";
+import type { OpenCourse } from "@/lib/open-courses";
+import { Programme } from "../programme";
 import { CtaLink } from "../ui/cta-link";
 import { CredibilityMarquee } from "./credibility-marquee";
-import { Notation } from "../ui/notation";
-import { Reveal } from "../ui/reveal";
-import { IconArrow, IconCheck, IconClock, IconMessage } from "../ui/icons";
-import { buttonClass } from "@/components/ui/button";
 
-/** Hàng cam kết dịch vụ, khớp với dải cam kết in trong ảnh promo bên phải. */
-const promises = [
-  { icon: IconCheck, title: "Bảo mật tuyệt đối", desc: "Không lưu trữ tài liệu" },
-  { icon: IconClock, title: "Kết quả nhanh", desc: "Chỉ từ 5–30 phút" },
-  { icon: IconMessage, title: "Hỗ trợ tận tâm", desc: "Giải đáp mọi thắc mắc" },
-];
-
-export function Hero() {
+/**
+ * Khung đầu trang chủ theo hướng "chương trình hội nghị"
+ * (.impeccable/surfaces/app-page-tsx.md): tiêu đề, một câu giới thiệu, rồi bảng
+ * chương trình — các khóa đang mở là phiên chính có nút Đăng ký trên từng
+ * dòng, kiểm tra AI & đạo văn là phiên song song. Cố vấn học thuật xuất hiện
+ * trên thẻ đeo diễn giả ở cột phải; trên mobile thẻ thu thành một hàng ngang
+ * đứng trước bảng.
+ *
+ * Hành động chính của trang là mua khóa (PRODUCT.md), nên nút chính nằm ngay
+ * trên dòng khóa; tư vấn là liên kết phụ.
+ *
+ * `open` do trang đọc sẵn (lib/open-courses.ts) để Hero vẫn là component đồng
+ * bộ, render được trong test.
+ */
+export function Hero({ open }: { open: OpenCourse[] }) {
   return (
-    <section id="top" className="relative overflow-hidden bg-bg">
-      {/* Một lớp wash thương hiệu nhẹ phía sau hero */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-x-0 top-0 h-[420px] bg-[radial-gradient(55%_90%_at_72%_0%,var(--tint)_0%,transparent_72%)]"
-      />
-      <div className="shell relative grid items-center gap-12 py-16 sm:py-20 lg:grid-cols-[1fr_0.95fr] lg:py-28">
-        <Reveal>
-          <p className="inline-flex items-center gap-2 rounded-full bg-tint px-3 py-1.5 text-xs font-semibold text-success">
-            <span className="h-1.5 w-1.5 rounded-full bg-success" />
-            Khóa mới khai giảng 01/12/2026
-          </p>
-
-          <h1 className="mt-6 text-4xl font-bold leading-[1.08] tracking-tight sm:text-5xl lg:text-6xl">
-            <span className="text-primary">Nghiên cứu bài bản,</span>
-            <br />
-            <span className="text-fg">
-              <Notation type="underline">công bố quốc tế</Notation>
-            </span>
-          </h1>
-
-          <p className="mt-4 text-lg font-semibold text-primary">
-            {"// "}
+    <section id="top" className="bg-bg">
+      <div className="shell grid gap-x-16 pt-10 pb-12 sm:pt-12 lg:grid-cols-[minmax(0,1fr)_17.5rem] lg:pt-14 lg:pb-16">
+        <div className="lg:col-start-1 lg:row-start-1">
+          <h1 className="max-w-[18ch] text-[2.5rem] leading-[1.06] font-extrabold tracking-[-0.03em] sm:text-5xl lg:text-[3.5rem]">
             {site.tagline}
-          </p>
-
-          {/* lg:max-w-md để chừa chỗ cho ảnh promo lấn sang từ bên phải */}
-          <p className="mt-5 max-w-xl text-base leading-relaxed text-fg-muted sm:text-lg lg:max-w-md">
+          </h1>
+          <p className="mt-5 max-w-[58ch] text-lg leading-relaxed text-fg-muted">
             {site.name} đồng hành cùng bạn từ khâu xác định câu hỏi nghiên cứu đến
             lúc gửi bài và trả lời phản biện tại các tạp chí quốc tế — qua các lộ
-            trình đồng hành nghiên cứu, khóa đào tạo và dịch vụ hỗ trợ bản thảo.{" "}
-            {site.lead.role}:{" "}
-            <strong className="font-semibold text-fg">{site.lead.name}</strong> —{" "}
-            {site.lead.credential}.
+            trình đồng hành nghiên cứu, khóa đào tạo và dịch vụ hỗ trợ bản thảo.
           </p>
+        </div>
 
-          <div className="mt-8 flex flex-wrap items-center gap-3 lg:max-w-md">
+        <SpeakerBadge />
+
+        <div className="lg:col-start-1 lg:row-start-2">
+          <Programme open={open} />
+          <p className="mt-6 text-[0.9375rem] text-fg-muted">
+            Chưa chắc khóa nào hợp với đề tài của bạn?{" "}
             <CtaLink
               source="hero"
               target="tu-van"
-              className={buttonClass({ size: "lg" })}
+              className="font-semibold text-primary underline decoration-1 underline-offset-4 hover:decoration-2"
             >
               Đăng ký tư vấn miễn phí
-              <IconArrow size={16} />
             </CtaLink>
+          </p>
+        </div>
+      </div>
+      {/* Dải chạy nằm trong chính <section id="top"> để thứ tự các section
+          của trang chủ không đổi. */}
+      <CredibilityMarquee />
+    </section>
+  );
+}
 
-            <Link
-              href="/dich-vu#dong-hanh-nghien-cuu"
-              className={buttonClass({ variant: "secondary", size: "lg" })}
-            >
-              Xem lộ trình đồng hành
-            </Link>
-          </div>
+/** Học viên đã đồng hành — số chủ dự án xác nhận (PRODUCT.md, Evidence on Hand). */
+const LEARNERS = "500+";
 
-          <ul className="mt-8 grid gap-x-4 gap-y-3 rounded-card border border-line bg-bg-soft/50 p-4 sm:grid-cols-3 lg:max-w-lg">
-            {promises.map(({ icon: Icon, title, desc }) => (
-              <li key={title} className="flex items-start gap-2.5">
-                <Icon size={16} className="mt-0.5 shrink-0 text-primary" />
-                <span className="leading-tight">
-                  <span className="block text-[13px] font-bold text-fg">{title}</span>
-                  <span className="block text-[11px] text-fg-muted">{desc}</span>
-                </span>
-              </li>
-            ))}
-          </ul>
+function formatStat({ to, prefix = "", suffix = "", grouped }: Stat) {
+  const value = grouped ? new Intl.NumberFormat("vi-VN").format(to) : String(to);
+  return `${prefix}${value}${suffix}`;
+}
 
-          <div className="mt-6 flex items-center gap-4 border-t border-line pt-6">
+/**
+ * Thẻ đeo diễn giả treo trên dây navy. Thông tin thật của cố vấn và các số
+ * liệu đếm từ hồ sơ công bố (content/stats.ts) nằm ngay dưới thẻ.
+ *
+ * Chuyển động đặc trưng duy nhất của trang: thẻ lắc nhẹ một lần khi tải
+ * (`.badge-settle` trong globals.css), tắt hẳn khi người dùng giảm chuyển động.
+ */
+function SpeakerBadge() {
+  const { advisor } = about;
+  return (
+    <aside
+      aria-label="Cố vấn học thuật"
+      className="mt-8 lg:col-start-2 lg:row-span-2 lg:row-start-1 lg:mt-0"
+    >
+      <div className="relative lg:-mt-14 lg:pt-14">
+        {/* Dây đeo: chỉ có trên màn rộng, chạy từ mép trên của hero xuống thẻ. */}
+        <span
+          aria-hidden
+          className="absolute top-0 left-1/2 hidden h-16 w-5 -translate-x-1/2 bg-primary lg:block"
+        />
+        <div className="badge-settle relative border-2 border-rule bg-card lg:origin-top">
+          <p className="hidden bg-primary px-4 py-2.5 font-cond text-[0.8125rem] font-bold tracking-[0.12em] text-primary-fg uppercase lg:block">
+            {site.name}
+          </p>
+          <div className="flex items-center gap-4 p-3 lg:block lg:p-0">
             <Image
-              src={about.advisor.portrait.src}
-              alt={about.advisor.portrait.alt}
+              src={advisor.portrait.src}
+              alt={advisor.portrait.alt}
               width={960}
               height={1280}
-              sizes="40px"
-              className="h-10 w-10 shrink-0 rounded-full border border-line object-cover object-[center_72%]"
+              preload
+              sizes="(min-width: 1024px) 17.5rem, 5rem"
+              className="h-24 w-20 shrink-0 object-cover object-[center_30%] lg:h-72 lg:w-full"
             />
-            <div className="text-sm">
-              <p className="font-bold text-fg">
-                {site.lead.role}: {site.lead.name}
-              </p>
-              <p className="text-xs text-fg-muted">
-                {site.lead.credential} · Đồng hành cùng 500+ học viên & nghiên cứu sinh
+            <div className="min-w-0 lg:px-4 lg:pt-4 lg:pb-4">
+              <p className="text-xl leading-tight font-bold lg:text-2xl">{advisor.name}</p>
+              <p className="mt-1 text-sm text-fg-muted">{advisor.credential}</p>
+              <p className="mt-2 inline-block bg-accent px-2 py-1 font-cond text-[0.75rem] font-bold tracking-[0.1em] text-primary-fg uppercase lg:hidden">
+                {advisor.label}
               </p>
             </div>
           </div>
-        </Reveal>
-
-        <Reveal
-          delay={120}
-          className="justify-self-center lg:justify-self-stretch"
-        >
-          {/* Ảnh promo dịch vụ check Turnitin (HDI cung cấp). Trên màn lớn ảnh
-              phóng to và tràn sang trái, đè lên vùng chữ (z-10) nhưng
-              pointer-events-none để không chặn nút bên dưới. */}
-          <div className="mx-auto max-w-lg overflow-hidden rounded-card border border-line bg-card shadow-md lg:relative lg:z-10 lg:-ml-10 lg:w-[calc(100%+2.5rem)] lg:max-w-none lg:pointer-events-none xl:-ml-20 xl:w-[calc(100%+5rem)]">
-            <Image
-              src="/images/hero-check-turnitin-v3.jpg"
-              alt="Dịch vụ check Turnitin của HDI — Check AI Turnitin chỉ từ 50K, check đạo văn Turnitin chỉ từ 20K, combo AI và đạo văn Turnitin chỉ từ 60K"
-              width={1675}
-              height={939}
-              priority
-              sizes="(min-width: 1280px) 44rem, (min-width: 1024px) 40vw, (min-width: 640px) 32rem, 100vw"
-              className="h-auto w-full"
-            />
-          </div>
-        </Reveal>
+          <p className="hidden bg-accent px-4 py-2.5 font-cond text-[0.8125rem] font-bold tracking-[0.12em] text-primary-fg uppercase lg:block">
+            {advisor.label}
+          </p>
+        </div>
       </div>
-      {/* Dải chạy nằm trong chính <section id="top"> để thứ tự và nền các
-          section của trang chủ không đổi. */}
-      <CredibilityMarquee />
-    </section>
+
+      <dl className="mt-6 hidden grid-cols-2 gap-x-4 gap-y-4 border-t border-line pt-5 lg:grid">
+        {stats.map((stat) => (
+          <div key={stat.label}>
+            <dt className="text-[0.8125rem] leading-snug text-fg-muted">{stat.label}</dt>
+            <dd className="font-cond text-2xl leading-tight font-bold">{formatStat(stat)}</dd>
+          </div>
+        ))}
+        <div className="col-span-2">
+          <dt className="text-[0.8125rem] leading-snug text-fg-muted">
+            Học viên &amp; nghiên cứu sinh đã đồng hành
+          </dt>
+          <dd className="font-cond text-2xl leading-tight font-bold">{LEARNERS}</dd>
+        </div>
+      </dl>
+    </aside>
   );
 }

@@ -22,7 +22,7 @@ Trang chủ ngắn (desktop ≤ ~6.000px, mobile ≤ ~7.500px); tiêu đề căn
 
 THESIS: Trang chủ là cuốn chương trình của một hội nghị học thuật mà HDI tổ chức: các khóa là phiên chính có ngày, giờ, giá và nút đăng ký; check Turnitin là phiên song song; Dr. Tam Trinh là diễn giả có thẻ đeo. Từ chối hero chia đôi + lưới thẻ của trang đào tạo.
 
-OWN-WORLD: Giấy trắng in hai màu — mực gần đen `#141821` và navy HDI `#0c498f` — cộng một màu gỉ sét `#b4471a` chỉ cho nhãn phiên song song và vai trò diễn giả; nền phụ `#e8eef6` cho dải phiên song song. Bảng chương trình kẻ ngang: rule 2px mực ở đầu bảng, 1px xám giữa các phiên, không thẻ bo góc. Be Vietnam Pro cho tiêu đề và thân; Archivo hẹp (wdth) cho ngày, giờ, giá, chữ hoa thẻ đeo. Bo góc gần 0, không bóng đổ, không gradient.
+OWN-WORLD: Giấy trắng in hai màu — mực gần đen `#141821` và navy HDI `#0c498f` — cộng một màu gỉ sét `#b4471a` chỉ cho nhãn phiên song song và vai trò diễn giả; nền phụ `#e8eef6` cho dải phiên song song. Bảng chương trình kẻ ngang: rule 2px mực ở đầu bảng, 1px xám giữa các phiên, không thẻ bo góc. Font: Source Sans 3 cho toàn trang (chủ dự án giữ font cũ, 2026-11-12); ngày, giờ, giá dùng số thẳng cột (tabular-nums). Bo góc gần 0, không bóng đổ, không gradient.
 
 STORY: Người đọc thấy ngay đây là chương trình đào tạo nghiên cứu nghiêm túc, ai dẫn dắt và có uy tín gì, khóa nào sắp mở và giá bao nhiêu, rồi bấm Đăng ký trên đúng dòng khóa; ai chỉ cần check Turnitin thấy giá ngay ở phiên song song.
 

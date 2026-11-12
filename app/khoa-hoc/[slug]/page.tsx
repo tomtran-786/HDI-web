@@ -455,7 +455,6 @@ export default async function CourseDetailPage({ params }: CoursePageProps) {
                   availability={
                     availability ? (availability[item.slug] ?? "not_open") : undefined
                   }
-                  sizes="(min-width: 768px) 24rem, 100vw"
                 />
               </Reveal>
             ))}

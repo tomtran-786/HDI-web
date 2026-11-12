@@ -1,40 +1,38 @@
 import { faqItems } from "@/content/faq";
-import { Card } from "../ui/card";
 import { IconChevronDown } from "../ui/icons";
-import { Reveal } from "../ui/reveal";
 import { Section, SectionHeading } from "../ui/section";
 
-export function Faq({ soft }: { soft?: boolean }) {
+/**
+ * Câu hỏi thường gặp. Hình thức: tiêu đề đứng yên ở cột trái trên màn rộng,
+ * các câu hỏi là danh sách kẻ ở cột phải — không bọc trong thẻ.
+ */
+export function Faq() {
   return (
-    <Section id="faq" soft={soft}>
-      <SectionHeading
-        eyebrow="Câu hỏi thường gặp"
-        title="Những điều bạn có thể muốn biết trước khi bắt đầu"
-        mark={{ text: "muốn biết", type: "circle" }}
-        subtitle="Thông tin về khóa học, dịch vụ, hình thức học và quy trình đăng ký tại HDI."
-      />
-
-      <Reveal>
-        <Card className="mx-auto max-w-4xl overflow-hidden" hover={false}>
+    <Section id="faq">
+      <div className="grid gap-x-16 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.6fr)]">
+        <div className="lg:sticky lg:top-24 lg:self-start">
+          <SectionHeading
+            title="Câu hỏi thường gặp"
+            subtitle="Về khóa học, dịch vụ, hình thức học và quy trình đăng ký tại HDI."
+          />
+        </div>
+        <div className="border-t-2 border-rule">
           {faqItems.map((item) => (
-            <details
-              key={item.question}
-              className="group border-b border-line px-5 last:border-b-0 sm:px-7"
-            >
-              <summary className="flex cursor-pointer list-none items-center justify-between gap-5 py-5 text-left text-base font-bold text-fg transition hover:text-primary [&::-webkit-details-marker]:hidden sm:py-6 sm:text-lg">
+            <details key={item.question} className="group border-b border-line">
+              <summary className="flex cursor-pointer list-none items-start justify-between gap-6 py-5 text-left text-[1.0625rem] font-semibold text-fg transition-colors hover:text-primary [&::-webkit-details-marker]:hidden">
                 <span>{item.question}</span>
                 <IconChevronDown
                   size={18}
-                  className="shrink-0 text-primary transition-transform group-open:rotate-180"
+                  className="mt-1 shrink-0 text-fg-subtle transition-transform duration-200 group-open:rotate-180"
                 />
               </summary>
-              <p className="max-w-3xl pb-5 pr-8 text-sm leading-relaxed text-fg-muted sm:pb-6 sm:text-base">
+              <p className="max-w-[64ch] pr-8 pb-5 leading-relaxed text-fg-muted">
                 {item.answer}
               </p>
             </details>
           ))}
-        </Card>
-      </Reveal>
+        </div>
+      </div>
     </Section>
   );
 }

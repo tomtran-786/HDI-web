@@ -7,6 +7,7 @@ import { usePathname } from "next/navigation";
 import { nav, withoutHiddenCourses, type NavItem } from "@/content/navigation";
 import { site } from "@/content/site";
 import { ThemeToggle } from "./theme-toggle";
+import { buttonClass } from "./ui/button";
 import { Avatar } from "./ui/avatar";
 import { CartButton } from "./cart-button";
 import {
@@ -119,15 +120,15 @@ export function SiteHeader({
 
   const navLinkClass = (active: boolean, mobile = false) =>
     mobile
-      ? `rounded-card px-4 py-3 text-sm font-semibold transition ${
+      ? `rounded-xs px-4 py-3 text-base font-semibold transition-colors ${
           active
-            ? "bg-tint text-primary"
-            : "text-fg-muted hover:bg-bg-soft hover:text-primary"
+            ? "bg-tint text-fg"
+            : "text-fg-muted hover:bg-bg-soft hover:text-fg"
         }`
-      : `rounded-full px-3 py-2 text-[13px] font-semibold transition ${
+      : `px-3 py-2 text-sm font-semibold transition-colors ${
           active
-            ? "bg-card text-primary shadow-sm"
-            : "text-fg-muted hover:bg-card hover:text-primary"
+            ? "text-fg shadow-[inset_0_-2px_0_var(--primary)]"
+            : "text-fg-muted hover:text-fg"
         }`;
 
   const onDesktopBlur = (event: FocusEvent<HTMLDivElement>) => {
@@ -136,7 +137,7 @@ export function SiteHeader({
 
   return (
     <header
-      className={`sticky top-0 z-50 border-b bg-bg/85 backdrop-blur transition-colors ${
+      className={`sticky top-0 z-50 border-b bg-bg transition-colors ${
         scrolled ? "border-line" : "border-transparent"
       }`}
     >
@@ -154,17 +155,17 @@ export function SiteHeader({
             alt=""
             width={256}
             height={256}
-            className="h-9 w-9 rounded-lg"
+            className="h-9 w-9 rounded-sm"
           />
           <span className="flex items-baseline gap-2">
-            <span className="text-lg text-primary">{site.short}</span>
-            <span className="text-sm text-fg-muted">Research Center</span>
+            <span className="text-lg font-extrabold text-primary">{site.short}</span>
+            <span className="text-sm font-semibold text-fg-muted">Research Center</span>
           </span>
         </Link>
 
         <nav
           aria-label="Điều hướng chính"
-          className="hidden items-center gap-0.5 rounded-full border border-line bg-bg-soft/80 p-1 xl:flex"
+          className="hidden items-center gap-1 xl:flex"
         >
           {navItems.map((item) => {
             const active = isActive(item);
@@ -200,7 +201,7 @@ export function SiteHeader({
                   href={item.href}
                   aria-current={active ? "page" : undefined}
                   onClick={() => setDesktopOpen(null)}
-                  className={`flex items-center gap-1.5 rounded-full px-3 py-2 text-[13px] font-semibold transition hover:text-primary ${
+                  className={`flex items-center gap-1.5 px-3 py-2 text-sm font-semibold transition-colors hover:text-fg ${
                     active
                       ? "bg-card text-primary shadow-sm"
                       : "text-fg-muted"
@@ -233,7 +234,7 @@ export function SiteHeader({
                   >
                     {item.groups.map((group) => (
                       <div key={group.label}>
-                        <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-fg-subtle">
+                        <p className="font-cond text-[0.8125rem] font-bold tracking-[0.08em] text-fg-subtle uppercase">
                           {group.label}
                         </p>
                         <ul className="mt-3 space-y-1.5">
@@ -242,7 +243,7 @@ export function SiteHeader({
                               <Link
                                 href={child.href}
                                 onClick={() => setDesktopOpen(null)}
-                                className="block rounded-lg px-2 py-2 text-sm font-semibold leading-snug text-fg-muted transition hover:bg-bg-soft hover:text-primary"
+                                className="block rounded-xs px-2 py-2 text-sm font-semibold leading-snug text-fg-muted transition-colors hover:bg-bg-soft hover:text-fg"
                               >
                                 {child.label}
                               </Link>
@@ -257,7 +258,7 @@ export function SiteHeader({
                       <Link
                         href={item.href}
                         onClick={() => setDesktopOpen(null)}
-                        className="col-span-full inline-flex items-center justify-center rounded-full border border-line px-4 py-2.5 text-sm font-bold text-primary transition hover:border-primary"
+                        className="col-span-full inline-flex items-center justify-center rounded-xs border border-line px-4 py-2.5 text-sm font-semibold text-primary transition-colors hover:border-rule"
                       >
                         {item.href === "/dich-vu"
                           ? "Tất cả dịch vụ"
@@ -275,7 +276,7 @@ export function SiteHeader({
           {signedIn ? (
             <Link
               href="/tai-khoan"
-              className="hidden items-center gap-2 rounded-full border border-primary py-1 pl-1 pr-4 text-[11px] font-bold uppercase tracking-[0.12em] text-primary transition hover:bg-primary hover:text-primary-fg sm:inline-flex"
+              className="hidden items-center gap-2 rounded-xs border border-line py-1 pl-1 pr-3 text-sm font-semibold text-fg transition-colors hover:border-rule sm:inline-flex"
             >
               <Avatar
                 src={user?.image}
@@ -290,16 +291,17 @@ export function SiteHeader({
             <>
               <Link
                 href="/dang-nhap"
-                className="hidden px-3 py-2 text-[11px] font-bold uppercase tracking-[0.12em] text-fg-muted transition hover:text-primary sm:inline-block"
+                className="hidden px-3 py-2 text-sm font-semibold text-fg-muted transition-colors hover:text-fg sm:inline-block"
               >
                 Đăng nhập
               </Link>
-              <Link
-                href="/dang-ky-tai-khoan"
-                className="hidden rounded-xs border border-primary px-4 py-2 text-[11px] font-bold uppercase tracking-[0.12em] text-primary transition hover:bg-primary hover:text-primary-fg sm:inline-block"
-              >
-                Đăng ký
-              </Link>
+              {/* Bọc ngoài để `hidden` không phải tranh với `inline-flex` của
+                  buttonClass trên cùng một phần tử. */}
+              <span className="hidden sm:inline-flex">
+                <Link href="/dang-ky-tai-khoan" className={buttonClass({ size: "sm" })}>
+                  Đăng ký
+                </Link>
+              </span>
             </>
           )}
           <CartButton />
@@ -319,7 +321,7 @@ export function SiteHeader({
             aria-label={open ? "Đóng menu" : "Mở menu"}
             aria-expanded={open}
             aria-controls="mobile-navigation"
-            className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-line text-fg-muted xl:hidden"
+            className="inline-flex h-9 w-9 items-center justify-center rounded-xs border border-line text-fg-muted xl:hidden"
           >
             {open ? <IconClose /> : <IconMenu />}
           </button>
@@ -332,7 +334,7 @@ export function SiteHeader({
             type="button"
             aria-label="Đóng menu điều hướng"
             onClick={closeMobile}
-            className="fixed inset-x-0 bottom-0 top-16 z-10 bg-primary-deep/15 backdrop-blur-[1px] xl:hidden"
+            className="fixed inset-x-0 bottom-0 top-16 z-10 bg-fg/20 xl:hidden"
           />
           <nav
             id="mobile-navigation"
@@ -348,7 +350,7 @@ export function SiteHeader({
                 </span>
                 <ThemeToggle />
               </div>
-              <p className="mt-4 px-1 text-[10px] font-bold uppercase tracking-[0.16em] text-fg-subtle xs:mt-0">
+              <p className="mt-4 px-1 font-cond text-[0.8125rem] font-bold tracking-[0.08em] text-fg-subtle uppercase xs:mt-0">
                 Khám phá HDI
               </p>
               <div className="mt-3 grid gap-1">
@@ -398,13 +400,13 @@ export function SiteHeader({
                         <Link
                           href={item.href}
                           onClick={closeMobile}
-                          className="mt-1 block rounded-lg bg-bg-soft px-3 py-2.5 text-sm font-bold text-primary"
+                          className="mt-1 block rounded-xs bg-bg-soft px-3 py-2.5 text-sm font-semibold text-primary"
                         >
                           Xem tất cả
                         </Link>
                         {item.groups.map((group) => (
                           <div key={group.label} className="mt-4">
-                            <p className="px-3 text-[10px] font-bold uppercase tracking-[0.16em] text-fg-subtle">
+                            <p className="px-3 font-cond text-[0.8125rem] font-bold tracking-[0.08em] text-fg-subtle uppercase">
                               {group.label}
                             </p>
                             <ul className="mt-1.5 space-y-0.5">
@@ -413,7 +415,7 @@ export function SiteHeader({
                                   <Link
                                     href={child.href}
                                     onClick={closeMobile}
-                                    className="block rounded-lg px-3 py-2.5 text-sm font-semibold leading-snug text-fg-muted transition hover:bg-bg-soft hover:text-primary"
+                                    className="block rounded-xs px-3 py-2.5 text-sm font-semibold leading-snug text-fg-muted transition-colors hover:bg-bg-soft hover:text-fg"
                                   >
                                     {child.label}
                                   </Link>
@@ -433,7 +435,7 @@ export function SiteHeader({
                   <Link
                     href="/tai-khoan"
                     onClick={closeMobile}
-                    className="flex items-center justify-center gap-2 rounded-xs bg-primary px-5 py-3 text-center text-sm font-bold text-primary-fg"
+                    className={buttonClass()}
                   >
                     <Avatar
                       src={user?.image}
@@ -449,14 +451,14 @@ export function SiteHeader({
                     <Link
                       href="/dang-nhap"
                       onClick={closeMobile}
-                      className="rounded-full border border-line px-5 py-3 text-center text-sm font-bold text-fg"
+                      className={buttonClass({ variant: "secondary" })}
                     >
                       Đăng nhập
                     </Link>
                     <Link
                       href="/dang-ky-tai-khoan"
                       onClick={closeMobile}
-                      className="rounded-xs bg-primary px-5 py-3 text-center text-sm font-bold text-primary-fg"
+                      className={buttonClass()}
                     >
                       Đăng ký
                     </Link>
