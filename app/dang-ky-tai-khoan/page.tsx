@@ -11,6 +11,7 @@ import { SectionHeading } from "@/components/ui/section";
 import { Card } from "@/components/ui/card";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { IconMail } from "@/components/ui/icons";
+import { buttonClass } from "@/components/ui/button";
 
 export const metadata: Metadata = {
   title: "Tạo tài khoản — HDI Research Center",
@@ -75,7 +76,7 @@ export default async function RegisterPage({
                 </Link>
                 <Link
                   href={`/dang-nhap${nextQuery}`}
-                  className="block w-full rounded-full bg-primary px-6 py-3 text-center text-sm font-bold text-primary-fg transition hover:bg-primary-deep"
+                  className="block w-full rounded-xs bg-primary px-6 py-3 text-center text-sm font-bold text-primary-fg transition hover:bg-primary-deep"
                 >
                   {registerPage.sent.signInCta}
                 </Link>
@@ -142,7 +143,7 @@ export default async function RegisterPage({
                   </span>
                 </label>
                 <SubmitButton
-                  className="w-full rounded-full bg-primary px-6 py-3 text-sm font-bold text-primary-fg transition hover:bg-primary-deep"
+                  className={buttonClass({ size: "lg", className: "w-full" })}
                   pendingLabel="Đang tạo tài khoản…"
                 >
                   {registerPage.action}

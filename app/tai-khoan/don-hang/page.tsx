@@ -95,7 +95,7 @@ export default async function OrderListPage() {
           </p>
           <Link
             href="/khoa-hoc"
-            className="mt-6 inline-flex items-center gap-2 rounded-full bg-primary px-6 py-3 text-sm font-bold text-primary-fg transition hover:bg-primary-deep"
+            className="mt-6 inline-flex items-center gap-2 rounded-xs bg-primary px-6 py-3 text-sm font-bold text-primary-fg transition hover:bg-primary-deep"
           >
             Xem các khóa học
             <IconArrow size={16} />

@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { headers } from "next/headers";
-import { Source_Sans_3 } from "next/font/google";
+import { Archivo, Be_Vietnam_Pro } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
 import { SessionProvider } from "next-auth/react";
 import { CartProvider } from "@/components/cart-provider";
@@ -19,10 +19,30 @@ import { publicAvailability } from "@/lib/course-sales";
 import { currentSession } from "@/lib/current-session";
 import "./globals.css";
 
-const sourceSans = Source_Sans_3({
-  variable: "--font-source-sans",
-  // the page is in Vietnamese — without this subset the diacritics fall back
+/**
+ * Hai giọng chữ của cuốn "chương trình hội nghị" (.impeccable/surfaces/app-page-tsx.md).
+ *
+ * Be Vietnam Pro là chữ của trang: tiêu đề, thân bài, nút. Font do nhóm thiết
+ * kế người Việt vẽ nên dấu chồng (ề, ữ, ậ) đặt đúng chỗ ở mọi độ đậm. Font
+ * không có bản variable trên Google Fonts, nên phải liệt kê độ đậm đang dùng.
+ *
+ * Archivo là chữ của "lịch": ngày, giờ, học phí, chữ hoa trên thẻ đeo. Bản
+ * variable có trục độ rộng (wdth), utility `font-cond` trong globals.css kéo
+ * nó về dạng hẹp để cột số liệu thẳng hàng mà không chiếm chỗ.
+ *
+ * Cả hai bắt buộc có subset `vietnamese`; thiếu nó dấu sẽ rơi về font dự phòng.
+ */
+const beVietnam = Be_Vietnam_Pro({
+  variable: "--font-be-vietnam",
   subsets: ["latin", "vietnamese"],
+  weight: ["400", "500", "600", "700", "800"],
+  display: "swap",
+});
+
+const archivo = Archivo({
+  variable: "--font-archivo",
+  subsets: ["latin", "vietnamese"],
+  axes: ["wdth"],
   display: "swap",
 });
 
@@ -95,7 +115,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
     // the bootstrap script below adds `dark` before React hydrates
     <html
       lang="vi"
-      className={`${sourceSans.variable} h-full antialiased`}
+      className={`${beVietnam.variable} ${archivo.variable} h-full antialiased`}
       data-scroll-behavior="smooth"
       suppressHydrationWarning
     >

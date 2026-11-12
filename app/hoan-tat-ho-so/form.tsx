@@ -86,7 +86,7 @@ export function ProfileForm({
       <button
         type="submit"
         disabled={pending}
-        className="mt-7 inline-flex w-full items-center justify-center gap-2 rounded-full bg-primary px-6 py-3 text-sm font-bold text-primary-fg transition hover:bg-primary-deep disabled:opacity-60"
+        className="mt-7 inline-flex w-full items-center justify-center gap-2 rounded-xs bg-primary px-6 py-3 text-sm font-bold text-primary-fg transition hover:bg-primary-deep disabled:opacity-60"
       >
         {pending ? "Đang lưu…" : "Lưu và tiếp tục"}
         {!pending && <IconArrow size={16} />}

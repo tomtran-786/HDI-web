@@ -29,6 +29,7 @@ import {
 import { retryDriveAccess } from "./actions";
 import { LogoutButton } from "./logout-button";
 import { ReviewForm } from "./review-form";
+import { buttonClass } from "@/components/ui/button";
 
 export const metadata: Metadata = {
   title: "Tài khoản — HDI Research Center",
@@ -217,7 +218,7 @@ export default async function AccountPage() {
           <div className="mt-6 flex flex-wrap justify-center gap-3">
             <Link
               href="/khoa-hoc"
-              className="inline-flex items-center gap-2 rounded-full bg-primary px-6 py-3 text-sm font-bold text-primary-fg transition hover:bg-primary-deep"
+              className="inline-flex items-center gap-2 rounded-xs bg-primary px-6 py-3 text-sm font-bold text-primary-fg transition hover:bg-primary-deep"
             >
               Xem các khóa học
               <IconArrow size={16} />
@@ -312,7 +313,7 @@ export default async function AccountPage() {
                           href={secret.communityUrl}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="inline-flex flex-1 items-center justify-center gap-2 rounded-full bg-primary px-5 py-3 text-sm font-bold text-primary-fg transition hover:bg-primary-deep"
+                          className={buttonClass({ size: "lg", className: "flex-1" })}
                         >
                           <IconMessage size={16} />
                           Vào nhóm Zalo
@@ -323,7 +324,7 @@ export default async function AccountPage() {
                           href={secret.meetingUrl}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="inline-flex flex-1 items-center justify-center gap-2 rounded-full bg-primary px-5 py-3 text-sm font-bold text-primary-fg transition hover:bg-primary-deep"
+                          className={buttonClass({ size: "lg", className: "flex-1" })}
                         >
                           <IconVideo size={16} />
                           Vào lớp

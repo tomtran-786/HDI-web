@@ -7,6 +7,7 @@ import { CredibilityMarquee } from "./credibility-marquee";
 import { Notation } from "../ui/notation";
 import { Reveal } from "../ui/reveal";
 import { IconArrow, IconCheck, IconClock, IconMessage } from "../ui/icons";
+import { buttonClass } from "@/components/ui/button";
 
 /** Hàng cam kết dịch vụ, khớp với dải cam kết in trong ảnh promo bên phải. */
 const promises = [
@@ -57,7 +58,7 @@ export function Hero() {
             <CtaLink
               source="hero"
               target="tu-van"
-              className="inline-flex items-center gap-2 rounded-full bg-primary px-6 py-3 text-sm font-bold text-primary-fg transition-colors hover:bg-primary-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-bg"
+              className={buttonClass({ size: "lg" })}
             >
               Đăng ký tư vấn miễn phí
               <IconArrow size={16} />
@@ -65,7 +66,7 @@ export function Hero() {
 
             <Link
               href="/dich-vu#dong-hanh-nghien-cuu"
-              className="inline-flex items-center gap-2 rounded-full border border-line bg-card px-6 py-3 text-sm font-bold text-fg transition-colors hover:border-primary hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-bg"
+              className={buttonClass({ variant: "secondary", size: "lg" })}
             >
               Xem lộ trình đồng hành
             </Link>
@@ -110,7 +111,7 @@ export function Hero() {
           {/* Ảnh promo dịch vụ check Turnitin (HDI cung cấp). Trên màn lớn ảnh
               phóng to và tràn sang trái, đè lên vùng chữ (z-10) nhưng
               pointer-events-none để không chặn nút bên dưới. */}
-          <div className="mx-auto max-w-lg overflow-hidden rounded-card border border-line bg-card shadow-[0_1px_2px_rgba(23,38,56,0.04),0_16px_32px_-16px_rgba(23,38,56,0.18)] lg:relative lg:z-10 lg:-ml-10 lg:w-[calc(100%+2.5rem)] lg:max-w-none lg:pointer-events-none xl:-ml-20 xl:w-[calc(100%+5rem)]">
+          <div className="mx-auto max-w-lg overflow-hidden rounded-card border border-line bg-card shadow-md lg:relative lg:z-10 lg:-ml-10 lg:w-[calc(100%+2.5rem)] lg:max-w-none lg:pointer-events-none xl:-ml-20 xl:w-[calc(100%+5rem)]">
             <Image
               src="/images/hero-check-turnitin-v3.jpg"
               alt="Dịch vụ check Turnitin của HDI — Check AI Turnitin chỉ từ 50K, check đạo văn Turnitin chỉ từ 20K, combo AI và đạo văn Turnitin chỉ từ 60K"

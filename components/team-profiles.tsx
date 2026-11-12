@@ -7,6 +7,7 @@ import { Card } from "./ui/card";
 import { IconCheck, IconDownload } from "./ui/icons";
 import { Reveal } from "./ui/reveal";
 import { Section, SectionHeading } from "./ui/section";
+import { buttonClass } from "@/components/ui/button";
 
 /** Hồ sơ đầy đủ của cố vấn và trợ lý, đặt tại trang Về HDI. */
 export function TeamProfiles() {
@@ -72,7 +73,7 @@ export function TeamProfiles() {
               <a
                 href={links.cv}
                 download
-                className="inline-flex items-center gap-2 rounded-full border border-line bg-card px-4 py-2 text-sm font-bold text-fg transition hover:border-primary hover:text-primary"
+                className={buttonClass({ variant: "secondary", size: "sm" })}
               >
                 <IconDownload size={15} />
                 CV
@@ -80,7 +81,7 @@ export function TeamProfiles() {
               <a
                 href={links.teachingStatement}
                 download
-                className="inline-flex items-center gap-2 rounded-full border border-line bg-card px-4 py-2 text-sm font-bold text-fg transition hover:border-primary hover:text-primary"
+                className={buttonClass({ variant: "secondary", size: "sm" })}
               >
                 <IconDownload size={15} />
                 Teaching statement
@@ -189,7 +190,7 @@ export function TeamProfiles() {
               href={assistant.profile.portfolio}
               target="_blank"
               rel="noreferrer"
-              className="inline-flex items-center gap-2 rounded-full border border-line bg-card px-4 py-2 text-sm font-bold text-fg transition hover:border-primary hover:text-primary"
+              className={buttonClass({ variant: "secondary", size: "sm" })}
             >
               Portfolio
               <span aria-hidden>↗</span>
@@ -197,7 +198,7 @@ export function TeamProfiles() {
             <a
               href={assistant.profile.resume}
               download
-              className="inline-flex items-center gap-2 rounded-full border border-line bg-card px-4 py-2 text-sm font-bold text-fg transition hover:border-primary hover:text-primary"
+              className={buttonClass({ variant: "secondary", size: "sm" })}
             >
               <IconDownload size={15} />
               Resume

@@ -10,6 +10,7 @@ import {
 import { useCart } from "./cart-provider";
 import { CtaLink } from "./ui/cta-link";
 import { IconArrow, IconMessage } from "./ui/icons";
+import { buttonClass } from "@/components/ui/button";
 
 /**
  * Thanh học phí cố định ở đáy trang chi tiết — bản HDI của thanh "Starting at
@@ -63,7 +64,7 @@ export function CourseStickyBar({
   const { deal } = course.price;
 
   return (
-    <div className="course-bar-in fixed inset-x-0 bottom-0 z-30 border-t border-line bg-card/95 shadow-[0_-12px_30px_-18px_rgba(12,73,143,0.35)] backdrop-blur">
+    <div className="course-bar-in fixed inset-x-0 bottom-0 z-30 border-t border-line bg-card/95 shadow-[0_-1px_0_var(--border)] backdrop-blur">
       <div className="shell flex items-center justify-between gap-4 py-3">
         <div className="min-w-0">
           <p className="hidden truncate text-sm font-bold text-fg sm:block">
@@ -100,7 +101,7 @@ export function CourseStickyBar({
                 trackCta("khoa-hoc-sticky", "dang-ky", course.slug);
                 openCart(course.slug);
               }}
-              className="inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-bold text-primary-fg transition hover:bg-primary-deep"
+              className={buttonClass()}
             >
               Đăng ký ngay
               <IconArrow size={15} />
@@ -110,7 +111,7 @@ export function CourseStickyBar({
               source="khoa-hoc-sticky"
               target="zalo"
               course={course.slug}
-              className="inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-bold text-primary-fg transition hover:bg-primary-deep"
+              className={buttonClass()}
             >
               <IconMessage size={15} />
               Hỏi qua Zalo

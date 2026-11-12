@@ -349,14 +349,16 @@ describe("trang chi tiết khóa học", () => {
         params: Promise.resolve({ slug: course.slug }),
       }),
     );
+    const heading = html.indexOf(">Đánh giá học viên</h2>");
     const reviewBand = html.slice(
-      html.lastIndexOf("<section", html.indexOf("Người học chia sẻ")),
+      html.lastIndexOf("<section", heading),
       html.indexOf('id="chung-nhan"'),
     );
 
     expect(reviewBand).toMatch(/^<section[^>]*class="band /);
     expect(reviewBand).toContain("on-white");
-    expect(html.indexOf("Người học chia sẻ")).toBeLessThan(
+    expect(heading).toBeGreaterThan(-1);
+    expect(heading).toBeLessThan(
       html.indexOf('id="chung-nhan"'),
     );
   });

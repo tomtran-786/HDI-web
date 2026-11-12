@@ -1,6 +1,12 @@
 import type { ReactNode } from "react";
 
-/** The bordered card used throughout the design reference. */
+/**
+ * A ruled box for things a visitor can click or buy. Content that is only read
+ * sits directly on the page instead, separated by rules and whitespace.
+ *
+ * Elevation is declared once — a 1px border, no shadow. Hover darkens the
+ * border to the ink colour rather than lifting the box.
+ */
 export function Card({
   children,
   className = "",
@@ -12,12 +18,10 @@ export function Card({
   hover?: boolean;
   id?: string;
 }) {
-  const lift = hover
-    ? "transition duration-200 hover:-translate-y-0.5 hover:shadow-[0_10px_30px_-14px_rgba(12,73,143,0.35)]"
-    : "";
+  const hoverClass = hover ? "transition-colors duration-200 hover:border-rule" : "";
 
   return (
-    <div id={id} className={`rounded-card border border-line bg-card ${lift} ${className}`}>
+    <div id={id} className={`rounded-card border border-line bg-card ${hoverClass} ${className}`}>
       {children}
     </div>
   );

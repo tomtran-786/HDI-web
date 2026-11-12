@@ -7,6 +7,10 @@ const toneClass = {
   danger: "bg-tint text-danger",
 } as const;
 
+/**
+ * Chip trạng thái nhỏ — chỗ duy nhất còn dùng dạng viên thuốc. 12px là cỡ
+ * nhỏ nhất của chữ chức năng trên site.
+ */
 export function Badge({
   children,
   tone = "cool",
@@ -16,7 +20,7 @@ export function Badge({
 }) {
   return (
     <span
-      className={`inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-semibold leading-none ${toneClass[tone]}`}
+      className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold leading-none ${toneClass[tone]}`}
     >
       {children}
     </span>

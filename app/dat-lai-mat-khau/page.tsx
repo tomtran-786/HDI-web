@@ -7,6 +7,7 @@ import { SectionHeading } from "@/components/ui/section";
 import { Card } from "@/components/ui/card";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { resetPassword } from "./actions";
+import { buttonClass } from "@/components/ui/button";
 
 export const metadata: Metadata = {
   title: "Đặt lại mật khẩu — HDI Research Center",
@@ -51,7 +52,7 @@ export default async function ResetPasswordPage({
                   other exit is a sign-in page they still cannot get past. */}
               <Link
                 href={`/quen-mat-khau${nextQuery}`}
-                className="mt-4 inline-flex w-full items-center justify-center rounded-full bg-primary px-6 py-3 text-sm font-bold text-primary-fg transition hover:bg-primary-deep"
+                className="mt-4 inline-flex w-full items-center justify-center rounded-xs bg-primary px-6 py-3 text-sm font-bold text-primary-fg transition hover:bg-primary-deep"
               >
                 {resetPage.invalid.cta}
               </Link>
@@ -85,7 +86,7 @@ export default async function ResetPasswordPage({
                 />
               </label>
               <SubmitButton
-                className="w-full rounded-full bg-primary px-6 py-3 text-sm font-bold text-primary-fg transition hover:bg-primary-deep"
+                className={buttonClass({ size: "lg", className: "w-full" })}
                 pendingLabel="Đang đổi…"
               >
                 {resetPage.action}

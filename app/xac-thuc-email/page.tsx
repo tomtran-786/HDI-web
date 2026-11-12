@@ -9,6 +9,7 @@ import { Card } from "@/components/ui/card";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { IconCheck, IconMail } from "@/components/ui/icons";
 import { resendVerification, verifyEmail } from "./actions";
+import { buttonClass } from "@/components/ui/button";
 
 export const metadata: Metadata = {
   title: "Xác thực email — HDI Research Center",
@@ -19,7 +20,7 @@ const inputClass =
   "mt-1.5 w-full rounded-card border border-line bg-bg px-4 py-3 text-sm text-fg outline-none transition focus:border-primary";
 
 const primaryButton =
-  "w-full rounded-full bg-primary px-6 py-3 text-sm font-bold text-primary-fg transition hover:bg-primary-deep";
+  buttonClass({ size: "lg", className: "w-full" });
 
 function ResendForm({ next }: { next: string }) {
   return (

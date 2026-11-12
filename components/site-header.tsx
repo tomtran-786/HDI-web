@@ -223,7 +223,7 @@ export function SiteHeader({
                   }`}
                 >
                   <div
-                    className={`grid max-w-[calc(100vw-3rem)] gap-7 rounded-card border border-line bg-bg p-6 shadow-[0_24px_56px_-20px_rgba(12,73,143,0.45)] ${
+                    className={`grid max-w-[calc(100vw-3rem)] gap-7 rounded-card border border-line bg-bg p-6 shadow-lg ${
                       item.groups.length === 1
                         ? "w-[19rem] grid-cols-1"
                         : item.href === "/dich-vu"
@@ -296,7 +296,7 @@ export function SiteHeader({
               </Link>
               <Link
                 href="/dang-ky-tai-khoan"
-                className="hidden rounded-full border border-primary px-4 py-2 text-[11px] font-bold uppercase tracking-[0.12em] text-primary transition hover:bg-primary hover:text-primary-fg sm:inline-block"
+                className="hidden rounded-xs border border-primary px-4 py-2 text-[11px] font-bold uppercase tracking-[0.12em] text-primary transition hover:bg-primary hover:text-primary-fg sm:inline-block"
               >
                 Đăng ký
               </Link>
@@ -337,7 +337,7 @@ export function SiteHeader({
           <nav
             id="mobile-navigation"
             aria-label="Điều hướng di động"
-            className="absolute inset-x-0 top-full z-20 max-h-[calc(100dvh-4rem)] overflow-y-auto border-t border-line bg-bg shadow-[0_24px_48px_-24px_rgba(12,73,143,0.4)] xl:hidden"
+            className="absolute inset-x-0 top-full z-20 max-h-[calc(100dvh-4rem)] overflow-y-auto border-t border-line bg-bg shadow-lg xl:hidden"
           >
             <div className="shell py-5">
               {/* Mirrors the header's standalone toggle, which hides below
@@ -433,7 +433,7 @@ export function SiteHeader({
                   <Link
                     href="/tai-khoan"
                     onClick={closeMobile}
-                    className="flex items-center justify-center gap-2 rounded-full bg-primary px-5 py-3 text-center text-sm font-bold text-primary-fg"
+                    className="flex items-center justify-center gap-2 rounded-xs bg-primary px-5 py-3 text-center text-sm font-bold text-primary-fg"
                   >
                     <Avatar
                       src={user?.image}
@@ -456,7 +456,7 @@ export function SiteHeader({
                     <Link
                       href="/dang-ky-tai-khoan"
                       onClick={closeMobile}
-                      className="rounded-full bg-primary px-5 py-3 text-center text-sm font-bold text-primary-fg"
+                      className="rounded-xs bg-primary px-5 py-3 text-center text-sm font-bold text-primary-fg"
                     >
                       Đăng ký
                     </Link>

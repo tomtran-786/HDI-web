@@ -28,7 +28,7 @@ export function OpeningPoster({
     <section data-opening-poster className="border-t border-line bg-tint">
       <div className="shell py-12 sm:py-16">
         <Reveal>
-          <div className="overflow-hidden rounded-card border border-line bg-card shadow-[0_1px_2px_rgba(23,38,56,0.04),0_16px_32px_-16px_rgba(23,38,56,0.18)]">
+          <div className="overflow-hidden rounded-card border border-line bg-card shadow-md">
             <Image
               src="/images/lich-khai-giang-09-12-2026.png"
               alt="Lịch khai giảng các khóa đang mở đăng ký, tháng 09/2026 – 12/2026. AIQT — Nghiên cứu khoa học ứng dụng AI & xuất bản quốc tế: Buổi 1 Thứ Ba 01/12, Buổi 2 Thứ Bảy 05/12, Buổi 3 Thứ Ba 08/12, Buổi 4 Thứ Bảy 12/12, Buổi 5 Thứ Ba 15/12, Buổi 6 Thứ Bảy 19/12/2026. TIEULUAN — Viết tiểu luận, NCKH & khóa luận tốt nghiệp: Buổi 1 Thứ Hai 07/12, Buổi 2 Thứ Hai 14/12, Buổi 3 Thứ Hai 21/12/2026. STATA — Stata trong nghiên cứu định lượng: dự kiến khai giảng tháng 11/2026, đang tuyển sinh. SPSS — Phân tích định lượng với SPSS: Buổi 1 Thứ Hai 02/11, Buổi 2 Thứ Hai 09/11, Buổi 3 Thứ Hai 16/11, Buổi 4 Thứ Hai 23/11, Buổi 5 Thứ Hai 30/11/2026. Cả bốn khóa học trực tuyến qua Zoom, học liệu xem lại trong 02 năm. Cố vấn học thuật: Dr. Tam Trinh, PhD in Economics, Deakin University. Zalo tư vấn: 0333443388 (HDI Admin)."

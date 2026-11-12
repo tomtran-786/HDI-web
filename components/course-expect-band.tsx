@@ -39,7 +39,7 @@ export function CourseExpectBand({
           </h2>
           <a
             href={`#${priceCardId}`}
-            className="mt-8 inline-flex items-center gap-2 rounded-full bg-white px-6 py-3 text-sm font-bold text-[#0c498f] transition-colors hover:bg-white/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-on-band focus-visible:ring-offset-2 focus-visible:ring-offset-(color:--band-from)"
+            className="mt-8 inline-flex items-center gap-2 rounded-full bg-white px-6 py-3 text-sm font-bold text-[#0c498f] transition-colors hover:bg-white/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-on-band focus-visible:ring-offset-2 focus-visible:ring-offset-(color:--band)"
           >
             {buyable ? courseExpect.cta.open : courseExpect.cta.closed}
             <IconArrow size={16} />
@@ -54,13 +54,13 @@ export function CourseExpectBand({
           >
             <div
               aria-hidden
-              className="absolute inset-x-3 inset-y-4 -rotate-[6.5deg] rounded-card bg-white/55 shadow-[0_20px_60px_-24px_rgba(0,0,0,0.6)]"
+              className="absolute inset-x-3 inset-y-4 -rotate-[6.5deg] rounded-card bg-white/55 shadow-lg"
             />
             <div
               aria-hidden
-              className="absolute inset-x-3 inset-y-4 -rotate-[4.2deg] rounded-card bg-white/80 shadow-[0_20px_60px_-24px_rgba(0,0,0,0.6)]"
+              className="absolute inset-x-3 inset-y-4 -rotate-[4.2deg] rounded-card bg-white/80 shadow-lg"
             />
-            <ol className="on-white relative -rotate-2 space-y-5 rounded-card p-6 shadow-[0_24px_70px_-24px_rgba(0,0,0,0.65)] sm:p-7">
+            <ol className="on-white relative -rotate-2 space-y-5 rounded-card p-6 shadow-lg sm:p-7">
               {outcomes.map((outcome, index) => (
                 <li
                   key={outcome}

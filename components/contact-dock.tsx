@@ -37,7 +37,7 @@ function FeedbackBubbleButton({
   return (
     <div className="flex items-center justify-end gap-2">
       {showLabel && (
-        <span className="rounded-full border border-line bg-card px-3 py-1.5 text-xs font-bold text-fg shadow-md">
+        <span className="rounded-xs border border-line bg-card px-3 py-1.5 text-xs font-bold text-fg shadow-md">
           {feedbackCopy.bubble}
         </span>
       )}
@@ -109,7 +109,7 @@ export function ContactDock({ signedIn }: { signedIn: boolean }) {
               }`}
               style={{ transitionDelay: `${index * 45}ms` }}
             >
-              <span className="rounded-full border border-line bg-card px-3 py-1.5 text-xs font-bold text-fg shadow-md">
+              <span className="rounded-xs border border-line bg-card px-3 py-1.5 text-xs font-bold text-fg shadow-md">
                 {channel.label}
               </span>
               <a
@@ -138,7 +138,7 @@ export function ContactDock({ signedIn }: { signedIn: boolean }) {
         aria-expanded={open}
         aria-label={open ? "Đóng các kênh liên hệ" : "Mở các kênh liên hệ"}
         onClick={() => setOpen((current) => !current)}
-        className="inline-flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-fg shadow-[0_10px_28px_-8px_rgba(12,73,143,0.7)] transition hover:-translate-y-0.5 hover:bg-primary-deep"
+        className="inline-flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-fg shadow-md transition hover:-translate-y-0.5 hover:bg-primary-deep"
       >
         {open ? <IconClose size={23} /> : <IconMessage size={23} />}
       </button>

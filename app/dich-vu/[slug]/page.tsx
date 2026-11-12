@@ -12,6 +12,7 @@ import {
 } from "@/content/services";
 import { site } from "@/content/site";
 import { structuredDataForService } from "@/lib/structured-data";
+import { buttonClass } from "@/components/ui/button";
 
 type ServicePageProps = { params: Promise<{ slug: string }> };
 
@@ -129,7 +130,7 @@ export default async function ServiceDetailPage({ params }: ServicePageProps) {
               <CtaLink
                 source="dich-vu-detail"
                 target="tu-van"
-                className="inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-bold text-primary-fg transition hover:bg-primary-deep"
+                className={buttonClass()}
               >
                 Đăng ký tư vấn miễn phí
                 <IconArrow size={15} />

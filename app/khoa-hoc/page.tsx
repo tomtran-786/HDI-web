@@ -12,6 +12,7 @@ import { site } from "@/content/site";
 import { isListed } from "@/lib/course-availability";
 import { landingCourseData } from "@/lib/course-sales";
 import type { ReviewSummary } from "@/lib/reviews";
+import { buttonClass } from "@/components/ui/button";
 
 export const metadata: Metadata = {
   title: `Khóa học — ${site.name}`,
@@ -79,7 +80,7 @@ export default async function CoursesPage() {
               <CtaLink
                 source="lien-he"
                 target="tu-van"
-                className="mt-6 inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-bold text-primary-fg transition hover:bg-primary-deep"
+                className="mt-6 inline-flex items-center gap-2 rounded-xs bg-primary px-5 py-2.5 text-sm font-bold text-primary-fg transition hover:bg-primary-deep"
               >
                 Tư vấn miễn phí
                 <IconArrow size={15} />
@@ -110,7 +111,7 @@ export default async function CoursesPage() {
               <CtaLink
                 source="lien-he"
                 target="tu-van"
-                className="inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-bold text-primary-fg transition hover:bg-primary-deep"
+                className={buttonClass()}
               >
                 Tư vấn miễn phí
                 <IconArrow size={15} />

@@ -8,6 +8,7 @@ import { Reveal } from "@/components/ui/reveal";
 import { Section, SectionHeading } from "@/components/ui/section";
 import { serviceCatalog } from "@/content/services";
 import { site } from "@/content/site";
+import { buttonClass } from "@/components/ui/button";
 
 export const metadata: Metadata = {
   title: `Dịch vụ — ${site.name}`,
@@ -105,7 +106,7 @@ export default function ServicesPage() {
               <CtaLink
                 source="dich-vu-hub"
                 target="tu-van"
-                className="inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-bold text-primary-fg transition hover:bg-primary-deep"
+                className={buttonClass()}
               >
                 Đăng ký tư vấn miễn phí
                 <IconArrow size={15} />

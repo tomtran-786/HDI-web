@@ -6,6 +6,7 @@ import { restoreCartFromOrder } from "@/app/actions/checkout";
 import { useCart } from "@/components/cart-provider";
 import { checkoutReclaim } from "@/content/checkout";
 import { HANDOFF_COOKIE } from "@/lib/checkout-handoff-cookie";
+import { buttonClass } from "@/components/ui/button";
 
 /**
  * Hai trang PayOS trả về, và cả hai đều phải được bỏ qua.
@@ -116,7 +117,7 @@ export function CheckoutReclaim() {
                 router.push("/gio-hang");
               });
             }}
-            className="inline-flex items-center rounded-full bg-primary px-5 py-2.5 text-sm font-bold text-primary-fg transition hover:bg-primary-deep disabled:opacity-60"
+            className={buttonClass()}
           >
             {restoring ? "Đang mở lại giỏ…" : checkoutReclaim.restore}
           </button>

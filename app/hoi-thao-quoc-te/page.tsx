@@ -14,6 +14,7 @@ import { CtaLink } from "@/components/ui/cta-link";
 import { IconArrow, IconCheck } from "@/components/ui/icons";
 import { Reveal } from "@/components/ui/reveal";
 import { Section, SectionHeading } from "@/components/ui/section";
+import { buttonClass } from "@/components/ui/button";
 
 export const metadata: Metadata = {
   title: `Hội thảo quốc tế & cơ hội xuất bản — ${site.name}`,
@@ -163,7 +164,7 @@ export default function ConferenceProgramPage() {
               <CtaLink
                 source="hoi-thao-quoc-te"
                 target="tu-van"
-                className="inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-bold text-primary-fg transition hover:bg-primary-deep"
+                className={buttonClass()}
               >
                 Đăng ký tư vấn lộ trình hội thảo
                 <IconArrow size={15} />

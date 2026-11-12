@@ -413,7 +413,7 @@ export default async function CourseDetailPage({ params }: CoursePageProps) {
               <Reveal key={review.id} delay={index * 60} className="h-full">
                 {/* `on-white`: thẻ giữ nền trắng và màu chữ sáng ở cả dark mode,
                     vì nó nằm trên band navy chứ không trên nền trang. */}
-                <div className="on-white flex h-full flex-col rounded-card border border-line p-6 shadow-[0_2px_100px_rgba(0,0,0,0.25)]">
+                <div className="on-white flex h-full flex-col rounded-card border border-line p-6 shadow-md">
                   <Stars value={review.rating} size={15} />
                   {review.comment && (
                     <p className="mt-3 text-[15px] font-semibold leading-relaxed text-fg">

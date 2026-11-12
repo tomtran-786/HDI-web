@@ -20,6 +20,7 @@ import { PaymentPoll } from "@/components/payment-poll";
 import { PayosLink } from "@/components/payos-link";
 import { CancelServiceOrder } from "./cancel";
 import { CopyCode } from "./copy-code";
+import { buttonClass } from "@/components/ui/button";
 
 export const metadata: Metadata = {
   title: "Đơn dịch vụ — HDI Research Center",
@@ -159,7 +160,7 @@ export default async function ServiceOrderResultPage({
             <PayosLink
               href={order.checkoutUrl}
               handoff={{ kind: "service", key: ref }}
-              className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-full bg-primary px-5 py-3 text-sm font-bold text-primary-fg transition hover:bg-primary-deep"
+              className={buttonClass({ size: "lg", className: "mt-5 w-full" })}
             >
               Mở lại trang thanh toán
               <IconArrow size={16} />
@@ -196,7 +197,7 @@ export default async function ServiceOrderResultPage({
             href={links.zalo}
             target="_blank"
             rel="noopener noreferrer"
-            className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-full bg-primary px-5 py-3 text-sm font-bold text-primary-fg transition hover:bg-primary-deep"
+            className={buttonClass({ size: "lg", className: "mt-5 w-full" })}
           >
             <IconMessage size={16} />
             {aiCheck.result.sendCta}

@@ -186,7 +186,7 @@ export function CourseCard({
 
   return (
     <>
-      <article className="group relative flex h-full flex-col overflow-hidden rounded-card border border-line bg-card text-fg shadow-[0_12px_18px_-6px_rgba(0,0,0,0.12)] transition duration-200 hover:-translate-y-0.5 hover:border-primary hover:shadow-[0_16px_30px_-12px_rgba(12,73,143,0.35)]">
+      <article className="group relative flex h-full flex-col overflow-hidden rounded-card border border-line bg-card text-fg shadow-md transition duration-200 hover:-translate-y-0.5 hover:border-primary hover:shadow-md">
         <Link
           href={`/khoa-hoc/${course.slug}`}
           onClick={(event) => {
@@ -256,7 +256,7 @@ export function CourseCard({
                 openQuickView();
               }
             }}
-            className="relative z-10 inline-flex shrink-0 items-center gap-1.5 rounded-full bg-primary px-4 py-2 text-sm font-bold text-primary-fg transition hover:bg-primary-deep"
+            className="relative z-10 inline-flex shrink-0 items-center gap-1.5 rounded-xs bg-primary px-4 py-2 text-sm font-bold text-primary-fg transition hover:bg-primary-deep"
           >
             {buyable ? "Đăng ký ngay" : "Xem nhanh"}
             <IconArrow size={14} />

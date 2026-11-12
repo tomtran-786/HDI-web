@@ -29,10 +29,10 @@ const documents = [
 ];
 
 // Footer là band navy ở cả hai theme, nên chữ/ring dùng màu cố định trên nền
-// tối thay vì token chữ của trang. `--band-from` làm màu offset của ring focus.
+// tối thay vì token chữ của trang. `--band` làm màu offset của ring focus.
 const focusRing =
   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-on-band " +
-  "focus-visible:ring-offset-2 focus-visible:ring-offset-(color:--band-from)";
+  "focus-visible:ring-offset-2 focus-visible:ring-offset-(color:--band)";
 
 // Shared link treatment — explicit `transition-colors` (not `transition`), a
 // designed focus ring, and a hover colour, so every footer link has real
@@ -92,7 +92,7 @@ export function SiteFooter() {
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label={label}
-                  className={`inline-flex h-8 w-8 items-center justify-center rounded-full bg-accent-on-band text-(--band-from) transition-opacity hover:opacity-85 ${focusRing}`}
+                  className={`inline-flex h-8 w-8 items-center justify-center rounded-full bg-accent-on-band text-(--band) transition-opacity hover:opacity-85 ${focusRing}`}
                 >
                   <Icon size={16} />
                 </a>
@@ -102,7 +102,7 @@ export function SiteFooter() {
         </FooterColumn>
       </div>
 
-      <div className="relative bg-[color-mix(in_srgb,var(--band-from)_70%,black)]">
+      <div className="relative bg-[color-mix(in_srgb,var(--band)_70%,black)]">
         <div className="shell flex flex-col gap-2 py-5 text-sm text-white/45 sm:flex-row sm:items-center sm:justify-between">
           <p>
             © {new Date().getFullYear()} {site.name}

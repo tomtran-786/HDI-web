@@ -1,14 +1,15 @@
 import type { ReactNode } from "react";
-import { CornerRings } from "./corner-rings";
 import { Notation } from "./notation";
-import { Reveal } from "./reveal";
 
 type SectionTone = "plain" | "soft" | "band";
 
 /**
- * One page section. `tone` picks the surface: `plain`, `soft` (the alternate
- * radial wash) or `band` (a navy band with corner rings). `soft` stays as a
- * boolean alias so the existing call sites don't change.
+ * One page section. `tone` picks the surface: `plain`, `soft` (a flat, barely
+ * tinted paper) or `band` (a flat navy band). `soft` stays as a boolean alias
+ * so the existing call sites don't change.
+ *
+ * Sections are separated by a hairline rule and whitespace, the way the parts
+ * of a printed programme are — no washes, no decorative rings.
  */
 export function Section({
   id,
@@ -27,12 +28,8 @@ export function Section({
 
   if (resolved === "band") {
     return (
-      <section
-        id={id}
-        className={`band relative isolate scroll-mt-24 overflow-hidden ${className}`}
-      >
-        <CornerRings />
-        <div className="shell relative py-16 sm:py-20 lg:py-24">{children}</div>
+      <section id={id} className={`band relative scroll-mt-24 ${className}`}>
+        <div className="shell relative py-14 sm:py-16 lg:py-20">{children}</div>
       </section>
     );
   }
@@ -44,7 +41,7 @@ export function Section({
         resolved === "soft" ? "bg-bg-soft" : "bg-bg"
       } text-fg ${className}`}
     >
-      <div className="shell py-16 sm:py-20 lg:py-24">{children}</div>
+      <div className="shell py-14 sm:py-16 lg:py-20">{children}</div>
     </section>
   );
 }
@@ -66,14 +63,17 @@ export function splitTitleAtMark(title: string, mark: HeadingMark) {
   };
 }
 
+/**
+ * Tiêu đề có một cụm được gạch/khoanh bằng nét vẽ tay. Nét vẽ tay chỉ còn
+ * dùng tối đa một lần mỗi trang, cho đúng một tiêu đề chính — SectionHeading
+ * không còn tự vẽ nó.
+ */
 export function MarkedTitle({ title, mark }: { title: string; mark?: HeadingMark }) {
   if (!mark) return <>{title}</>;
   const parts = splitTitleAtMark(title, mark);
   if (!parts) {
     if (process.env.NODE_ENV !== "production") {
-      console.warn(
-        `SectionHeading: mark "${mark.text}" không nằm trong title "${title}"`,
-      );
+      console.warn(`MarkedTitle: mark "${mark.text}" không nằm trong title "${title}"`);
     }
     return <>{title}</>;
   }
@@ -86,54 +86,47 @@ export function MarkedTitle({ title, mark }: { title: string; mark?: HeadingMark
   );
 }
 
+/**
+ * Tiêu đề section, căn trái. Tiêu đề tự mang trọng lượng của nó: không còn
+ * nhãn in hoa nhỏ phía trên (eyebrow) và không còn nét vẽ tay. Hai prop
+ * `eyebrow` và `mark` vẫn được nhận để các trang chưa chuyển sang bố cục mới
+ * không vỡ, nhưng không được vẽ ra; thông tin nào trong eyebrow thật sự cần
+ * thì đưa vào `title` hoặc `subtitle` khi làm lại trang đó.
+ */
 export function SectionHeading({
-  eyebrow,
   title,
   subtitle,
   align = "left",
-  mark,
   onBand = false,
 }: {
+  /** @deprecated Không còn được vẽ ra. */
   eyebrow?: string;
   title: string;
   subtitle?: string;
   align?: "left" | "center";
-  /** Một cụm trong `title` được gạch chân / khoanh tròn bằng nét vẽ tay. */
+  /** @deprecated Không còn được vẽ ra. */
   mark?: HeadingMark;
-  /** Tiêu đề nằm trên band navy: h2 trắng, eyebrow màu accent. */
+  /** Tiêu đề nằm trên band navy: chữ trắng. */
   onBand?: boolean;
 }) {
   return (
-    <Reveal
-      className={`mb-10 sm:mb-12 ${align === "center" ? "text-center" : ""}`}
-    >
-      {eyebrow && (
-        <p
-          className={`mb-3 text-xs font-semibold uppercase tracking-[0.18em] ${
-            onBand ? "text-accent-on-band" : "text-fg-muted"
-          }`}
-        >
-          {eyebrow}
-        </p>
-      )}
+    <div className={`mb-8 sm:mb-10 ${align === "center" ? "text-center" : ""}`}>
       <h2
-        className={`text-3xl font-bold tracking-tight sm:text-4xl lg:text-[2.75rem] ${
-          // Tiêu đề có nét vẽ tay cần dòng thoáng hơn để nét ở dòng trên không
-          // chạm dấu tiếng Việt của dòng dưới.
-          mark ? "leading-[1.22]" : "lg:leading-[1.1]"
-        } ${onBand ? "text-white" : "text-primary"}`}
+        className={`text-[1.875rem] leading-[1.15] font-bold tracking-[-0.02em] sm:text-4xl lg:text-[2.625rem] ${
+          onBand ? "text-white" : "text-fg"
+        }`}
       >
-        <MarkedTitle title={title} mark={mark} />
+        {title}
       </h2>
       {subtitle && (
         <p
-          className={`mt-3 max-w-2xl text-base sm:text-lg ${
-            onBand ? "text-white/75" : "text-fg-muted"
+          className={`mt-3 max-w-[62ch] text-base sm:text-lg ${
+            onBand ? "text-white/80" : "text-fg-muted"
           } ${align === "center" ? "mx-auto" : ""}`}
         >
           {subtitle}
         </p>
       )}
-    </Reveal>
+    </div>
   );
 }

@@ -8,6 +8,7 @@ import { CtaLink } from "@/components/ui/cta-link";
 import { IconArrow, IconCheck } from "@/components/ui/icons";
 import { Reveal } from "@/components/ui/reveal";
 import { Section, SectionHeading } from "@/components/ui/section";
+import { buttonClass } from "@/components/ui/button";
 
 const DESCRIPTION =
   "HDI Research Center là cộng đồng huấn luyện và hỗ trợ nghiên cứu dành cho sinh viên, học viên cao học, nghiên cứu sinh, giảng viên và nhà nghiên cứu trẻ, dưới sự định hướng chuyên môn của Dr. Tam Trinh – Lead Academic Advisor.";
@@ -161,7 +162,7 @@ export default function AboutHdiPage() {
             <CheckList items={about.record.items} columns />
             <Link
               href={about.record.cta.href}
-              className="mt-7 inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-bold text-primary-fg transition hover:bg-primary-deep"
+              className="mt-7 inline-flex items-center gap-2 rounded-xs bg-primary px-5 py-2.5 text-sm font-bold text-primary-fg transition hover:bg-primary-deep"
             >
               {about.record.cta.label}
               <IconArrow size={15} />
@@ -183,7 +184,7 @@ export default function AboutHdiPage() {
               <CtaLink
                 source="lien-he"
                 target="tu-van"
-                className="inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-bold text-primary-fg transition hover:bg-primary-deep"
+                className={buttonClass()}
               >
                 Đăng ký tư vấn miễn phí
                 <IconArrow size={15} />

@@ -8,6 +8,7 @@ import { Card } from "@/components/ui/card";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { IconCheck } from "@/components/ui/icons";
 import { requestPasswordReset } from "./actions";
+import { buttonClass } from "@/components/ui/button";
 
 export const metadata: Metadata = {
   title: "Quên mật khẩu — HDI Research Center",
@@ -72,7 +73,7 @@ export default async function ForgotPasswordPage({
                   />
                 </label>
                 <SubmitButton
-                  className="w-full rounded-full bg-primary px-6 py-3 text-sm font-bold text-primary-fg transition hover:bg-primary-deep"
+                  className={buttonClass({ size: "lg", className: "w-full" })}
                   pendingLabel="Đang gửi…"
                 >
                   {forgotPage.action}

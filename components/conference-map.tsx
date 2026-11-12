@@ -125,7 +125,7 @@ export function ConferenceMap() {
   return (
     <div ref={rootRef} data-map className="relative">
       <div className="relative aspect-[16/10] sm:aspect-[2/1]">
-        <div className="absolute inset-0 overflow-hidden rounded-[20px] border border-line bg-card bg-[radial-gradient(circle_at_50%_40%,color-mix(in_srgb,var(--accent)_4%,transparent),transparent_70%)] shadow-[0_2px_100px_rgba(31,73,125,0.18)]">
+        <div className="absolute inset-0 overflow-hidden rounded-[20px] border border-line bg-card bg-[radial-gradient(circle_at_50%_40%,color-mix(in_srgb,var(--accent)_4%,transparent),transparent_70%)] shadow-md">
           <svg
             aria-hidden
             viewBox={`0 0 ${MAP_WIDTH} ${MAP_HEIGHT}`}
@@ -257,7 +257,7 @@ export function ConferenceMap() {
                   <span
                     id={tipId}
                     role="tooltip"
-                    className={`band pointer-events-none absolute z-30 w-60 max-w-[70vw] rounded-xl px-3.5 py-3 text-left shadow-[0_12px_40px_rgba(0,0,0,0.3)] transition-opacity duration-150 ${
+                    className={`band pointer-events-none absolute z-30 w-60 max-w-[70vw] rounded-xl px-3.5 py-3 text-left shadow-lg transition-opacity duration-150 ${
                       open
                         ? "visible opacity-100"
                         : dismissed
@@ -291,7 +291,7 @@ export function ConferenceMap() {
 
       {/* Thẻ số liệu: nổi đè mép dưới bản đồ từ `sm`, xuống dưới thành lưới 2×2
           ở mobile. Số chạy lên khi cuộn tới (RunningScore). */}
-      <dl className="band relative z-10 mt-4 grid grid-cols-2 gap-y-6 rounded-[18px] px-4 py-6 shadow-[0_12px_40px_rgba(12,73,143,0.25)] sm:-mt-10 sm:mx-6 sm:grid-cols-4 sm:px-6">
+      <dl className="band relative z-10 mt-4 grid grid-cols-2 gap-y-6 rounded-[18px] px-4 py-6 shadow-lg sm:-mt-10 sm:mx-6 sm:grid-cols-4 sm:px-6">
         {stats.map((stat) => (
           <div key={stat.label} className="text-center">
             <dt className="sr-only">{`${stat.label}: ${format(stat, stat.to)}`}</dt>

@@ -36,7 +36,7 @@ export function CourseCover({
         variant === "banner"
           ? "h-[200px] border-b border-line sm:h-[280px] lg:h-[340px]"
           : variant === "hero"
-            ? "aspect-[16/9] rounded-card border border-line shadow-[0_18px_40px_-24px_rgba(12,73,143,0.45)]"
+            ? "aspect-[16/9] rounded-card border border-line shadow-md"
             : "aspect-[16/9] border-b border-line"
       }`}
     >

@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import Link from "next/link";
 import { Section } from "@/components/ui/section";
+import { buttonClass } from "@/components/ui/button";
 
 /**
  * Ranh giới lỗi riêng cho khu quản trị.
@@ -50,7 +51,7 @@ export default function AdminError({
           <button
             type="button"
             onClick={reset}
-            className="rounded-full bg-primary px-6 py-3 text-sm font-bold text-primary-fg transition hover:bg-primary-deep"
+            className={buttonClass({ size: "lg" })}
           >
             Thử lại
           </button>

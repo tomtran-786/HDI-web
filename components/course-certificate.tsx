@@ -87,7 +87,7 @@ export function CertificateSection({ soft = false }: { soft?: boolean }) {
               aria-hidden
               className="pointer-events-none absolute -bottom-4 -right-2 h-56 w-56 rounded-full bg-primary/25 blur-3xl"
             />
-            <div className="relative -rotate-2 rounded-card border border-line bg-white p-3 shadow-[0_2px_100px_rgba(31,73,125,0.18)] transition-transform duration-300 hover:rotate-0 motion-reduce:rotate-0 motion-reduce:transition-none sm:p-4">
+            <div className="relative -rotate-2 rounded-card border border-line bg-white p-3 shadow-md transition-transform duration-300 hover:rotate-0 motion-reduce:rotate-0 motion-reduce:transition-none sm:p-4">
               <CertificateViewer />
             </div>
             <span

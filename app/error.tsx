@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { Section } from "@/components/ui/section";
+import { buttonClass } from "@/components/ui/button";
 
 export default function ErrorPage({
   error,
@@ -30,7 +31,7 @@ export default function ErrorPage({
           <button
             type="button"
             onClick={reset}
-            className="rounded-full bg-primary px-6 py-3 text-sm font-bold text-primary-fg transition hover:bg-primary-deep"
+            className={buttonClass({ size: "lg" })}
           >
             Thử lại
           </button>

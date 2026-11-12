@@ -25,12 +25,12 @@ export function PriceTag({
   const { deal } = price;
   const leadClass =
     size === "lg"
-      ? "text-2xl font-bold tracking-tight text-primary sm:text-3xl"
-      : "text-lg font-bold text-primary";
+      ? "font-cond text-[1.75rem] leading-none font-bold text-fg sm:text-[2rem]"
+      : "font-cond text-xl leading-none font-bold text-fg";
   const struckClass =
     size === "lg"
-      ? "text-base font-semibold text-fg-subtle line-through"
-      : "text-sm font-semibold text-fg-subtle line-through";
+      ? "font-cond text-base font-semibold text-fg-subtle line-through"
+      : "font-cond text-sm font-semibold text-fg-subtle line-through";
 
   if (!deal) {
     return <p className={leadClass}>{price.amount}</p>;
