@@ -52,7 +52,7 @@ export default function ConferenceProgramPage() {
           src={images.hero.src}
           alt={images.hero.alt}
           fill
-          priority
+          preload
           sizes="100vw"
           className="object-cover"
         />

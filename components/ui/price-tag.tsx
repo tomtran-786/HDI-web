@@ -25,8 +25,8 @@ export function PriceTag({
   const { deal } = price;
   const leadClass =
     size === "lg"
-      ? "font-cond text-[1.75rem] leading-none font-bold text-fg sm:text-[2rem]"
-      : "font-cond text-xl leading-none font-bold text-fg";
+      ? "font-cond text-[1.75rem] leading-none font-bold whitespace-nowrap text-fg sm:text-[2rem]"
+      : "font-cond text-xl leading-none font-bold whitespace-nowrap text-fg";
   const struckClass =
     size === "lg"
       ? "font-cond text-base font-semibold text-fg-subtle line-through"

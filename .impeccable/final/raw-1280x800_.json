@@ -1,0 +1,13 @@
+[
+  {
+    "antipattern": "marquee",
+    "name": "Auto-scrolling marquee",
+    "description": "Continuously auto-scrolling content demands attention it has not earned and hides half its content at any moment. Reserve motion for content that changes; let readers move at their own pace.",
+    "severity": "warning",
+    "category": "slop",
+    "file": "http://localhost:3001/",
+    "line": 0,
+    "snippet": ".marquee-track — infinite horizontal loop animation \"marquee-left\"",
+    "selector": "body"
+  }
+]

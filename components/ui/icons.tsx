@@ -182,13 +182,6 @@ export function IconChevronDown({ className, size = 18 }: IconProps) {
   );
 }
 
-export const programIcons = {
-  user: IconUser,
-  users: IconUsers,
-  journal: IconJournal,
-  revise: IconRevise,
-};
-
 /**
  * Google's mark, in its official four colours — the one icon here that ignores
  * `currentColor`, because Google's brand guidelines require the real colours on

@@ -29,7 +29,7 @@ export function Section({
   if (resolved === "band") {
     return (
       <section id={id} className={`band relative scroll-mt-24 ${className}`}>
-        <div className="shell relative py-14 sm:py-16 lg:py-20">{children}</div>
+        <div className="shell relative py-12 sm:py-16 lg:py-20">{children}</div>
       </section>
     );
   }
@@ -41,7 +41,7 @@ export function Section({
         resolved === "soft" ? "bg-bg-soft" : "bg-bg"
       } text-fg ${className}`}
     >
-      <div className="shell py-14 sm:py-16 lg:py-20">{children}</div>
+      <div className="shell py-12 sm:py-16 lg:py-20">{children}</div>
     </section>
   );
 }

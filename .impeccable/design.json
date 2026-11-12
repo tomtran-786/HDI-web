@@ -1,0 +1,218 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-11-12T03:00:00Z",
+  "title": "Design System: HDI Research Center",
+  "extensions": {
+    "colorMeta": {
+      "navy": {
+        "role": "primary",
+        "displayName": "Navy HDI",
+        "tonalRamp": [
+          "#06213f",
+          "#003865",
+          "#0c498f",
+          "#2f68ab",
+          "#5b8bc4",
+          "#8fb2da",
+          "#c4d6ec",
+          "#e8eef6"
+        ]
+      },
+      "rust": {
+        "role": "secondary",
+        "displayName": "Gỉ sét",
+        "tonalRamp": [
+          "#4a1c09",
+          "#7a2f10",
+          "#9a3a12",
+          "#b4471a",
+          "#d06a3c",
+          "#ec9a72",
+          "#f6c8b0",
+          "#fbe9df"
+        ]
+      },
+      "ink": {
+        "role": "neutral",
+        "displayName": "Mực",
+        "tonalRamp": [
+          "#0b0d12",
+          "#141821",
+          "#2b3341",
+          "#464d5b",
+          "#5a6170",
+          "#959eac",
+          "#d9dde4",
+          "#f6f7f9"
+        ]
+      },
+      "paper": {
+        "role": "neutral",
+        "displayName": "Giấy"
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display",
+        "purpose": "Tiêu đề duy nhất của trang chủ."
+      },
+      "figure": {
+        "displayName": "Figure",
+        "purpose": "Ngày, giờ, học phí, số liệu — tabular-nums."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Nhãn trường form và đầu cột; không làm kicker trên tiêu đề."
+      }
+    },
+    "shadows": [
+      {
+        "name": "shadow-sm",
+        "value": "0 1px 2px rgb(20 24 33 / 0.08)",
+        "purpose": "Nhãn nổi nhỏ, khung ảnh chứng nhận."
+      },
+      {
+        "name": "shadow-md",
+        "value": "0 2px 4px rgb(20 24 33 / 0.06), 0 12px 24px -8px rgb(20 24 33 / 0.16)",
+        "purpose": "Nút nổi liên hệ, tờ danh sách trên dải navy."
+      },
+      {
+        "name": "shadow-lg",
+        "value": "0 4px 8px rgb(20 24 33 / 0.08), 0 24px 48px -12px rgb(20 24 33 / 0.28)",
+        "purpose": "Dialog, menu thả xuống."
+      }
+    ],
+    "motion": [
+      {
+        "name": "ease-out-expo",
+        "value": "cubic-bezier(0.16, 1, 0.3, 1)",
+        "purpose": "Mọi chuyển động có chủ đích: dialog, thẻ đeo, hàng danh sách."
+      },
+      {
+        "name": "badge-settle",
+        "value": "1.4s ease-out-expo, rotate -4deg → 1.2deg → 0",
+        "purpose": "Thẻ đeo diễn giả lắc một lần khi tải, chỉ từ 1024px, tắt khi giảm chuyển động."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "xs",
+        "value": "400px"
+      },
+      {
+        "name": "sm",
+        "value": "640px"
+      },
+      {
+        "name": "md",
+        "value": "768px"
+      },
+      {
+        "name": "lg",
+        "value": "1024px"
+      },
+      {
+        "name": "xl",
+        "value": "1280px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Hành động chính: Đăng ký, Thanh toán.",
+      "html": "<button class=\"ds-btn-primary\">Đăng ký</button>",
+      "css": ".ds-btn-primary{display:inline-flex;align-items:center;height:44px;padding:0 20px;background:var(--primary,#0c498f);color:#fff;border:0;border-radius:2px;font-weight:600;font-size:15px;transition:background-color .15s}.ds-btn-primary:hover{background:var(--primary-deep,#003865)}.ds-btn-primary:focus-visible{outline:2px solid #0c498f;outline-offset:2px}"
+    },
+    {
+      "name": "Secondary Button",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "Hành động phụ cạnh nút chính.",
+      "html": "<button class=\"ds-btn-secondary\">Xem các khóa khác</button>",
+      "css": ".ds-btn-secondary{display:inline-flex;align-items:center;height:44px;padding:0 20px;background:transparent;color:#141821;border:1px solid #141821;border-radius:2px;font-weight:600;font-size:15px;transition:background-color .15s,color .15s}.ds-btn-secondary:hover{background:#141821;color:#fff}.ds-btn-secondary:focus-visible{outline:2px solid #0c498f;outline-offset:2px}"
+    },
+    {
+      "name": "Status Chip",
+      "kind": "chip",
+      "refersTo": "status-chip",
+      "description": "Trạng thái và điều kiện ưu đãi.",
+      "html": "<span class=\"ds-chip\">mỗi người · nhóm từ 03 bạn</span>",
+      "css": ".ds-chip{display:inline-flex;align-items:center;padding:4px 10px;border-radius:9999px;background:#e8eef6;color:#1c7a4d;font-size:12px;font-weight:600;line-height:1}"
+    },
+    {
+      "name": "Input",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Ô nhập form đăng nhập, báo giá.",
+      "html": "<label class=\"ds-field\">Email<input class=\"ds-input\" type=\"email\"></label>",
+      "css": ".ds-field{display:block;font-size:14px;font-weight:600;color:#141821}.ds-input{display:block;width:100%;margin-top:6px;padding:12px 16px;border:1px solid #d9dde4;border-radius:4px;background:#fff;font-size:14px}.ds-input:focus{outline:none;border-color:#0c498f}"
+    },
+    {
+      "name": "Course Card",
+      "kind": "card",
+      "refersTo": "card",
+      "description": "Thẻ khóa ở /khoa-hoc: thứ mua được.",
+      "html": "<article class=\"ds-card\"><p class=\"ds-card-status\">Còn chỗ</p><h3>Phân tích định lượng với SPSS</h3><p class=\"ds-card-meta\">05 buổi | 690 học viên đã đăng ký</p></article>",
+      "css": ".ds-card{border:1px solid #d9dde4;border-radius:4px;background:#fff;padding:20px;transition:border-color .2s}.ds-card:hover{border-color:#141821}.ds-card h3{margin:12px 0 0;font-size:20px;font-weight:700}.ds-card-status{margin:0;color:#1c7a4d;font-size:14px;font-weight:600}.ds-card-meta{margin:8px 0 0;color:#464d5b;font-size:14px}"
+    },
+    {
+      "name": "Programme Row",
+      "kind": "custom",
+      "refersTo": "parallel-session",
+      "description": "Một phiên chính trong bảng chương trình ở hero.",
+      "html": "<div class=\"ds-row\"><p class=\"ds-date\">01/12<small>Thứ Ba</small></p><div><a href=\"#\">Nghiên cứu khoa học ứng dụng AI &amp; xuất bản quốc tế</a><p>06 buổi · 19:00–21:00 · Còn 15 chỗ</p></div><button class=\"ds-btn\">Đăng ký</button></div>",
+      "css": ".ds-row{display:grid;grid-template-columns:5.5rem 1fr auto;gap:24px;align-items:center;padding:16px 0;border-bottom:1px solid #d9dde4}.ds-date{margin:0;font-size:28px;font-weight:700;line-height:1;font-variant-numeric:tabular-nums}.ds-date small{display:block;margin-top:4px;font-size:13px;font-weight:400;color:#5a6170}.ds-row a{color:#141821;font-size:18px;font-weight:600;text-decoration:none}.ds-row a:hover{color:#0c498f;text-decoration:underline}.ds-row p{margin:4px 0 0;color:#464d5b;font-size:14px}.ds-btn{height:36px;padding:0 14px;border:0;border-radius:2px;background:#0c498f;color:#fff;font-weight:600}"
+    }
+  ],
+  "narrative": {
+    "northStar": "Cuốn chương trình hội nghị",
+    "overview": "HDI-web đọc như cuốn chương trình của một hội nghị học thuật do HDI tổ chức. Các khóa học là phiên chính, mỗi phiên có ngày, giờ, học phí và nút Đăng ký ngay trên dòng. Dịch vụ kiểm tra AI & đạo văn là phiên song song. Cố vấn học thuật xuất hiện trên thẻ đeo diễn giả.",
+    "keyCharacteristics": [
+      "Bảng chương trình kẻ ngang: rule 2px màu mực ở đầu bảng, hairline 1px giữa các dòng.",
+      "Một font duy nhất, Source Sans 3; số liệu dùng tabular-nums để thẳng cột.",
+      "Một màu nhấn duy nhất (gỉ sét) cho nhãn \"song song\", vai trò diễn giả, số chỗ sắp hết.",
+      "Góc gần như vuông (2–4px); viên thuốc chỉ cho chip trạng thái và ảnh đại diện.",
+      "Tiêu đề căn trái, màu mực; không có nhãn in hoa nhỏ phía trên tiêu đề."
+    ],
+    "rules": [
+      {
+        "name": "The One Accent Rule",
+        "body": "Gỉ sét chỉ đánh dấu điều đang khẩn hoặc khác loại (phiên song song, chỗ sắp hết, vai trò). Mọi chữ khác là mực trên giấy.",
+        "section": "colors"
+      },
+      {
+        "name": "The No Glow Rule",
+        "body": "Không gradient, không quầng radial, không bóng màu. Màu phủ thành mảng phẳng (band, tint) hoặc không có.",
+        "section": "colors"
+      },
+      {
+        "name": "The 12px Floor",
+        "body": "Không chữ chức năng nào dưới 12px.",
+        "section": "typography"
+      },
+      {
+        "name": "The Heading Speaks Rule",
+        "body": "Không eyebrow trên tiêu đề. Thông tin cần thiết đi vào chính tiêu đề, dòng mô tả, hoặc nhãn của danh sách.",
+        "section": "typography"
+      }
+    ],
+    "dos": [
+      "Do đặt hành động mua (Đăng ký) ngay trên dòng khóa.",
+      "Do hiển thị giá ưu đãi to nhất, giá gốc gạch ngang và điều kiện ngay cạnh (PriceTag).",
+      "Do dùng buttonClass() cho mọi nút mới.",
+      "Do giới hạn đoạn văn 54–62ch và dùng tabular-nums cho cột số.",
+      "Do căn trái mọi tiêu đề section."
+    ],
+    "donts": [
+      "Don't đặt nhãn in hoa nhỏ phía trên tiêu đề.",
+      "Don't dùng gradient, glow, nền loang, ảnh nền mờ sau chữ.",
+      "Don't bọc nội dung chỉ để đọc trong thẻ đổ bóng.",
+      "Don't thêm fade-up khi cuộn; chuyển động phải có lý do (dialog, phản hồi thao tác, thẻ đeo).",
+      "Don't đổi font family; Source Sans 3 là font của thương hiệu.",
+      "Don't đặt chữ vào ảnh (poster, banner) — dựng bằng HTML từ content/."
+    ]
+  }
+}
