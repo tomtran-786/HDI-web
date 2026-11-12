@@ -14,7 +14,6 @@ export type Project = {
 };
 
 export const projectsIntro = {
-  eyebrow: "Dự án",
   title: "Dự án nghiên cứu được tài trợ",
   subtitle: "Ba đề tài với tổng kinh phí khoảng US$37,300",
 };

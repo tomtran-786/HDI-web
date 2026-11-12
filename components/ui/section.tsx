@@ -87,11 +87,9 @@ export function MarkedTitle({ title, mark }: { title: string; mark?: HeadingMark
 }
 
 /**
- * Tiêu đề section, căn trái. Tiêu đề tự mang trọng lượng của nó: không còn
- * nhãn in hoa nhỏ phía trên (eyebrow) và không còn nét vẽ tay. Hai prop
- * `eyebrow` và `mark` vẫn được nhận để các trang chưa chuyển sang bố cục mới
- * không vỡ, nhưng không được vẽ ra; thông tin nào trong eyebrow thật sự cần
- * thì đưa vào `title` hoặc `subtitle` khi làm lại trang đó.
+ * Tiêu đề section, căn trái. Tiêu đề tự mang trọng lượng của nó: không có
+ * nhãn in hoa nhỏ phía trên (eyebrow) và không có nét vẽ tay — nét vẽ tay chỉ
+ * đi qua `MarkedTitle`.
  */
 export function SectionHeading({
   title,
@@ -100,13 +98,9 @@ export function SectionHeading({
   onBand = false,
   as: Heading = "h2",
 }: {
-  /** @deprecated Không còn được vẽ ra. */
-  eyebrow?: string;
   title: string;
   subtitle?: string;
   align?: "left" | "center";
-  /** @deprecated Không còn được vẽ ra. */
-  mark?: HeadingMark;
   /** Tiêu đề nằm trên band navy: chữ trắng. */
   onBand?: boolean;
   /** `h1` khi đây là tiêu đề chính của trang (các màn đăng nhập, tài khoản). */

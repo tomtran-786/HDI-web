@@ -7,7 +7,6 @@ import {
   publicationYears,
 } from "@/content/publications";
 import { Badge } from "../ui/badge";
-import { Reveal } from "../ui/reveal";
 import { Section, SectionHeading } from "../ui/section";
 
 export function Publications() {
@@ -34,7 +33,7 @@ export function Publications() {
         subtitle={publicationsIntro.subtitle}
       />
 
-      <Reveal>
+      <div>
         <div className="mb-7 flex flex-wrap gap-2">
           {filters.map((f) => {
             const active = f.key === year;
@@ -60,11 +59,11 @@ export function Publications() {
             );
           })}
         </div>
-      </Reveal>
+      </div>
 
       <ol className="space-y-4">
-        {shown.map((p, i) => (
-          <Reveal key={p.title} delay={Math.min(i, 6) * 45}>
+        {shown.map((p) => (
+          <div key={p.title}>
             <div className="border-t-2 border-rule pt-5">
               <div className="flex flex-wrap items-center gap-3">
                 <span className="text-sm font-bold text-primary">{p.year}</span>
@@ -91,7 +90,7 @@ export function Publications() {
                 )}
               </div>
             </div>
-          </Reveal>
+          </div>
         ))}
       </ol>
     </Section>

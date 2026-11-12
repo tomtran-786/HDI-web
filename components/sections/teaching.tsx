@@ -5,7 +5,6 @@ import {
   unitsTaught,
 } from "@/content/teaching";
 import { Badge } from "../ui/badge";
-import { Reveal } from "../ui/reveal";
 import { Section, SectionHeading } from "../ui/section";
 
 export function Teaching() {
@@ -17,7 +16,7 @@ export function Teaching() {
       />
 
       <div className="grid gap-5 lg:grid-cols-[1.15fr_0.85fr]">
-        <Reveal>
+        <div>
           <div className="h-full border-t-2 border-rule pt-5">
             <p className="text-[0.8125rem] font-bold uppercase tracking-[0.06em] text-fg-subtle">
               Luận án đã hướng dẫn
@@ -38,9 +37,9 @@ export function Teaching() {
               ))}
             </ul>
           </div>
-        </Reveal>
+        </div>
 
-        <Reveal delay={90}>
+        <div>
           <div className="grid h-full gap-5">
             <div className="border-t-2 border-rule pt-5">
               <p className="text-[0.8125rem] font-bold uppercase tracking-[0.06em] text-fg-subtle">
@@ -65,7 +64,7 @@ export function Teaching() {
               </ul>
             </div>
           </div>
-        </Reveal>
+        </div>
       </div>
     </Section>
   );

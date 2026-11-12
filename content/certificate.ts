@@ -19,7 +19,6 @@ export const certificate = {
     text: "Có giấy chứng nhận hoàn tất khóa học",
     link: "Xem mẫu",
   },
-  eyebrow: "Chứng nhận",
   title: "Hoàn thành khóa học, nhận giấy chứng nhận",
   /** Cụm trong `title` được gạch chân tay. */
   mark: "giấy chứng nhận",

@@ -2,7 +2,6 @@ import { Fragment } from "react";
 import Image from "next/image";
 import type { AdvisorPhoto, CaptionPart } from "@/content/about";
 import { ExternalLink } from "./ui/external-link";
-import { Reveal } from "./ui/reveal";
 
 /**
  * Lưới ảnh hoạt động học thuật có caption. Ảnh tĩnh, không carousel hay
@@ -22,8 +21,8 @@ export function ActivityGallery({
     <div
       className={`grid gap-x-6 gap-y-8 sm:grid-cols-2 ${columns === 3 ? "lg:grid-cols-3" : ""} ${className}`}
     >
-      {photos.map((photo, index) => (
-        <Reveal key={photo.id} delay={index * 60}>
+      {photos.map((photo) => (
+        <div key={photo.id}>
           <PhotoFigure
             photo={photo}
             sizes={
@@ -33,7 +32,7 @@ export function ActivityGallery({
             }
             framed
           />
-        </Reveal>
+        </div>
       ))}
     </div>
   );

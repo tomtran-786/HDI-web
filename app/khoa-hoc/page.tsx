@@ -3,7 +3,6 @@ import { CertificateSection } from "@/components/course-certificate";
 import { CourseList } from "@/components/course-list";
 import { CtaLink } from "@/components/ui/cta-link";
 import { IconMessage } from "@/components/ui/icons";
-import { Reveal } from "@/components/ui/reveal";
 import { Section } from "@/components/ui/section";
 import { courses, coursesIntro } from "@/content/course";
 import { courseVisibility } from "@/content/course-visibility";
@@ -52,14 +51,14 @@ export default async function CoursesPage() {
       </section>
 
       <Section>
-        <Reveal>
+        <div>
           <p className="max-w-[54ch] text-base leading-relaxed text-fg-muted sm:text-lg">
             {coursesIntro.intro}
           </p>
           <p className="mb-8 mt-3 max-w-[54ch] text-sm leading-relaxed text-fg-subtle">
             {coursesIntro.guide}
           </p>
-        </Reveal>
+        </div>
         {listed.length > 0 ? (
           <CourseList
             courses={listed}
@@ -67,7 +66,7 @@ export default async function CoursesPage() {
             availability={availability}
           />
         ) : (
-          <Reveal>
+          <div>
             <div className="rounded-card border border-line bg-card p-7 text-center sm:p-10">
               <h2 className="text-xl font-bold text-fg sm:text-2xl">
                 {courseVisibility.listEmpty.title}
@@ -83,7 +82,7 @@ export default async function CoursesPage() {
                 Tư vấn miễn phí
               </CtaLink>
             </div>
-          </Reveal>
+          </div>
         )}
       </Section>
 

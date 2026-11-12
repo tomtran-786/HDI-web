@@ -213,10 +213,6 @@ p {
   .deck-row { opacity: 1; transform: none; transition: none; }
 }
 
-/* <Reveal> không còn làm mờ-trồi từng khối: nội dung hiện sẵn ngay từ đầu.
-   Nó chỉ còn bật data-shown để các chuyển động con có chủ đích (hàng của
-   manuscript deck) biết lúc nào khối đã vào màn hình. */
-
 /* Native <dialog> renders in the top layer, so it inherits nothing from body —
    it has to name its own surface tokens. It stays a DOM descendant of <body>,
    so the `.dark` class variant still reaches it. */

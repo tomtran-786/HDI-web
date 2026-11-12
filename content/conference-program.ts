@@ -43,7 +43,6 @@ export type ConferenceForum = {
 export type ProcessStep = { title: string; detail: string };
 
 export const conferenceProgramIntro = {
-  eyebrow: "Sau khóa học",
   title: "Hội thảo quốc tế & cơ hội xuất bản",
   subtitle:
     "HDI đồng hành cùng nghiên cứu sinh, học viên cao học và nhà nghiên cứu trẻ chuẩn bị, trình bày tại hội thảo quốc tế rồi hoàn thiện bài viết hướng tới công bố — dưới hướng dẫn của Dr. Tâm Trịnh.",

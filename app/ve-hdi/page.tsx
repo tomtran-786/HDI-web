@@ -5,7 +5,6 @@ import { site } from "@/content/site";
 import { TeamProfiles } from "@/components/team-profiles";
 import { CtaLink } from "@/components/ui/cta-link";
 import { IconCheck } from "@/components/ui/icons";
-import { Reveal } from "@/components/ui/reveal";
 import { Section, SectionHeading } from "@/components/ui/section";
 import { buttonClass } from "@/components/ui/button";
 
@@ -43,7 +42,7 @@ export default function AboutHdiPage() {
       <Section>
         <SectionHeading title="HDI là ai?" />
 
-        <Reveal>
+        <div>
           <div className="border-t-2 border-rule pt-5">
             <h2 className="text-xl font-bold text-fg">{identity.mission.title}</h2>
             <div className="mt-4 space-y-4 text-base leading-relaxed text-fg-muted max-w-[62ch]">
@@ -52,10 +51,10 @@ export default function AboutHdiPage() {
               ))}
             </div>
           </div>
-        </Reveal>
+        </div>
 
         <div className="mt-6 grid gap-6 lg:grid-cols-2">
-          <Reveal delay={60} className="h-full">
+          <div className="h-full">
             <div className="h-full border-t-2 border-rule pt-5">
               <h2 className="text-xl font-bold text-fg">{identity.audience.title}</h2>
               <p className="mt-4 text-base leading-relaxed text-fg-muted">
@@ -63,9 +62,9 @@ export default function AboutHdiPage() {
               </p>
               <CheckList items={identity.audience.items} />
             </div>
-          </Reveal>
+          </div>
 
-          <Reveal delay={120} className="h-full">
+          <div className="h-full">
             <div className="h-full border-t-2 border-rule pt-5">
               <h2 className="text-xl font-bold text-fg">{identity.howWeWork.title}</h2>
               <div className="mt-4 space-y-3 text-base leading-relaxed text-fg-muted max-w-[62ch]">
@@ -75,7 +74,7 @@ export default function AboutHdiPage() {
               </div>
               <CheckList items={identity.howWeWork.items} />
             </div>
-          </Reveal>
+          </div>
         </div>
       </Section>
 
@@ -85,7 +84,7 @@ export default function AboutHdiPage() {
           subtitle={about.model.subtitle}
         />
 
-        <Reveal>
+        <div>
           <div className="flex flex-col items-stretch gap-2 rounded-card border border-line bg-card p-4 sm:flex-row sm:items-center sm:justify-center sm:gap-4 sm:p-5">
             {about.model.chain.map((step, index) => (
               <div
@@ -106,18 +105,18 @@ export default function AboutHdiPage() {
               </div>
             ))}
           </div>
-        </Reveal>
+        </div>
 
         <div className="mt-6 grid gap-5 sm:grid-cols-3">
-          {about.model.layers.map((layer, index) => (
-            <Reveal key={layer.name} delay={60 + index * 60} className="h-full">
+          {about.model.layers.map((layer) => (
+            <div key={layer.name} className="h-full">
               <div className="h-full border-t-2 border-rule pt-5">
                 <h2 className="text-base font-bold text-fg">{layer.name}</h2>
                 <p className="mt-3 text-sm leading-relaxed text-fg-muted">
                   {layer.body}
                 </p>
               </div>
-            </Reveal>
+            </div>
           ))}
         </div>
 
@@ -126,15 +125,15 @@ export default function AboutHdiPage() {
       <Section>
         <SectionHeading title={about.principles.title} />
         <div className="grid gap-5 sm:grid-cols-2">
-          {about.principles.items.map((principle, index) => (
-            <Reveal key={principle.name} delay={index * 50} className="h-full">
+          {about.principles.items.map((principle) => (
+            <div key={principle.name} className="h-full">
               <div className="h-full border-t-2 border-rule pt-5">
                 <h2 className="text-lg font-bold text-fg">{principle.name}</h2>
                 <p className="mt-3 text-sm leading-relaxed text-fg-muted sm:text-base">
                   {principle.body}
                 </p>
               </div>
-            </Reveal>
+            </div>
           ))}
         </div>
       </Section>
@@ -146,7 +145,7 @@ export default function AboutHdiPage() {
           title={about.record.title}
           subtitle={about.record.subtitle}
         />
-        <Reveal>
+        <div>
           <div className="border-t-2 border-rule pt-5">
             <div className="max-w-[54ch] space-y-3 text-base leading-relaxed text-fg-muted">
               {about.record.paragraphs.map((paragraph) => (
@@ -161,11 +160,11 @@ export default function AboutHdiPage() {
               {about.record.cta.label}
             </Link>
           </div>
-        </Reveal>
+        </div>
       </Section>
 
       <Section>
-        <Reveal>
+        <div>
           <div className="rounded-card border border-line bg-card p-7 sm:p-9">
             <h2 className="text-2xl font-bold text-fg sm:text-3xl">
               {about.closing.title}
@@ -189,7 +188,7 @@ export default function AboutHdiPage() {
               </Link>
             </div>
           </div>
-        </Reveal>
+        </div>
       </Section>
     </>
   );

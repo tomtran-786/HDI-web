@@ -9,23 +9,8 @@ type RoughAnnotation = ReturnType<typeof annotate>;
 // Vẽ khi phần tử vào 80% chiều cao viewport (rootMargin đáy -20%).
 const DRAW_ROOT_MARGIN = "0px 0px -20% 0px";
 const DRAW_DELAY_MS = 100;
-// Thời lượng transition của `.reveal` trong globals.css (0.6s).
-const REVEAL_TRANSITION_MS = 600;
 // Gom các lần đổi kích thước liên tiếp (kéo cửa sổ, font swap) vào một lần vẽ lại.
 const REDRAW_DEBOUNCE_MS = 120;
-
-/**
- * Nét vẽ phải chờ `Reveal` bao quanh trượt xong: `.reveal` có `transform` nên
- * đang trượt thì mọi thứ bên trong còn dịch chuyển, và hình chữ nhật đo lúc đó
- * sẽ lệch khi transform về `none`.
- */
-function revealSettleMs(el: HTMLElement, reduceMotion: boolean) {
-  if (reduceMotion) return 0;
-  const reveal = el.closest<HTMLElement>(".reveal");
-  if (!reveal) return 0;
-  const delay = parseFloat(getComputedStyle(reveal).transitionDelay) * 1000;
-  return REVEAL_TRANSITION_MS + (Number.isFinite(delay) ? delay : 0) + 50;
-}
 
 /**
  * Nét gạch chân đặt ở đáy hộp nội dung của chữ, mà hộp đó cao hơn `line-height`
@@ -45,7 +30,7 @@ function underlinePadding(el: HTMLElement): number {
  *
  * rough-notation chèn một `<svg position:absolute>` cạnh span. Nếu cha của span
  * không có vị trí thì containing block của svg là tổ tiên nào đó, và khi tổ tiên
- * đó đổi (vd. `.reveal` hết `transform`) nét nhảy đi nơi khác — từng lệch hàng
+ * đó đổi (vd. một khối cha đổi `transform`) nét nhảy đi nơi khác — từng lệch hàng
  * nghìn px. Vì vậy cha luôn được đặt `position: relative` trước khi vẽ.
  *
  * Nét được vẽ lại (không animate) khi cha đổi kích thước: ResizeObserver đặt
@@ -106,7 +91,7 @@ export function Notation({
           shown = true;
           draw(!reduceMotion);
         },
-        reduceMotion ? 0 : DRAW_DELAY_MS + revealSettleMs(el, reduceMotion),
+        reduceMotion ? 0 : DRAW_DELAY_MS,
       );
     };
 

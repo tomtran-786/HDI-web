@@ -6,7 +6,6 @@ import { trackCourseSort } from "@/lib/analytics";
 import type { PublicAvailability } from "@/lib/course-availability";
 import type { ReviewSummary } from "@/lib/reviews";
 import { CourseCard } from "./course-card";
-import { Reveal } from "./ui/reveal";
 
 /**
  * `compare: null` keeps the authored order in content/course.ts, which runs the
@@ -48,7 +47,7 @@ export function CourseList({
 
   return (
     <>
-      <Reveal>
+      <div>
         <div className="mb-7 flex flex-wrap items-center">
           <span className="mr-2 text-sm font-semibold text-fg-muted">
             Sắp xếp
@@ -77,13 +76,13 @@ export function CourseList({
             );
           })}
         </div>
-      </Reveal>
+      </div>
 
       {/* Các thẻ khóa mang h3; h2 ẩn giữ cấp tiêu đề liền mạch từ h1 của trang. */}
       <h2 className="sr-only">Danh sách khóa học</h2>
       <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-        {shown.map((course, i) => (
-          <Reveal key={course.slug} delay={110 + i * 70} className="h-full">
+        {shown.map((course) => (
+          <div key={course.slug} className="h-full">
             <CourseCard
               course={course}
               summary={summaries[course.slug]}
@@ -93,7 +92,7 @@ export function CourseList({
                   : undefined
               }
             />
-          </Reveal>
+          </div>
         ))}
       </div>
     </>

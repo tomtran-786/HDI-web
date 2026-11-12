@@ -138,7 +138,6 @@ const manuscriptServices: readonly ServiceItem[] = [
 ];
 
 export const serviceCatalog = {
-  eyebrow: "Dịch vụ",
   title: "Dịch vụ nghiên cứu và hỗ trợ bản thảo",
   subtitle:
     "Chọn đúng nhóm hỗ trợ theo giai đoạn hiện tại của đề tài hoặc bản thảo.",

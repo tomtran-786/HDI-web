@@ -18,7 +18,6 @@ import { Card } from "@/components/ui/card";
 import { EnrolledPill } from "@/components/ui/enrolled-pill";
 import { CheckDot } from "@/components/ui/check-dot";
 import { PriceTag } from "@/components/ui/price-tag";
-import { Reveal } from "@/components/ui/reveal";
 import { MarkedTitle, Section, SectionHeading } from "@/components/ui/section";
 import { CourseCover } from "@/components/course-cover";
 import { Stars } from "@/components/ui/stars";
@@ -283,7 +282,7 @@ export default async function CourseDetailPage({ params }: CoursePageProps) {
 
       <Section>
         <SectionHeading title="Giới thiệu khóa học" />
-        <Reveal>
+        <div>
             <p className="max-w-[54ch] text-xl leading-relaxed text-fg">
               {course.intro}
             </p>
@@ -301,7 +300,7 @@ export default async function CourseDetailPage({ params }: CoursePageProps) {
                 </li>
               ))}
             </ul>
-        </Reveal>
+        </div>
       </Section>
 
       <Section>
@@ -333,12 +332,12 @@ export default async function CourseDetailPage({ params }: CoursePageProps) {
               : ""
           }
         >
-          <Reveal>
+          <div>
             <CourseRoadmap course={course} />
-          </Reveal>
+          </div>
 
           {instructor && (
-            <Reveal className="lg:sticky lg:top-24">
+            <div className="lg:sticky lg:top-24">
               <Card className="p-6" hover={false}>
                 <h3 className="text-lg font-bold">Giảng viên</h3>
                 <div className="mt-4 flex items-center gap-4">
@@ -383,7 +382,7 @@ export default async function CourseDetailPage({ params }: CoursePageProps) {
                   ))}
                 </div>
               </Card>
-            </Reveal>
+            </div>
           )}
         </div>
       </Section>
@@ -395,8 +394,8 @@ export default async function CourseDetailPage({ params }: CoursePageProps) {
             onBand
           />
           <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
-            {publishedReviews.map((review, index) => (
-              <Reveal key={review.id} delay={index * 60} className="h-full">
+            {publishedReviews.map((review) => (
+              <div key={review.id} className="h-full">
                 {/* `on-white`: thẻ giữ nền trắng và màu chữ sáng ở cả dark mode,
                     vì nó nằm trên band navy chứ không trên nền trang. */}
                 <div className="on-white flex h-full flex-col rounded-card border border-line p-6">
@@ -415,7 +414,7 @@ export default async function CourseDetailPage({ params }: CoursePageProps) {
                     </span>
                   </div>
                 </div>
-              </Reveal>
+              </div>
             ))}
           </div>
         </Section>
@@ -433,8 +432,8 @@ export default async function CourseDetailPage({ params }: CoursePageProps) {
         <Section>
           <SectionHeading title="Khóa học khác" />
           <div className="grid gap-5 md:grid-cols-3">
-            {related.map((item, index) => (
-              <Reveal key={item.slug} delay={index * 60} className="h-full">
+            {related.map((item) => (
+              <div key={item.slug} className="h-full">
                 <CourseCard
                   course={item}
                   summary={summaries[item.slug]}
@@ -442,7 +441,7 @@ export default async function CourseDetailPage({ params }: CoursePageProps) {
                     availability ? (availability[item.slug] ?? "not_open") : undefined
                   }
                 />
-              </Reveal>
+              </div>
             ))}
           </div>
         </Section>

@@ -420,7 +420,6 @@ const INSTRUCTOR_TAM = {
 } satisfies NonNullable<Course["instructor"]>;
 
 export const coursesIntro = {
-  eyebrow: "Khóa học",
   title: "Phát triển năng lực nghiên cứu theo lộ trình",
   subtitle:
     "Từ kỹ năng viết học thuật nền tảng đến phương pháp nghiên cứu, phân tích dữ liệu, ứng dụng AI và công bố khoa học.",

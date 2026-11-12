@@ -20,7 +20,6 @@ import {
  * chưa được thực thi thì nó không được đứng ở đây.
  */
 export const referralPage = {
-  eyebrow: "Khu vực học viên",
   title: "Giới thiệu bạn bè",
   subtitle: `Bạn của bạn được giảm ${REFERRAL_DISCOUNT_PCT}% cho khóa học đầu tiên, và bạn nhận ${REFERRAL_COMMISSION_PCT}% học phí họ đã đóng dưới dạng credits.`,
 

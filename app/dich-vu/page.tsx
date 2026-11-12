@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Reveal } from "@/components/ui/reveal";
 import { Section, SectionHeading } from "@/components/ui/section";
 import { serviceCatalog } from "@/content/services";
 import { site } from "@/content/site";
@@ -34,11 +33,11 @@ export default function ServicesPage() {
           />
 
           {group.id === "dong-hanh-nghien-cuu" && (
-            <Reveal>
+            <div>
               <p className="mb-8 max-w-[54ch] text-lg leading-relaxed text-fg-muted">
                 {serviceCatalog.researchIntro}
               </p>
-            </Reveal>
+            </div>
           )}
 
           {/* Danh sách kẻ hai cột thay cho lưới thẻ icon: tên dịch vụ là liên
@@ -65,11 +64,11 @@ export default function ServicesPage() {
           </ul>
 
           {group.id === "dong-hanh-nghien-cuu" && (
-            <Reveal delay={140}>
+            <div>
               <p className="mt-8 text-sm text-fg-muted">
                 {serviceCatalog.researchNote}
               </p>
-            </Reveal>
+            </div>
           )}
         </Section>
       ))}

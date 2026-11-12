@@ -98,7 +98,6 @@ const activityPhotos: readonly AdvisorPhoto[] = [
 ];
 
 export const about = {
-  eyebrow: "Về chúng tôi",
   title: "Về HDI Research Center",
   subtitle: "Nghiên cứu bài bản – Đồng hành thực chất – Hướng tới công bố",
   paragraphs: [

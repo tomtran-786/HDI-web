@@ -1,7 +1,6 @@
 import { projects, projectsIntro } from "@/content/projects";
 import { Badge } from "../ui/badge";
 import { Card } from "../ui/card";
-import { Reveal } from "../ui/reveal";
 import { Section, SectionHeading } from "../ui/section";
 
 export function Projects() {
@@ -13,8 +12,8 @@ export function Projects() {
       />
 
       <div className="grid gap-5 lg:grid-cols-3">
-        {projects.map((p, i) => (
-          <Reveal key={p.title} delay={i * 80}>
+        {projects.map((p) => (
+          <div key={p.title}>
             <Card className="flex h-full flex-col p-6">
               <div className="flex flex-wrap items-baseline gap-2">
                 <span className="text-2xl font-bold tracking-tight text-primary">
@@ -33,7 +32,7 @@ export function Projects() {
                 <Badge>{p.role}</Badge>
               </div>
             </Card>
-          </Reveal>
+          </div>
         ))}
       </div>
     </Section>

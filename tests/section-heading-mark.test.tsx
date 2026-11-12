@@ -11,16 +11,13 @@ import { MarkedTitle, Section, SectionHeading } from "@/components/ui/section";
  * còn đi qua MarkedTitle, tối đa một lần mỗi trang.
  */
 describe("SectionHeading", () => {
-  it("in title nguyên văn, không vẽ eyebrow và không vẽ nét nhấn", () => {
+  it("in title nguyên văn, không có nhãn phía trên và không vẽ nét nhấn", () => {
     const html = renderToStaticMarkup(
-      <SectionHeading
-        eyebrow="Đang mở đăng ký"
-        title="Khóa học đang nhận học viên"
-        mark={{ text: "học viên", type: "circle" }}
-      />,
+      <SectionHeading title="Khóa học đang nhận học viên" subtitle="Phụ đề" />,
     );
     expect(html).toContain(">Khóa học đang nhận học viên</h2>");
-    expect(html).not.toContain("Đang mở đăng ký");
+    expect(html.indexOf("<h2")).toBeLessThan(html.indexOf("Phụ đề"));
+    expect(html).not.toMatch(/<p[^>]*>[^<]*<\/p>\s*<h2/);
     expect(html).not.toContain("data-notation");
   });
 

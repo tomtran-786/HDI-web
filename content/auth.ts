@@ -14,7 +14,6 @@
 import { REFERRAL_DISCOUNT_PCT } from "@/lib/referral-pricing";
 
 export const verifyPage = {
-  eyebrow: "Bảo mật tài khoản",
   title: "Xác thực email",
   subtitle: "Xác nhận địa chỉ email trước khi đăng nhập bằng mật khẩu.",
 
@@ -58,7 +57,6 @@ export const verifyPage = {
 } as const;
 
 export const signInPage = {
-  eyebrow: "Khu vực học viên",
   title: "Đăng nhập",
   subtitle: "Đăng nhập bằng email và mật khẩu hoặc bằng Google.",
 
@@ -104,7 +102,6 @@ export const signInPage = {
 } as const;
 
 export const forgotPage = {
-  eyebrow: "Bảo mật tài khoản",
   title: "Quên mật khẩu",
   subtitle: "Nhận liên kết đặt lại mật khẩu qua email.",
 
@@ -127,7 +124,6 @@ export const forgotPage = {
 } as const;
 
 export const resetPage = {
-  eyebrow: "Bảo mật tài khoản",
   title: "Đặt lại mật khẩu",
   subtitle: "Mật khẩu mới sẽ đăng xuất các phiên cũ.",
 
@@ -148,7 +144,6 @@ export const resetPage = {
 } as const;
 
 export const registerPage = {
-  eyebrow: "Khu vực học viên",
   title: "Tạo tài khoản",
   subtitle: "Đăng ký bằng email hoặc tiếp tục bằng Google ở trang đăng nhập.",
 

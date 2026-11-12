@@ -3,7 +3,6 @@ import { notFound } from "next/navigation";
 import { StructuredData } from "@/components/structured-data";
 import { CtaLink } from "@/components/ui/cta-link";
 import { IconCheck } from "@/components/ui/icons";
-import { Reveal } from "@/components/ui/reveal";
 import { Section, SectionHeading } from "@/components/ui/section";
 import {
   SERVICE_SLUGS,
@@ -66,29 +65,29 @@ export default async function ServiceDetailPage({ params }: ServicePageProps) {
         <>
           <Section>
             <SectionHeading title="Giới thiệu dịch vụ" />
-            <Reveal>
+            <div>
               <p className="max-w-[54ch] text-base leading-relaxed text-fg-muted sm:text-lg">
                 {service.summary}
               </p>
-            </Reveal>
+            </div>
           </Section>
 
           <Section>
             <SectionHeading title="Phù hợp với ai" />
-            <Reveal>
+            <div>
               <div className="max-w-3xl border-t-2 border-rule pt-5">
                 <p className="text-base leading-relaxed text-fg-muted sm:text-lg">
                   {service.bestFor}
                 </p>
               </div>
-            </Reveal>
+            </div>
           </Section>
 
           <Section>
             <SectionHeading
               title={service.supportLabel ?? "Nội dung hỗ trợ"}
             />
-            <Reveal>
+            <div>
               <div className="max-w-4xl border-t-2 border-rule pt-5">
                 <ul className="space-y-4">
                   {service.support?.map((item) => (
@@ -102,21 +101,21 @@ export default async function ServiceDetailPage({ params }: ServicePageProps) {
                   ))}
                 </ul>
               </div>
-            </Reveal>
+            </div>
           </Section>
         </>
       ) : (
         <Section>
-          <Reveal>
+          <div>
             <p className="max-w-[54ch] text-base leading-relaxed text-fg-muted sm:text-lg">
               {service.summary}
             </p>
-          </Reveal>
+          </div>
         </Section>
       )}
 
       <Section>
-        <Reveal>
+        <div>
           <div className="rounded-card border border-line bg-card p-7 sm:p-9">
             <h2 className="text-2xl font-bold text-fg sm:text-3xl">
               Liên hệ đội ngũ HDI
@@ -138,7 +137,7 @@ export default async function ServiceDetailPage({ params }: ServicePageProps) {
               </CtaLink>
             </div>
           </div>
-        </Reveal>
+        </div>
       </Section>
     </>
   );

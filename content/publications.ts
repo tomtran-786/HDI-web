@@ -15,7 +15,6 @@ export type Publication = {
 };
 
 export const publicationsIntro = {
-  eyebrow: "Công bố",
   title: "Công bố khoa học",
   subtitle: "15 bài báo trên các tạp chí quốc tế có bình duyệt",
 };

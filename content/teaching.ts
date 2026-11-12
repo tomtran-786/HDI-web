@@ -12,7 +12,6 @@ export type Supervision = {
 };
 
 export const teachingIntro = {
-  eyebrow: "Hướng dẫn & giảng dạy",
   title: "Hướng dẫn và giảng dạy",
   subtitle: "Bốn luận án đã và đang hướng dẫn, cùng các học phần đã giảng dạy",
 };

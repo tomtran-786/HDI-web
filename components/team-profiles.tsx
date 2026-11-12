@@ -4,7 +4,6 @@ import { links } from "@/content/site";
 import { ActivityGallery } from "./activity-gallery";
 import { Badge } from "./ui/badge";
 import { IconCheck, IconDownload } from "./ui/icons";
-import { Reveal } from "./ui/reveal";
 import { Section, SectionHeading } from "./ui/section";
 import { buttonClass } from "@/components/ui/button";
 
@@ -17,16 +16,16 @@ export function TeamProfiles() {
     <Section id="doi-ngu">
       <SectionHeading title="Đội ngũ học thuật và nghiên cứu" />
 
-      <Reveal>
+      <div>
         <p className="text-[0.8125rem] font-bold uppercase tracking-[0.06em] text-fg-subtle">
           {advisor.label} – {advisor.labelEn}
         </p>
         <h3 className="mt-2 text-2xl font-bold text-fg">{advisor.name}</h3>
         <p className="mt-1 text-sm text-fg-muted">{advisor.credential}</p>
-      </Reveal>
+      </div>
 
       <div className="mt-7 grid gap-8 lg:grid-cols-[0.85fr_1.15fr] lg:gap-10">
-        <Reveal>
+        <div>
           <div className="lg:sticky lg:top-24">
             <Image
               src={advisor.portrait.src}
@@ -87,9 +86,9 @@ export function TeamProfiles() {
               </a>
             </div>
           </div>
-        </Reveal>
+        </div>
 
-        <Reveal delay={100}>
+        <div>
           <div className="space-y-4 text-[15px] leading-relaxed text-fg-muted sm:text-base max-w-[62ch]">
             {advisor.paragraphs.map((paragraph) => (
               <p key={paragraph}>{paragraph}</p>
@@ -134,19 +133,19 @@ export function TeamProfiles() {
               </ul>
             </div>
           </div>
-        </Reveal>
+        </div>
       </div>
 
       <div className="mt-12">
-        <Reveal>
+        <div>
           <h3 className="border-b-2 border-rule pb-2 text-xl font-bold text-fg">
             Hoạt động học thuật: trao đổi và kết nối cùng học giả quốc tế
           </h3>
-        </Reveal>
+        </div>
         <ActivityGallery photos={advisor.activityPhotos} className="mt-6" />
       </div>
 
-      <Reveal delay={120}>
+      <div>
         <div className="mt-12 border-t border-line border-t-2 border-rule pt-5">
           <div className="flex flex-col gap-6 sm:flex-row sm:items-start">
             <Image
@@ -201,7 +200,7 @@ export function TeamProfiles() {
             </a>
           </div>
         </div>
-      </Reveal>
+      </div>
     </Section>
   );
 }

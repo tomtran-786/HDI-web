@@ -12,7 +12,6 @@ import { ActivityGallery, PhotoFigure } from "@/components/activity-gallery";
 import { Badge } from "@/components/ui/badge";
 import { CtaLink } from "@/components/ui/cta-link";
 import { IconCheck } from "@/components/ui/icons";
-import { Reveal } from "@/components/ui/reveal";
 import { Section, SectionHeading } from "@/components/ui/section";
 import { buttonClass } from "@/components/ui/button";
 
@@ -60,7 +59,7 @@ export default function ConferenceProgramPage() {
 
       <Section>
         <SectionHeading title="HDI đồng hành cùng bạn" />
-        <Reveal>
+        <div>
           <p className="max-w-[54ch] text-base leading-relaxed text-fg-muted sm:text-lg">
             {lead}
           </p>
@@ -68,7 +67,7 @@ export default function ConferenceProgramPage() {
             Dưới hướng dẫn của Dr. Tâm Trịnh, học viên được hỗ trợ:
           </p>
           <CheckList items={benefits} columns />
-        </Reveal>
+        </div>
       </Section>
 
       <ForumSection forum={forums[0]} />
@@ -80,7 +79,7 @@ export default function ConferenceProgramPage() {
           subtitle="Kinh nghiệm học thuật — hướng dẫn thực chất — kết nối quốc tế."
         />
         <div className="grid gap-8 lg:grid-cols-2 lg:items-center">
-          <Reveal>
+          <div>
             <div className="space-y-4 text-base leading-relaxed text-fg-muted max-w-[62ch]">
               {advisor.paragraphs.map((paragraph) => (
                 <p key={paragraph}>{paragraph}</p>
@@ -98,20 +97,20 @@ export default function ConferenceProgramPage() {
             >
               Xem hồ sơ học thuật đầy đủ
             </Link>
-          </Reveal>
-          <Reveal delay={100}>
+          </div>
+          <div>
             <PhotoFigure
               photo={featuredPhoto}
               sizes="(min-width: 1024px) 36rem, 100vw"
             />
-          </Reveal>
+          </div>
         </div>
 
-        <Reveal>
+        <div>
           <h3 className="mt-14 text-lg font-bold text-fg">
             Kết nối học thuật quốc tế
           </h3>
-        </Reveal>
+        </div>
         <ActivityGallery photos={networkPhotos} columns={3} className="mt-5" />
       </Section>
 
@@ -120,7 +119,7 @@ export default function ConferenceProgramPage() {
           title="Quy trình đồng hành"
           subtitle="Bảy bước từ đánh giá đề tài đến tư vấn hướng gửi xuất bản."
         />
-        <Reveal>
+        <div>
           <ol className="overflow-hidden rounded-card border border-line bg-card">
             {process.map((step, index) => (
               <li
@@ -141,11 +140,11 @@ export default function ConferenceProgramPage() {
               </li>
             ))}
           </ol>
-        </Reveal>
+        </div>
       </Section>
 
       <Section>
-        <Reveal>
+        <div>
           <div className="rounded-card border border-line bg-card p-7 sm:p-9">
             <h2 className="text-2xl font-bold text-fg sm:text-3xl">
               Sẵn sàng cho hội thảo quốc tế đầu tiên?
@@ -170,7 +169,7 @@ export default function ConferenceProgramPage() {
               </Link>
             </div>
           </div>
-        </Reveal>
+        </div>
       </Section>
     </>
   );
@@ -182,7 +181,7 @@ function ForumSection({ forum }: { forum: ConferenceForum }) {
       <SectionHeading title={forum.name} />
 
       <div className="grid gap-8 lg:grid-cols-[1.6fr_1fr] lg:items-start">
-        <Reveal>
+        <div>
           <div className="space-y-4 text-base leading-relaxed text-fg-muted max-w-[62ch]">
             {forum.body.map((paragraph) => (
               <p key={paragraph}>{paragraph}</p>
@@ -196,9 +195,9 @@ function ForumSection({ forum }: { forum: ConferenceForum }) {
           >
             Trang chính thức
           </a>
-        </Reveal>
+        </div>
 
-        <Reveal delay={80}>
+        <div>
           <ul className="space-y-2">
             {forum.highlights.map((item) => (
               <li
@@ -210,11 +209,11 @@ function ForumSection({ forum }: { forum: ConferenceForum }) {
               </li>
             ))}
           </ul>
-        </Reveal>
+        </div>
       </div>
 
       <h3 className="mt-10 text-lg font-bold text-fg">Hướng phát triển công bố</h3>
-      <Reveal>
+      <div>
         <ol className="mt-4 overflow-hidden rounded-card border border-line bg-card">
           {forum.outlets.map((outlet) => (
             <li
@@ -233,28 +232,28 @@ function ForumSection({ forum }: { forum: ConferenceForum }) {
             </li>
           ))}
         </ol>
-      </Reveal>
+      </div>
 
-      <Reveal>
+      <div>
         <p className="mt-4 max-w-[72ch] rounded-card border border-line bg-tint px-4 py-3 text-sm leading-relaxed text-fg-muted">
           <span className="font-semibold text-fg">Lưu ý về xếp hạng. </span>
           {forum.note}
         </p>
-      </Reveal>
+      </div>
 
       <h3 className="mt-10 text-lg font-bold text-fg">
         HDI đồng hành cùng người tham dự
       </h3>
-      <Reveal>
+      <div>
         <CheckList items={forum.accompany} columns />
-      </Reveal>
+      </div>
 
-      <Reveal>
+      <div>
         <p className="mt-8 max-w-[72ch] rounded-card border border-line bg-bg-soft px-4 py-3 text-sm leading-relaxed text-fg-subtle">
           <span className="font-semibold text-fg-muted">Miễn trừ. </span>
           {forum.disclaimer}
         </p>
-      </Reveal>
+      </div>
     </Section>
   );
 }

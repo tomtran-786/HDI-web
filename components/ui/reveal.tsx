@@ -5,12 +5,10 @@ import { observeReveal } from "@/lib/reveal-observer";
 
 /**
  * Marks its children as "in view" once they scroll onto the screen, by
- * setting `data-shown`. It no longer fades or lifts anything itself — content
- * is visible from the first paint. A child that has a deliberate entrance
- * (the manuscript deck rows) keys its own CSS off `.reveal[data-shown]`.
- *
- * `delay` is kept for call sites that still pass it; it only postpones the
- * attribute.
+ * setting `data-shown`. It does not fade or lift anything itself. The only
+ * remaining user is the manuscript deck in course-expect-band, whose rows key
+ * their staggered entrance off `.reveal[data-shown]`; plain sections no longer
+ * wrap their content in it.
  */
 export function Reveal({
   children,

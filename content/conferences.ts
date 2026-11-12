@@ -20,7 +20,6 @@ export type Conference = {
 };
 
 export const conferencesIntro = {
-  eyebrow: "Hội thảo",
   title: "Hội thảo quốc tế",
   subtitle: "14 lần trình bày tại Hoa Kỳ, Australia, Ba Lan, Thổ Nhĩ Kỳ, Singapore, Lào, Hong Kong, Đài Loan, Malaysia, Thái Lan và Việt Nam",
 };

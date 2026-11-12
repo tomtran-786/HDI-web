@@ -18,7 +18,6 @@ export const stages = [
 export type StageValue = (typeof stages)[number]["value"];
 
 export const profileIntro = {
-  eyebrow: "Hoàn tất hồ sơ",
   title: "Còn hai thông tin nữa",
   subtitle:
     "Google đã cung cấp họ tên và email của bạn. Hai mục dưới đây giúp chúng tôi xếp bạn đúng lớp và liên hệ khi cần.",
