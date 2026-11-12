@@ -97,7 +97,7 @@ export function MarkdownEditor({ name }: { name: string }) {
   const overLimit = value.length > BODY_MAX;
 
   return (
-    <div className="overflow-hidden rounded-card border border-line bg-card">
+    <div className="overflow-hidden rounded-button border border-line bg-card">
       <div className="flex flex-wrap gap-1 border-b border-line bg-bg-soft p-2">
         {tools.map((tool) => (
           <button

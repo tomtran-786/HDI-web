@@ -53,7 +53,7 @@ export function ProfileForm({
         key={`phone-${state.phone ?? ""}`}
         defaultValue={phone}
         placeholder="0912 345 678"
-        className="mt-2 w-full rounded-card border border-line bg-bg px-4 py-3 text-[15px] text-fg outline-none transition placeholder:text-fg-subtle focus:border-primary"
+        className="mt-2 w-full rounded-button border border-line bg-bg px-4 py-3 text-[15px] text-fg outline-none transition placeholder:text-fg-subtle focus:border-primary"
       />
       <p className="mt-2 text-xs text-fg-subtle">
         Ưu tiên số dùng Zalo — đây là kênh liên hệ chính.
@@ -67,7 +67,7 @@ export function ProfileForm({
           {stages.map((s) => (
             <label
               key={s.value}
-              className="flex cursor-pointer items-start gap-3 rounded-card border border-line px-4 py-3 transition hover:border-primary has-[:checked]:border-primary has-[:checked]:bg-tint"
+              className="flex cursor-pointer items-start gap-3 rounded-button border border-line px-4 py-3 transition hover:border-primary has-[:checked]:border-primary has-[:checked]:bg-tint"
             >
               <input
                 type="radio"

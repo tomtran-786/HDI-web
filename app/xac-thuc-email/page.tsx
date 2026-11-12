@@ -17,7 +17,7 @@ export const metadata: Metadata = {
 };
 
 const inputClass =
-  "mt-1.5 w-full rounded-card border border-line bg-bg px-4 py-3 text-sm text-fg outline-none transition focus:border-primary";
+  "mt-1.5 w-full rounded-button border border-line bg-bg px-4 py-3 text-sm text-fg outline-none transition focus:border-primary";
 
 const primaryButton =
   buttonClass({ size: "lg", className: "w-full" });

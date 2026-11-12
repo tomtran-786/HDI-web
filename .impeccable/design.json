@@ -148,7 +148,7 @@
       "refersTo": "input",
       "description": "Ô nhập form đăng nhập, báo giá.",
       "html": "<label class=\"ds-field\">Email<input class=\"ds-input\" type=\"email\"></label>",
-      "css": ".ds-field{display:block;font-size:14px;font-weight:600;color:#141821}.ds-input{display:block;width:100%;margin-top:6px;padding:12px 16px;border:1px solid #d9dde4;border-radius:4px;background:#fff;font-size:14px}.ds-input:focus{outline:none;border-color:#0c498f}"
+      "css": ".ds-field{display:block;font-size:14px;font-weight:600;color:#141821}.ds-input{display:block;width:100%;margin-top:6px;padding:12px 16px;border:1px solid #d9dde4;border-radius:10px;background:#fff;font-size:14px}.ds-input:focus{outline:none;border-color:#0c498f}"
     },
     {
       "name": "Course Card",
@@ -174,7 +174,7 @@
       "Bảng chương trình kẻ ngang: rule 2px màu mực ở đầu bảng, hairline 1px giữa các dòng.",
       "Một font duy nhất, Source Sans 3; số liệu dùng tabular-nums để thẳng cột.",
       "Một màu nhấn duy nhất (gỉ sét) cho nhãn \"song song\", vai trò diễn giả, số chỗ sắp hết.",
-      "Thẻ, ô nhập gần như vuông (2–4px); nút bo 10px; viên thuốc chỉ cho chip trạng thái và ảnh đại diện.",
+      "Thẻ gần như vuông (2–4px); nút và ô nhập bo 10px; viên thuốc chỉ cho chip trạng thái và ảnh đại diện.",
       "Tiêu đề căn trái, màu mực; không có nhãn in hoa nhỏ phía trên tiêu đề."
     ],
     "rules": [
@@ -200,7 +200,7 @@
       },
       {
         "name": "The Button Radius Rule",
-        "body": "Thứ bấm được bo 10px; thứ để đọc hoặc nhập liệu giữ 2–4px. Mục menu đang chọn dùng gạch chân, không phải nút.",
+        "body": "Thứ bấm được và ô nhập liệu bo 10px; thứ để đọc giữ 2–4px. Mục menu đang chọn dùng gạch chân, không phải nút.",
         "section": "shapes"
       }
     ],

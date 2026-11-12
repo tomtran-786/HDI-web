@@ -21,7 +21,7 @@ export const metadata: Metadata = {
 };
 
 const inputClass =
-  "mt-1.5 w-full rounded-card border border-line bg-bg px-4 py-3 text-sm outline-none transition focus:border-primary";
+  "mt-1.5 w-full rounded-button border border-line bg-bg px-4 py-3 text-sm outline-none transition focus:border-primary";
 
 export default async function SignInPage({
   searchParams,

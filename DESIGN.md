@@ -95,7 +95,7 @@ components:
   input:
     backgroundColor: "{colors.paper}"
     textColor: "{colors.ink}"
-    rounded: "{rounded.sm}"
+    rounded: "{rounded.button}"
     padding: "12px 16px"
   status-chip:
     backgroundColor: "{colors.tint}"
@@ -125,7 +125,7 @@ Bề mặt là giấy trắng in hai màu: mực gần đen cho chữ, navy HDI 
 - Bảng chương trình kẻ ngang: rule 2px màu mực ở đầu bảng, hairline 1px giữa các dòng.
 - Một font duy nhất, Source Sans 3; số liệu dùng `tabular-nums` để thẳng cột.
 - Một màu nhấn duy nhất (gỉ sét) cho nhãn "song song", vai trò diễn giả, số chỗ sắp hết.
-- Thẻ, ô nhập gần như vuông (2–4px); nút bo 10px; viên thuốc chỉ cho chip trạng thái và ảnh đại diện.
+- Thẻ gần như vuông (2–4px); nút và ô nhập bo 10px; viên thuốc chỉ cho chip trạng thái và ảnh đại diện.
 - Tiêu đề căn trái, màu mực; không có nhãn in hoa nhỏ phía trên tiêu đề.
 
 ## Colors
@@ -174,9 +174,9 @@ Thẻ trên trang dùng viền, không dùng bóng. Bóng chỉ cho thứ thật
 
 ## Shapes
 
-Thang bo góc 2 / 4 / 8px cho bề mặt: thẻ và ô nhập 4px, dialog 8px. Riêng nút có token riêng `--radius-button: 10px` (`rounded-button`) — chủ dự án chọn theo nút của theanalystacademy.com (2026-11-12); áp cho mọi nút chữ và nút icon vuông (giỏ hàng, đổi giao diện, menu, mạng xã hội, đóng dialog). `rounded-full` chỉ cho chip trạng thái, ảnh đại diện, nút nổi liên hệ và ghim bản đồ.
+Thang bo góc 2 / 4 / 8px cho bề mặt: thẻ và hộp thông báo 4px, dialog 8px. Nút và ô nhập liệu dùng token riêng `--radius-button: 10px` (`rounded-button`) — chủ dự án chọn theo nút của theanalystacademy.com (2026-11-12); áp cho mọi nút chữ, nút icon vuông (giỏ hàng, đổi giao diện, menu, mạng xã hội, đóng dialog), ô nhập, ô văn bản, ô chọn, khung soạn thảo và các ô lựa chọn dạng thẻ (loại kiểm tra ở form báo giá, nhóm học viên ở hoàn tất hồ sơ). Ô nhập ghép liền nút (mã giới thiệu ở giỏ hàng) bo 10px ở hai mép ngoài. `rounded-full` chỉ cho chip trạng thái, ảnh đại diện, nút nổi liên hệ và ghim bản đồ.
 
-**The Button Radius Rule.** Thứ bấm được bo 10px; thứ để đọc hoặc nhập liệu giữ 2–4px. Mục menu đang chọn dùng gạch chân, không phải nút.
+**The Button Radius Rule.** Thứ bấm được và ô nhập liệu bo 10px; thứ để đọc giữ 2–4px. Mục menu đang chọn dùng gạch chân, không phải nút.
 
 ## Components
 
@@ -190,7 +190,7 @@ Nguồn duy nhất: `buttonClass({ variant, size })` trong `components/ui/button
 `Card`: viền hairline 4px, hover đậm viền sang màu mực, không nâng. Chỉ dành cho thứ bấm được hoặc mua được (thẻ khóa, form báo giá, thẻ giá). Nội dung chỉ để đọc nằm trên khối có `border-t-2` màu mực.
 
 ### Inputs / Fields
-Viền hairline, bo 4px, nền giấy; focus đổi viền sang navy. Nhãn ở trên, 14px đậm.
+Viền hairline, bo 10px như nút, nền giấy; focus đổi viền sang navy. Nhãn ở trên, 14px đậm.
 
 ### Navigation
 Header nền giấy đặc (không kính mờ), mục đang mở có gạch dưới navy 2px. Breadcrumb chữ thường 14px. Một nút nổi duy nhất mở các kênh liên hệ và mục góp ý.

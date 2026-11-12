@@ -64,7 +64,7 @@ export default async function ForgotPasswordPage({
                 <label className="block text-sm font-semibold">
                   {forgotPage.label}
                   <input
-                    className="mt-1.5 w-full rounded-card border border-line bg-bg px-4 py-3 text-sm outline-none transition focus:border-primary"
+                    className="mt-1.5 w-full rounded-button border border-line bg-bg px-4 py-3 text-sm outline-none transition focus:border-primary"
                     name="email"
                     type="email"
                     autoComplete="email"

@@ -649,7 +649,7 @@ export default async function AdminPage({
                       name="status"
                       defaultValue={c.status}
                       aria-label={`Trạng thái ${course?.title ?? c.slug}`}
-                      className="rounded-full border border-line bg-card px-3 py-2 text-sm text-fg"
+                      className="rounded-button border border-line bg-card px-3 py-2 text-sm text-fg"
                     >
                       <option value="draft">draft</option>
                       <option value="open">open</option>

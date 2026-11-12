@@ -77,7 +77,7 @@ export function QuoteForm({
         value={words}
         onChange={(event) => setWords(event.target.value)}
         placeholder="8000"
-        className="mt-2 w-full rounded-card border border-line bg-bg px-4 py-3 text-[15px] text-fg outline-none transition placeholder:text-fg-subtle focus:border-primary"
+        className="mt-2 w-full rounded-button border border-line bg-bg px-4 py-3 text-[15px] text-fg outline-none transition placeholder:text-fg-subtle focus:border-primary"
       />
       <p className="mt-2 text-xs leading-relaxed text-fg-subtle">
         {aiCheck.wordHint}
@@ -91,7 +91,7 @@ export function QuoteForm({
           {aiCheckKinds.map((option) => (
             <label
               key={option.id}
-              className="flex cursor-pointer items-center justify-between gap-3 rounded-card border border-line px-4 py-3 transition hover:border-primary has-[:checked]:border-primary has-[:checked]:bg-tint"
+              className="flex cursor-pointer items-center justify-between gap-3 rounded-button border border-line px-4 py-3 transition hover:border-primary has-[:checked]:border-primary has-[:checked]:bg-tint"
             >
               <span className="flex items-center gap-3">
                 <input

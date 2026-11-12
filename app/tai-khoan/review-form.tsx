@@ -219,7 +219,7 @@ function ReviewDialogBody({
             maxLength={COMMENT_MAX}
             defaultValue={defaultComment ?? ""}
             placeholder={review.commentPlaceholder}
-            className="mt-3 w-full rounded-card border border-line bg-bg px-4 py-3 text-[15px] text-fg outline-none transition placeholder:text-fg-subtle focus:border-primary"
+            className="mt-3 w-full rounded-button border border-line bg-bg px-4 py-3 text-[15px] text-fg outline-none transition placeholder:text-fg-subtle focus:border-primary"
           />
 
           <p className="mt-2 text-xs leading-relaxed text-fg-subtle">

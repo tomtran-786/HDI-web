@@ -758,7 +758,7 @@ export function CartClient() {
                         }
                       }}
                       disabled={memberEmails.length >= MAX_MEMBERS}
-                      className="min-w-0 flex-1 rounded-sm border border-line bg-bg px-3 py-2 text-sm text-fg outline-none transition focus:border-primary disabled:opacity-60"
+                      className="min-w-0 flex-1 rounded-button border border-line bg-bg px-3 py-2 text-sm text-fg outline-none transition focus:border-primary disabled:opacity-60"
                     />
                     <button
                       type="button"
@@ -911,7 +911,7 @@ export function CartClient() {
                 spellCheck={false}
                 maxLength={12}
                 placeholder={referralPanel.codePlaceholder}
-                className="min-w-0 flex-1 rounded-l-sm border border-r-0 border-line bg-bg px-3 py-2 text-sm uppercase tracking-wide text-fg outline-none transition placeholder:normal-case placeholder:tracking-normal placeholder:text-fg-subtle focus:border-primary disabled:cursor-not-allowed disabled:bg-bg-soft disabled:opacity-70"
+                className="min-w-0 flex-1 rounded-l-button border border-r-0 border-line bg-bg px-3 py-2 text-sm uppercase tracking-wide text-fg outline-none transition placeholder:normal-case placeholder:tracking-normal placeholder:text-fg-subtle focus:border-primary disabled:cursor-not-allowed disabled:bg-bg-soft disabled:opacity-70"
               />
               <button
                 type="button"
@@ -919,7 +919,7 @@ export function CartClient() {
                 disabled={
                   !promoCanEdit || promoChecking || referralCodeDraft.trim() === ""
                 }
-                className="shrink-0 rounded-r-sm bg-primary px-4 py-2 text-sm font-bold text-primary-fg transition-colors hover:bg-primary-deep disabled:cursor-not-allowed disabled:opacity-60"
+                className="shrink-0 rounded-r-button bg-primary px-4 py-2 text-sm font-bold text-primary-fg transition-colors hover:bg-primary-deep disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {promoChecking ? cartPage.promo.applying : cartPage.promo.apply}
               </button>

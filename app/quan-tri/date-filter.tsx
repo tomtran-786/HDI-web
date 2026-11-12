@@ -2,7 +2,7 @@ import Link from "next/link";
 import { toDayInputVN } from "@/lib/format";
 
 const inputClass =
-  "rounded-sm border border-line bg-card px-4 py-2 text-sm text-fg outline-none transition focus:border-primary";
+  "rounded-button border border-line bg-card px-4 py-2 text-sm text-fg outline-none transition focus:border-primary";
 
 const pillClass =
   "rounded-button border border-line bg-card px-4 py-2 text-sm font-bold text-fg-muted transition hover:border-primary hover:text-primary";
