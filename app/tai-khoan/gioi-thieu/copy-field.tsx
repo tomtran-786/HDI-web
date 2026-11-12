@@ -47,7 +47,7 @@ export function CopyField({
               // Trình duyệt từ chối clipboard. Giá trị vẫn nằm ngay bên cạnh.
             }
           }}
-          className="inline-flex items-center gap-2 rounded-xs border border-rule px-4 py-2 text-xs font-semibold text-fg-muted transition hover:bg-fg hover:text-bg"
+          className="inline-flex items-center gap-2 rounded-button border border-rule px-4 py-2 text-xs font-semibold text-fg-muted transition hover:bg-fg hover:text-bg"
         >
           {copied ? referralPage.copied : referralPage.copy}
         </button>

@@ -44,7 +44,7 @@ export function Publications() {
                 type="button"
                 onClick={() => setYear(f.key)}
                 aria-pressed={active}
-                className={`inline-flex items-center gap-2 rounded-xs px-4 py-2 text-sm font-semibold transition ${
+                className={`inline-flex items-center gap-2 rounded-button px-4 py-2 text-sm font-semibold transition ${
                   active
                     ? "bg-primary text-primary-fg"
                     : "border border-line bg-card text-fg-muted hover:border-primary hover:text-primary"

@@ -134,7 +134,7 @@ export default async function SignInPage({
             }}
           >
             <SubmitButton
-              className="inline-flex w-full items-center justify-center gap-3 rounded-xs border border-rule bg-bg px-6 py-3 text-sm font-semibold text-fg transition hover:bg-fg hover:text-bg"
+              className="inline-flex w-full items-center justify-center gap-3 rounded-button border border-rule bg-bg px-6 py-3 text-sm font-semibold text-fg transition hover:bg-fg hover:text-bg"
               pendingLabel="Đang chuyển sang Google…"
             >
               <IconGoogle size={18} />

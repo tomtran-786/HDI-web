@@ -60,7 +60,7 @@ export function Conferences() {
           <button
             type="button"
             onClick={() => setExpanded((v) => !v)}
-            className="rounded-xs border border-line bg-card px-6 py-2.5 text-sm font-bold text-fg-muted transition hover:border-primary hover:text-primary"
+            className="rounded-button border border-line bg-card px-6 py-2.5 text-sm font-bold text-fg-muted transition hover:border-primary hover:text-primary"
           >
             {expanded ? "Thu gọn" : `Xem thêm ${hidden} hội thảo`}
           </button>

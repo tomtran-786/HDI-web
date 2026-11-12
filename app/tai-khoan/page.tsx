@@ -189,14 +189,14 @@ export default async function AccountPage() {
         <div className="mb-10 flex flex-wrap items-center gap-3 sm:mb-12">
           <Link
             href="/tai-khoan/don-hang"
-            className="inline-flex items-center gap-2 rounded-xs border border-rule px-5 py-2.5 text-sm font-semibold text-fg-muted transition hover:bg-fg hover:text-bg"
+            className="inline-flex items-center gap-2 rounded-button border border-rule px-5 py-2.5 text-sm font-semibold text-fg-muted transition hover:bg-fg hover:text-bg"
           >
             <IconReceipt size={16} />
             Đơn hàng
           </Link>
           <Link
             href="/tai-khoan/gioi-thieu"
-            className="inline-flex items-center gap-2 rounded-xs border border-rule px-5 py-2.5 text-sm font-semibold text-fg-muted transition hover:bg-fg hover:text-bg"
+            className="inline-flex items-center gap-2 rounded-button border border-rule px-5 py-2.5 text-sm font-semibold text-fg-muted transition hover:bg-fg hover:text-bg"
           >
             <IconUsers size={16} />
             {referralPage.accountCta}
@@ -217,7 +217,7 @@ export default async function AccountPage() {
           <div className="mt-6 flex flex-wrap justify-center gap-3">
             <Link
               href="/khoa-hoc"
-              className="inline-flex items-center gap-2 rounded-xs bg-primary px-6 py-3 text-sm font-semibold text-primary-fg transition hover:bg-primary-deep"
+              className="inline-flex items-center gap-2 rounded-button bg-primary px-6 py-3 text-sm font-semibold text-primary-fg transition hover:bg-primary-deep"
             >
               Xem các khóa học
             </Link>
@@ -225,7 +225,7 @@ export default async function AccountPage() {
               href={links.zalo}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 rounded-xs border border-rule px-6 py-3 text-sm font-semibold text-fg transition hover:bg-fg hover:text-bg"
+              className="inline-flex items-center gap-2 rounded-button border border-rule px-6 py-3 text-sm font-semibold text-fg transition hover:bg-fg hover:text-bg"
             >
               <IconMessage size={16} />
               Nhắn Zalo
@@ -333,7 +333,7 @@ export default async function AccountPage() {
                           href={`https://drive.google.com/drive/folders/${secret.driveFolderId}`}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="inline-flex flex-1 items-center justify-center gap-2 rounded-xs border border-rule px-5 py-3 text-sm font-semibold text-fg transition hover:bg-fg hover:text-bg"
+                          className="inline-flex flex-1 items-center justify-center gap-2 rounded-button border border-rule px-5 py-3 text-sm font-semibold text-fg transition hover:bg-fg hover:text-bg"
                         >
                           <IconFolder size={16} />
                           Kho record
@@ -349,7 +349,7 @@ export default async function AccountPage() {
                         >
                           <button
                             type="submit"
-                            className="inline-flex w-full items-center justify-center gap-2 rounded-xs border border-rule px-5 py-3 text-sm font-semibold text-fg transition hover:bg-fg hover:text-bg"
+                            className="inline-flex w-full items-center justify-center gap-2 rounded-button border border-rule px-5 py-3 text-sm font-semibold text-fg transition hover:bg-fg hover:text-bg"
                           >
                             <IconFolder size={16} />
                             Thử cấp lại quyền record
@@ -422,7 +422,7 @@ export default async function AccountPage() {
                   </p>
                   <Link
                     href={`/kiem-tra-ai-dao-van/ket-qua/${order.ref}`}
-                    className="inline-flex items-center gap-2 rounded-xs border border-rule px-4 py-2 text-sm font-semibold text-fg-muted transition hover:bg-fg hover:text-bg"
+                    className="inline-flex items-center gap-2 rounded-button border border-rule px-4 py-2 text-sm font-semibold text-fg-muted transition hover:bg-fg hover:text-bg"
                   >
                     Xem đơn
                   </Link>

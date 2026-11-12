@@ -258,7 +258,7 @@ export function SiteHeader({
                       <Link
                         href={item.href}
                         onClick={() => setDesktopOpen(null)}
-                        className="col-span-full inline-flex items-center justify-center rounded-xs border border-line px-4 py-2.5 text-sm font-semibold text-primary transition-colors hover:border-rule"
+                        className="col-span-full inline-flex items-center justify-center rounded-button border border-line px-4 py-2.5 text-sm font-semibold text-primary transition-colors hover:border-rule"
                       >
                         {item.href === "/dich-vu"
                           ? "Tất cả dịch vụ"
@@ -276,7 +276,7 @@ export function SiteHeader({
           {signedIn ? (
             <Link
               href="/tai-khoan"
-              className="hidden items-center gap-2 rounded-xs border border-line py-1 pl-1 pr-3 text-sm font-semibold text-fg transition-colors hover:border-rule sm:inline-flex"
+              className="hidden items-center gap-2 rounded-button border border-line py-1 pl-1 pr-3 text-sm font-semibold text-fg transition-colors hover:border-rule sm:inline-flex"
             >
               <Avatar
                 src={user?.image}
@@ -321,7 +321,7 @@ export function SiteHeader({
             aria-label={open ? "Đóng menu" : "Mở menu"}
             aria-expanded={open}
             aria-controls="mobile-navigation"
-            className="inline-flex h-9 w-9 items-center justify-center rounded-xs border border-line text-fg-muted xl:hidden"
+            className="inline-flex h-9 w-9 items-center justify-center rounded-button border border-line text-fg-muted xl:hidden"
           >
             {open ? <IconClose /> : <IconMenu />}
           </button>

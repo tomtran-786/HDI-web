@@ -113,7 +113,7 @@ export default async function PaymentResultPage({
               actions={
                 <div className="space-y-3">
                   <Link
-                    className="inline-flex w-full items-center justify-center rounded-sm bg-primary px-5 py-3 text-sm font-bold text-primary-fg transition-colors hover:bg-primary-deep"
+                    className="inline-flex w-full items-center justify-center rounded-button bg-primary px-5 py-3 text-sm font-bold text-primary-fg transition-colors hover:bg-primary-deep"
                     href={paid ? "/tai-khoan" : `/tai-khoan/don-hang/${order.code}`}
                   >
                     {paid

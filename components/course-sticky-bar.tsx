@@ -90,7 +90,7 @@ export function CourseStickyBar({
         <div className="flex shrink-0 items-center gap-2">
           <a
             href={outlineHref}
-            className="hidden items-center rounded-xs border border-rule px-4 py-2.5 text-sm font-semibold text-fg transition hover:bg-fg hover:text-bg md:inline-flex"
+            className="hidden items-center rounded-button border border-rule px-4 py-2.5 text-sm font-semibold text-fg transition hover:bg-fg hover:text-bg md:inline-flex"
           >
             Xem lộ trình
           </a>

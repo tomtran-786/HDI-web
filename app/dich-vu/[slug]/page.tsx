@@ -132,7 +132,7 @@ export default async function ServiceDetailPage({ params }: ServicePageProps) {
               <CtaLink
                 source="dich-vu-detail"
                 target="zalo"
-                className="inline-flex items-center rounded-xs border border-rule px-5 py-2.5 text-sm font-semibold text-fg transition hover:bg-fg hover:text-bg"
+                className="inline-flex items-center rounded-button border border-rule px-5 py-2.5 text-sm font-semibold text-fg transition hover:bg-fg hover:text-bg"
               >
                 Nhắn Zalo
               </CtaLink>

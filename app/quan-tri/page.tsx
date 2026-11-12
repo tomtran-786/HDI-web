@@ -658,7 +658,7 @@ export default async function AdminPage({
                     </select>
                     <button
                       type="submit"
-                      className="rounded-xs border border-rule px-3 py-2 text-sm font-semibold text-fg-muted transition hover:bg-fg hover:text-bg"
+                      className="rounded-button border border-rule px-3 py-2 text-sm font-semibold text-fg-muted transition hover:bg-fg hover:text-bg"
                     >
                       Lưu
                     </button>
@@ -717,7 +717,7 @@ export default async function AdminPage({
                       <input type="hidden" name="status" value={next} />
                       <button
                         type="submit"
-                        className="rounded-xs border border-rule px-4 py-2 text-sm font-semibold text-fg-muted transition hover:bg-fg hover:text-bg"
+                        className="rounded-button border border-rule px-4 py-2 text-sm font-semibold text-fg-muted transition hover:bg-fg hover:text-bg"
                       >
                         {next === "published" ? "Duyệt & đăng" : "Không đăng"}
                       </button>

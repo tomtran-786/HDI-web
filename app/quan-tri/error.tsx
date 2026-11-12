@@ -57,7 +57,7 @@ export default function AdminError({
           </button>
           <Link
             href="/quan-tri"
-            className="rounded-xs border border-rule px-6 py-3 text-sm font-semibold text-fg transition hover:bg-fg hover:text-bg"
+            className="rounded-button border border-rule px-6 py-3 text-sm font-semibold text-fg transition hover:bg-fg hover:text-bg"
           >
             Mở lại trang quản trị
           </Link>

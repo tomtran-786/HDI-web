@@ -6,15 +6,16 @@
  * riêng, bọc lại hết thì chỉ thêm một lớp không ai cần. Vị trí (margin,
  * `w-full`, `flex-1`) vẫn do chỗ gọi thêm vào bằng `className`.
  *
- * Hình dạng theo thế giới "chương trình hội nghị": góc 2px như mép giấy cắt,
- * không bóng, không viên thuốc. Focus dùng outline toàn cục trong globals.css.
+ * Bo góc 10px (`rounded-button`, token `--radius-button`), theo nút của
+ * theanalystacademy.com mà chủ dự án chọn làm chuẩn. Không bóng, không viên
+ * thuốc. Focus dùng outline toàn cục trong globals.css.
  */
 
 type Variant = "primary" | "secondary" | "quiet" | "onBand";
 type Size = "sm" | "md" | "lg";
 
 const base =
-  "inline-flex items-center justify-center gap-2 rounded-xs font-semibold whitespace-nowrap transition-colors duration-150 disabled:cursor-not-allowed disabled:opacity-60";
+  "inline-flex items-center justify-center gap-2 rounded-button font-semibold whitespace-nowrap transition-colors duration-150 disabled:cursor-not-allowed disabled:opacity-60";
 
 const variants: Record<Variant, string> = {
   /** Hành động chính của khung: Đăng ký, Thanh toán. Một cái mỗi vùng. */

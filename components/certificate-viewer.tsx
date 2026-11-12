@@ -60,7 +60,7 @@ function CertificateDialog({ onClose }: { onClose: () => void }) {
           type="button"
           onClick={onClose}
           aria-label={zoom.close}
-          className="absolute right-3 top-3 z-10 inline-flex h-9 w-9 items-center justify-center rounded-full border border-line bg-card text-fg-muted shadow-sm transition hover:border-primary hover:text-primary"
+          className="absolute right-3 top-3 z-10 inline-flex h-9 w-9 items-center justify-center rounded-button border border-line bg-card text-fg-muted shadow-sm transition hover:border-primary hover:text-primary"
         >
           <IconClose />
         </button>

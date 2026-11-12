@@ -23,7 +23,7 @@ export function ThemeToggle({ className = "" }: { className?: string }) {
       type="button"
       onClick={toggle}
       aria-label="Đổi giao diện sáng / tối"
-      className={`inline-flex h-9 w-9 items-center justify-center rounded-full border border-line text-fg-muted transition hover:border-primary hover:text-primary ${className}`}
+      className={`inline-flex h-9 w-9 items-center justify-center rounded-button border border-line text-fg-muted transition hover:border-primary hover:text-primary ${className}`}
     >
       <IconMoon className="dark:hidden" />
       <IconSun className="hidden dark:block" />

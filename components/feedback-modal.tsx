@@ -66,7 +66,7 @@ export function FeedbackModal({
             type="button"
             onClick={onClose}
             aria-label={feedbackCopy.close}
-            className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-line text-fg-muted transition hover:border-primary hover:text-primary"
+            className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-button border border-line text-fg-muted transition hover:border-primary hover:text-primary"
           >
             <IconClose />
           </button>
@@ -81,7 +81,7 @@ export function FeedbackModal({
               </p>
               <Link
                 href={`/dang-nhap?tiep=${encodeURIComponent(pathname)}`}
-                className="mt-5 inline-flex items-center justify-center rounded-xs bg-primary px-6 py-3 text-sm font-semibold text-primary-fg transition hover:bg-primary-deep"
+                className="mt-5 inline-flex items-center justify-center rounded-button bg-primary px-6 py-3 text-sm font-semibold text-primary-fg transition hover:bg-primary-deep"
               >
                 {feedbackCopy.signIn}
               </Link>
@@ -102,7 +102,7 @@ export function FeedbackModal({
               <button
                 type="button"
                 onClick={onClose}
-                className="mt-6 inline-flex items-center justify-center rounded-xs bg-primary px-7 py-3 text-sm font-semibold text-primary-fg transition hover:bg-primary-deep"
+                className="mt-6 inline-flex items-center justify-center rounded-button bg-primary px-7 py-3 text-sm font-semibold text-primary-fg transition hover:bg-primary-deep"
               >
                 {feedbackCopy.done}
               </button>
@@ -135,7 +135,7 @@ export function FeedbackModal({
                         role="radio"
                         aria-checked={active}
                         onClick={() => setKind(option)}
-                        className={`inline-flex items-center justify-center gap-2 rounded-xs px-4 py-2.5 text-sm font-semibold transition ${
+                        className={`inline-flex items-center justify-center gap-2 rounded-button px-4 py-2.5 text-sm font-semibold transition ${
                           active
                             ? "bg-primary text-primary-fg"
                             : "border border-line text-fg-muted hover:border-primary hover:text-primary"
@@ -176,14 +176,14 @@ export function FeedbackModal({
               <button
                 type="button"
                 onClick={onClose}
-                className="inline-flex items-center justify-center rounded-xs border border-rule px-6 py-3 text-sm font-semibold text-fg-muted transition hover:bg-fg hover:text-bg"
+                className="inline-flex items-center justify-center rounded-button border border-rule px-6 py-3 text-sm font-semibold text-fg-muted transition hover:bg-fg hover:text-bg"
               >
                 {feedbackCopy.cancel}
               </button>
               <button
                 type="submit"
                 disabled={pending}
-                className="inline-flex items-center justify-center rounded-xs bg-primary px-7 py-3 text-sm font-semibold text-primary-fg transition hover:bg-primary-deep disabled:cursor-not-allowed disabled:opacity-60"
+                className="inline-flex items-center justify-center rounded-button bg-primary px-7 py-3 text-sm font-semibold text-primary-fg transition hover:bg-primary-deep disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {pending ? feedbackCopy.submitting : feedbackCopy.submit}
               </button>

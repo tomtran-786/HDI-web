@@ -81,7 +81,7 @@ export function CourseQuickView({
           type="button"
           onClick={onClose}
           aria-label="Đóng xem nhanh"
-          className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-line text-fg-muted transition hover:border-primary hover:text-primary"
+          className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-button border border-line text-fg-muted transition hover:border-primary hover:text-primary"
         >
           <IconClose />
         </button>

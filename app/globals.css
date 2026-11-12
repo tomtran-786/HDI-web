@@ -98,6 +98,9 @@
   --radius-sm: 4px;
   --radius-md: 8px;
   --radius-card: 4px;
+  /* Nút bo 10px, theo theanalystacademy.com (chủ dự án yêu cầu 2026-11-12).
+     Chỉ dành cho thứ bấm được; thẻ, ô nhập, hộp vẫn theo thang 2/4/8. */
+  --radius-button: 10px;
 
   /* Ba mức bóng, thay cho gần hai chục giá trị lẻ. Bóng chỉ dành cho thứ thật
      sự nổi khỏi trang (menu thả, dialog, thanh dính đáy); thẻ nằm trên trang

@@ -176,7 +176,7 @@ export default async function ServiceOrderResultPage({
           {view === "closed" && (
             <Link
               href="/kiem-tra-ai-dao-van"
-              className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-xs border border-rule px-5 py-3 text-sm font-semibold text-fg transition hover:bg-fg hover:text-bg"
+              className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-button border border-rule px-5 py-3 text-sm font-semibold text-fg transition hover:bg-fg hover:text-bg"
             >
               {aiCheck.result.back}
             </Link>

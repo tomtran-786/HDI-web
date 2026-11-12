@@ -51,7 +51,7 @@ export default async function ResetPasswordPage({
                   other exit is a sign-in page they still cannot get past. */}
               <Link
                 href={`/quen-mat-khau${nextQuery}`}
-                className="mt-4 inline-flex w-full items-center justify-center rounded-xs bg-primary px-6 py-3 text-sm font-semibold text-primary-fg transition hover:bg-primary-deep"
+                className="mt-4 inline-flex w-full items-center justify-center rounded-button bg-primary px-6 py-3 text-sm font-semibold text-primary-fg transition hover:bg-primary-deep"
               >
                 {resetPage.invalid.cta}
               </Link>

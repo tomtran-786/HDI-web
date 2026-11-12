@@ -60,6 +60,7 @@ rounded:
   xs: "2px"
   sm: "4px"
   md: "8px"
+  button: "10px"
 spacing:
   gutter: "20px"
   shell: "76rem"
@@ -68,7 +69,7 @@ components:
   button-primary:
     backgroundColor: "{colors.navy}"
     textColor: "{colors.paper}"
-    rounded: "{rounded.xs}"
+    rounded: "{rounded.button}"
     height: "44px"
     padding: "0 20px"
   button-primary-hover:
@@ -76,7 +77,7 @@ components:
   button-secondary:
     backgroundColor: "{colors.paper}"
     textColor: "{colors.ink}"
-    rounded: "{rounded.xs}"
+    rounded: "{rounded.button}"
     height: "44px"
     padding: "0 20px"
   button-secondary-hover:
@@ -85,7 +86,7 @@ components:
   button-on-band:
     backgroundColor: "{colors.paper}"
     textColor: "{colors.band}"
-    rounded: "{rounded.xs}"
+    rounded: "{rounded.button}"
     height: "48px"
   card:
     backgroundColor: "{colors.paper}"
@@ -124,7 +125,7 @@ Bề mặt là giấy trắng in hai màu: mực gần đen cho chữ, navy HDI 
 - Bảng chương trình kẻ ngang: rule 2px màu mực ở đầu bảng, hairline 1px giữa các dòng.
 - Một font duy nhất, Source Sans 3; số liệu dùng `tabular-nums` để thẳng cột.
 - Một màu nhấn duy nhất (gỉ sét) cho nhãn "song song", vai trò diễn giả, số chỗ sắp hết.
-- Góc gần như vuông (2–4px); viên thuốc chỉ cho chip trạng thái và ảnh đại diện.
+- Thẻ, ô nhập gần như vuông (2–4px); nút bo 10px; viên thuốc chỉ cho chip trạng thái và ảnh đại diện.
 - Tiêu đề căn trái, màu mực; không có nhãn in hoa nhỏ phía trên tiêu đề.
 
 ## Colors
@@ -173,12 +174,14 @@ Thẻ trên trang dùng viền, không dùng bóng. Bóng chỉ cho thứ thật
 
 ## Shapes
 
-Thang bo góc 2 / 4 / 8px: nút 2px, thẻ và ô nhập 4px, dialog 8px. `rounded-full` chỉ cho chip trạng thái, ảnh đại diện, nút tròn chỉ có icon và ghim bản đồ.
+Thang bo góc 2 / 4 / 8px cho bề mặt: thẻ và ô nhập 4px, dialog 8px. Riêng nút có token riêng `--radius-button: 10px` (`rounded-button`) — chủ dự án chọn theo nút của theanalystacademy.com (2026-11-12); áp cho mọi nút chữ và nút icon vuông (giỏ hàng, đổi giao diện, menu, mạng xã hội, đóng dialog). `rounded-full` chỉ cho chip trạng thái, ảnh đại diện, nút nổi liên hệ và ghim bản đồ.
+
+**The Button Radius Rule.** Thứ bấm được bo 10px; thứ để đọc hoặc nhập liệu giữ 2–4px. Mục menu đang chọn dùng gạch chân, không phải nút.
 
 ## Components
 
 ### Buttons
-Nguồn duy nhất: `buttonClass({ variant, size })` trong `components/ui/button.tsx`. `primary` (navy đặc), `secondary` (viền mực, hover đảo màu), `quiet` (liên kết gạch chân), `onBand` (trắng trên dải navy). Cỡ `sm` 36px, `md` 44px, `lg` 48px. Không mũi tên sau nhãn.
+Nguồn duy nhất: `buttonClass({ variant, size })` trong `components/ui/button.tsx`. `primary` (navy đặc), `secondary` (viền mực, hover đảo màu), `quiet` (liên kết gạch chân), `onBand` (trắng trên dải navy). Bo 10px (`rounded-button`). Cỡ `sm` 36px, `md` 44px, `lg` 48px. Không mũi tên sau nhãn.
 
 ### Chips
 `Badge`: viên thuốc 12px trên nền `tint` — chỉ cho trạng thái (còn chỗ, hết chỗ, ưu đãi).

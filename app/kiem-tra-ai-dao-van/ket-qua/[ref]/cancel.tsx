@@ -59,7 +59,7 @@ export function CancelServiceOrder({ orderId }: { orderId: string }) {
             <button
               type="button"
               onClick={() => dialogRef.current?.close()}
-              className="inline-flex items-center justify-center rounded-xs border border-rule px-6 py-3 text-sm font-semibold text-fg transition hover:bg-fg hover:text-bg"
+              className="inline-flex items-center justify-center rounded-button border border-rule px-6 py-3 text-sm font-semibold text-fg transition hover:bg-fg hover:text-bg"
             >
               Giữ lại
             </button>
@@ -77,7 +77,7 @@ export function CancelServiceOrder({ orderId }: { orderId: string }) {
                   }
                 })
               }
-              className="inline-flex items-center justify-center rounded-xs bg-danger px-6 py-3 text-sm font-semibold text-primary-fg transition disabled:cursor-not-allowed disabled:opacity-60"
+              className="inline-flex items-center justify-center rounded-button bg-danger px-6 py-3 text-sm font-semibold text-primary-fg transition disabled:cursor-not-allowed disabled:opacity-60"
             >
               {pending ? "Đang hủy…" : "Hủy đơn"}
             </button>

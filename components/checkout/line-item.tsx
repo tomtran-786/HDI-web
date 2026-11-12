@@ -119,7 +119,7 @@ export function LineItem({
                   type="button"
                   onClick={onRemove}
                   aria-label={cartPage.removeLabel(course.title)}
-                  className="rounded-sm bg-primary px-3 py-1.5 text-xs font-bold text-primary-fg transition-colors hover:bg-primary-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-bg"
+                  className="rounded-button bg-primary px-3 py-1.5 text-xs font-bold text-primary-fg transition-colors hover:bg-primary-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-bg"
                 >
                   {cartPage.remove}
                 </button>

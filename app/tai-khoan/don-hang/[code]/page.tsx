@@ -92,7 +92,7 @@ export default async function OrderDetailPage({
   // Nút chữ nhật bo nhẹ, đặc cho hành động chính và viền cho hành động phụ —
   // cùng ngôn ngữ với thẻ tóm tắt ở giỏ hàng.
   const secondaryButton =
-    "inline-flex w-full items-center justify-center gap-2 rounded-sm border border-line px-5 py-2.5 text-sm font-bold text-fg transition hover:border-primary hover:text-primary";
+    "inline-flex w-full items-center justify-center gap-2 rounded-button border border-line px-5 py-2.5 text-sm font-bold text-fg transition hover:border-primary hover:text-primary";
 
   return (
     <>
@@ -152,7 +152,7 @@ export default async function OrderDetailPage({
                       <PayosLink
                         href={order.checkoutUrl}
                         handoff={{ kind: "order", key: String(order.code) }}
-                        className="inline-flex w-full items-center justify-center gap-2 rounded-sm bg-primary px-5 py-3 text-sm font-bold text-primary-fg transition hover:bg-primary-deep"
+                        className="inline-flex w-full items-center justify-center gap-2 rounded-button bg-primary px-5 py-3 text-sm font-bold text-primary-fg transition hover:bg-primary-deep"
                       >
                         Thanh toán với PayOS
                       </PayosLink>
@@ -185,7 +185,7 @@ export default async function OrderDetailPage({
                 ) : status === "paid" ? (
                   <Link
                     href="/tai-khoan"
-                    className="inline-flex w-full items-center justify-center gap-2 rounded-sm bg-primary px-5 py-3 text-sm font-bold text-primary-fg transition hover:bg-primary-deep"
+                    className="inline-flex w-full items-center justify-center gap-2 rounded-button bg-primary px-5 py-3 text-sm font-bold text-primary-fg transition hover:bg-primary-deep"
                   >
                     Vào trang tài khoản
                   </Link>

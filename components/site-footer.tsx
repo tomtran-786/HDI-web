@@ -86,7 +86,7 @@ export function SiteFooter() {
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label={label}
-                  className={`inline-flex h-9 w-9 items-center justify-center rounded-xs border border-white/40 text-white transition-colors hover:bg-white hover:text-(--band) ${focusRing}`}
+                  className={`inline-flex h-9 w-9 items-center justify-center rounded-button border border-white/40 text-white transition-colors hover:bg-white hover:text-(--band) ${focusRing}`}
                 >
                   <Icon size={16} />
                 </a>

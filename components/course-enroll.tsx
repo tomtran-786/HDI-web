@@ -49,7 +49,7 @@ export function CourseEnroll({
             trackCta(source, "dang-ky", course.slug);
             openCart(course.slug);
           }}
-          className={`inline-flex items-center justify-center gap-2 rounded-xs bg-primary ${size} text-sm font-semibold text-primary-fg transition hover:bg-primary-deep ${
+          className={`inline-flex items-center justify-center gap-2 rounded-button bg-primary ${size} text-sm font-semibold text-primary-fg transition hover:bg-primary-deep ${
             pills ? "" : "flex-1"
           }`}
         >
@@ -60,7 +60,7 @@ export function CourseEnroll({
         source={source}
         target="zalo"
         course={course.slug}
-        className={`inline-flex items-center justify-center gap-2 rounded-xs border border-rule ${size} text-sm font-semibold text-fg transition hover:border-primary hover:text-primary`}
+        className={`inline-flex items-center justify-center gap-2 rounded-button border border-rule ${size} text-sm font-semibold text-fg transition hover:border-primary hover:text-primary`}
       >
         <IconMessage size={pills ? 14 : 16} />
         Nhắn Zalo

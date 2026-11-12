@@ -604,7 +604,7 @@ export function CartClient() {
           </p>
           <Link
             href="/khoa-hoc"
-            className="mt-5 inline-flex items-center gap-2 rounded-sm bg-primary px-5 py-2.5 text-sm font-bold text-primary-fg transition-colors hover:bg-primary-deep"
+            className="mt-5 inline-flex items-center gap-2 rounded-button bg-primary px-5 py-2.5 text-sm font-bold text-primary-fg transition-colors hover:bg-primary-deep"
           >
             {cartPage.empty.browse}
           </Link>
@@ -764,7 +764,7 @@ export function CartClient() {
                       type="button"
                       onClick={() => addMember(draft)}
                       disabled={!draft.trim()}
-                      className="shrink-0 rounded-xs border border-rule px-3 py-2 text-xs font-semibold text-fg-muted transition hover:bg-fg hover:text-bg disabled:opacity-50"
+                      className="shrink-0 rounded-button border border-rule px-3 py-2 text-xs font-semibold text-fg-muted transition hover:bg-fg hover:text-bg disabled:opacity-50"
                     >
                       {groupPanel.add}
                     </button>
@@ -869,7 +869,7 @@ export function CartClient() {
               <button
                 type="submit"
                 disabled={checkoutDisabled}
-                className="hidden w-full items-center justify-center gap-2 rounded-sm bg-primary px-7 py-3 text-sm font-bold text-primary-fg transition hover:bg-primary-deep disabled:cursor-not-allowed disabled:opacity-60 lg:inline-flex"
+                className="hidden w-full items-center justify-center gap-2 rounded-button bg-primary px-7 py-3 text-sm font-bold text-primary-fg transition hover:bg-primary-deep disabled:cursor-not-allowed disabled:opacity-60 lg:inline-flex"
               >
                 <IconCart size={16} />
                 {checkoutLabel}
@@ -963,7 +963,7 @@ export function CartClient() {
             type="submit"
             form="cart-checkout-form"
             disabled={checkoutDisabled}
-            className="inline-flex shrink-0 items-center justify-center gap-2 rounded-sm bg-primary px-6 py-3 text-sm font-bold text-primary-fg transition hover:bg-primary-deep disabled:cursor-not-allowed disabled:opacity-60"
+            className="inline-flex shrink-0 items-center justify-center gap-2 rounded-button bg-primary px-6 py-3 text-sm font-bold text-primary-fg transition hover:bg-primary-deep disabled:cursor-not-allowed disabled:opacity-60"
           >
             <IconCart size={16} />
             {checkoutLabel}

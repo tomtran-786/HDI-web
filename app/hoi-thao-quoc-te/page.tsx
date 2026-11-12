@@ -164,7 +164,7 @@ export default function ConferenceProgramPage() {
               </CtaLink>
               <Link
                 href="/khoa-hoc"
-                className="inline-flex items-center rounded-xs border border-rule px-5 py-2.5 text-sm font-semibold text-fg transition hover:bg-fg hover:text-bg"
+                className="inline-flex items-center rounded-button border border-rule px-5 py-2.5 text-sm font-semibold text-fg transition hover:bg-fg hover:text-bg"
               >
                 Xem khóa học nền tảng
               </Link>

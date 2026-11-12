@@ -5,10 +5,10 @@ const inputClass =
   "rounded-sm border border-line bg-card px-4 py-2 text-sm text-fg outline-none transition focus:border-primary";
 
 const pillClass =
-  "rounded-xs border border-line bg-card px-4 py-2 text-sm font-bold text-fg-muted transition hover:border-primary hover:text-primary";
+  "rounded-button border border-line bg-card px-4 py-2 text-sm font-bold text-fg-muted transition hover:border-primary hover:text-primary";
 
 const activePillClass =
-  "rounded-xs bg-primary px-4 py-2 text-sm font-bold text-primary-fg";
+  "rounded-button bg-primary px-4 py-2 text-sm font-bold text-primary-fg";
 
 /** Mốc `YYYY-MM-DD` của N ngày trước, theo giờ Việt Nam. */
 function daysAgo(days: number, now: Date) {
@@ -75,7 +75,7 @@ export function DateFilter({
         </label>
         <button
           type="submit"
-          className="rounded-xs bg-primary px-5 py-2 text-sm font-semibold text-primary-fg transition hover:opacity-90"
+          className="rounded-button bg-primary px-5 py-2 text-sm font-semibold text-primary-fg transition hover:opacity-90"
         >
           Áp dụng
         </button>

@@ -66,7 +66,7 @@ export function CourseList({
                   trackCourseSort(key);
                 }}
                 aria-pressed={active}
-                className={`-ml-px inline-flex h-9 items-center border px-3.5 text-sm font-semibold transition-colors first-of-type:rounded-l-xs last:rounded-r-xs ${
+                className={`-ml-px inline-flex h-9 items-center border px-3.5 text-sm font-semibold transition-colors first-of-type:rounded-l-button last:rounded-r-button ${
                   active
                     ? "relative z-[1] border-rule bg-fg text-bg"
                     : "border-line bg-bg text-fg-muted hover:text-fg"

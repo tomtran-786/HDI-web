@@ -22,7 +22,7 @@ export function CartButton({ onNavigate }: { onNavigate?: () => void }) {
         openCart();
       }}
       aria-label={count > 0 ? `Giỏ hàng, ${count} khóa học` : "Giỏ hàng"}
-      className="relative inline-flex h-9 w-9 items-center justify-center rounded-full border border-line text-fg-muted transition hover:border-primary hover:text-primary"
+      className="relative inline-flex h-9 w-9 items-center justify-center rounded-button border border-line text-fg-muted transition hover:border-primary hover:text-primary"
     >
       <IconCart size={17} />
       {count > 0 && (

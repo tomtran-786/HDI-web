@@ -156,7 +156,7 @@ export default function AboutHdiPage() {
             <CheckList items={about.record.items} columns />
             <Link
               href={about.record.cta.href}
-              className="mt-7 inline-flex items-center gap-2 rounded-xs bg-primary px-5 py-2.5 text-sm font-bold text-primary-fg transition hover:bg-primary-deep"
+              className="mt-7 inline-flex items-center gap-2 rounded-button bg-primary px-5 py-2.5 text-sm font-bold text-primary-fg transition hover:bg-primary-deep"
             >
               {about.record.cta.label}
             </Link>
@@ -183,7 +183,7 @@ export default function AboutHdiPage() {
               </CtaLink>
               <Link
                 href="/khoa-hoc"
-                className="inline-flex items-center rounded-xs border border-rule px-5 py-2.5 text-sm font-semibold text-fg transition hover:bg-fg hover:text-bg"
+                className="inline-flex items-center rounded-button border border-rule px-5 py-2.5 text-sm font-semibold text-fg transition hover:bg-fg hover:text-bg"
               >
                 Xem chương trình đào tạo
               </Link>
