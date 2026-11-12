@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import { aiCheck, aiCheckKinds, aiCheckTiers } from "@/content/ai-check";
 import { site } from "@/content/site";
 import { formatVnd } from "@/lib/format";
@@ -30,6 +31,22 @@ export default async function AiCheckPage({
 
   return (
     <>
+      {/* Banner quảng cáo do HDI cung cấp, đặt lại theo yêu cầu chủ dự án
+          (2026-11-12) dù DESIGN.md tránh chữ trong ảnh: chỉ ở trang này, ảnh
+          thuần full-width giữ tỷ lệ 2045×769. Giá trong ảnh khớp bậc đầu của
+          `aiCheckTiers` — đổi giá thì phải đổi cả ảnh. */}
+      <div className="w-full border-b border-line bg-bg">
+        <Image
+          src="/images/banner-check-turnitin-v2.jpg"
+          alt="Check AI & Đạo văn Turnitin — Check AI chỉ từ 50K, Check đạo văn chỉ từ 20K, Combo AI + Đạo văn chỉ từ 60K"
+          width={2045}
+          height={769}
+          priority
+          sizes="100vw"
+          className="h-auto w-full"
+        />
+      </div>
+
       <section className="border-b border-line bg-bg">
         <div className="shell py-14 sm:py-16 lg:py-20">
           <h1 className="max-w-[22ch] text-[2.25rem] leading-[1.08] font-extrabold tracking-[-0.03em] sm:text-5xl lg:text-[3.25rem]">

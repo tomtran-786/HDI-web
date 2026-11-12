@@ -17,6 +17,7 @@ import { formatVnd } from "@/lib/format";
 import { AuthShell } from "@/components/auth-shell";
 import { Avatar } from "@/components/ui/avatar";
 import { SectionHeading } from "@/components/ui/section";
+import { AiCheckUpsell } from "@/components/ai-check-upsell";
 import { Badge } from "@/components/ui/badge";
 import {
   IconFolder,
@@ -389,6 +390,8 @@ export default async function AccountPage() {
           })}
         </div>
       )}
+
+      <AiCheckUpsell className="mt-12" />
 
       {serviceOrders.length > 0 && (
         <>

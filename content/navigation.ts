@@ -17,6 +17,11 @@ export type NavItem = {
   label: string;
   href: string;
   groups?: readonly NavGroup[];
+  /**
+   * Nhãn giá nhỏ cạnh mục (vd. "từ 20K"). Mục có nhãn được coi là mục nổi bật:
+   * menu mobile đưa nó lên đầu danh sách.
+   */
+  badge?: string;
 };
 
 export const nav: readonly NavItem[] = [
@@ -122,6 +127,15 @@ export const nav: readonly NavItem[] = [
         ],
       },
     ],
+  },
+  // Dịch vụ lẻ bán chạy nhất có mục cấp 1 riêng (vẫn giữ trong "Dịch vụ").
+  // Nhãn giá là chữ viết tay để header không phải kéo cả content/ai-check.ts
+  // vào bundle client; tests/navigation-ai-check-badge.test.ts canh nó khớp
+  // mức giá thấp nhất của bảng giá.
+  {
+    label: "Kiểm tra đạo văn",
+    href: "/kiem-tra-ai-dao-van",
+    badge: "từ 20K",
   },
   { label: "Hội thảo quốc tế", href: "/hoi-thao-quoc-te" },
   // Hiện cho mọi người, kể cả khách chưa đăng nhập: chương trình chỉ chạy được

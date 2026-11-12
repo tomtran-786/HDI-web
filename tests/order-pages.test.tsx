@@ -39,6 +39,7 @@ vi.mock("@/components/payment-poll", () => ({
 }));
 
 import OrderDetailPage from "@/app/tai-khoan/don-hang/[code]/page";
+import { aiCheckUpsell } from "@/content/ai-check";
 import PaymentResultPage from "@/app/thanh-toan/ket-qua/page";
 
 const USER = "user-1";
@@ -169,6 +170,18 @@ describe("/thanh-toan/ket-qua", () => {
     expect(html).not.toContain("POLL_SENTINEL");
     expect(html).toContain('href="/tai-khoan"');
     expect(mocks.syncPayosOrderStatus).not.toHaveBeenCalled();
+  });
+
+  it("chỉ đơn đã thanh toán mới gợi ý dịch vụ kiểm tra AI & đạo văn", async () => {
+    mocks.orderFindFirst.mockResolvedValue(order({ status: "paid" }));
+    const paidHtml = await result();
+    expect(paidHtml).toContain(aiCheckUpsell.title.replace("&", "&amp;"));
+    expect(paidHtml).toContain("từ 20.000đ");
+    expect(paidHtml).toContain('href="/kiem-tra-ai-dao-van"');
+
+    mocks.orderFindFirst.mockResolvedValue(order());
+    const waitingHtml = await result();
+    expect(waitingHtml).not.toContain("Sắp nộp bài?");
   });
 
   it("đơn PayOS đã đóng thì nói đúng trạng thái đóng, không hứa xác nhận", async () => {

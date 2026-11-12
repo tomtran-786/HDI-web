@@ -88,8 +88,20 @@ export const aiCheckTeaser = {
   tooLong: "Trên 29.000 từ: HDI báo giá riêng qua Zalo.",
 } as const;
 
+/**
+ * Gợi ý dịch vụ kiểm tra ở trang thanh toán thành công và trang tài khoản
+ * (components/ai-check-upsell.tsx). Người vừa mua khóa viết tiểu luận, NCKH
+ * hay bài báo là đúng người sắp cần kiểm tra bản thảo. Giá "từ …" lấy từ
+ * `aiCheckFromPrices`, không viết tay.
+ */
+export const aiCheckUpsell = {
+  title: "Sắp nộp bài? Kiểm tra AI & đạo văn bằng Turnitin",
+  body: (fromPrice: string) =>
+    `Báo cáo tỷ lệ AI và tỷ lệ trùng lặp trước khi nộp hoặc gửi đăng, từ ${fromPrice}. Thanh toán trực tuyến, gửi bài qua Zalo.`,
+  cta: "Đặt kiểm tra",
+} as const;
+
 export const aiCheck = {
-  eyebrow: "Dịch vụ",
   title: "Kiểm tra AI & đạo văn",
   subtitle:
     "Nhập số từ của bản thảo để biết ngay chi phí, thanh toán trực tuyến rồi gửi bài qua Zalo.",
@@ -128,7 +140,6 @@ export const aiCheck = {
   // Zalo không nhận sẵn nội dung tin nhắn qua deep link, nên mã đơn phải được
   // học viên tự mang sang. Chữ ở trang kết quả nói đúng điều đó.
   result: {
-    eyebrow: "Đơn dịch vụ",
     pendingTitle: "Đơn đã tạo, đang chờ thanh toán",
     pendingBody:
       "Nếu bạn đã chuyển khoản, trạng thái sẽ đổi trong ít phút sau khi ngân hàng báo về. Bạn có thể gửi bài trước.",

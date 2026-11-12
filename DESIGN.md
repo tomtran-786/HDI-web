@@ -193,7 +193,7 @@ Nguồn duy nhất: `buttonClass({ variant, size })` trong `components/ui/button
 Viền hairline, bo 10px như nút, nền giấy; focus đổi viền sang navy. Nhãn ở trên, 14px đậm.
 
 ### Navigation
-Header nền giấy đặc (không kính mờ), mục đang mở có gạch dưới navy 2px. Breadcrumb chữ thường 14px. Một nút nổi duy nhất mở các kênh liên hệ và mục góp ý.
+Header nền giấy đặc (không kính mờ), mục đang mở có gạch dưới navy 2px. "Kiểm tra đạo văn" là mục cấp 1 duy nhất mang nhãn giá ("từ 20K", chữ `font-cond` màu gỉ sét, không viền, không nền); trên menu mobile nó đứng đầu danh sách. Ở 1280–1535px các mục menu đệm 8px để cả hàng vừa một dòng (admin thì chữ phụ "Research Center" của logo nhường chỗ cho mục "Quản trị"). Breadcrumb chữ thường 14px. Một nút nổi duy nhất mở các kênh liên hệ và mục góp ý.
 
 ### Bảng chương trình (signature)
 `components/programme.tsx`: đầu bảng "Lịch khai giảng tháng …" trên rule 2px; mỗi dòng: ngày + thứ (figure), tên khóa (liên kết), meta (số buổi · giờ · số học viên · còn N chỗ), `PriceTag`, nút Đăng ký. Dòng cuối "Song song" trên nền tint: kiểm tra AI & đạo văn, giá "từ 50K / 20K / 60K".
@@ -216,4 +216,4 @@ Hero trang chủ: dây navy từ mép trên xuống, thẻ viền mực 2px, đ�
 - **Don't** bọc nội dung chỉ để đọc trong thẻ đổ bóng.
 - **Don't** thêm fade-up khi cuộn; chuyển động phải có lý do (dialog, phản hồi thao tác, thẻ đeo).
 - **Don't** đổi font family; Source Sans 3 là font của thương hiệu.
-- **Don't** đặt chữ vào ảnh (poster, banner) — dựng bằng HTML từ `content/`.
+- **Don't** đặt chữ vào ảnh (poster, banner) — dựng bằng HTML từ `content/`. Ngoại lệ duy nhất, theo yêu cầu chủ dự án (2026-11-12): banner HDI `banner-check-turnitin-v2.jpg` ở đầu trang `/kiem-tra-ai-dao-van`, như trên `main` trước redesign. Giá in trong ảnh phải khớp bậc đầu của `aiCheckTiers`.

@@ -83,9 +83,11 @@ describe("lối vào trang quản trị trên navbar", () => {
 
   it("render đủ hai dropdown và toàn bộ href con", () => {
     const html = render({ signedIn: false });
-    const children = nav.flatMap((item) =>
-      item.groups?.flatMap((group) => group.children) ?? [],
-    );
+    // Mục con nào cũng là mục cấp 1 (Kiểm tra AI & Đạo văn) thì footer vẫn có.
+    const topLevel = new Set(footerNav.map((item) => item.href));
+    const children = nav
+      .flatMap((item) => item.groups?.flatMap((group) => group.children) ?? [])
+      .filter((child) => !topLevel.has(child.href));
 
     expect(html).toContain('id="desktop-dich-vu-menu"');
     expect(html).toContain('id="desktop-khoa-hoc-menu"');
@@ -94,21 +96,24 @@ describe("lối vào trang quản trị trên navbar", () => {
     for (const child of children) expect(html).toContain(`href="${child.href}"`);
   });
 
-  it("đánh dấu mục Dịch vụ active trên route Kiểm tra AI & Đạo văn — mục con này sống trong dropdown Dịch vụ", () => {
+  it("trên route Kiểm tra AI & Đạo văn, mục cấp 1 riêng của nó active chứ không phải Dịch vụ", () => {
     mocks.pathname = "/kiem-tra-ai-dao-van";
     const html = render({ signedIn: false });
 
-    // "Kiểm tra AI & Đạo văn" nằm trong dropdown "Dịch vụ" (content/navigation.ts),
-    // không còn là mục top-level riêng — chỉ mục cha mới mang `aria-current`.
-    expect(html).toMatch(/aria-current="page"[^>]*href="\/dich-vu"/);
-    expect(html).not.toMatch(/aria-current="page"[^>]*href="\/kiem-tra-ai-dao-van"/);
+    // Mục này vừa là mục cấp 1 (kèm nhãn "từ 20K") vừa còn trong dropdown
+    // "Dịch vụ"; chỉ mục cấp 1 mang `aria-current` để không có hai mục cùng sáng.
+    expect(html).toMatch(/aria-current="page"[^>]*href="\/kiem-tra-ai-dao-van"/);
+    expect(html).not.toMatch(/aria-current="page"[^>]*href="\/dich-vu"/);
+    expect(html).toContain("từ 20K");
   });
 
   it("footer chỉ dùng link cha và không bung item dropdown", () => {
     const html = renderToStaticMarkup(<SiteFooter />);
-    const children = nav.flatMap((item) =>
-      item.groups?.flatMap((group) => group.children) ?? [],
-    );
+    // Mục con nào cũng là mục cấp 1 (Kiểm tra AI & Đạo văn) thì footer vẫn có.
+    const topLevel = new Set(footerNav.map((item) => item.href));
+    const children = nav
+      .flatMap((item) => item.groups?.flatMap((group) => group.children) ?? [])
+      .filter((child) => !topLevel.has(child.href));
 
     for (const item of footerNav) expect(html).toContain(`href="${item.href}"`);
     for (const child of children) expect(html).not.toContain(`href="${child.href}"`);

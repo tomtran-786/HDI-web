@@ -43,6 +43,12 @@ export function SiteHeader({
     ? [...visibleNav, ADMIN_NAV]
     : visibleNav;
 
+  // Mục có nhãn giá (Kiểm tra đạo văn) lên đầu menu mobile; desktop giữ thứ tự gốc.
+  const mobileNavItems = [
+    ...navItems.filter((item) => item.badge),
+    ...navItems.filter((item) => !item.badge),
+  ];
+
   const closeMobile = () => {
     setOpen(false);
     setMobileOpenGroups([]);
@@ -101,15 +107,6 @@ export function SiteHeader({
     if (item.href.startsWith("/#")) {
       return pathname === "/" && activeHref === item.href;
     }
-    // "Kiểm tra AI & Đạo văn" (/kiem-tra-ai-dao-van) sống dưới mục "Dịch vụ"
-    // nhưng không nằm trên path /dich-vu/, nên nhánh chung không bắt được.
-    if (item.href === "/dich-vu") {
-      return (
-        pathname === "/dich-vu" ||
-        pathname.startsWith("/dich-vu/") ||
-        pathname === "/kiem-tra-ai-dao-van"
-      );
-    }
     // "Hồ sơ học thuật" (/cong-bo) sống dưới mục "Về HDI" nhưng không nằm trên
     // path /ve-hdi/, nên nhánh chung không bắt được — phải nêu tên riêng.
     if (item.href === "/ve-hdi") {
@@ -125,7 +122,7 @@ export function SiteHeader({
             ? "bg-tint text-fg"
             : "text-fg-muted hover:bg-bg-soft hover:text-fg"
         }`
-      : `px-3 py-2 text-sm font-semibold transition-colors ${
+      : `px-2 py-2 text-sm font-semibold whitespace-nowrap transition-colors 2xl:px-3 ${
           active
             ? "text-fg shadow-[inset_0_-2px_0_var(--primary)]"
             : "text-fg-muted hover:text-fg"
@@ -159,13 +156,19 @@ export function SiteHeader({
           />
           <span className="flex items-baseline gap-2">
             <span className="text-lg font-extrabold text-primary">{site.short}</span>
-            <span className="text-sm font-semibold text-fg-muted">Research Center</span>
+            {/* Admin có thêm mục "Quản trị": ở 1280–1535px thanh menu hết chỗ,
+                nên chữ phụ của logo nhường chỗ (chỉ với admin, chỉ khoảng đó). */}
+            <span
+              className={`text-sm font-semibold text-fg-muted ${isAdmin ? "xl:hidden 2xl:inline" : ""}`}
+            >
+              Research Center
+            </span>
           </span>
         </Link>
 
         <nav
           aria-label="Điều hướng chính"
-          className="hidden items-center gap-1 xl:flex"
+          className="hidden items-center gap-0.5 xl:flex 2xl:gap-1"
         >
           {navItems.map((item) => {
             const active = isActive(item);
@@ -179,9 +182,10 @@ export function SiteHeader({
                     setActiveHref(item.href);
                     setDesktopOpen(null);
                   }}
-                  className={navLinkClass(active)}
+                  className={`${navLinkClass(active)} ${item.badge ? "inline-flex items-baseline gap-1.5" : ""}`}
                 >
                   {item.label}
+                  {item.badge && <NavBadge>{item.badge}</NavBadge>}
                 </Link>
               );
             }
@@ -201,7 +205,7 @@ export function SiteHeader({
                   href={item.href}
                   aria-current={active ? "page" : undefined}
                   onClick={() => setDesktopOpen(null)}
-                  className={`flex items-center gap-1.5 px-3 py-2 text-sm font-semibold transition-colors hover:text-fg ${
+                  className={`flex items-center gap-1.5 px-2 py-2 text-sm font-semibold whitespace-nowrap transition-colors hover:text-fg 2xl:px-3 ${
                     active
                       ? "bg-card text-primary shadow-sm"
                       : "text-fg-muted"
@@ -272,7 +276,7 @@ export function SiteHeader({
           })}
         </nav>
 
-        <div className="flex items-center gap-2">
+        <div className="flex shrink-0 items-center gap-2">
           {signedIn ? (
             <Link
               href="/tai-khoan"
@@ -291,7 +295,7 @@ export function SiteHeader({
             <>
               <Link
                 href="/dang-nhap"
-                className="hidden px-3 py-2 text-sm font-semibold text-fg-muted transition-colors hover:text-fg sm:inline-block"
+                className="hidden px-3 py-2 text-sm font-semibold whitespace-nowrap text-fg-muted transition-colors hover:text-fg sm:inline-block"
               >
                 Đăng nhập
               </Link>
@@ -354,7 +358,7 @@ export function SiteHeader({
                 Khám phá HDI
               </p>
               <div className="mt-3 grid gap-1">
-                {navItems.map((item) => {
+                {mobileNavItems.map((item) => {
                   const active = isActive(item);
                   if (!item.groups?.length) {
                     return (
@@ -366,9 +370,10 @@ export function SiteHeader({
                           setActiveHref(item.href);
                           closeMobile();
                         }}
-                        className={navLinkClass(active, true)}
+                        className={`${navLinkClass(active, true)} ${item.badge ? "flex items-baseline justify-between gap-3" : ""}`}
                       >
                         {item.label}
+                        {item.badge && <NavBadge>{item.badge}</NavBadge>}
                       </Link>
                     );
                   }
@@ -475,5 +480,14 @@ export function SiteHeader({
         </>
       )}
     </header>
+  );
+}
+
+/** Nhãn giá cạnh mục menu: chữ gỉ sét, cùng màu nhấn với nhãn "phiên song song". */
+function NavBadge({ children }: { children: string }) {
+  return (
+    <span className="font-cond text-xs font-bold whitespace-nowrap text-accent-text">
+      {children}
+    </span>
   );
 }

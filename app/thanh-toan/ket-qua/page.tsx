@@ -13,6 +13,7 @@ import {
 import { SummaryCard } from "@/components/checkout/summary-card";
 import { Badge } from "@/components/ui/badge";
 import { PaymentPoll } from "@/components/payment-poll";
+import { AiCheckUpsell } from "@/components/ai-check-upsell";
 
 export const metadata: Metadata = {
   title: "Kết quả thanh toán — HDI Research Center",
@@ -104,6 +105,9 @@ export default async function PaymentResultPage({
                 </p>
               </div>
               <OrderLineList items={order.items} />
+              {/* Chỉ khi đã trả xong: đơn đang chờ hay đã đóng thì việc của
+                  người đọc là xử lý đơn này, không phải mua thêm. */}
+              {paid && <AiCheckUpsell className="mt-8" />}
             </div>
 
             <SummaryCard
