@@ -1,0 +1,8 @@
+url-desktop_.json FAIL 16 {'tiny-text': 5, 'line-length': 2, 'dark-glow': 1, 'kicker-above-heading': 6, 'marquee': 1, 'radial-halo': 1} | ADV 19
+url-desktop_gio-hang.json FAIL 2 {'dark-glow': 1, 'kicker-above-heading': 1} | ADV 0
+url-desktop_khoa-hoc.json FAIL 10 {'line-length': 1, 'undersized-ui-text': 1, 'tiny-text': 3, 'dark-glow': 1, 'kicker-above-heading': 3, 'skipped-heading': 1} | ADV 2
+url-desktop_kiem-tra-ai-dao-van.json FAIL 9 {'line-length': 2, 'undersized-ui-text': 5, 'dark-glow': 1, 'kicker-above-heading': 1} | ADV 3
+url-mobile_.json FAIL 14 {'tiny-text': 5, 'dark-glow': 1, 'kicker-above-heading': 6, 'marquee': 1, 'radial-halo': 1} | ADV 19
+url-mobile_gio-hang.json FAIL 2 {'dark-glow': 1, 'kicker-above-heading': 1} | ADV 1
+url-mobile_khoa-hoc.json FAIL 9 {'undersized-ui-text': 1, 'tiny-text': 3, 'dark-glow': 1, 'kicker-above-heading': 3, 'skipped-heading': 1} | ADV 2
+url-mobile_kiem-tra-ai-dao-van.json FAIL 7 {'undersized-ui-text': 5, 'dark-glow': 1, 'kicker-above-heading': 1} | ADV 2
