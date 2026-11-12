@@ -22,7 +22,7 @@ export function AdminActionButton({
   id,
   label,
   confirm,
-  className = "rounded-full border border-line px-4 py-2 text-sm font-bold text-fg-muted transition hover:border-primary hover:text-primary",
+  className = "rounded-button border border-line px-4 py-2 text-sm font-bold text-fg-muted transition hover:border-primary hover:text-primary",
 }: {
   /**
    * Server action trả về kết quả có lời nhắn. Thường nhận một id (mã đơn, mã

@@ -115,9 +115,11 @@ function SpeakerBadge() {
         </div>
       </div>
 
-      <dl className="mt-6 hidden grid-cols-2 gap-x-4 gap-y-4 border-t border-line pt-5 lg:grid">
+      {/* Mobile chỉ giữ dòng "500+ học viên" — con số thật duy nhất nói về người
+          học (PRODUCT.md); bốn số liệu học thuật chỉ hiện từ lg để giữ trang ngắn. */}
+      <dl className="mt-4 grid grid-cols-2 gap-x-4 gap-y-4 border-t border-line pt-3 lg:mt-6 lg:pt-5">
         {stats.map((stat) => (
-          <div key={stat.label}>
+          <div key={stat.label} className="hidden lg:block">
             <dt className="text-[0.8125rem] leading-snug text-fg-muted">{stat.label}</dt>
             <dd className="font-cond text-2xl leading-tight font-bold">{formatStat(stat)}</dd>
           </div>

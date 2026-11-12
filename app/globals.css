@@ -150,6 +150,16 @@ p {
   outline: 2px solid var(--primary);
   outline-offset: 2px;
 }
+/* Navy trên dải navy gần như không thấy (≈1,2:1): trên band, vòng focus dùng
+   màu gỉ sét sáng dành cho band. Mặt sáng nằm trong band (thẻ trắng, .on-white)
+   lấy lại vòng navy. */
+.band :focus-visible {
+  outline-color: var(--accent-on-band);
+}
+.band .bg-card :focus-visible,
+.band .on-white :focus-visible {
+  outline-color: var(--primary);
+}
 
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
@@ -194,6 +204,7 @@ p {
   --primary: #0c498f;
   --warning: #8f5d00;
   --border: #d9dde4;
+  --rule: #141821;
   background: #fff;
   color: var(--fg);
 }

@@ -207,7 +207,7 @@ export function SiteHeader({
                   onClick={() => setDesktopOpen(null)}
                   className={`flex items-center gap-1.5 px-2 py-2 text-sm font-semibold whitespace-nowrap transition-colors hover:text-fg 2xl:px-3 ${
                     active
-                      ? "bg-card text-primary shadow-sm"
+                      ? "text-fg shadow-[inset_0_-2px_0_var(--primary)]"
                       : "text-fg-muted"
                   }`}
                 >

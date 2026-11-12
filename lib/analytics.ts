@@ -30,7 +30,6 @@ import { track } from "@vercel/analytics";
  */
 export type CtaSource =
   | "header"
-  | "header-mobile"
   | "hero"
   | "home-open-courses"
   | "home-ai-check"
@@ -39,7 +38,6 @@ export type CtaSource =
   | "khoa-hoc-detail"
   | "khoa-hoc-sticky"
   | "khoa-hoc-card"
-  | "dich-vu-hub"
   | "dich-vu-detail"
   | "hoi-thao-quoc-te"
   | "lien-he"

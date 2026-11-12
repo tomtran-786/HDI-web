@@ -57,7 +57,7 @@ import { structuredDataForCourse } from "@/lib/structured-data";
  *      khác" — cùng thẻ CourseCard với trang chủ và /khoa-hoc, bấm vào mở modal
  *      xem nhanh.
  *
- * Nhịp nền: hero và các section trắng xen kẽ với nền `soft` (radial wash), còn
+ * Nhịp nền: các section trắng phân tách bằng đường kẻ mảnh, còn
  * band navy chỉ dùng cho đánh giá và "Điều bạn nhận được".
  *
  * Bảng "Thông tin khóa học" riêng ở cuối trang đã bỏ: sáu dòng `facts` và học

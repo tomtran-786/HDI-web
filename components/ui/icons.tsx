@@ -31,27 +31,6 @@ export function IconUsers({ className, size = 20 }: IconProps) {
   );
 }
 
-export function IconJournal({ className, size = 20 }: IconProps) {
-  return (
-    <svg {...base(size)} className={className} aria-hidden>
-      <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
-      <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
-      <path d="M9 7h7M9 11h5" />
-    </svg>
-  );
-}
-
-export function IconRevise({ className, size = 20 }: IconProps) {
-  return (
-    <svg {...base(size)} className={className} aria-hidden>
-      <path d="M3 12a9 9 0 0 1 15.5-6.2L21 8" />
-      <path d="M21 3v5h-5" />
-      <path d="M21 12a9 9 0 0 1-15.5 6.2L3 16" />
-      <path d="M3 21v-5h5" />
-    </svg>
-  );
-}
-
 export function IconMail({ className, size = 20 }: IconProps) {
   return (
     <svg {...base(size)} className={className} aria-hidden>
@@ -97,14 +76,6 @@ export function IconDownload({ className, size = 20 }: IconProps) {
     <svg {...base(size)} className={className} aria-hidden>
       <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
       <path d="M7 10l5 5 5-5M12 15V3" />
-    </svg>
-  );
-}
-
-export function IconArrow({ className, size = 20 }: IconProps) {
-  return (
-    <svg {...base(size)} className={className} aria-hidden>
-      <path d="M7 17 17 7M9 7h8v8" />
     </svg>
   );
 }

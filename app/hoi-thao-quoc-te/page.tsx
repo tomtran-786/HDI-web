@@ -93,7 +93,7 @@ export default function ConferenceProgramPage() {
             <p className="mt-4 text-sm font-semibold text-fg">{advisor.since}</p>
             <Link
               href="/cong-bo"
-              className="mt-6 text-[0.9375rem] font-semibold text-primary underline decoration-1 underline-offset-4 hover:decoration-2"
+              className="mt-6 inline-block text-[0.9375rem] font-semibold text-primary underline decoration-1 underline-offset-4 hover:decoration-2"
             >
               Xem hồ sơ học thuật đầy đủ
             </Link>
@@ -191,7 +191,7 @@ function ForumSection({ forum }: { forum: ConferenceForum }) {
             href={forum.externalUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="mt-5 text-[0.9375rem] font-semibold text-primary underline decoration-1 underline-offset-4 hover:decoration-2"
+            className="mt-5 inline-block text-[0.9375rem] font-semibold text-primary underline decoration-1 underline-offset-4 hover:decoration-2"
           >
             Trang chính thức
           </a>

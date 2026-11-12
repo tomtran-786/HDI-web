@@ -16,7 +16,6 @@ export const SERVICE_SLUGS = [
 ] as const;
 
 export type ServiceSlug = (typeof SERVICE_SLUGS)[number];
-export type ServiceIcon = "user" | "users" | "journal" | "revise";
 
 export type ServiceItem = {
   slug?: ServiceSlug;
@@ -27,7 +26,6 @@ export type ServiceItem = {
   bestFor?: string;
   supportLabel?: string;
   support?: readonly string[];
-  icon?: ServiceIcon;
 };
 
 export type ServiceGroup = {
@@ -56,7 +54,6 @@ const researchServices: readonly ServiceItem[] = [
       "Đọc kết quả và định hướng bước tiếp theo",
       "Tư vấn chiến lược phát triển bản thảo",
     ],
-    icon: "user",
   },
   {
     slug: "research-project-mentoring",
@@ -76,7 +73,6 @@ const researchServices: readonly ServiceItem[] = [
       "Chuẩn bị và phân tích dữ liệu",
       "Hoàn thiện cấu trúc công trình",
     ],
-    icon: "users",
   },
   {
     slug: "publication-mentoring",
@@ -97,7 +93,6 @@ const researchServices: readonly ServiceItem[] = [
       "Chuẩn bị bản thảo và tài liệu gửi bài",
       "Hỗ trợ góp ý trả lời các câu hỏi trong quá trình phản biện",
     ],
-    icon: "journal",
   },
   {
     slug: "revision-resubmission-support",
@@ -117,7 +112,6 @@ const researchServices: readonly ServiceItem[] = [
       "Hoàn thiện response letter",
       "Rà soát hồ sơ trước khi resubmit",
     ],
-    icon: "revise",
   },
 ];
 

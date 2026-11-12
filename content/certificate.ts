@@ -20,8 +20,6 @@ export const certificate = {
     link: "Xem mẫu",
   },
   title: "Hoàn thành khóa học, nhận giấy chứng nhận",
-  /** Cụm trong `title` được gạch chân tay. */
-  mark: "giấy chứng nhận",
   /** Đoạn dẫn ngắn; `strong` là các cụm tô đậm. Chỉ lấy ý từ ảnh mẫu bên dưới. */
   lead: [
     { text: "Giấy chứng nhận " },

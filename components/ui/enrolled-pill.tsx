@@ -10,10 +10,7 @@ export function EnrolledPill({ slug }: { slug: CourseSlug }) {
 
   return (
     <div
-      className="inline-flex max-w-full items-center gap-2.5 self-start rounded-full border border-line px-3 py-2"
-      style={{
-        background: "linear-gradient(90deg, var(--tint), transparent)",
-      }}
+      className="inline-flex max-w-full items-center gap-2.5 self-start rounded-full border border-line bg-tint px-3 py-2"
     >
       <span className="flex shrink-0 pl-2" aria-hidden>
         {avatarOpacity.map((opacity) => (

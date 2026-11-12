@@ -206,6 +206,8 @@ export default async function AccountPage() {
         </div>
       </div>
 
+      {/* Thẻ khóa dùng h3 cho tên khóa; h2 ẩn giữ thứ bậc h1 → h2 → h3. */}
+      <h2 className="sr-only">Khóa học của bạn</h2>
       {visibleEnrollments.length === 0 ? (
         <div className="rounded-card border border-line bg-card p-8 text-center sm:p-10">
           <p className="text-lg font-bold tracking-tight">
@@ -395,9 +397,9 @@ export default async function AccountPage() {
 
       {serviceOrders.length > 0 && (
         <>
-          <h3 className="mt-12 mb-4 text-sm font-bold uppercase tracking-[0.06em] text-fg-subtle">
+          <h2 className="mt-12 mb-4 text-sm font-bold uppercase tracking-[0.06em] text-fg-subtle">
             Đơn dịch vụ
-          </h3>
+          </h2>
           <ul className="space-y-3">
             {serviceOrders.map((order) => (
               <li
