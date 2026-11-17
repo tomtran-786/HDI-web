@@ -216,4 +216,4 @@ Hero trang chủ: dây navy từ mép trên xuống, thẻ viền mực 2px, đ�
 - **Don't** bọc nội dung chỉ để đọc trong thẻ đổ bóng.
 - **Don't** thêm fade-up khi cuộn; chuyển động phải có lý do (dialog, phản hồi thao tác, thẻ đeo).
 - **Don't** đổi font family; Source Sans 3 là font của thương hiệu.
-- **Don't** đặt chữ vào ảnh (poster, banner) — dựng bằng HTML từ `content/`. Ngoại lệ duy nhất, theo yêu cầu chủ dự án (2026-11-12): banner HDI `banner-check-turnitin-v2.jpg` ở đầu trang `/kiem-tra-ai-dao-van`, như trên `main` trước redesign. Giá in trong ảnh phải khớp bậc đầu của `aiCheckTiers`.
+- **Don't** đặt chữ vào ảnh (poster, banner) — dựng bằng HTML từ `content/`. Banner HDI đầu trang `/kiem-tra-ai-dao-van` đã gỡ (2026-11-17) vì có tên và logo Turnitin; nếu HDI làm banner thay thế thì ảnh không được nêu tên hay logo bên thứ ba, và giá in trong ảnh phải khớp bậc đầu của `aiCheckTiers`.

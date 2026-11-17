@@ -784,7 +784,7 @@ export const courses = [
             text: "Đạo văn, similarity và sử dụng AI có trách nhiệm",
             points: [
               "Similarity ≠ plagiarism",
-              "Vì sao Turnitin đánh dấu similarity",
+              "Vì sao phần mềm kiểm tra đạo văn đánh dấu similarity",
               "Paraphrase đúng cách",
               "Citation đúng nhưng vẫn có thể similarity cao",
               "AI-generated text và các rủi ro học thuật",

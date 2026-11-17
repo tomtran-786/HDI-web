@@ -18,7 +18,7 @@ Họ đến từ Zalo, Facebook, TikTok lẫn tìm kiếm; mobile và desktop ng
 
 ## Product Purpose
 
-HDI Research Center huấn luyện nghiên cứu và công bố quốc tế. Website vừa là hồ sơ học thuật của trung tâm, vừa là nơi bán khóa học có giới hạn chỗ và dịch vụ kiểm tra AI/đạo văn (Turnitin) theo đơn.
+HDI Research Center huấn luyện nghiên cứu và công bố quốc tế. Website vừa là hồ sơ học thuật của trung tâm, vừa là nơi bán khóa học có giới hạn chỗ và dịch vụ kiểm tra AI/đạo văn theo đơn.
 
 Thành công, theo thứ tự ưu tiên chủ dự án đã chốt:
 

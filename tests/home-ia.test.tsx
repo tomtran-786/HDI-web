@@ -56,7 +56,7 @@ describe("kiến trúc nội dung homepage và Về HDI", () => {
     });
   });
 
-  it("bảng chương trình trong hero hiện khóa đang mở, số chỗ thật và phiên song song Turnitin", async () => {
+  it("bảng chương trình trong hero hiện khóa đang mở, số chỗ thật và phiên song song kiểm tra AI & đạo văn", async () => {
     const html = renderToStaticMarkup(await Home());
     const heroEnd = html.indexOf("</section>", html.indexOf('id="top"'));
 
@@ -131,7 +131,7 @@ describe("kiến trúc nội dung homepage và Về HDI", () => {
     const html = renderToStaticMarkup(await Home());
     expect(html).not.toContain('id="khoa-hoc"');
     expect(html).not.toContain("Còn 0 chỗ");
-    // Dịch vụ Turnitin không phụ thuộc khóa nào đang mở.
+    // Dịch vụ kiểm tra AI & đạo văn không phụ thuộc khóa nào đang mở.
     expect(html).toContain('href="/kiem-tra-ai-dao-van"');
     expect(html).toContain('id="hoi-thao-quoc-te"');
   });

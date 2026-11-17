@@ -78,7 +78,7 @@ export const aiCheckFromPrices = aiCheckTiers[0].prices;
  */
 export const aiCheckTeaser = {
   label: "Song song",
-  title: "Kiểm tra AI & đạo văn bằng Turnitin",
+  title: "Kiểm tra AI & đạo văn trước khi nộp",
   hint: "Gõ số từ để xem giá, gửi bản thảo qua Zalo sau khi thanh toán.",
   wordLabel: "Số từ",
   wordPlaceholder: "VD: 8000",
@@ -95,7 +95,7 @@ export const aiCheckTeaser = {
  * `aiCheckFromPrices`, không viết tay.
  */
 export const aiCheckUpsell = {
-  title: "Sắp nộp bài? Kiểm tra AI & đạo văn bằng Turnitin",
+  title: "Sắp nộp bài? Kiểm tra AI & đạo văn",
   body: (fromPrice: string) =>
     `Báo cáo tỷ lệ AI và tỷ lệ trùng lặp trước khi nộp hoặc gửi đăng, từ ${fromPrice}. Thanh toán trực tuyến, gửi bài qua Zalo.`,
   cta: "Đặt kiểm tra",
